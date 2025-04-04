@@ -20,7 +20,7 @@ DEBUG=false
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    workflow|release)
+    workflow|release|input)
       TEST_SCOPE="$1"
       shift
       ;;
@@ -33,11 +33,12 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --help)
-      echo "Usage: $(basename $0) [workflow|release] [--fail-fast] [--debug]"
+      echo "Usage: $(basename $0) [workflow|release|input] [--fail-fast] [--debug]"
       echo
       echo "Options:"
       echo "  workflow     Run only workflow tests"
       echo "  release      Run only release tests"
+      echo "  input        Run only input interface tests"
       echo "  --fail-fast  Stop at first failure"
       echo "  --debug      Run with debug output enabled"
       echo 
