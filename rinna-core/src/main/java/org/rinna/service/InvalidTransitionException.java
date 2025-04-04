@@ -6,12 +6,16 @@
  * the LICENSE file, which is part of this source code package.
  */
 
-package com.rinna.service;
+package org.rinna.service;
 
 /**
  * Exception thrown when an invalid workflow transition is attempted.
  */
 public class InvalidTransitionException extends Exception {
+    /**
+     * Serial version UID for serialization.
+     */
+    private static final long serialVersionUID = 1L;
     
     /**
      * Constructs a new InvalidTransitionException with the specified detail message.
