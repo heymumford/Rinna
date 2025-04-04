@@ -76,3 +76,18 @@ cd rinna-core && ../bin/rin test
 
 - **0**: All operations completed successfully
 - **Non-zero**: One or more operations failed
+
+## Package Structure
+
+- **Base Package**: `org.rinna`
+- **Core Package**: `org.rinna.core`
+- **Model Package**: `org.rinna.model`
+- **Service Package**: `org.rinna.service`
+
+## Utility Scripts
+
+| Script | Purpose | Example |
+|--------|---------|---------|
+| `bin/rin` | Main CLI tool | `bin/rin test` |
+| `bin/rin-version` | Version management | `bin/rin-version minor` |
+| `bin/refactor-package.sh` | Package refactoring | `bin/refactor-package.sh` |

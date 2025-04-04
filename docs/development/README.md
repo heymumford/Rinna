@@ -1,6 +1,6 @@
 # Rinna Development Guide
 
-## Architecture
+## Architecture and Design
 
 Rinna follows a clean architecture approach:
 
@@ -10,6 +10,12 @@ Rinna follows a clean architecture approach:
 - **DB**: Data persistence layer
 - **CLI**: Command-line interface
 - **Util**: Utility classes
+
+For our overall implementation approach and design decisions, see:
+
+- [Design Approach](design-approach.md) - Our phased implementation strategy
+- [Architecture](architecture.md) - Detailed system architecture
+- [Package Refactoring](package-refactoring.md) - Guide for the com.rinna to org.rinna package migration
 
 ## Development Setup
 
@@ -27,11 +33,11 @@ mvn test
 
 ## Adding Features
 
-1. Create domain models in `com.rinna.model`
-2. Implement business logic in `com.rinna.service`
-3. Add persistence in `com.rinna.db`
-4. Extend CLI commands in `com.rinna.cli`
-5. Write tests in `src/test/java/com/rinna`
+1. Create domain models in `org.rinna.model`
+2. Implement business logic in `org.rinna.service`
+3. Add persistence in `org.rinna.db`
+4. Extend CLI commands in `org.rinna.cli`
+5. Write tests in `src/test/java/org/rinna`
 6. Add Cucumber scenarios in `src/test/resources/features`
 
 ## Testing

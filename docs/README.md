@@ -7,6 +7,7 @@ Welcome to the Rinna documentation. Rinna is a streamlined workflow and release 
 - [Getting Started](getting-started/README.md) - Quick installation and setup
 - [User Guide](user-guide/README.md) - How to use Rinna effectively
 - [Development](development/README.md) - Guide for extending Rinna
+- [Technical Specification](technical-specification.md) - System requirements and specifications
 
 ## Core Concepts
 
