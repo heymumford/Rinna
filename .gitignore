@@ -64,9 +64,8 @@ engineering_spec_v0.3.md
 **/Test.java
 /tmp/
 
-# Build and test artifacts
+# Build and test artifacts except fix-headers.sh
 /bin/run-build.sh
-/bin/fix-headers.sh
 /bin/fix-java-files.sh
 /bin/restore-files.sh
 /bin/update-headers.sh

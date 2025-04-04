@@ -1,16 +1,8 @@
-package com.rinna.bdd;
+/*
+ * Component of the Rinna workflow management system
+ *
+ * Copyright (c) 2025 Eric C. Mumford (@heymumford)
+ * This file is subject to the terms and conditions defined in
+ * the LICENSE file, which is part of this source code package.
+ */
 
-import org.junit.platform.suite.api.ConfigurationParameter;
-import org.junit.platform.suite.api.IncludeEngines;
-import org.junit.platform.suite.api.SelectClasspathResource;
-import org.junit.platform.suite.api.Suite;
-
-import static io.cucumber.junit.platform.engine.Constants.GLUE_PROPERTY_NAME;
-
-@Suite
-@IncludeEngines("cucumber")
-@SelectClasspathResource("features")
-@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "com.rinna.bdd")
-public class CucumberRunner {
-    // This class is empty on purpose - it's just a runner
-}
