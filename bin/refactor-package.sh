@@ -3,7 +3,15 @@
 #
 # refactor-package.sh - Refactor Java package structure
 #
+# USAGE: ./bin/refactor-package.sh
+#
 # PURPOSE: Refactor Java packages from com.rinna to org.rinna
+#
+# DESCRIPTION:
+# This script migrates the entire codebase from the 'com.rinna' package 
+# namespace to 'org.rinna'. It updates package declarations, imports, 
+# and references in build files. See docs/development/package-refactoring.md
+# for more details.
 #
 # Copyright (c) 2025 Eric C. Mumford (@heymumford)
 # This file is subject to the terms and conditions defined in
