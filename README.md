@@ -12,8 +12,6 @@ Java, project management, workflow automation
 
 <div align="center">
 
-![Rinna Workflow Management System](https://via.placeholder.com/800x200?text=Rinna%20Workflow%20Management)
-
 *A streamlined task management CLI (Command-Line Interface) designed for developers who code, not for managers who report.*
 
 [![Build Status](https://img.shields.io/badge/build-failing-red.svg)](https://github.com/heymumford/Rinna/actions)
