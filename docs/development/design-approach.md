@@ -9,6 +9,7 @@ This document outlines our approach to designing and implementing Rinna based on
 3. **Usability**: The system should be intuitive to use with well-designed APIs.
 4. **Immutability**: Work items have unique, immutable identifiers and follow immutable data patterns.
 5. **Explicit Flow**: Workflow transitions are clearly defined and strictly enforced.
+6. **Modern Java**: Leverage Java 21 features to write more expressive, concise, and maintainable code.
 
 ## Implementation Approach
 
@@ -102,9 +103,10 @@ Rinna follows a clean architecture approach:
 ## Next Steps
 
 1. Complete the core workflow state machine
-2. Enhance developer-focused query and filtering capabilities
-3. Develop CLI interface with developer-centric commands
-4. Add GitHub integration for seamless workflow management
-5. Implement SQLite persistence with efficient query support
+2. Adopt Java 21 features to enhance code readability and maintainability
+3. Enhance developer-focused query and filtering capabilities
+4. Develop CLI interface with developer-centric commands
+5. Add GitHub integration for seamless workflow management
+6. Implement SQLite persistence with efficient query support
 
-Each step follows TDD principles, with tests written before implementation.
+Each step follows TDD principles, with tests written before implementation. See the [Java 21 Features](java21-features.md) document for details on how we'll leverage modern Java capabilities.

@@ -109,8 +109,16 @@ The architecture maintains clear extension points:
 - Consistent package structure following Clean Architecture
 - Clear separation of concerns
 - Intuitive organization that maps to architectural concepts
+- Modern Java 21 features to improve code quality and readability
 
-### 4. Testing Strategy
+### 4. Modern Java Utilization
+- Records for immutable data transfer and value objects
+- Pattern matching for cleaner conditional logic
+- Virtual threads for efficient concurrency
+- Sealed classes for representing closed hierarchies
+- String templates for cleaner text formatting
+
+### 5. Testing Strategy
 - Entities and use cases tested in isolation
 - Interface adapters tested with mocked use cases
 - Framework components tested with integration tests

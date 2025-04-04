@@ -24,7 +24,7 @@ NC='\033[0m' # No Color
 # Constants
 RINNA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GITHUB_OWNER="heymumford" # Update this to the appropriate GitHub owner/organization
-GITHUB_REPO="rinna"       # Update this to the appropriate GitHub repo name
+GITHUB_REPO="Rinna"       # Update this to the appropriate GitHub repo name
 
 # Help message
 function show_help {

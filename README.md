@@ -1,42 +1,89 @@
 # Rinna
 
-Streamlined workflow management for self-driven engineering teams.
+<div align="center">
 
-## Purpose
+![Rinna Logo](https://via.placeholder.com/150x150.png?text=Rinna)
 
-Rinna delivers explicit workflow tracking, release management, and development cycle management with intentional clarity and minimum overhead.
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/heymumford/Rinna/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Java Version](https://img.shields.io/badge/java-21-orange.svg)](https://openjdk.java.net/projects/jdk/21/)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/heymumford/Rinna/releases)
+[![GitHub Issues](https://img.shields.io/github/issues/heymumford/Rinna.svg)](https://github.com/heymumford/Rinna/issues)
+[![GitHub PRs](https://img.shields.io/github/issues-pr/heymumford/Rinna.svg)](https://github.com/heymumford/Rinna/pulls)
 
-## Core Elements
+**Workflow management for developers, by developers.**
 
-- **Work Items**: Goals → Features → Bugs/Chores
+</div>
+
+## What Is Rinna?
+
+Rinna is a streamlined, developer-centric workflow management system designed specifically for software engineers who want to focus on coding, not on managing tools. Unlike bloated enterprise solutions, Rinna provides just what developers need: clear visibility, minimal ceremony, and seamless integration with development workflows.
+
+**Rinna isn't trying to replace Jira or other enterprise tools – it's solving a fundamentally different problem: how to make workflow management work _for_ developers rather than making developers work for their tools.**
+
+### The Problem
+
+Traditional workflow management tools:
+- Are designed for managers, not developers
+- Introduce excessive ceremony and process overhead
+- Pull developers out of their coding environment
+- Create friction in the development process
+- Prioritize reporting over productivity
+
+### How Rinna Solves It
+
+Rinna embodies a radical philosophy: **workflow management should adapt to developers, not the other way around**.
+
+- **Code-Adjacent**: Lives where developers work – in the terminal, IDE, and git workflow
+- **Minimal Ceremony**: Lightweight processes that don't interrupt flow state
+- **Developer-Owned**: Complete control over workflow by the people doing the work
+- **Clean Architecture**: Extensible design that grows with your needs
+- **Zero-Friction**: Integrate with existing tools without disrupting workflows
+
+## Key Features
+
+- **Terminal-First Interface**: Manage your workflow without leaving your development environment
+- **Git Integration**: Update work status directly through commit messages
+- **Self-Contained**: SQLite-based storage for individual or team use (PostgreSQL for scaled deployments)
+- **Clean Architecture**: Modular design with clear boundaries and extensibility points
+- **Explicit Workflow**: Clear, auditable state transitions for work items
+- **Java 21 Powered**: Leveraging modern language features for a clean, maintainable codebase
+
+## Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/heymumford/Rinna.git
+cd Rinna
+
+# Make scripts executable
+chmod +x bin/rin bin/rin-version
+
+# Build the project
+bin/rin build
+
+# Create a new work item
+bin/rin item create "Implement authentication" --type feature
+
+# List all work items
+bin/rin items list
+
+# Update status
+bin/rin workflow move ITEM-123 in-progress
+```
+
+## Work Model
+
+Rinna uses a straightforward work model designed for development teams:
+
+- **Work Items**: Goals → Features → Bugs → Chores
 - **Workflow**: Found → Triaged → To Do → In Progress → In Test → Done
-- **Versioning**: Enforced semantic versioning (major.minor.patch)
-- **Lota**: Configurable development cycles with defined ceremonies
+- **Developer-Centric Attributes**: Effort, assignee, blocked status, and tags
+- **Flexible Organization**: Work hierarchies without prescriptive methodologies
 
-## Architecture
+## Maven Integration
 
-Rinna is built using Clean Architecture principles:
-
-- **Domain Layer**: Core business logic and entities
-- **Use Cases**: Application-specific business rules
-- **Adapters**: Interface with external systems
-- **Frameworks**: External dependencies and delivery mechanisms
-
-This architecture ensures:
-- Separation of concerns
-- Testability
-- Flexibility to change frameworks
-- Independence of business logic from technical details
-
-## Testing
-
-Rinna uses a comprehensive testing approach:
-
-- **Unit Tests**: Testing individual components
-- **BDD Tests**: Behavior-driven tests for verifying system behavior
-- **CI/CD**: Automated testing and deployment through GitHub Actions
-
-## Integration
+Include Rinna in your Java projects:
 
 ```xml
 <dependency>
@@ -46,32 +93,49 @@ Rinna uses a comprehensive testing approach:
 </dependency>
 ```
 
-## Documentation
+## Why Rinna Is Different
 
-- [Getting Started](docs/getting-started/README.md)
-- [User Guide](docs/user-guide/README.md)
-- [Technical Specification](docs/technical-specification.md)
-- [Development Guide](docs/development/README.md)
-- [Testing Strategy](docs/development/testing.md)
-- [Architecture](docs/development/architecture.md)
+- **By Developers, For Developers**: Built from the ground up with developer experience at the core
+- **Zero-Friction Philosophy**: Never adds more process than is absolutely necessary
+- **Technology Agnostic**: Works with any stack, any platform, any methodology
+- **No Lock-in**: Your data is yours, with simple import/export and standard formats
+- **Extensible Architecture**: Add custom workflows, integrations, and visualizations
 
-## Requirements
+## Project Status
 
-- Java 11+
-- Maven wrapper (included)
+Rinna is in active development, following these principles:
 
-## Development
+- **Incremental Releases**: Delivering value early and often
+- **Feature Completeness**: Each feature ships fully functional, not partially implemented
+- **Community Driven**: Development priorities based on community feedback
 
-Use the Rinna CLI tool for simplified build and test management:
+## CLI Reference
+
+Use the Rinna CLI for simplified workflow management:
 
 ```bash
-# Make scripts executable
-chmod +x bin/rin bin/rin-version
-
 # Show help and usage information
 bin/rin --help
 
-# Clean, build, and test with default output
+# Create a work item
+bin/rin item create "Fix login bug" --type bug --priority high
+
+# Transition a work item
+bin/rin workflow move ITEM-123 in-progress
+
+# Show item details
+bin/rin item show ITEM-123
+
+# List items by state
+bin/rin items list --state in-progress
+```
+
+## Development
+
+Build and test Rinna using the included tools:
+
+```bash
+# Clean, build, and test
 bin/rin all
 
 # Run tests with verbose output
@@ -81,8 +145,28 @@ bin/rin -v test
 bin/rin -e build
 ```
 
-See the [CLI documentation](docs/user-guide/rin-cli.md) for more options.
+## Documentation
+
+- [Getting Started](docs/getting-started/README.md)
+- [User Guide](docs/user-guide/README.md)
+- [Technical Specification](docs/technical-specification.md)
+- [Development Guide](docs/development/README.md)
+- [Architecture](docs/development/architecture.md)
+- [Java 21 Features](docs/development/java21-features.md)
+
+## Requirements
+
+- Java 21+
+- Maven wrapper (included)
+
+## Contributing
+
+Contributions are welcome! Please see our [Contributing Guide](docs/development/contribution.md) for details.
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+Special thanks to the open-source community and all contributors who have helped shape Rinna's vision.

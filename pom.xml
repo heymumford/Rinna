@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.rinna</groupId>
-    <artifactId>rinna</artifactId>
+    <artifactId>Rinna</artifactId>
     <version>1.1.0</version>
     <packaging>pom</packaging>
 
@@ -17,9 +17,9 @@
     </modules>
 
     <properties>
-        <java.version>11</java.version>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <skipTests>false</skipTests>
         <maven.test.skip>false</maven.test.skip>
@@ -35,6 +35,7 @@
         <spotbugs.version>4.7.3</spotbugs.version>
         <jacoco.version>0.8.10</jacoco.version>
         <pmd.version>6.55.0</pmd.version>
+        <owasp.version>8.4.3</owasp.version>
     </properties>
 
     <dependencies>
@@ -111,9 +112,12 @@
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
-                    <release>${java.version}</release>
+                    <fork>true</fork>
                 </configuration>
             </plugin>
+            
+            <!-- Maven Compiler Plugin -->
+            <!-- The toolchains plugin is removed as we're using the system JDK 21 directly -->
             
             <!-- Surefire for tests -->
             <plugin>
@@ -168,7 +172,6 @@
                 <configuration>
                     <configLocation>config/checkstyle/checkstyle.xml</configLocation>
                     <suppressionsLocation>config/checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
-                    <encoding>UTF-8</encoding>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
                     <linkXRef>false</linkXRef>
@@ -231,7 +234,6 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>
                     <targetJdk>${java.version}</targetJdk>
                     <printFailingErrors>true</printFailingErrors>
                     <linkXRef>false</linkXRef>
@@ -243,6 +245,24 @@
                 <executions>
                     <execution>
                         <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- OWASP Dependency Check -->
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>${owasp.version}</version>
+                <configuration>
+                    <failBuildOnCVSS>8</failBuildOnCVSS>
+                    <suppressionFile>config/owasp/suppressions.xml</suppressionFile>
+                </configuration>
+                <executions>
+                    <execution>
                         <goals>
                             <goal>check</goal>
                         </goals>
@@ -285,6 +305,18 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco.version}</version>
             </plugin>
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>${owasp.version}</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>aggregate</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
         </plugins>
     </reporting>
     
@@ -302,7 +334,7 @@
             <id>github</id>
             <properties>
                 <github.owner>heymumford</github.owner>
-                <github.repo>rinna</github.repo>
+                <github.repo>Rinna</github.repo>
             </properties>
         </profile>
     </profiles>
