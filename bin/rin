@@ -88,10 +88,18 @@ function show_help {
     
     # Commands
     echo -e "${YELLOW}COMMANDS${NC}"
-    echo -e "  ${GREEN}build${NC}     Build the project"
-    echo -e "  ${GREEN}clean${NC}     Clean the project"
-    echo -e "  ${GREEN}test${NC}      Run tests"
-    echo -e "  ${GREEN}all${NC}       Clean, build, and test (default if no command specified)"
+    echo -e "  ${GREEN}build${NC}            Build the project"
+    echo -e "  ${GREEN}clean${NC}            Clean the project"
+    echo -e "  ${GREEN}test${NC}             Run tests"
+    echo -e "  ${GREEN}all${NC}              Clean, build, and test (default if no command specified)"
+    echo -e "  ${GREEN}version${NC}          Version management:"
+    echo -e "    ${GREEN}current${NC}          Show current version information"
+    echo -e "    ${GREEN}major${NC}            Bump major version (x.0.0)"
+    echo -e "    ${GREEN}minor${NC}            Bump minor version (0.x.0)"
+    echo -e "    ${GREEN}patch${NC}            Bump patch version (0.0.x)"
+    echo -e "    ${GREEN}set <version>${NC}    Set to specific version (e.g., 1.2.3)"
+    echo -e "    ${GREEN}release${NC}          Create a release from current version"
+    echo -e "    ${GREEN}tag${NC}              Create a git tag for current version"
     echo
     
     # Options
@@ -134,6 +142,14 @@ function show_help {
     echo -e "  rin all"
     echo
     
+    # Version examples
+    echo -e "  ${BLUE}# Check current version information${NC}"
+    echo -e "  rin version current"
+    echo
+    echo -e "  ${BLUE}# Bump minor version and create a tag${NC}"
+    echo -e "  rin version minor -m \"Added new feature XYZ\""
+    echo
+    
     # How it helps
     echo -e "${YELLOW}HOW IT HELPS${NC}"
     echo -e "  ${BLUE}•${NC} ${GREEN}Terse mode${NC} shows minimal output with passing summaries and full errors"
@@ -145,6 +161,9 @@ function show_help {
 }
 
 # Parse arguments
+VERSION_COMMAND=""
+VERSION_ARGS=""
+
 while [[ $# -gt 0 ]]; do
     case $1 in
         build)
@@ -164,6 +183,15 @@ while [[ $# -gt 0 ]]; do
             BUILD=1
             RUN_TESTS=1
             shift
+            ;;
+        version)
+            # Collect all version-related arguments
+            VERSION_COMMAND="version"
+            shift
+            while [[ $# -gt 0 && "$1" != "build" && "$1" != "clean" && "$1" != "test" && "$1" != "all" ]]; do
+                VERSION_ARGS="$VERSION_ARGS $1"
+                shift
+            done
             ;;
         -v|--verbose)
             VERBOSE=1
@@ -193,7 +221,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # If no commands specified, do everything
-if [[ $CLEAN -eq 0 && $BUILD -eq 0 && $RUN_TESTS -eq 0 ]]; then
+if [[ $CLEAN -eq 0 && $BUILD -eq 0 && $RUN_TESTS -eq 0 && -z "$VERSION_COMMAND" ]]; then
     CLEAN=1
     BUILD=1
     RUN_TESTS=1
@@ -201,6 +229,17 @@ fi
 
 # Go to the Rinna directory
 cd "$RINNA_DIR"
+
+# Handle version command if specified
+if [[ -n "$VERSION_COMMAND" ]]; then
+    # Check if rin-version exists and is executable
+    if [[ -x "$RINNA_DIR/bin/rin-version" ]]; then
+        exec "$RINNA_DIR/bin/rin-version" $VERSION_ARGS
+    else
+        echo -e "${RED}Error: bin/rin-version script not found or not executable${NC}"
+        exit 1
+    fi
+fi
 
 # Function to run a command with appropriate output based on verbosity
 function run_cmd {

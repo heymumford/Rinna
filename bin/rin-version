@@ -1,0 +1,411 @@
+#!/usr/bin/env bash
+
+#
+# rin-version - Rinna version management utility
+#
+# PURPOSE: Command-line utility to manage version numbers across POM files, 
+# git tags, GitHub releases, and GitHub packages
+#
+# Copyright (c) 2025 Eric C. Mumford (@heymumford)
+# This file is subject to the terms and conditions defined in
+# the LICENSE file, which is part of this source code package.
+# (MIT License)
+#
+
+set -e
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Constants
+RINNA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+GITHUB_OWNER="heymumford" # Update this to the appropriate GitHub owner/organization
+GITHUB_REPO="rinna"       # Update this to the appropriate GitHub repo name
+
+# Help message
+function show_help {
+    echo -e "${BLUE}rin-version${NC} - Rinna version management utility"
+    echo
+    echo "Usage: rin-version [command] [options]"
+    echo
+    echo "Commands:"
+    echo "  current                 Show current version information"
+    echo "  major                   Bump major version (x.0.0)"
+    echo "  minor                   Bump minor version (0.x.0)"
+    echo "  patch                   Bump patch version (0.0.x)"
+    echo "  set <version>           Set to specific version (e.g., 1.2.3)"
+    echo "  release                 Create a release from current version"
+    echo "  tag                     Create a git tag for current version"
+    echo
+    echo "Options:"
+    echo "  -m, --message <msg>     Custom release/commit message"
+    echo "  -d, --dry-run           Show what would be done without making changes"
+    echo "  -h, --help              Show this help message"
+    echo
+    echo "Examples:"
+    echo "  rin-version current     # Show current version information"
+    echo "  rin-version minor       # Bump minor version (e.g., 1.0.0 -> 1.1.0)"
+    echo "  rin-version major -m \"Version 2.0.0 release\" # Bump major with custom message"
+    echo
+}
+
+# Parse arguments
+COMMAND=""
+VERSION=""
+MESSAGE=""
+DRY_RUN=false
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        current|major|minor|patch|release|tag)
+            COMMAND="$1"
+            shift
+            ;;
+        set)
+            COMMAND="set"
+            if [[ $# -gt 1 && ! "$2" =~ ^- ]]; then
+                VERSION="$2"
+                shift
+            else
+                echo -e "${RED}Error: Version must be provided after 'set' command${NC}"
+                exit 1
+            fi
+            shift
+            ;;
+        -m|--message)
+            if [[ $# -gt 1 && ! "$2" =~ ^- ]]; then
+                MESSAGE="$2"
+                shift
+            else
+                echo -e "${RED}Error: Message must be provided after -m/--message${NC}"
+                exit 1
+            fi
+            shift
+            ;;
+        -d|--dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}Unknown option or command: $1${NC}"
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+# Check if command is provided
+if [[ -z "$COMMAND" ]]; then
+    echo -e "${RED}Error: No command specified${NC}"
+    show_help
+    exit 1
+fi
+
+# Function to get current version from the root pom.xml
+function get_current_version {
+    local version=$(grep -m 1 "<version>" "$RINNA_DIR/pom.xml" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
+    echo "$version"
+}
+
+# Function to parse version into components
+function parse_version {
+    local version="$1"
+    local major=$(echo "$version" | cut -d '.' -f 1)
+    local minor=$(echo "$version" | cut -d '.' -f 2)
+    local patch=$(echo "$version" | cut -d '.' -f 3)
+    echo "$major $minor $patch"
+}
+
+# Function to update version in all POM files
+function update_pom_versions {
+    local new_version="$1"
+    local dry_run="$2"
+    
+    # Find all pom.xml files
+    local pom_files=$(find "$RINNA_DIR" -name "pom.xml")
+    
+    for pom_file in $pom_files; do
+        if [[ "$dry_run" == "true" ]]; then
+            echo -e "${BLUE}Would update version in ${pom_file} to ${new_version}${NC}"
+        else
+            # Update parent section version if it exists
+            if grep -q "<parent>" "$pom_file"; then
+                sed -i -E "s|(<parent>.*<version>).*?(</version>)|\\1${new_version}\\2|" "$pom_file"
+            fi
+            
+            # Update project version if it's the root pom
+            if [[ "$pom_file" == "$RINNA_DIR/pom.xml" ]]; then
+                sed -i -E "s|(<artifactId>rinna</artifactId>\\s*<version>).*?(</version>)|\\1${new_version}\\2|" "$pom_file"
+            fi
+            
+            echo -e "${GREEN}Updated version in ${pom_file} to ${new_version}${NC}"
+        fi
+    done
+}
+
+# Function to create a git tag
+function create_git_tag {
+    local version="$1"
+    local message="$2"
+    local dry_run="$3"
+    
+    local tag_name="v${version}"
+    
+    if [[ -z "$message" ]]; then
+        message="Release version ${version}"
+    fi
+    
+    if [[ "$dry_run" == "true" ]]; then
+        echo -e "${BLUE}Would create git tag: ${tag_name} with message: ${message}${NC}"
+    else
+        git tag -a "$tag_name" -m "$message"
+        echo -e "${GREEN}Created git tag: ${tag_name}${NC}"
+    fi
+}
+
+# Function to create a GitHub release
+function create_github_release {
+    local version="$1"
+    local message="$2"
+    local dry_run="$3"
+    
+    local tag_name="v${version}"
+    
+    if [[ -z "$message" ]]; then
+        message="Release ${version}"
+    fi
+    
+    if [[ "$dry_run" == "true" ]]; then
+        echo -e "${BLUE}Would create GitHub release: ${tag_name} with message: ${message}${NC}"
+    else
+        if command -v gh &> /dev/null; then
+            if gh release create "$tag_name" -t "Rinna ${version}" -n "$message"; then
+                echo -e "${GREEN}Created GitHub release: ${tag_name}${NC}"
+            else
+                echo -e "${RED}Failed to create GitHub release${NC}"
+                return 1
+            fi
+        else
+            echo -e "${YELLOW}Warning: GitHub CLI (gh) not installed or not in PATH.${NC}"
+            echo -e "${YELLOW}Cannot create GitHub release automatically.${NC}"
+            echo -e "${YELLOW}Please manually create a release for tag: ${tag_name}${NC}"
+        fi
+    fi
+}
+
+# Function to publish to GitHub Packages
+function publish_to_github_packages {
+    local version="$1"
+    local dry_run="$2"
+    
+    if [[ "$dry_run" == "true" ]]; then
+        echo -e "${BLUE}Would publish version ${version} to GitHub Packages${NC}"
+    else
+        # Check if GitHub CLI is available
+        if command -v gh &> /dev/null; then
+            # Ensure we have proper authentication
+            if mvn deploy -DskipTests -Dgithub.packages.username=${GITHUB_OWNER} -Dgithub.packages.password=$(gh auth token); then
+                echo -e "${GREEN}Published version ${version} to GitHub Packages${NC}"
+            else
+                echo -e "${RED}Failed to publish to GitHub Packages${NC}"
+                return 1
+            fi
+        else
+            echo -e "${YELLOW}Warning: GitHub CLI (gh) not installed or not in PATH.${NC}"
+            echo -e "${YELLOW}Cannot publish to GitHub Packages automatically.${NC}"
+            echo -e "${YELLOW}Please manually publish with: mvn deploy -DskipTests${NC}"
+        fi
+    fi
+}
+
+# Command: current - Show current version information
+function cmd_current {
+    local current_version=$(get_current_version)
+    read -r major minor patch < <(parse_version "$current_version")
+    
+    echo -e "${BLUE}Current version information:${NC}"
+    echo -e "  Version: ${GREEN}${current_version}${NC}"
+    echo -e "  Major: ${major}, Minor: ${minor}, Patch: ${patch}"
+    
+    # Check for existing git tags
+    local git_tags=$(git tag -l "v${current_version}")
+    if [[ -n "$git_tags" ]]; then
+        echo -e "  Git tag: ${GREEN}v${current_version}${NC} exists"
+    else
+        echo -e "  Git tag: ${YELLOW}v${current_version}${NC} does not exist"
+    fi
+    
+    # Check for GitHub releases if gh CLI is installed
+    if command -v gh &> /dev/null; then
+        if gh release view "v${current_version}" &> /dev/null; then
+            echo -e "  GitHub release: ${GREEN}v${current_version}${NC} exists"
+        else
+            echo -e "  GitHub release: ${YELLOW}v${current_version}${NC} does not exist"
+        fi
+    else
+        echo -e "  GitHub release: ${YELLOW}Cannot check (gh CLI not installed)${NC}"
+    fi
+}
+
+# Command: major - Bump major version
+function cmd_major {
+    local current_version=$(get_current_version)
+    read -r major minor patch < <(parse_version "$current_version")
+    
+    local new_major=$((major + 1))
+    local new_version="${new_major}.0.0"
+    
+    echo -e "${BLUE}Bumping major version:${NC} ${current_version} → ${GREEN}${new_version}${NC}"
+    
+    update_pom_versions "$new_version" "$DRY_RUN"
+    
+    if [[ "$DRY_RUN" != "true" ]]; then
+        # Commit the version change
+        git add "$(find "$RINNA_DIR" -name "pom.xml")"
+        git commit -m "Bump version to ${new_version}"
+        echo -e "${GREEN}Committed version change${NC}"
+        
+        # Create tag and release if requested
+        create_git_tag "$new_version" "$MESSAGE" "$DRY_RUN"
+    fi
+}
+
+# Command: minor - Bump minor version
+function cmd_minor {
+    local current_version=$(get_current_version)
+    read -r major minor patch < <(parse_version "$current_version")
+    
+    local new_minor=$((minor + 1))
+    local new_version="${major}.${new_minor}.0"
+    
+    echo -e "${BLUE}Bumping minor version:${NC} ${current_version} → ${GREEN}${new_version}${NC}"
+    
+    update_pom_versions "$new_version" "$DRY_RUN"
+    
+    if [[ "$DRY_RUN" != "true" ]]; then
+        # Commit the version change
+        git add "$(find "$RINNA_DIR" -name "pom.xml")"
+        git commit -m "Bump version to ${new_version}"
+        echo -e "${GREEN}Committed version change${NC}"
+        
+        # Create tag and release if requested
+        create_git_tag "$new_version" "$MESSAGE" "$DRY_RUN"
+    fi
+}
+
+# Command: patch - Bump patch version
+function cmd_patch {
+    local current_version=$(get_current_version)
+    read -r major minor patch < <(parse_version "$current_version")
+    
+    local new_patch=$((patch + 1))
+    local new_version="${major}.${minor}.${new_patch}"
+    
+    echo -e "${BLUE}Bumping patch version:${NC} ${current_version} → ${GREEN}${new_version}${NC}"
+    
+    update_pom_versions "$new_version" "$DRY_RUN"
+    
+    if [[ "$DRY_RUN" != "true" ]]; then
+        # Commit the version change
+        git add "$(find "$RINNA_DIR" -name "pom.xml")"
+        git commit -m "Bump version to ${new_version}"
+        echo -e "${GREEN}Committed version change${NC}"
+        
+        # Create tag and release if requested
+        create_git_tag "$new_version" "$MESSAGE" "$DRY_RUN"
+    fi
+}
+
+# Command: set - Set specific version
+function cmd_set {
+    if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo -e "${RED}Error: Invalid version format. Must be in format: X.Y.Z${NC}"
+        exit 1
+    fi
+    
+    local current_version=$(get_current_version)
+    echo -e "${BLUE}Setting version:${NC} ${current_version} → ${GREEN}${VERSION}${NC}"
+    
+    update_pom_versions "$VERSION" "$DRY_RUN"
+    
+    if [[ "$DRY_RUN" != "true" ]]; then
+        # Commit the version change
+        git add "$(find "$RINNA_DIR" -name "pom.xml")"
+        git commit -m "Set version to ${VERSION}"
+        echo -e "${GREEN}Committed version change${NC}"
+        
+        # Create tag and release if requested
+        create_git_tag "$VERSION" "$MESSAGE" "$DRY_RUN"
+    fi
+}
+
+# Command: release - Create a release
+function cmd_release {
+    local current_version=$(get_current_version)
+    
+    if [[ -z "$MESSAGE" ]]; then
+        MESSAGE="Release version ${current_version}"
+    fi
+    
+    echo -e "${BLUE}Creating release for version:${NC} ${GREEN}${current_version}${NC}"
+    
+    # Create git tag if it doesn't exist
+    if ! git tag -l "v${current_version}" | grep -q "v${current_version}"; then
+        create_git_tag "$current_version" "$MESSAGE" "$DRY_RUN"
+    else
+        echo -e "${YELLOW}Git tag v${current_version} already exists${NC}"
+    fi
+    
+    # Create GitHub release
+    create_github_release "$current_version" "$MESSAGE" "$DRY_RUN"
+    
+    # Publish to GitHub Packages
+    publish_to_github_packages "$current_version" "$DRY_RUN"
+}
+
+# Command: tag - Create a git tag
+function cmd_tag {
+    local current_version=$(get_current_version)
+    
+    if [[ -z "$MESSAGE" ]]; then
+        MESSAGE="Version ${current_version}"
+    fi
+    
+    echo -e "${BLUE}Creating git tag for version:${NC} ${GREEN}${current_version}${NC}"
+    
+    # Create git tag
+    create_git_tag "$current_version" "$MESSAGE" "$DRY_RUN"
+}
+
+# Handle the command
+case "$COMMAND" in
+    current)
+        cmd_current
+        ;;
+    major)
+        cmd_major
+        ;;
+    minor)
+        cmd_minor
+        ;;
+    patch)
+        cmd_patch
+        ;;
+    set)
+        cmd_set
+        ;;
+    release)
+        cmd_release
+        ;;
+    tag)
+        cmd_tag
+        ;;
+esac

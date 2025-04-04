@@ -8,6 +8,19 @@
 | `clean` | Clean artifacts | `rin clean` |
 | `test` | Run tests | `rin test` |
 | `all` | Clean, build, test | `rin all` |
+| `version` | Version management | See below |
+
+## Version Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `current` | Show version info | `rin version current` |
+| `major` | Bump major version | `rin version major` |
+| `minor` | Bump minor version | `rin version minor` |
+| `patch` | Bump patch version | `rin version patch` |
+| `set <ver>` | Set specific version | `rin version set 1.2.3` |
+| `tag` | Create git tag | `rin version tag` |
+| `release` | Create GitHub release | `rin version release` |
 
 ## Output Modes
 
