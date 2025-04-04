@@ -10,6 +10,7 @@ package org.rinna;
 
 import org.rinna.config.RinnaConfig;
 import org.rinna.domain.usecase.ItemService;
+import org.rinna.domain.usecase.QueueService;
 import org.rinna.domain.usecase.ReleaseService;
 import org.rinna.domain.usecase.WorkflowService;
 
@@ -21,6 +22,7 @@ public class Rinna {
     private final ItemService itemService;
     private final WorkflowService workflowService;
     private final ReleaseService releaseService;
+    private final QueueService queueService;
     
     /**
      * Constructs a new Rinna instance with the specified services.
@@ -28,11 +30,14 @@ public class Rinna {
      * @param itemService the item service to use
      * @param workflowService the workflow service to use
      * @param releaseService the release service to use
+     * @param queueService the queue service to use
      */
-    public Rinna(ItemService itemService, WorkflowService workflowService, ReleaseService releaseService) {
+    public Rinna(ItemService itemService, WorkflowService workflowService, 
+                ReleaseService releaseService, QueueService queueService) {
         this.itemService = itemService;
         this.workflowService = workflowService;
         this.releaseService = releaseService;
+        this.queueService = queueService;
     }
     
     /**
@@ -60,7 +65,12 @@ public class Rinna {
      */
     public static Rinna initialize() {
         RinnaConfig config = new RinnaConfig();
-        return new Rinna(config.getItemService(), config.getWorkflowService(), config.getReleaseService());
+        return new Rinna(
+            config.getItemService(), 
+            config.getWorkflowService(), 
+            config.getReleaseService(),
+            config.getQueueService()
+        );
     }
     
     /**
@@ -70,5 +80,14 @@ public class Rinna {
      */
     public ReleaseService releases() {
         return releaseService;
+    }
+    
+    /**
+     * Returns the queue service.
+     *
+     * @return the queue service
+     */
+    public QueueService queue() {
+        return queueService;
     }
 }
