@@ -43,10 +43,16 @@ A "Lota" represents the specific cycle duration chosen by the software engineeri
 ## Technical Environment
 
 - **OS:** Ubuntu 24 LTS
-- **Languages:** Java (Core Logic), Bash (CLI), optionally Go/Rust (Performance-critical components)
+- **Languages:** 
+  - Java 21 (Core Domain Logic)
+  - Go 1.21+ (API Server)
+  - Bash (CLI and Utilities)
 - **Database:** SQLite (Local), PostgreSQL (Azure deployment)
+- **API:** RESTful JSON API
+- **Authentication:** JWT-based authentication
 - **Containerization:** Docker (Local and Azure)
 - **Infrastructure Automation:** Terraform, Azure CLI
+- **Build System:** Make, Maven, Go Build
 
 ## Database Schema (high-level)
 
@@ -57,12 +63,19 @@ A "Lota" represents the specific cycle duration chosen by the software engineeri
 ## Interfaces
 
 ### Input
+- RESTful API (Go server)
 - CLI commands (Bash, Java)
 - SQLite/PostgreSQL database operations
 
 ### Output
+- JSON API responses
 - Explicit CLI feedback messages
 - Database queries providing current workflow and release status
+
+### Integration
+- API-first design enabling third-party integrations
+- Well-defined JSON contract between API server and clients
+- HTTP client libraries for common languages
 
 ## Automation & Feedback
 - Automated validation with explicit feedback on workflow actions
