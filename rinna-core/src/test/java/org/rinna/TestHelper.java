@@ -96,7 +96,7 @@ public class TestHelper implements BeforeEachCallback, AfterEachCallback {
      * @return the created release
      */
     public Release createTestRelease(String version) {
-        Release release = getRinna().releases().createRelease(version);
+        Release release = getRinna().releases().createRelease(version, "Test release " + version);
         createdReleaseIds.add(release.getId());
         return release;
     }
