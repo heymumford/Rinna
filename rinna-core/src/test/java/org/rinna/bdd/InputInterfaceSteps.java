@@ -45,38 +45,23 @@ public class InputInterfaceSteps {
     
     @When("a critical production incident {string} is submitted")
     public void aCriticalProductionIncidentIsSubmitted(String title) {
-        WorkItemCreateRequest request = new WorkItemCreateRequest.Builder()
-                .title(title)
-                .type(WorkItemType.BUG)
-                .priority(Priority.HIGH)
-                .build();
-        
-        WorkItem workItem = context.getRinna().items().create(request);
+        // Use the queue service to submit a production incident
+        WorkItem workItem = context.getRinna().queue().submitProductionIncident(title, null);
         context.saveWorkItem("current", workItem);
     }
     
     @When("a feature request {string} is submitted with description {string}")
     public void aFeatureRequestIsSubmittedWithDescription(String title, String description) {
-        WorkItemCreateRequest request = new WorkItemCreateRequest.Builder()
-                .title(title)
-                .description(description)
-                .type(WorkItemType.FEATURE)
-                .priority(Priority.MEDIUM)
-                .build();
-        
-        WorkItem workItem = context.getRinna().items().create(request);
+        // Use the queue service to submit a feature request
+        WorkItem workItem = context.getRinna().queue().submitFeatureRequest(title, description, Priority.MEDIUM);
         context.saveWorkItem("current", workItem);
     }
     
     @When("a technical task {string} is submitted with priority {string}")
     public void aTechnicalTaskIsSubmittedWithPriority(String title, String priority) {
-        WorkItemCreateRequest request = new WorkItemCreateRequest.Builder()
-                .title(title)
-                .type(WorkItemType.CHORE)
-                .priority(Priority.valueOf(priority.toUpperCase()))
-                .build();
-        
-        WorkItem workItem = context.getRinna().items().create(request);
+        // Use the queue service to submit a technical task
+        WorkItem workItem = context.getRinna().queue().submitTechnicalTask(
+                title, null, Priority.valueOf(priority.toUpperCase()));
         context.saveWorkItem("current", workItem);
     }
     
@@ -104,14 +89,10 @@ public class InputInterfaceSteps {
         WorkItem parent = context.getWorkItem(parentTitle);
         assertNotNull(parent);
         
-        WorkItemCreateRequest request = new WorkItemCreateRequest.Builder()
-                .title(childTitle)
-                .type(WorkItemType.FEATURE)
-                .parentId(parent.getId())
-                .build();
-        
         try {
-            WorkItem child = context.getRinna().items().create(request);
+            // Use the queue service to create a child work item
+            WorkItem child = context.getRinna().queue().submitChildWorkItem(
+                    childTitle, WorkItemType.FEATURE, parent.getId(), null, null);
             context.saveWorkItem(childTitle, child);
         } catch (Exception e) {
             lastException = e;
@@ -123,14 +104,10 @@ public class InputInterfaceSteps {
         WorkItem parent = context.getWorkItem(parentTitle);
         assertNotNull(parent);
         
-        WorkItemCreateRequest request = new WorkItemCreateRequest.Builder()
-                .title(childTitle)
-                .type(WorkItemType.CHORE)
-                .parentId(parent.getId())
-                .build();
-        
         try {
-            WorkItem child = context.getRinna().items().create(request);
+            // Use the queue service to create a child work item
+            WorkItem child = context.getRinna().queue().submitChildWorkItem(
+                    childTitle, WorkItemType.CHORE, parent.getId(), null, null);
             context.saveWorkItem(childTitle, child);
         } catch (Exception e) {
             lastException = e;
@@ -314,16 +291,11 @@ public class InputInterfaceSteps {
     @When("a production incident is reported with {string} flag")
     public void aProductionIncidentIsReportedWithFlag(String flag) {
         // Create a high-priority production incident
-        WorkItemCreateRequest request = new WorkItemCreateRequest.Builder()
-                .title("URGENT: Production outage")
-                .type(WorkItemType.BUG)
-                .priority(Priority.HIGH)
-                .build();
+        WorkItem workItem = context.getRinna().queue().submitProductionIncident(
+                "URGENT: Production outage", "Critical production outage that needs immediate attention");
         
-        WorkItem workItem = context.getRinna().items().create(request);
-        
-        // Add metadata for the urgent flag
-        context.saveWorkItemMetadata(workItem.getId(), "flag", flag);
+        // Set the urgent flag using the queue service
+        context.getRinna().queue().setUrgent(workItem.getId(), true);
         
         // Add to the front of the queue
         workQueue.add(0, workItem);
@@ -338,9 +310,8 @@ public class InputInterfaceSteps {
         assertEquals(WorkItemType.BUG, topItem.getType());
         assertEquals(Priority.HIGH, topItem.getPriority());
         
-        Optional<String> flag = context.getWorkItemMetadata(topItem.getId(), "flag");
-        assertTrue(flag.isPresent());
-        assertEquals("URGENT", flag.get());
+        // Check if the item is marked as urgent using the queue service
+        assertTrue(context.getRinna().queue().isUrgent(topItem.getId()));
     }
     
     @Then("the team should be notified about the urgent item")
