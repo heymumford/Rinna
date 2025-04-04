@@ -63,6 +63,7 @@ engineering_spec_v0.3.md
 **/DemoApp.java
 **/Test.java
 /tmp/
+CLAUDE.md
 
 # Build and test artifacts except fix-headers.sh
 /bin/run-build.sh

@@ -17,6 +17,14 @@ For our overall implementation approach and design decisions, see:
 - [Architecture](architecture.md) - Detailed system architecture
 - [Package Refactoring](package-refactoring.md) - Guide for the com.rinna to org.rinna package migration
 
+## Java 21 Adoption
+
+Rinna leverages modern Java 21 features to enhance our codebase. See these resources:
+
+- [Java 21 Features](java21-features.md) - Overview of Java 21 features we're using
+- [Java 21 Code Examples](java21-examples.md) - Concrete code examples using Java 21
+- [Java 21 Implementation Plan](java21-implementation-plan.md) - Our phased approach to Java 21 adoption
+
 ## Development Setup
 
 ```bash
@@ -41,6 +49,12 @@ chmod +x bin/rin bin/rin-version
 - **Types**: Prefer immutable objects, use interfaces for declarations
 - **Documentation**: JavaDoc for all public methods and classes
 - **Testing**: BDD tests for high-level features, JUnit for unit tests
+- **Java 21 Features**:
+  - Use records for DTOs and value objects
+  - Prefer pattern matching for type-based conditionals
+  - Use sealed classes for closed hierarchies
+  - Apply string templates for complex string formatting
+  - Utilize virtual threads for I/O-bound operations
 
 ## Development Workflow
 
