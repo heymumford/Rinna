@@ -57,6 +57,20 @@ bin/rin -v test
 bin/rin -e build
 ```
 
+### Common Build Operations
+
+Our project uses Maven with a wrapper (./mvnw) for build operations. The `bin/rin` tool provides a convenient interface to these commands:
+
+| Operation | Rin Command | Maven Command |
+|-----------|-------------|---------------|
+| Clean | `bin/rin clean` | `./mvnw clean` |
+| Compile | `bin/rin build` | `./mvnw compile` |
+| Test | `bin/rin test` | `./mvnw test` |
+| Package | `bin/rin build` | `./mvnw package` |
+| Run all checks | `bin/rin all` | `./mvnw verify` |
+| Generate docs | - | `./mvnw site` |
+| Static analysis | - | `./mvnw verify` |
+
 ## Adding Features
 
 1. Create domain models in `org.rinna.model`
