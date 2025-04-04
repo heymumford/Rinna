@@ -19,7 +19,7 @@
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
-            <version>1.2.0</version>
+            <version>3.40.1.0</version>
         </dependency>
     </dependencies>
 
@@ -75,8 +75,10 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                     <fork>true</fork>
+                    <release>${java.version}</release>
                     <compilerArgs>
                         <arg>-Xlint:all</arg>
+                        <arg>--enable-preview</arg>
                     </compilerArgs>
                     <showWarnings>true</showWarnings>
                     <showDeprecation>true</showDeprecation>
@@ -124,7 +126,7 @@
                         <cucumber.publish.quiet>true</cucumber.publish.quiet>
                         <cucumber.glue>org.rinna.bdd</cucumber.glue>
                     </systemPropertyVariables>
-                    <argLine>-XX:+EnableDynamicAgentLoading</argLine>
+                    <argLine>-XX:+EnableDynamicAgentLoading --enable-preview</argLine>
                     <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
                 </configuration>
             </plugin>

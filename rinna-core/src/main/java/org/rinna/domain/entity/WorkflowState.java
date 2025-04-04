@@ -8,40 +8,41 @@
 
 package org.rinna.domain.entity;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Enumeration of possible workflow states in the Rinna system.
  * These states represent the progression of a work item through its lifecycle.
  */
 public enum WorkflowState {
-    /**
-     * Initial state for newly created work items.
-     */
+    /** Initial state for newly created work items. */
     FOUND,
     
-    /**
-     * Work item has been reviewed and prioritized.
-     */
+    /** Work item has been reviewed and prioritized. */
     TRIAGED,
     
-    /**
-     * Work item is ready to be worked on.
-     */
+    /** Work item is ready to be worked on. */
     TO_DO,
     
-    /**
-     * Work item is actively being worked on.
-     */
+    /** Work item is actively being worked on. */
     IN_PROGRESS,
     
-    /**
-     * Work item implementation is complete and being tested.
-     */
+    /** Work item implementation is complete and being tested. */
     IN_TEST,
     
-    /**
-     * Work item is complete and verified.
-     */
+    /** Work item is complete and verified. */
     DONE;
+    
+    // Static mapping of allowed transitions
+    private static final Map<WorkflowState, List<WorkflowState>> VALID_TRANSITIONS = Map.of(
+        FOUND, List.of(TRIAGED),
+        TRIAGED, List.of(TO_DO, DONE),
+        TO_DO, List.of(IN_PROGRESS, DONE),
+        IN_PROGRESS, List.of(IN_TEST, TO_DO),
+        IN_TEST, List.of(DONE, IN_PROGRESS),
+        DONE, List.of()
+    );
     
     /**
      * Returns whether this state can transition to the given target state.
@@ -50,21 +51,15 @@ public enum WorkflowState {
      * @return true if this state can transition to the target state
      */
     public boolean canTransitionTo(WorkflowState targetState) {
-        switch (this) {
-            case FOUND:
-                return targetState == TRIAGED;
-            case TRIAGED:
-                return targetState == TO_DO || targetState == DONE;
-            case TO_DO:
-                return targetState == IN_PROGRESS || targetState == DONE;
-            case IN_PROGRESS:
-                return targetState == IN_TEST || targetState == TO_DO;
-            case IN_TEST:
-                return targetState == DONE || targetState == IN_PROGRESS;
-            case DONE:
-                return false;
-            default:
-                return false;
-        }
+        return VALID_TRANSITIONS.getOrDefault(this, List.of()).contains(targetState);
+    }
+    
+    /**
+     * Returns the list of states that this state can transition to.
+     * 
+     * @return list of valid target states
+     */
+    public List<WorkflowState> getAvailableTransitions() {
+        return VALID_TRANSITIONS.getOrDefault(this, List.of());
     }
 }

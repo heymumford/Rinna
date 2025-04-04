@@ -33,41 +33,27 @@ public class DefaultWorkItem implements WorkItem {
     
     /**
      * Constructs a new DefaultWorkItem from a create request.
-     * 
-     * @param id the unique identifier
-     * @param request the create request
      */
     public DefaultWorkItem(UUID id, WorkItemCreateRequest request) {
         this(
             id,
-            request.getTitle(),
-            request.getDescription(),
-            request.getType(),
+            request.title(),
+            request.description(),
+            request.type(),
             WorkflowState.FOUND, // Initial state
-            request.getPriority(),
-            request.getAssignee(),
+            request.priority(),
+            request.assignee(),
             Instant.now(),
             Instant.now(),
             request.getParentId().orElse(null),
             request.getProjectId().orElse(null),
-            request.getVisibility(),
-            request.isLocalOnly()
+            request.visibility(),
+            request.localOnly()
         );
     }
     
     /**
      * Constructs a new DefaultWorkItem with the given parameters.
-     * 
-     * @param id the unique identifier
-     * @param title the title
-     * @param description the description
-     * @param type the type
-     * @param status the workflow state
-     * @param priority the priority
-     * @param assignee the assignee
-     * @param createdAt the creation timestamp
-     * @param updatedAt the last update timestamp
-     * @param parentId the parent ID
      */
     public DefaultWorkItem(
             UUID id,
@@ -97,37 +83,45 @@ public class DefaultWorkItem implements WorkItem {
         this.visibility = visibility != null ? visibility : "PUBLIC";
         this.localOnly = localOnly;
     }
-    
-    @Override
-    public UUID getId() {
-        return id;
+
+    // Create a copy with modified fields
+    public DefaultWorkItem with(
+            WorkflowState status,
+            Priority priority,
+            String assignee) {
+        return new DefaultWorkItem(
+            this.id,
+            this.title,
+            this.description,
+            this.type,
+            status != null ? status : this.status,
+            priority != null ? priority : this.priority,
+            assignee, // Can be null to remove assignee
+            this.createdAt,
+            Instant.now(),
+            this.parentId,
+            this.projectId,
+            this.visibility,
+            this.localOnly
+        );
     }
     
-    @Override
-    public String getTitle() {
-        return title;
-    }
-    
-    @Override
-    public String getDescription() {
-        return description;
-    }
-    
-    @Override
-    public WorkItemType getType() {
-        return type;
-    }
-    
-    @Override
-    public WorkflowState getStatus() {
-        return status;
-    }
+    @Override public UUID getId() { return id; }
+    @Override public String getTitle() { return title; }
+    @Override public String getDescription() { return description; }
+    @Override public WorkItemType getType() { return type; }
+    @Override public WorkflowState getStatus() { return status; }
+    @Override public Priority getPriority() { return priority; }
+    @Override public String getAssignee() { return assignee; }
+    @Override public Instant getCreatedAt() { return createdAt; }
+    @Override public Instant getUpdatedAt() { return updatedAt; }
+    @Override public Optional<UUID> getParentId() { return Optional.ofNullable(parentId); }
+    @Override public Optional<UUID> getProjectId() { return Optional.ofNullable(projectId); }
+    @Override public String getVisibility() { return visibility; }
+    @Override public boolean isLocalOnly() { return localOnly; }
     
     /**
      * Updates the workflow state and updates the last update timestamp.
-     * 
-     * @param status the new workflow state
-     * @return this work item
      */
     public DefaultWorkItem setStatus(WorkflowState status) {
         this.status = Objects.requireNonNull(status, "Status cannot be null");
@@ -135,16 +129,8 @@ public class DefaultWorkItem implements WorkItem {
         return this;
     }
     
-    @Override
-    public Priority getPriority() {
-        return priority;
-    }
-    
     /**
      * Updates the priority and updates the last update timestamp.
-     * 
-     * @param priority the new priority
-     * @return this work item
      */
     public DefaultWorkItem setPriority(Priority priority) {
         this.priority = Objects.requireNonNull(priority, "Priority cannot be null");
@@ -152,16 +138,8 @@ public class DefaultWorkItem implements WorkItem {
         return this;
     }
     
-    @Override
-    public String getAssignee() {
-        return assignee;
-    }
-    
     /**
      * Updates the assignee and updates the last update timestamp.
-     * 
-     * @param assignee the new assignee
-     * @return this work item
      */
     public DefaultWorkItem setAssignee(String assignee) {
         this.assignee = assignee;
@@ -170,40 +148,9 @@ public class DefaultWorkItem implements WorkItem {
     }
     
     @Override
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-    
-    @Override
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-    
-    @Override
-    public Optional<UUID> getParentId() {
-        return Optional.ofNullable(parentId);
-    }
-    
-    @Override
-    public Optional<UUID> getProjectId() {
-        return Optional.ofNullable(projectId);
-    }
-    
-    @Override
-    public String getVisibility() {
-        return visibility;
-    }
-    
-    @Override
-    public boolean isLocalOnly() {
-        return localOnly;
-    }
-    
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        DefaultWorkItem that = (DefaultWorkItem) o;
+        if (!(o instanceof DefaultWorkItem that)) return false;
         return Objects.equals(id, that.id);
     }
     
@@ -214,12 +161,6 @@ public class DefaultWorkItem implements WorkItem {
     
     @Override
     public String toString() {
-        return "DefaultWorkItem{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", type=" + type +
-                ", status=" + status +
-                ", priority=" + priority +
-                '}';
+        return STR."DefaultWorkItem{id=\{id}, title='\{title}', type=\{type}, status=\{status}, priority=\{priority}}";
     }
 }

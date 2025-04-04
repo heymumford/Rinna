@@ -24,45 +24,32 @@ public class InvalidTransitionException extends Exception {
     
     /**
      * Constructs a new InvalidTransitionException with the specified item ID and states.
-     * 
-     * @param itemId the ID of the work item
-     * @param currentState the current workflow state
-     * @param targetState the target workflow state
      */
     public InvalidTransitionException(UUID itemId, WorkflowState currentState, WorkflowState targetState) {
-        super(String.format(
-                "Invalid transition for item %s: %s → %s", 
-                itemId, 
-                currentState, 
-                targetState));
+        super(STR."Invalid transition for item \{itemId}: \{currentState} → \{targetState}");
         this.itemId = itemId;
         this.currentState = currentState;
         this.targetState = targetState;
     }
     
     /**
-     * Returns the ID of the work item.
-     * 
-     * @return the item ID
+     * Constructs a new InvalidTransitionException with a custom message.
      */
+    public InvalidTransitionException(String message) {
+        super(message);
+        this.itemId = null;
+        this.currentState = null;
+        this.targetState = null;
+    }
+    
     public UUID getItemId() {
         return itemId;
     }
     
-    /**
-     * Returns the current workflow state.
-     * 
-     * @return the current state
-     */
     public WorkflowState getCurrentState() {
         return currentState;
     }
     
-    /**
-     * Returns the target workflow state.
-     * 
-     * @return the target state
-     */
     public WorkflowState getTargetState() {
         return targetState;
     }

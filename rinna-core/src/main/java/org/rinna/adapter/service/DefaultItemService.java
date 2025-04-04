@@ -27,8 +27,6 @@ public class DefaultItemService implements ItemService {
     
     /**
      * Constructs a new DefaultItemService with the given repository.
-     * 
-     * @param itemRepository the item repository
      */
     public DefaultItemService(ItemRepository itemRepository) {
         this.itemRepository = Objects.requireNonNull(itemRepository, "Item repository cannot be null");
@@ -42,8 +40,7 @@ public class DefaultItemService implements ItemService {
     
     @Override
     public Optional<WorkItem> findById(UUID id) {
-        Objects.requireNonNull(id, "ID cannot be null");
-        return itemRepository.findById(id);
+        return itemRepository.findById(Objects.requireNonNull(id, "ID cannot be null"));
     }
     
     @Override
@@ -53,14 +50,12 @@ public class DefaultItemService implements ItemService {
     
     @Override
     public List<WorkItem> findByType(String type) {
-        Objects.requireNonNull(type, "Type cannot be null");
-        return itemRepository.findByType(type);
+        return itemRepository.findByType(Objects.requireNonNull(type, "Type cannot be null"));
     }
     
     @Override
     public List<WorkItem> findByStatus(String status) {
-        Objects.requireNonNull(status, "Status cannot be null");
-        return itemRepository.findByStatus(status);
+        return itemRepository.findByStatus(Objects.requireNonNull(status, "Status cannot be null"));
     }
     
     @Override
@@ -70,23 +65,19 @@ public class DefaultItemService implements ItemService {
     
     @Override
     public WorkItem updateAssignee(UUID id, String assignee) {
-        Objects.requireNonNull(id, "ID cannot be null");
+        WorkItem item = findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(STR."Work item not found: \{id}"));
         
-        WorkItem item = itemRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Work item not found: " + id));
-        
-        if (item instanceof DefaultWorkItem) {
-            DefaultWorkItem defaultItem = (DefaultWorkItem) item;
-            defaultItem.setAssignee(assignee);
-            return itemRepository.save(defaultItem);
-        } else {
-            throw new UnsupportedOperationException("Cannot update non-default work item");
-        }
+        return switch (item) {
+            case DefaultWorkItem defaultItem -> 
+                itemRepository.save(defaultItem.setAssignee(assignee));
+            default -> 
+                throw new UnsupportedOperationException("Cannot update non-default work item");
+        };
     }
     
     @Override
     public void deleteById(UUID id) {
-        Objects.requireNonNull(id, "ID cannot be null");
-        itemRepository.deleteById(id);
+        itemRepository.deleteById(Objects.requireNonNull(id, "ID cannot be null"));
     }
 }
