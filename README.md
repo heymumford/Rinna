@@ -14,21 +14,23 @@ Rinna is a developer-centric workflow management system explicitly designed for 
 ### The Problem
 
 Traditional project/workflow management tools:
-- Are designed primarily for reporting to management
+- Are designed primarily for [reporting to management](docs/specifications/engineering_spec.md#negative-outcomes-prevented)
 - Force developers to context-switch away from their coding environment
-- Introduce excessive ceremony that interrupts flow state
+- Introduce excessive ceremony that interrupts [flow state](docs/technical-specification.md#core-philosophy)
 - Prioritize process over productivity
 - Constrain rather than enable developers
+
+We've [seen the problems](docs/user-guide/README.md) with existing tools and built Rinna specifically to avoid them.
 
 ### Rinna's Solution
 
 Rinna embodies a fundamentally different approach:
 
-- **Lives Where Developers Work**: Terminal-first interface that integrates with git workflows and IDEs
-- **Zero-Friction Philosophy**: Never adds more process than absolutely necessary
-- **Developer-Owned**: Complete workflow control by the people doing the work
-- **Clear Visibility**: Simple, unambiguous work item tracking without the noise
-- **Clean Architecture**: Designed for extensibility and adapting to your needs, not the other way around
+- **Lives Where Developers Work**: [Terminal-first interface](docs/user-guide/rin-cli.md) that integrates with [git workflows](docs/user-guide/workflow.md) and IDEs
+- **Zero-Friction Philosophy**: Never adds more process than [absolutely necessary](docs/technical-specification.md#core-philosophy)
+- **Developer-Owned**: Complete workflow control by the [people doing the work](docs/development/design-approach.md)
+- **Clear Visibility**: Simple, unambiguous [work item tracking](docs/user-guide/lota.md) without the noise
+- **Clean Architecture**: Designed with [hexagonal principles](docs/development/architecture.md) for extensibility
 
 [Learn more about our philosophy](docs/technical-specification.md)
 
@@ -40,17 +42,17 @@ Rinna uses a deliberate, opinionated workflow model built from hard-earned engin
 - **Workflow**: Found → Triaged → To Do → In Progress → In Test → Done
 - **Developer-Focused Attributes**: Effort estimates, assignees, blocking status
 
-**The workflow isn't configurable because it doesn't need to be.** Rather than adapting to inefficient processes, Rinna implements a battle-tested flow that works. You can map its outputs to other systems if needed, but we won't compromise on what works.
+**The workflow isn't configurable because it doesn't need to be.** Rather than adapting to inefficient processes, Rinna implements a [battle-tested flow](docs/user-guide/workflow.md) that works. You can map its outputs to other systems if needed, but [we won't compromise on what works](docs/specifications/engineering_spec.md#core-philosophy). 😉
 
 [Explore the workflow model](docs/user-guide/workflow.md)
 
 ## Core Features
 
-- **Terminal-First Interface**: Work directly from your development environment
-- **Git Integration**: Update work status through commit messages and branches
-- **Self-Contained**: Lightweight SQLite storage with no external dependencies
-- **Clean API**: Modular Java design with clear interfaces
-- **Language-Agnostic**: Core concepts apply regardless of programming language
+- **Terminal-First Interface**: Work directly from your [development environment](docs/user-guide/rin-cli.md)
+- **Git Integration**: Update work status through [commit messages](docs/user-guide/api-integration.md) and branches
+- **Self-Contained**: [Lightweight SQLite storage](docs/development/architecture.md#module-structure) with no external dependencies
+- **Clean API**: [Modular Java design](docs/development/architecture.md) with clear interfaces
+- **Language-Agnostic**: [Core concepts](docs/technical-specification.md) apply regardless of programming language
 
 ## Example Usage
 
