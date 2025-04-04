@@ -18,7 +18,7 @@ Java, project management, workflow automation
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Java Version](https://img.shields.io/badge/java-21-orange.svg)](https://openjdk.java.net/projects/jdk/21/)
 [![Go Version](https://img.shields.io/badge/go-1.21-blue.svg)](https://golang.org/doc/go1.21)
-[![Version](https://img.shields.io/badge/version-1.1.5-blue.svg)](https://github.com/heymumford/Rinna/releases)
+[![Version](https://img.shields.io/badge/version-1.1.6-blue.svg)](https://github.com/heymumford/Rinna/releases)
 [![GitHub Stars](https://img.shields.io/github/stars/heymumford/Rinna?style=social)](https://github.com/heymumford/Rinna/stargazers)
 [![Twitter Follow](https://img.shields.io/twitter/follow/heymumford?style=social)](https://twitter.com/heymumford)
 
@@ -91,12 +91,15 @@ Can you customize the workflow? No, you can't. [That's the point](docs/user-guid
 - **Terminal-First Interface**: Work directly from your [development environment](docs/user-guide/rin-CLI.md)
 - **Git Integration**: Update work status through [commit messages](docs/user-guide/API-integration.md) and branches
 - **Self-Contained**: [Lightweight SQLite storage](docs/development/architecture.md#module-structure) with no external dependencies
-- **High-Performance API**: Go-based API layer provides lightning-fast responses
+- **High-Performance API**: Go-based API layer provides lightning-fast responses for [external integrations](docs/user-guide/API-integration.md)
+- **GitHub Webhook Integration**: Automatically create work items from [pull requests and CI workflows](docs/user-guide/API-integration.md#webhook-integration)
 - **Robust Business Logic**: Java core with strong domain model ensures correctness
 - **Clean Architecture**: [Modular polyglot design](docs/development/architecture.md) with clear interfaces
 - **Language-Agnostic**: [Core concepts](docs/technical-specification.md) apply regardless of programming language
 
 ## Example Usage
+
+### CLI Interface
 
 ```bash
 # Create a work item
@@ -112,7 +115,34 @@ bin/rin-cli list --status=IN_DEV
 bin/rin-cli update WI-123 --status=DONE --assignee=developer1
 ```
 
-[See full CLI (Command-Line Interface) reference](docs/user-guide/rin-CLI.md)
+[See full CLI reference](docs/user-guide/rin-CLI.md)
+
+### API Integration
+
+```bash
+# Create a work item via API
+curl -X POST "http://localhost:8080/api/v1/workitems" \
+  -H "Authorization: Bearer ri-dev-token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Implement payment gateway",
+    "type": "FEATURE",
+    "priority": "HIGH",
+    "projectId": "webshop"
+  }'
+
+# Configure GitHub webhook integration
+curl -X POST "http://localhost:8080/api/v1/webhooks/config" \
+  -H "Authorization: Bearer ri-dev-token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "projectKey": "webshop",
+    "source": "github",
+    "secret": "your-webhook-secret"
+  }'
+```
+
+[See full API documentation](docs/user-guide/API-integration.md)
 
 ## Documentation
 
@@ -172,9 +202,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | Terminal-based | Yes | No | No | No |
 | Enterprise mapping | Yes | N/A | Limited | Limited |
 | Ceremony level | Minimal | Extensive | Moderate | Moderate |
+| GitHub webhook integration | Yes, native | Plugin | Yes, native | Limited |
+| REST API | Yes, Go-powered | Yes | Yes | Yes |
+| API client libraries | Java & Go | Java & REST | REST only | JavaScript |
 | Target user | Developers | Managers | Developers & Managers | Product teams |
 | Learning curve | Low | High | Medium | Medium |
 | Java support | Native (Java 21) | Web interface | No | No |
+| Polyglot architecture | Yes (Java + Go) | No | No | No |
 
 ## Frequently Asked Questions
 
