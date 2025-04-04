@@ -6,12 +6,12 @@
  * the LICENSE file, which is part of this source code package.
  */
 
-package com.rinna.service.impl;
+package org.rinna.service.impl;
 
-import com.rinna.model.DefaultWorkItem;
-import com.rinna.model.WorkItem;
-import com.rinna.model.WorkItemCreateRequest;
-import com.rinna.service.ItemService;
+import org.rinna.model.DefaultWorkItem;
+import org.rinna.model.WorkItem;
+import org.rinna.model.WorkItemCreateRequest;
+import org.rinna.service.ItemService;
 
 import java.util.ArrayList;
 import java.util.List;

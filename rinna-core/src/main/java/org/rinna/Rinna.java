@@ -6,12 +6,12 @@
  * the LICENSE file, which is part of this source code package.
  */
 
-package com.rinna;
+package org.rinna;
 
-import com.rinna.service.ItemService;
-import com.rinna.service.WorkflowService;
-import com.rinna.service.impl.DefaultWorkflowService;
-import com.rinna.service.impl.InMemoryItemService;
+import org.rinna.service.ItemService;
+import org.rinna.service.WorkflowService;
+import org.rinna.service.impl.DefaultWorkflowService;
+import org.rinna.service.impl.InMemoryItemService;
 
 /**
  * Main entry point for the Rinna system.

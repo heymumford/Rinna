@@ -6,7 +6,7 @@
  * the LICENSE file, which is part of this source code package.
  */
 
-package com.rinna.model;
+package org.rinna.model;
 
 import java.time.Instant;
 import java.util.List;

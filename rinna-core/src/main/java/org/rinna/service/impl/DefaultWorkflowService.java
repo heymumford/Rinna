@@ -6,14 +6,14 @@
  * the LICENSE file, which is part of this source code package.
  */
 
-package com.rinna.service.impl;
+package org.rinna.service.impl;
 
-import com.rinna.model.DefaultWorkItem;
-import com.rinna.model.WorkItem;
-import com.rinna.model.WorkflowState;
-import com.rinna.service.InvalidTransitionException;
-import com.rinna.service.ItemService;
-import com.rinna.service.WorkflowService;
+import org.rinna.model.DefaultWorkItem;
+import org.rinna.model.WorkItem;
+import org.rinna.model.WorkflowState;
+import org.rinna.service.InvalidTransitionException;
+import org.rinna.service.ItemService;
+import org.rinna.service.WorkflowService;
 
 import java.util.Arrays;
 import java.util.Collections;

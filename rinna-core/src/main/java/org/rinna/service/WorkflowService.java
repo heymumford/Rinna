@@ -6,10 +6,10 @@
  * the LICENSE file, which is part of this source code package.
  */
 
-package com.rinna.service;
+package org.rinna.service;
 
-import com.rinna.model.WorkItem;
-import com.rinna.model.WorkflowState;
+import org.rinna.model.WorkItem;
+import org.rinna.model.WorkflowState;
 
 import java.util.List;
 import java.util.UUID;
