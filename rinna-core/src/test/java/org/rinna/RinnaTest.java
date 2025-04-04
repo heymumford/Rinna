@@ -9,11 +9,14 @@
 package org.rinna;
 
 import org.junit.jupiter.api.Test;
+import org.rinna.domain.entity.Priority;
 import org.rinna.domain.entity.Release;
 import org.rinna.domain.entity.WorkItem;
 import org.rinna.domain.entity.WorkItemCreateRequest;
 import org.rinna.domain.entity.WorkItemType;
+import org.rinna.domain.entity.WorkQueue;
 import org.rinna.domain.usecase.ItemService;
+import org.rinna.domain.usecase.QueueService;
 import org.rinna.domain.usecase.ReleaseService;
 import org.rinna.domain.usecase.WorkflowService;
 
@@ -36,6 +39,7 @@ public class RinnaTest {
         assertNotNull(rinna.items());
         assertNotNull(rinna.workflow());
         assertNotNull(rinna.releases());
+        assertNotNull(rinna.queue());
     }
     
     @Test
@@ -44,14 +48,16 @@ public class RinnaTest {
         ItemService mockItemService = new MockItemService();
         WorkflowService mockWorkflowService = new MockWorkflowService();
         ReleaseService mockReleaseService = new MockReleaseService();
+        QueueService mockQueueService = new MockQueueService();
         
         // Create a Rinna instance with the mock services
-        Rinna rinna = new Rinna(mockItemService, mockWorkflowService, mockReleaseService);
+        Rinna rinna = new Rinna(mockItemService, mockWorkflowService, mockReleaseService, mockQueueService);
         
         // Verify that the services are the ones we provided
         assertSame(mockItemService, rinna.items());
         assertSame(mockWorkflowService, rinna.workflow());
         assertSame(mockReleaseService, rinna.releases());
+        assertSame(mockQueueService, rinna.queue());
     }
     
     /**
@@ -176,6 +182,147 @@ public class RinnaTest {
         
         @Override
         public java.util.List<Release> findAll() {
+            return java.util.List.of();
+        }
+    }
+    
+    /**
+     * Mock implementation of QueueService for testing.
+     */
+    private static class MockQueueService implements QueueService {
+        @Override
+        public WorkQueue createQueue(String name, String description) {
+            return null;
+        }
+        
+        @Override
+        public void addWorkItemToQueue(java.util.UUID queueId, java.util.UUID workItemId) {
+            // No-op
+        }
+        
+        @Override
+        public boolean removeWorkItemFromQueue(java.util.UUID queueId, java.util.UUID workItemId) {
+            return false;
+        }
+        
+        @Override
+        public java.util.Optional<WorkItem> getNextWorkItem(java.util.UUID queueId) {
+            return java.util.Optional.empty();
+        }
+        
+        @Override
+        public java.util.List<WorkItem> getQueueItems(java.util.UUID queueId) {
+            return java.util.List.of();
+        }
+        
+        @Override
+        public java.util.List<WorkItem> getQueueItemsByType(java.util.UUID queueId, WorkItemType type) {
+            return java.util.List.of();
+        }
+        
+        @Override
+        public java.util.List<WorkItem> getQueueItemsByState(java.util.UUID queueId, org.rinna.domain.entity.WorkflowState state) {
+            return java.util.List.of();
+        }
+        
+        @Override
+        public java.util.List<WorkItem> getQueueItemsByPriority(java.util.UUID queueId, Priority priority) {
+            return java.util.List.of();
+        }
+        
+        @Override
+        public java.util.List<WorkItem> getQueueItemsByAssignee(java.util.UUID queueId, String assignee) {
+            return java.util.List.of();
+        }
+        
+        @Override
+        public void reprioritizeQueue(java.util.UUID queueId) {
+            // No-op
+        }
+        
+        @Override
+        public void reprioritizeQueueWithWeights(java.util.UUID queueId, java.util.Map<String, Integer> weights) {
+            // No-op
+        }
+        
+        @Override
+        public void reprioritizeQueueByCapacity(java.util.UUID queueId, int teamCapacity) {
+            // No-op
+        }
+        
+        @Override
+        public void activateQueue(java.util.UUID queueId) {
+            // No-op
+        }
+        
+        @Override
+        public void deactivateQueue(java.util.UUID queueId) {
+            // No-op
+        }
+        
+        @Override
+        public java.util.Optional<WorkQueue> findById(java.util.UUID id) {
+            return java.util.Optional.empty();
+        }
+        
+        @Override
+        public java.util.Optional<WorkQueue> findByName(String name) {
+            return java.util.Optional.empty();
+        }
+        
+        @Override
+        public java.util.List<WorkQueue> findAllQueues() {
+            return java.util.List.of();
+        }
+        
+        @Override
+        public java.util.List<WorkQueue> findActiveQueues() {
+            return java.util.List.of();
+        }
+        
+        @Override
+        public WorkItem submitProductionIncident(String title, String description) {
+            return null;
+        }
+        
+        @Override
+        public WorkItem submitFeatureRequest(String title, String description, Priority priority) {
+            return null;
+        }
+        
+        @Override
+        public WorkItem submitTechnicalTask(String title, String description, Priority priority) {
+            return null;
+        }
+        
+        @Override
+        public WorkItem submitChildWorkItem(String title, WorkItemType type, java.util.UUID parentId, 
+                                           String description, Priority priority) {
+            return null;
+        }
+        
+        @Override
+        public WorkQueue createDefaultQueue() {
+            return null;
+        }
+        
+        @Override
+        public WorkQueue getDefaultQueue() {
+            return null;
+        }
+        
+        @Override
+        public boolean isUrgent(java.util.UUID workItemId) {
+            return false;
+        }
+        
+        @Override
+        public void setUrgent(java.util.UUID workItemId, boolean urgent) {
+            // No-op
+        }
+        
+        @Override
+        public java.util.List<WorkItem> findUrgentItems() {
             return java.util.List.of();
         }
     }
