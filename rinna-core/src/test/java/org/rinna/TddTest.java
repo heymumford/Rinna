@@ -103,6 +103,6 @@ public abstract class TddTest {
      * @param operation the operation to run
      */
     protected void assertFastOperation(Duration duration, Runnable operation) {
-        assertTimeout(duration, operation);
+        assertTimeout(duration, () -> operation.run());
     }
 }
