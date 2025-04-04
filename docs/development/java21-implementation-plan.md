@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford], Gemini Deep Research, Claude 3.7. -->
+
 # Java 21 Implementation Plan
 
 This document outlines our plan for systematically adopting Java 21 features in the Rinna codebase.

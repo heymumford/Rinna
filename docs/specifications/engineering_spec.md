@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford], Gemini Deep Research, Claude 3.7. -->
+
 # Rinna Engineering Specification v0.3
 
 ## Vision
@@ -130,5 +132,3 @@ Software implementation teams retain autonomy to select specific architectural d
 ---
 
 Rinna aims above all to deliver explicit and intuitive clarity for software teams.
-
-

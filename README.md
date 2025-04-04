@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford], Gemini Deep Research, Claude 3.7. -->
+
 # Rinna
 
 [![Build Status](https://img.shields.io/badge/build-failing-red.svg)](https://github.com/heymumford/Rinna/actions)

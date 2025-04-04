@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford], Gemini Deep Research, Claude 3.7. -->
+
 # Rinna Design Approach
 
 This document outlines our approach to designing and implementing Rinna based on the engineering specification v0.3.
