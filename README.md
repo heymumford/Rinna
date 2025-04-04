@@ -12,7 +12,7 @@ Java, project management, workflow automation
 
 <div align="center">
 
-*A streamlined task management CLI (Command-Line Interface) designed for developers who code, not for managers who report.*
+*A streamlined task management CLI (Command-Line Interface) designed for developers who code, not for ever-probing managers who report.*
 
 [![Build Status](https://img.shields.io/badge/build-failing-red.svg)](https://github.com/heymumford/Rinna/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
