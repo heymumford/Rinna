@@ -13,9 +13,7 @@ import org.rinna.domain.entity.Release;
 import org.rinna.domain.entity.WorkItem;
 import org.rinna.domain.entity.WorkItemCreateRequest;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Test context for sharing state between Cucumber step definitions.
@@ -27,6 +25,9 @@ public class TestContext {
     private final Map<String, UUID> workItemIds;
     private final Map<String, WorkItemCreateRequest> createRequests;
     private final Map<String, Release> releases;
+    private final Map<UUID, Map<String, String>> workItemMetadata;
+    private final Map<String, Object> configurationValues;
+    private final Set<String> configurationFlags;
     private Exception lastException;
     
     /**
@@ -38,6 +39,9 @@ public class TestContext {
         this.workItemIds = new HashMap<>();
         this.createRequests = new HashMap<>();
         this.releases = new HashMap<>();
+        this.workItemMetadata = new HashMap<>();
+        this.configurationValues = new HashMap<>();
+        this.configurationFlags = new HashSet<>();
     }
     
     /**
@@ -68,6 +72,15 @@ public class TestContext {
      */
     public WorkItem getWorkItem(String key) {
         return workItems.get(key);
+    }
+    
+    /**
+     * Returns all work item keys in the test context.
+     *
+     * @return the set of work item keys
+     */
+    public Set<String> getAllWorkItemKeys() {
+        return new HashSet<>(workItems.keySet());
     }
     
     /**
@@ -143,5 +156,78 @@ public class TestContext {
      */
     public void clearException() {
         this.lastException = null;
+    }
+    
+    /**
+     * Saves metadata for a work item.
+     * 
+     * @param workItemId the ID of the work item
+     * @param key the metadata key
+     * @param value the metadata value
+     */
+    public void saveWorkItemMetadata(UUID workItemId, String key, String value) {
+        Map<String, String> metadata = workItemMetadata.computeIfAbsent(workItemId, k -> new HashMap<>());
+        metadata.put(key, value);
+    }
+    
+    /**
+     * Retrieves metadata for a work item.
+     * 
+     * @param workItemId the ID of the work item
+     * @param key the metadata key
+     * @return the metadata value as an Optional
+     */
+    public Optional<String> getWorkItemMetadata(UUID workItemId, String key) {
+        Map<String, String> metadata = workItemMetadata.get(workItemId);
+        if (metadata == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(metadata.get(key));
+    }
+    
+    /**
+     * Sets a configuration flag.
+     * 
+     * @param flag the flag to set
+     * @param value true to enable, false to disable
+     */
+    public void setConfigurationFlag(String flag, boolean value) {
+        if (value) {
+            configurationFlags.add(flag);
+        } else {
+            configurationFlags.remove(flag);
+        }
+    }
+    
+    /**
+     * Checks if a configuration flag is set.
+     * 
+     * @param flag the flag to check
+     * @return true if the flag is set, false otherwise
+     */
+    public boolean getConfigurationFlag(String flag) {
+        return configurationFlags.contains(flag);
+    }
+    
+    /**
+     * Sets a configuration value.
+     * 
+     * @param key the configuration key
+     * @param value the configuration value
+     */
+    public void setConfigurationValue(String key, Object value) {
+        configurationValues.put(key, value);
+    }
+    
+    /**
+     * Retrieves a configuration value.
+     * 
+     * @param key the configuration key
+     * @param <T> the type of the value
+     * @return the configuration value as an Optional
+     */
+    @SuppressWarnings("unchecked")
+    public <T> Optional<T> getConfigurationValue(String key) {
+        return Optional.ofNullable((T) configurationValues.get(key));
     }
 }

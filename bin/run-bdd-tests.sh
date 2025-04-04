@@ -77,9 +77,13 @@ case $TEST_SCOPE in
     echo "Running release BDD tests..."
     ${MVN_CMD} ${MVN_OPTS} -Dtest=ReleaseRunner test
     ;;
+  input)
+    echo "Running input interface BDD tests..."
+    ${MVN_CMD} ${MVN_OPTS} -Dtest=InputInterfaceRunner test
+    ;;
   all)
     echo "Running all BDD tests..."
-    ${MVN_CMD} ${MVN_OPTS} -Dtest=CucumberRunner,ReleaseRunner test
+    ${MVN_CMD} ${MVN_OPTS} -Dtest=CucumberRunner,ReleaseRunner,InputInterfaceRunner test
     ;;
 esac
 
