@@ -8,13 +8,13 @@
 
 package org.rinna;
 
-import org.rinna.service.ItemService;
-import org.rinna.service.WorkflowService;
-import org.rinna.service.impl.DefaultWorkflowService;
-import org.rinna.service.impl.InMemoryItemService;
+import org.rinna.config.RinnaConfig;
+import org.rinna.domain.usecase.ItemService;
+import org.rinna.domain.usecase.WorkflowService;
 
 /**
  * Main entry point for the Rinna system.
+ * This class provides access to the core services of the system.
  */
 public class Rinna {
     private final ItemService itemService;
@@ -50,13 +50,12 @@ public class Rinna {
     }
     
     /**
-     * Initializes a new Rinna instance with default in-memory services.
+     * Initializes a new Rinna instance with default services.
      *
      * @return a new Rinna instance
      */
     public static Rinna initialize() {
-        InMemoryItemService itemService = new InMemoryItemService();
-        DefaultWorkflowService workflowService = new DefaultWorkflowService(itemService);
-        return new Rinna(itemService, workflowService);
+        RinnaConfig config = new RinnaConfig();
+        return new Rinna(config.getItemService(), config.getWorkflowService());
     }
 }
