@@ -61,6 +61,7 @@ The `run-tests.sh` script provides more fine-grained control over test execution
 - **add-readme-copyright-header.sh** - Adds copyright headers to README files
 - **add-source-copyright-headers.sh** - Adds copyright headers to Java source files
 - **custom-maven.sh** - Sets custom Maven options like --enable-preview
+- **rinnasrv** - Go API server executable
 
 ## Usage Notes
 
