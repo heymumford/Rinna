@@ -9,6 +9,7 @@
 package org.rinna;
 
 import org.rinna.config.RinnaConfig;
+import org.rinna.domain.repository.MetadataRepository;
 import org.rinna.domain.usecase.ItemService;
 import org.rinna.domain.usecase.QueueService;
 import org.rinna.domain.usecase.ReleaseService;
@@ -23,6 +24,7 @@ public class Rinna {
     private final WorkflowService workflowService;
     private final ReleaseService releaseService;
     private final QueueService queueService;
+    private final MetadataRepository metadataRepository;
     
     /**
      * Constructs a new Rinna instance with the specified services.
@@ -31,13 +33,16 @@ public class Rinna {
      * @param workflowService the workflow service to use
      * @param releaseService the release service to use
      * @param queueService the queue service to use
+     * @param metadataRepository the metadata repository to use
      */
     public Rinna(ItemService itemService, WorkflowService workflowService, 
-                ReleaseService releaseService, QueueService queueService) {
+                ReleaseService releaseService, QueueService queueService,
+                MetadataRepository metadataRepository) {
         this.itemService = itemService;
         this.workflowService = workflowService;
         this.releaseService = releaseService;
         this.queueService = queueService;
+        this.metadataRepository = metadataRepository;
     }
     
     /**
@@ -69,7 +74,8 @@ public class Rinna {
             config.getItemService(), 
             config.getWorkflowService(), 
             config.getReleaseService(),
-            config.getQueueService()
+            config.getQueueService(),
+            config.getMetadataRepository()
         );
     }
     
@@ -89,5 +95,14 @@ public class Rinna {
      */
     public QueueService queue() {
         return queueService;
+    }
+    
+    /**
+     * Returns the metadata repository.
+     *
+     * @return the metadata repository
+     */
+    public MetadataRepository getMetadataRepository() {
+        return metadataRepository;
     }
 }

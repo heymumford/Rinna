@@ -15,6 +15,7 @@ import org.rinna.domain.entity.WorkItem;
 import org.rinna.domain.entity.WorkItemCreateRequest;
 import org.rinna.domain.entity.WorkItemType;
 import org.rinna.domain.entity.WorkQueue;
+import org.rinna.domain.repository.MetadataRepository;
 import org.rinna.domain.usecase.ItemService;
 import org.rinna.domain.usecase.QueueService;
 import org.rinna.domain.usecase.ReleaseService;
@@ -40,6 +41,7 @@ public class RinnaTest {
         assertNotNull(rinna.workflow());
         assertNotNull(rinna.releases());
         assertNotNull(rinna.queue());
+        assertNotNull(rinna.getMetadataRepository());
     }
     
     @Test
@@ -49,15 +51,18 @@ public class RinnaTest {
         WorkflowService mockWorkflowService = new MockWorkflowService();
         ReleaseService mockReleaseService = new MockReleaseService();
         QueueService mockQueueService = new MockQueueService();
+        MetadataRepository mockMetadataRepository = new MockMetadataRepository();
         
         // Create a Rinna instance with the mock services
-        Rinna rinna = new Rinna(mockItemService, mockWorkflowService, mockReleaseService, mockQueueService);
+        Rinna rinna = new Rinna(mockItemService, mockWorkflowService, 
+                mockReleaseService, mockQueueService, mockMetadataRepository);
         
         // Verify that the services are the ones we provided
         assertSame(mockItemService, rinna.items());
         assertSame(mockWorkflowService, rinna.workflow());
         assertSame(mockReleaseService, rinna.releases());
         assertSame(mockQueueService, rinna.queue());
+        assertSame(mockMetadataRepository, rinna.getMetadataRepository());
     }
     
     /**
@@ -323,6 +328,57 @@ public class RinnaTest {
         
         @Override
         public java.util.List<WorkItem> findUrgentItems() {
+            return java.util.List.of();
+        }
+    }
+    
+    /**
+     * Mock implementation of MetadataRepository for testing.
+     */
+    private static class MockMetadataRepository implements MetadataRepository {
+        @Override
+        public org.rinna.domain.entity.WorkItemMetadata save(org.rinna.domain.entity.WorkItemMetadata metadata) {
+            return metadata;
+        }
+        
+        @Override
+        public java.util.Optional<org.rinna.domain.entity.WorkItemMetadata> findById(java.util.UUID id) {
+            return java.util.Optional.empty();
+        }
+        
+        @Override
+        public java.util.List<org.rinna.domain.entity.WorkItemMetadata> findByWorkItemId(java.util.UUID workItemId) {
+            return java.util.List.of();
+        }
+        
+        @Override
+        public java.util.Optional<org.rinna.domain.entity.WorkItemMetadata> findByWorkItemIdAndKey(
+                java.util.UUID workItemId, String key) {
+            return java.util.Optional.empty();
+        }
+        
+        @Override
+        public java.util.Map<String, String> getMetadataMap(java.util.UUID workItemId) {
+            return java.util.Map.of();
+        }
+        
+        @Override
+        public boolean deleteById(java.util.UUID id) {
+            return false;
+        }
+        
+        @Override
+        public int deleteByWorkItemId(java.util.UUID workItemId) {
+            return 0;
+        }
+        
+        @Override
+        public boolean deleteByWorkItemIdAndKey(java.util.UUID workItemId, String key) {
+            return false;
+        }
+        
+        @Override
+        public java.util.List<org.rinna.domain.entity.WorkItemMetadata> findAll() {
             return java.util.List.of();
         }
     }

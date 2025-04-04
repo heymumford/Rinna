@@ -9,6 +9,7 @@
 package org.rinna.domain.entity;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -86,4 +87,27 @@ public interface WorkItem {
      * @return an Optional containing the parent ID, or empty if no parent
      */
     Optional<UUID> getParentId();
+    
+    /**
+     * Returns the project ID of this work item.
+     * 
+     * @return an Optional containing the project ID, or empty if not associated with a project
+     */
+    Optional<UUID> getProjectId();
+    
+    /**
+     * Returns the visibility status of this work item.
+     * Visibility can be PUBLIC, TEAM, or PRIVATE.
+     * 
+     * @return the visibility status
+     */
+    String getVisibility();
+    
+    /**
+     * Returns whether this work item is local only.
+     * Local-only items are created by the local client and not yet synchronized.
+     * 
+     * @return true if the item is local only, false otherwise
+     */
+    boolean isLocalOnly();
 }

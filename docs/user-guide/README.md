@@ -8,8 +8,13 @@ Rinna focuses on providing a streamlined, developer-centric approach to workflow
 
 ## Tools
 
-- [CLI Tool (rin)](rin-cli.md) - Command-line utility for managing work and automating developer workflows
-- [Quick Reference](rin-quick-ref.md) - Concise reference for common developer CLI commands
+- [CLI Tool (rin)](rin-CLI.md) - Command-Line Interface utility for managing work and automating developer workflows
+- [Quick Reference](rin-quick-ref.md) - Concise reference for common developer CLI (Command-Line Interface) commands
+
+## Metrics and Business Value
+
+- [Workflow Philosophy](workflow-philosophy.md) - Our approach to streamlined workflow management
+- [IT Workflow Metrics](metrics/IT-workflow-metrics.md) - Framework for demonstrating IT's strategic value
 
 ## Work Item Management
 
@@ -86,7 +91,7 @@ rin lota show "Sprint 1"
 
 ## Building and Testing
 
-Use the Rinna CLI tool for simplified build and test operations:
+Use the Rinna CLI (Command-Line Interface) tool for simplified build and test operations:
 
 ```bash
 # Clean and build the project
@@ -99,4 +104,4 @@ rin -v test
 rin -e all
 ```
 
-For complete CLI documentation, see [rin-cli.md](rin-cli.md) or run `rin --help`.
+For complete CLI documentation, see [rin-CLI.md](rin-CLI.md) or run `rin --help`.

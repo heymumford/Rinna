@@ -17,6 +17,7 @@ Java, project management, workflow automation
 [![Build Status](https://img.shields.io/badge/build-failing-red.svg)](https://github.com/heymumford/Rinna/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Java Version](https://img.shields.io/badge/java-21-orange.svg)](https://openjdk.java.net/projects/jdk/21/)
+[![Go Version](https://img.shields.io/badge/go-1.21-blue.svg)](https://golang.org/doc/go1.21)
 [![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/heymumford/Rinna/releases)
 [![GitHub Stars](https://img.shields.io/github/stars/heymumford/Rinna?style=social)](https://github.com/heymumford/Rinna/stargazers)
 [![Twitter Follow](https://img.shields.io/twitter/follow/heymumford?style=social)](https://twitter.com/heymumford)
@@ -66,6 +67,7 @@ Rinna embodies a fundamentally different approach:
 - **Zero-Friction Philosophy**: Never adds more process than [absolutely necessary](docs/technical-specification.md#core-philosophy)
 - **Developer-Owned**: Complete workflow control by the [people doing the work](docs/development/design-approach.md)
 - **Clear Visibility**: Simple, unambiguous [work item tracking](docs/user-guide/lota.md) without the noise
+- **Polyglot Architecture**: Go API layer for speed with Java core for robust business logic
 - **Clean Architecture**: Designed with [hexagonal principles](docs/development/architecture.md) for extensibility
 
 [Learn more about our philosophy](docs/technical-specification.md)
@@ -89,20 +91,25 @@ Can you customize the workflow? No, you can't. [That's the point](docs/user-guid
 - **Terminal-First Interface**: Work directly from your [development environment](docs/user-guide/rin-CLI.md)
 - **Git Integration**: Update work status through [commit messages](docs/user-guide/API-integration.md) and branches
 - **Self-Contained**: [Lightweight SQLite storage](docs/development/architecture.md#module-structure) with no external dependencies
-- **Clean API**: [Modular Java design](docs/development/architecture.md) with clear interfaces
+- **High-Performance API**: Go-based API layer provides lightning-fast responses
+- **Robust Business Logic**: Java core with strong domain model ensures correctness
+- **Clean Architecture**: [Modular polyglot design](docs/development/architecture.md) with clear interfaces
 - **Language-Agnostic**: [Core concepts](docs/technical-specification.md) apply regardless of programming language
 
 ## Example Usage
 
 ```bash
 # Create a work item
-bin/rin item create "Fix authentication bypass" --type bug --priority high
+bin/rin-cli add "Fix authentication bypass" --type=BUG --priority=HIGH
 
-# Transition a work item
-bin/rin workflow move ITEM-123 in-progress
+# View a work item
+bin/rin-cli view WI-123
 
-# List items by state
-bin/rin items list --state in-progress --assignee @me
+# List work items
+bin/rin-cli list --status=IN_DEV
+
+# Update a work item
+bin/rin-cli update WI-123 --status=DONE --assignee=developer1
 ```
 
 [See full CLI (Command-Line Interface) reference](docs/user-guide/rin-CLI.md)
@@ -142,7 +149,9 @@ bin/rin build
 ## Requirements
 
 - Java 21+
-- Maven wrapper (included)
+- Go 1.21+ (for API server)
+- Maven 3.8+ (system installation)
+- `jq` for the CLI client
 
 ## Contributing
 

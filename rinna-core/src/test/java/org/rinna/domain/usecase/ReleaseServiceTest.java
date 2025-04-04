@@ -11,6 +11,11 @@ package org.rinna.domain.usecase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.rinna.adapter.persistence.InMemoryReleaseRepository;
 import org.rinna.adapter.service.DefaultReleaseService;
 import org.rinna.domain.entity.Release;
@@ -27,16 +32,20 @@ import static org.mockito.Mockito.*;
 /**
  * Tests for the ReleaseService interface.
  */
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ReleaseServiceTest {
     
     private ReleaseService releaseService;
+    
+    @Mock
     private ItemService itemService;
+    
     private ReleaseRepository releaseRepository;
     
     @BeforeEach
     void setUp() {
-        // Create mocks and real implementations
-        itemService = mock(ItemService.class);
+        // Create real implementations
         releaseRepository = new InMemoryReleaseRepository();
         releaseService = new DefaultReleaseService(releaseRepository, itemService);
     }

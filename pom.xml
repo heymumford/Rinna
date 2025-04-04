@@ -25,12 +25,13 @@
         <maven.test.skip>false</maven.test.skip>
         
         <!-- Dependency versions -->
-        <junit.jupiter.version>5.9.2</junit.jupiter.version>
-        <junit.platform.version>1.9.2</junit.platform.version>
-        <cucumber.version>7.11.2</cucumber.version>
+        <junit.jupiter.version>5.10.2</junit.jupiter.version>
+        <junit.platform.version>1.10.2</junit.platform.version>
+        <cucumber.version>7.16.1</cucumber.version>
         <sqlite.jdbc.version>3.42.0.0</sqlite.jdbc.version>
-        <mockito.version>5.2.0</mockito.version>
+        <mockito.version>5.10.0</mockito.version>
         <assertj.version>3.24.2</assertj.version>
+        <jackson.version>2.15.2</jackson.version>
         <checkstyle.version>10.11.0</checkstyle.version>
         <spotbugs.version>4.7.3</spotbugs.version>
         <jacoco.version>0.8.10</jacoco.version>
@@ -95,10 +96,39 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy</artifactId>
+            <version>1.14.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <version>1.14.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${assertj.version}</version>
             <scope>test</scope>
+        </dependency>
+        
+        <!-- Jackson for JSON processing -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
     </dependencies>
 
@@ -123,13 +153,33 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.1.2</version>
+                <version>3.2.5</version>
                 <configuration>
                     <skip>false</skip>
                     <skipTests>false</skipTests>
                     <includes>
                         <include>**/*Test.java</include>
+                        <include>**/*Tests.java</include>
+                        <include>**/*Runner.java</include>
                     </includes>
+                    <properties>
+                        <!-- Parallel execution for JUnit Jupiter tests -->
+                        <configurationParameters>
+                            junit.jupiter.execution.parallel.enabled=true
+                            junit.jupiter.execution.parallel.mode.default=same_thread
+                            junit.jupiter.execution.parallel.mode.classes.default=concurrent
+                            junit.jupiter.execution.parallel.config.strategy=dynamic
+                            junit.jupiter.execution.parallel.config.dynamic.factor=0.5
+                        </configurationParameters>
+                    </properties>
+                    <systemPropertyVariables>
+                        <java.awt.headless>true</java.awt.headless>
+                        <cucumber.junit-platform.naming-strategy>long</cucumber.junit-platform.naming-strategy>
+                        <cucumber.publish.quiet>true</cucumber.publish.quiet>
+                        <cucumber.glue>org.rinna.bdd</cucumber.glue>
+                    </systemPropertyVariables>
+                    <argLine>-XX:+EnableDynamicAgentLoading</argLine>
+                    <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
                 </configuration>
             </plugin>
             

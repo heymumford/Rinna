@@ -102,3 +102,107 @@ Feature: Work input interface and prioritization
     And there are 3 active developers
     When the work queue is prioritized based on team capacity
     Then the top items should not exceed 15 story points in total
+    
+  # JSON API Integration Scenarios
+  @json-api
+  Scenario: Accepting a valid JSON payload with authentication
+    Given an API authentication token "ri-5e7a9b3f2c8d" for project "billing-system"
+    When the following JSON payload is submitted with the token:
+      """
+      {
+        "type": "FEATURE",
+        "title": "Support for cryptocurrency payments",
+        "description": "Add support for Bitcoin and Ethereum payments",
+        "priority": "HIGH",
+        "metadata": {
+          "source": "product_roadmap",
+          "estimated_points": "8",
+          "requested_by": "finance_team"
+        }
+      }
+      """
+    Then a work item should be created with the specified attributes
+    And the work item should be associated with project "billing-system"
+    And the work item should include all the provided metadata
+  
+  @json-api
+  Scenario: Rejecting an unauthorized JSON payload
+    Given an invalid API authentication token "invalid-token" for project "billing-system"
+    When a JSON payload is submitted with the invalid token
+    Then the system should reject the request with a 401 status code
+    And provide an authentication error message
+  
+  @webhook
+  Scenario: Processing a GitHub webhook for a new pull request
+    Given a GitHub webhook secret "gh-webhook-secret-1234" is configured for project "data-platform"
+    When a GitHub pull request webhook is received with:
+      """
+      {
+        "action": "opened",
+        "pull_request": {
+          "title": "Add data validation for CSV imports",
+          "body": "This PR adds validation for CSV files before import to prevent data corruption.",
+          "user": {
+            "login": "developer1"
+          },
+          "html_url": "https://github.com/org/data-platform/pull/123",
+          "additions": 450,
+          "deletions": 22,
+          "changed_files": 5
+        },
+        "repository": {
+          "full_name": "org/data-platform"
+        }
+      }
+      """
+    Then a work item should be created with type "FEATURE" and title "PR: Add data validation for CSV imports"
+    And the work item should have the tag "source:github"
+    And the work item should have the tag "github_pr:123"
+    And the work item should have the PR description and URL in its description
+  
+  @webhook
+  Scenario: Processing a GitHub webhook for a failed CI build
+    Given a GitHub webhook secret "gh-webhook-secret-1234" is configured for project "data-platform"
+    When a GitHub workflow run webhook is received with status "failure":
+      """
+      {
+        "action": "completed",
+        "workflow_run": {
+          "name": "CI Pipeline",
+          "head_branch": "feature/new-export-format",
+          "conclusion": "failure",
+          "html_url": "https://github.com/org/data-platform/actions/runs/456789",
+          "check_suite_url": "https://api.github.com/repos/org/data-platform/check-suites/123456"
+        },
+        "repository": {
+          "full_name": "org/data-platform"
+        }
+      }
+      """
+    Then a work item should be created with type "BUG" and priority "HIGH"
+    And the work item should have the tag "source:github_ci"
+    And the work item should have the tag "branch:feature/new-export-format"
+    And the work item should have a link to the failed workflow run
+  
+  # Local Development Client Scenarios
+  @client
+  Scenario: Tracking local repository changes with the Rinna client
+    Given a developer has installed the Rinna local client in their repository
+    And the client is configured with API token "dev-client-token" for project "user-portal"
+    When the developer runs tests that fail locally
+    Then the client should send a report to Rinna with:
+      | attribute      | value                                 |
+      | type           | BUG                                   |
+      | title          | Local test failure: UserAuthTests     |
+      | branch         | feature/improve-auth                  |
+      | failing_tests  | testUserRegistration, testLoginFlow   |
+      | status         | LOCAL_ONLY                            |
+    And the work item should be visible only to the developer until pushed
+  
+  @client
+  Scenario: Synchronizing local work with the central Rinna system
+    Given a developer has local work items tracked by the Rinna client
+    When the developer pushes their branch to the remote repository
+    Then the local work items should be synchronized with the central Rinna system
+    And the items should transition from "LOCAL_ONLY" to "SHARED" status
+    And other team members should now be able to see these work items

@@ -46,6 +46,8 @@ function show_help {
     echo "    workflow     Run workflow BDD tests only"
     echo "    release      Run release BDD tests only"
     echo "    input        Run input interface BDD tests only"
+    echo "    cli          Run CLI integration BDD tests only"
+    echo "    api          Run API integration BDD tests only"
     echo "  all       Clean, build, and test (default if no command specified)"
     echo "  version   Version management:"
     echo "    current       Show current version information"
@@ -106,6 +108,14 @@ while [[ $# -gt 0 ]]; do
             elif [[ $2 == "input" ]]; then
                 RUN_TESTS=1
                 TEST_TYPE="input"
+                shift 2
+            elif [[ $2 == "cli" ]]; then
+                RUN_TESTS=1
+                TEST_TYPE="cli"
+                shift 2
+            elif [[ $2 == "api" ]]; then
+                RUN_TESTS=1
+                TEST_TYPE="api"
                 shift 2
             else
                 RUN_TESTS=1
@@ -228,19 +238,19 @@ function run_cmd {
 
 # Clean if requested
 if [[ $CLEAN -eq 1 ]]; then
-    run_cmd "./mvnw clean" "Cleaning project"
+    run_cmd "mvn clean" "Cleaning project"
 fi
 
 # Build if requested
 if [[ $BUILD -eq 1 ]]; then
-    run_cmd "./mvnw compile" "Building project"
+    run_cmd "mvn compile" "Building project"
 fi
 
 # Run tests if requested
 if [[ $RUN_TESTS -eq 1 ]]; then
     # Set up test command based on test type
     if [[ $TEST_TYPE == "unit" ]]; then
-        TEST_CMD="./mvnw -Dtest=\"*Test\" test"
+        TEST_CMD="mvn -Dtest=\"*Test\" test"
         TEST_DESC="Running unit tests"
     elif [[ $TEST_TYPE == "bdd" ]]; then
         TEST_CMD="./bin/run-bdd-tests.sh"
@@ -254,8 +264,14 @@ if [[ $RUN_TESTS -eq 1 ]]; then
     elif [[ $TEST_TYPE == "input" ]]; then
         TEST_CMD="./bin/run-bdd-tests.sh input"
         TEST_DESC="Running input interface BDD tests"
+    elif [[ $TEST_TYPE == "cli" ]]; then
+        TEST_CMD="./bin/run-tests.sh cli"
+        TEST_DESC="Running CLI integration BDD tests"
+    elif [[ $TEST_TYPE == "api" ]]; then
+        TEST_CMD="./bin/run-tests.sh api"
+        TEST_DESC="Running API integration BDD tests"
     else
-        TEST_CMD="./mvnw test"
+        TEST_CMD="mvn test"
         TEST_DESC="Running all tests"
     fi
     

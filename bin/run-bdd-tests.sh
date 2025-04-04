@@ -57,7 +57,7 @@ mkdir -p ${CORE_MODULE}/${TARGET_DIR}/features
 cp -r ${CORE_MODULE}/src/test/resources/* ${CORE_MODULE}/${TARGET_DIR}/
 
 # Configure Maven command
-MVN_CMD="./mvnw"
+MVN_CMD="mvn"
 MVN_OPTS=""
 
 if $FAIL_FAST; then

@@ -39,6 +39,20 @@
                 </includes>
             </testResource>
         </testResources>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.3.1</version>
+                    <configuration>
+                        <nonFilteredFileExtensions>
+                            <nonFilteredFileExtension>feature</nonFilteredFileExtension>
+                        </nonFilteredFileExtensions>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -91,14 +105,27 @@
                     <skip>false</skip>
                     <includes>
                         <include>**/*Test.java</include>
+                        <include>**/*Tests.java</include>
                         <include>**/*Runner.java</include>
                     </includes>
+                    <properties>
+                        <!-- Parallel execution for JUnit Jupiter tests -->
+                        <configurationParameters>
+                            junit.jupiter.execution.parallel.enabled=true
+                            junit.jupiter.execution.parallel.mode.default=same_thread
+                            junit.jupiter.execution.parallel.mode.classes.default=concurrent
+                            junit.jupiter.execution.parallel.config.strategy=dynamic
+                            junit.jupiter.execution.parallel.config.dynamic.factor=0.5
+                        </configurationParameters>
+                    </properties>
                     <systemPropertyVariables>
                         <java.awt.headless>true</java.awt.headless>
                         <cucumber.junit-platform.naming-strategy>long</cucumber.junit-platform.naming-strategy>
+                        <cucumber.publish.quiet>true</cucumber.publish.quiet>
+                        <cucumber.glue>org.rinna.bdd</cucumber.glue>
                     </systemPropertyVariables>
+                    <argLine>-XX:+EnableDynamicAgentLoading</argLine>
                     <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
-                    <testSourceDirectory>${project.basedir}/src/test/java</testSourceDirectory>
                 </configuration>
             </plugin>
             <plugin>

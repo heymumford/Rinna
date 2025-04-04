@@ -90,3 +90,7 @@ Project planning is inherently messy, and the intention is always to produce pre
 Stop forcing your team into new SDLCs and paying for a space shuttle of a software management solution when all you need is a sport compact car to get around.
 
 The goal isn't to constrain your team - it's to liberate developers from unnecessary process overhead while still providing the benefits of structured workflow management. By removing pointless flexibility where it doesn't add value, we deliver more valuable flexibility where it matters: in how developers interact with their work.
+
+## Related Resources
+
+For a comprehensive framework on measuring and demonstrating IT value in the enterprise, see our [IT Workflow Metrics](metrics/IT-workflow-metrics.md) guide.

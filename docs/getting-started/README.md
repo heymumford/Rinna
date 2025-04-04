@@ -24,7 +24,7 @@ git clone https://github.com/heymumford/rinna.git
 
 # Build the project
 cd rinna
-./mvnw clean install
+mvn clean install
 
 # Make scripts executable
 chmod +x bin/rin bin/rin-version

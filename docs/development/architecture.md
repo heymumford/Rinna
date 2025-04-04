@@ -2,25 +2,27 @@
 
 # Rinna Architecture
 
-## Clean Architecture Overview
+## Polyglot Clean Architecture
 
-Rinna has been restructured to follow Robert C. Martin's (Uncle Bob) Clean Architecture principles, organizing the codebase into concentric layers with dependencies pointing inward:
+Rinna implements a polyglot approach to Clean Architecture, using Java for the core domain layer and Go for the API layer. This combines the strengths of both languages while maintaining the principles of Clean Architecture:
 
 ```
 ┌───────────────────────────────────────────────┐
-│ Framework & Drivers                           │
+│ Framework & Drivers (Go CLI, Java CLI)        │
 │ ┌───────────────────────────────────────────┐ │
-│ │ Interface Adapters                        │ │
+│ │ Interface Adapters (Go API, Java Adapters)│ │
 │ │ ┌───────────────────────────────────────┐ │ │
-│ │ │ Application Use Cases                 │ │ │
+│ │ │ Application Use Cases (Java)          │ │ │
 │ │ │ ┌───────────────────────────────────┐ │ │ │
-│ │ │ │ Enterprise Business Rules         │ │ │ │
+│ │ │ │ Enterprise Business Rules (Java)  │ │ │ │
 │ │ │ │ (Entities)                        │ │ │ │
 │ │ │ └───────────────────────────────────┘ │ │ │
 │ │ └───────────────────────────────────────┘ │ │
 │ └───────────────────────────────────────────┘ │
 └───────────────────────────────────────────────┘
 ```
+
+Each layer follows Clean Architecture principles, with dependencies pointing inward, while the integration between languages happens at well-defined API boundaries.
 
 ## New Package Structure
 
@@ -59,15 +61,25 @@ The codebase has been reorganized into the following package structure:
 
 ## Module Structure
 
-The module structure remains modular and extensible:
+The module structure is modular and polyglot, supporting both Java and Go components:
 
 ```
 rinna/
-├── rinna-core/            # Core domain model and services
+├── rinna-core/            # Core domain model and services (Java)
+├── api/                   # Go API service
+│   ├── cmd/               # Command-line executables
+│   │   └── rinnasrv/      # API server executable
+│   ├── internal/          # Package-private code
+│   │   ├── handlers/      # HTTP handlers
+│   │   ├── middleware/    # HTTP middleware
+│   │   ├── models/        # API data models
+│   │   └── client/        # Java service client
+│   └── pkg/               # Public packages
+│       ├── auth/          # Authentication
+│       └── config/        # Configuration
 ├── rinna-data-sqlite/     # SQLite persistence implementation (planned)
-├── rinna-data-api/        # Data access interfaces (planned)
-├── rinna-cli/             # Reference CLI implementation (planned)
-└── rinna-spring/          # Optional Spring integration (planned)
+├── bin/                   # CLI tools and utilities
+└── docs/                  # Documentation
 ```
 
 ## Dependency Rule
@@ -97,21 +109,30 @@ The architecture maintains clear extension points:
 
 ## Implementation Philosophy
 
-### 1. Minimal Dependencies
+### 1. Polyglot Architecture with Strong Boundaries
+- Java for domain model and business logic (JDK 21)
+- Go for API layer and CLI integration services
+- Well-defined JSON contract between language boundaries
+- Each language used for its strengths
+
+### 2. Minimal Dependencies
 - Only standard Java libraries in domain layer
+- Standard library Go where possible
 - Clear separation between layers 
 - Dependencies only point inward
 
-### 2. Extensibility
+### 3. Extensibility
 - Well-defined interfaces in the domain layer
 - Pluggable implementations in outer layers
 - Dependency injection for flexible component wiring
+- API-first design for service integration
 
-### 3. Developer Experience
+### 4. Developer Experience
 - Consistent package structure following Clean Architecture
 - Clear separation of concerns
 - Intuitive organization that maps to architectural concepts
-- Modern Java 21 features to improve code quality and readability
+- Modern Java 21 features for domain logic
+- Efficient Go implementation for API services
 
 ### 4. Modern Java Utilization
 - Records for immutable data transfer and value objects

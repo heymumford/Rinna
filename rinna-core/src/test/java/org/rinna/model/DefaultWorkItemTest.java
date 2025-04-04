@@ -68,7 +68,10 @@ public class DefaultWorkItemTest {
                 "tester",
                 now,
                 now,
-                null);
+                null,
+                null,
+                "PUBLIC",
+                false);
         
         // Initial status should be FOUND
         assertEquals(WorkflowState.FOUND, item.getStatus());
@@ -98,7 +101,10 @@ public class DefaultWorkItemTest {
                 "tester",
                 now,
                 now,
-                null);
+                null,
+                null,
+                "PUBLIC",
+                false);
         
         // Initial priority should be MEDIUM
         assertEquals(Priority.MEDIUM, item.getPriority());
@@ -128,7 +134,10 @@ public class DefaultWorkItemTest {
                 "tester",
                 now,
                 now,
-                null);
+                null,
+                null,
+                "PUBLIC",
+                false);
         
         // Initial assignee should be "tester"
         assertEquals("tester", item.getAssignee());
@@ -157,7 +166,10 @@ public class DefaultWorkItemTest {
                 "tester1",
                 Instant.now(),
                 Instant.now(),
-                null);
+                null,
+                null,
+                "PUBLIC",
+                false);
         
         DefaultWorkItem item2 = new DefaultWorkItem(
                 id,
@@ -169,7 +181,10 @@ public class DefaultWorkItemTest {
                 "tester2", // Different assignee
                 Instant.now().plusSeconds(1000), // Different timestamps
                 Instant.now().plusSeconds(2000),
-                null);
+                null,
+                null,
+                "PUBLIC",
+                false);
         
         // Create a third work item with a different ID
         DefaultWorkItem item3 = new DefaultWorkItem(
@@ -182,7 +197,10 @@ public class DefaultWorkItemTest {
                 "tester1",
                 Instant.now(),
                 Instant.now(),
-                null);
+                null,
+                null,
+                "PUBLIC",
+                false);
         
         // Items with the same ID should be equal
         assertEquals(item1, item2);
