@@ -19,15 +19,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * In-memory implementation of the ItemRepository interface.
- * This implementation stores work items in memory and is intended for testing
- * and demonstration purposes only.
+ * For testing and demonstration purposes only.
  */
 public class InMemoryItemRepository implements ItemRepository {
     private final Map<UUID, WorkItem> items = new ConcurrentHashMap<>();
@@ -40,10 +39,8 @@ public class InMemoryItemRepository implements ItemRepository {
     
     @Override
     public WorkItem create(WorkItemCreateRequest request) {
-        UUID id = UUID.randomUUID();
-        DefaultWorkItem item = new DefaultWorkItem(id, request);
-        items.put(id, item);
-        return item;
+        DefaultWorkItem item = new DefaultWorkItem(UUID.randomUUID(), request);
+        return save(item);
     }
     
     @Override
@@ -53,7 +50,7 @@ public class InMemoryItemRepository implements ItemRepository {
     
     @Override
     public List<WorkItem> findAll() {
-        return Collections.unmodifiableList(new ArrayList<>(items.values()));
+        return new ArrayList<>(items.values());
     }
     
     @Override
@@ -62,7 +59,7 @@ public class InMemoryItemRepository implements ItemRepository {
             WorkItemType workItemType = WorkItemType.valueOf(type.toUpperCase());
             return items.values().stream()
                     .filter(item -> item.getType() == workItemType)
-                    .collect(Collectors.toList());
+                    .toList();
         } catch (IllegalArgumentException e) {
             return Collections.emptyList();
         }
@@ -74,7 +71,7 @@ public class InMemoryItemRepository implements ItemRepository {
             WorkflowState workflowState = WorkflowState.valueOf(status.toUpperCase());
             return items.values().stream()
                     .filter(item -> item.getStatus() == workflowState)
-                    .collect(Collectors.toList());
+                    .toList();
         } catch (IllegalArgumentException e) {
             return Collections.emptyList();
         }
@@ -82,14 +79,9 @@ public class InMemoryItemRepository implements ItemRepository {
     
     @Override
     public List<WorkItem> findByAssignee(String assignee) {
-        if (assignee == null) {
-            return items.values().stream()
-                    .filter(item -> item.getAssignee() == null)
-                    .collect(Collectors.toList());
-        }
         return items.values().stream()
-                .filter(item -> assignee.equals(item.getAssignee()))
-                .collect(Collectors.toList());
+                .filter(item -> Objects.equals(assignee, item.getAssignee()))
+                .toList();
     }
     
     @Override
@@ -98,8 +90,7 @@ public class InMemoryItemRepository implements ItemRepository {
     }
     
     /**
-     * Clears all items from the repository.
-     * This method is intended for testing purposes only.
+     * Clears all items from the repository (for testing).
      */
     public void clear() {
         items.clear();

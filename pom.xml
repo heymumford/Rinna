@@ -143,6 +143,10 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                     <fork>true</fork>
+                    <release>${java.version}</release>
+                    <compilerArgs>
+                        <arg>--enable-preview</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             
@@ -178,7 +182,7 @@
                         <cucumber.publish.quiet>true</cucumber.publish.quiet>
                         <cucumber.glue>org.rinna.bdd</cucumber.glue>
                     </systemPropertyVariables>
-                    <argLine>-XX:+EnableDynamicAgentLoading</argLine>
+                    <argLine>-XX:+EnableDynamicAgentLoading --enable-preview</argLine>
                     <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
                 </configuration>
             </plugin>

@@ -61,11 +61,11 @@ public class WorkflowSteps {
     public void theWorkItemHasDescription(String description) {
         WorkItemCreateRequest request = context.getCreateRequest("current");
         WorkItemCreateRequest updatedRequest = new WorkItemCreateRequest.Builder()
-                .title(request.getTitle())
+                .title(request.title())
                 .description(description)
-                .type(request.getType())
-                .priority(request.getPriority())
-                .assignee(request.getAssignee())
+                .type(request.type())
+                .priority(request.priority())
+                .assignee(request.assignee())
                 .parentId(request.getParentId().orElse(null))
                 .build();
         
@@ -78,11 +78,11 @@ public class WorkflowSteps {
         Priority priorityEnum = Priority.valueOf(priority.toUpperCase());
         
         WorkItemCreateRequest updatedRequest = new WorkItemCreateRequest.Builder()
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .type(request.getType())
+                .title(request.title())
+                .description(request.description())
+                .type(request.type())
                 .priority(priorityEnum)
-                .assignee(request.getAssignee())
+                .assignee(request.assignee())
                 .parentId(request.getParentId().orElse(null))
                 .build();
         
@@ -94,10 +94,10 @@ public class WorkflowSteps {
         WorkItemCreateRequest request = context.getCreateRequest("current");
         
         WorkItemCreateRequest updatedRequest = new WorkItemCreateRequest.Builder()
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .type(request.getType())
-                .priority(request.getPriority())
+                .title(request.title())
+                .description(request.description())
+                .type(request.type())
+                .priority(request.priority())
                 .assignee(assignee)
                 .parentId(request.getParentId().orElse(null))
                 .build();
