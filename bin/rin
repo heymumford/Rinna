@@ -45,6 +45,7 @@ function show_help {
     echo "    bdd          Run BDD tests only"
     echo "    workflow     Run workflow BDD tests only"
     echo "    release      Run release BDD tests only"
+    echo "    input        Run input interface BDD tests only"
     echo "  all       Clean, build, and test (default if no command specified)"
     echo "  version   Version management:"
     echo "    current       Show current version information"
@@ -101,6 +102,10 @@ while [[ $# -gt 0 ]]; do
             elif [[ $2 == "release" ]]; then
                 RUN_TESTS=1
                 TEST_TYPE="release"
+                shift 2
+            elif [[ $2 == "input" ]]; then
+                RUN_TESTS=1
+                TEST_TYPE="input"
                 shift 2
             else
                 RUN_TESTS=1
@@ -246,6 +251,9 @@ if [[ $RUN_TESTS -eq 1 ]]; then
     elif [[ $TEST_TYPE == "release" ]]; then
         TEST_CMD="./bin/run-bdd-tests.sh release"
         TEST_DESC="Running release BDD tests"
+    elif [[ $TEST_TYPE == "input" ]]; then
+        TEST_CMD="./bin/run-bdd-tests.sh input"
+        TEST_DESC="Running input interface BDD tests"
     else
         TEST_CMD="./mvnw test"
         TEST_DESC="Running all tests"
