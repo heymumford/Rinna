@@ -34,12 +34,13 @@ Rinna embodies a fundamentally different approach:
 
 ## Work Model
 
-Rinna uses a straightforward model that maps to how software is actually built:
+Rinna uses a deliberate, opinionated workflow model built from hard-earned engineering experience:
 
 - **Work Items**: Goals → Features → Bugs → Chores
 - **Workflow**: Found → Triaged → To Do → In Progress → In Test → Done
 - **Developer-Focused Attributes**: Effort estimates, assignees, blocking status
-- **No Imposed Methodology**: Adapts to how your team works, not the other way around
+
+**The workflow isn't configurable because it doesn't need to be.** Rather than adapting to inefficient processes, Rinna implements a battle-tested flow that works. You can map its outputs to other systems if needed, but we won't compromise on what works.
 
 [Explore the workflow model](docs/user-guide/workflow.md)
 
