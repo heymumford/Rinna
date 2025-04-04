@@ -35,7 +35,7 @@ git clone https://github.com/heymumford/rinna.git
 
 # Build the project
 cd rinna
-./mvnw clean install
+mvn clean install
 
 # Make scripts executable
 chmod +x bin/rin bin/rin-version
@@ -75,17 +75,17 @@ bin/rin -e build
 
 ### Common Build Operations
 
-Our project uses Maven with a wrapper (./mvnw) for build operations. The `bin/rin` tool provides a convenient interface to these commands:
+Our project uses Maven for build operations. The `bin/rin` tool provides a convenient interface to these commands:
 
 | Operation | Rin Command | Maven Command |
 |-----------|-------------|---------------|
-| Clean | `bin/rin clean` | `./mvnw clean` |
-| Compile | `bin/rin build` | `./mvnw compile` |
-| Test | `bin/rin test` | `./mvnw test` |
-| Package | `bin/rin build` | `./mvnw package` |
-| Run all checks | `bin/rin all` | `./mvnw verify` |
-| Generate docs | - | `./mvnw site` |
-| Static analysis | - | `./mvnw verify` |
+| Clean | `bin/rin clean` | `mvn clean` |
+| Compile | `bin/rin build` | `mvn compile` |
+| Test | `bin/rin test` | `mvn test` |
+| Package | `bin/rin build` | `mvn package` |
+| Run all checks | `bin/rin all` | `mvn verify` |
+| Generate docs | - | `mvn site` |
+| Static analysis | - | `mvn verify` |
 
 ## Adding Features
 

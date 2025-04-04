@@ -137,6 +137,12 @@ public class WorkflowSteps {
         assertEquals(WorkItemType.valueOf(type.toUpperCase()), workItem.getType());
     }
     
+    @Then("the work item should have type {string}")
+    public void theWorkItemShouldHaveType(String type) {
+        WorkItem workItem = context.getWorkItem("current");
+        assertEquals(WorkItemType.valueOf(type.toUpperCase()), workItem.getType());
+    }
+    
     @Then("the work item should have priority {string}")
     public void theWorkItemShouldHavePriority(String priority) {
         WorkItem workItem = context.getWorkItem("current");

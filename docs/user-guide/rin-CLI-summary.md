@@ -1,10 +1,10 @@
 <!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford], Gemini Deep Research, Claude 3.7. -->
 
-# Rinna CLI Tool Summary
+# Rinna CLI (Command-Line Interface) Tool Summary
 
 ## Purpose and Features
 
-The `rin` CLI tool provides a streamlined interface for building, cleaning, and testing the Rinna project with different verbosity levels. Key features include:
+The `rin` CLI (Command-Line Interface) tool provides a streamlined interface for building, cleaning, and testing the Rinna project with different verbosity levels. Key features include:
 
 1. **Three Output Modes**:
    - **Terse Mode (default)**: Shows minimal output with success/failure indicators and execution time
@@ -19,7 +19,7 @@ The `rin` CLI tool provides a streamlined interface for building, cleaning, and 
    - `version`: Manage versions with subcommands (current, major, minor, patch, set, release, tag)
 
 3. **Key Features**:
-   - Environment independence via Maven wrapper
+   - Simplified builds using system Maven
    - Color-coded output for better readability
    - Execution time tracking for each phase
    - Test result summary with pass/fail statistics
@@ -27,9 +27,9 @@ The `rin` CLI tool provides a streamlined interface for building, cleaning, and 
 
 ## Documentation
 
-We've created comprehensive documentation for the `rin` CLI:
+We've created comprehensive documentation for the `rin` CLI (Command-Line Interface):
 
-1. **User Guide**: `/docs/user-guide/rin-cli.md` provides complete details on:
+1. **User Guide**: `/docs/user-guide/rin-CLI.md` provides complete details on:
    - Installation instructions
    - Command reference
    - Verbosity options
@@ -47,7 +47,7 @@ The CLI implementation is designed to be clean and maintainable:
 
 - A single, focused script for the main CLI (`bin/rin`)
 - A separate script for version management (`bin/rin-version`)
-- Uses Maven wrapper to ensure environment independence
+- Uses system Maven installation for builds and tests
 - Provides clear, helpful output with color-coding
 - Implements robust error handling and test result reporting
 

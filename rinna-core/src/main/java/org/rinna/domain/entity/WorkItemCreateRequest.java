@@ -8,6 +8,8 @@
 
 package org.rinna.domain.entity;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,6 +24,10 @@ public class WorkItemCreateRequest {
     private final Priority priority;
     private final String assignee;
     private final UUID parentId;
+    private final UUID projectId;
+    private final String visibility;
+    private final boolean localOnly;
+    private final Map<String, String> metadata;
     
     /**
      * Creates a new WorkItemCreateRequest with the given parameters.
@@ -32,6 +38,10 @@ public class WorkItemCreateRequest {
      * @param priority the priority of the work item
      * @param assignee the assignee of the work item
      * @param parentId the parent ID of the work item, or null if no parent
+     * @param projectId the project ID, or null if not associated with a project
+     * @param visibility the visibility status
+     * @param localOnly whether the work item is local only
+     * @param metadata additional metadata as key-value pairs
      */
     public WorkItemCreateRequest(
             String title, 
@@ -39,13 +49,21 @@ public class WorkItemCreateRequest {
             WorkItemType type, 
             Priority priority, 
             String assignee, 
-            UUID parentId) {
+            UUID parentId,
+            UUID projectId,
+            String visibility,
+            boolean localOnly,
+            Map<String, String> metadata) {
         this.title = title;
         this.description = description;
         this.type = type;
         this.priority = priority;
         this.assignee = assignee;
         this.parentId = parentId;
+        this.projectId = projectId;
+        this.visibility = visibility != null ? visibility : "PUBLIC";
+        this.localOnly = localOnly;
+        this.metadata = metadata != null ? metadata : new HashMap<>();
     }
     
     /**
@@ -103,6 +121,42 @@ public class WorkItemCreateRequest {
     }
     
     /**
+     * Returns the project ID as an Optional.
+     * 
+     * @return an Optional containing the project ID, or empty if not associated with a project
+     */
+    public Optional<UUID> getProjectId() {
+        return Optional.ofNullable(projectId);
+    }
+    
+    /**
+     * Returns the visibility status.
+     * 
+     * @return the visibility status
+     */
+    public String getVisibility() {
+        return visibility;
+    }
+    
+    /**
+     * Returns whether this work item is local only.
+     * 
+     * @return true if local only, false otherwise
+     */
+    public boolean isLocalOnly() {
+        return localOnly;
+    }
+    
+    /**
+     * Returns the metadata.
+     * 
+     * @return the metadata as a map of key-value pairs
+     */
+    public Map<String, String> getMetadata() {
+        return new HashMap<>(metadata);
+    }
+    
+    /**
      * Builder for creating WorkItemCreateRequest instances.
      */
     public static class Builder {
@@ -112,6 +166,10 @@ public class WorkItemCreateRequest {
         private Priority priority = Priority.MEDIUM; // Default
         private String assignee;
         private UUID parentId;
+        private UUID projectId;
+        private String visibility = "PUBLIC"; // Default
+        private boolean localOnly = false; // Default
+        private Map<String, String> metadata = new HashMap<>();
         
         /**
          * Sets the title.
@@ -180,6 +238,62 @@ public class WorkItemCreateRequest {
         }
         
         /**
+         * Sets the project ID.
+         * 
+         * @param projectId the project ID
+         * @return this builder
+         */
+        public Builder projectId(UUID projectId) {
+            this.projectId = projectId;
+            return this;
+        }
+        
+        /**
+         * Sets the visibility status.
+         * 
+         * @param visibility the visibility status
+         * @return this builder
+         */
+        public Builder visibility(String visibility) {
+            this.visibility = visibility;
+            return this;
+        }
+        
+        /**
+         * Sets whether the work item is local only.
+         * 
+         * @param localOnly true if local only, false otherwise
+         * @return this builder
+         */
+        public Builder localOnly(boolean localOnly) {
+            this.localOnly = localOnly;
+            return this;
+        }
+        
+        /**
+         * Adds a metadata entry.
+         * 
+         * @param key the metadata key
+         * @param value the metadata value
+         * @return this builder
+         */
+        public Builder addMetadata(String key, String value) {
+            this.metadata.put(key, value);
+            return this;
+        }
+        
+        /**
+         * Sets the metadata map.
+         * 
+         * @param metadata the metadata map
+         * @return this builder
+         */
+        public Builder metadata(Map<String, String> metadata) {
+            this.metadata = new HashMap<>(metadata);
+            return this;
+        }
+        
+        /**
          * Builds a new WorkItemCreateRequest.
          * 
          * @return a new WorkItemCreateRequest
@@ -198,7 +312,11 @@ public class WorkItemCreateRequest {
                     type, 
                     priority, 
                     assignee, 
-                    parentId);
+                    parentId,
+                    projectId,
+                    visibility,
+                    localOnly,
+                    metadata);
         }
     }
 }

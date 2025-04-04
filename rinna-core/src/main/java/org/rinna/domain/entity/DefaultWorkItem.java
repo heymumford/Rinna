@@ -27,6 +27,9 @@ public class DefaultWorkItem implements WorkItem {
     private final Instant createdAt;
     private Instant updatedAt;
     private final UUID parentId;
+    private final UUID projectId;
+    private final String visibility;
+    private final boolean localOnly;
     
     /**
      * Constructs a new DefaultWorkItem from a create request.
@@ -45,7 +48,10 @@ public class DefaultWorkItem implements WorkItem {
             request.getAssignee(),
             Instant.now(),
             Instant.now(),
-            request.getParentId().orElse(null)
+            request.getParentId().orElse(null),
+            request.getProjectId().orElse(null),
+            request.getVisibility(),
+            request.isLocalOnly()
         );
     }
     
@@ -73,7 +79,10 @@ public class DefaultWorkItem implements WorkItem {
             String assignee,
             Instant createdAt,
             Instant updatedAt,
-            UUID parentId) {
+            UUID parentId,
+            UUID projectId,
+            String visibility,
+            boolean localOnly) {
         this.id = Objects.requireNonNull(id, "ID cannot be null");
         this.title = Objects.requireNonNull(title, "Title cannot be null");
         this.description = description;
@@ -84,6 +93,9 @@ public class DefaultWorkItem implements WorkItem {
         this.createdAt = Objects.requireNonNull(createdAt, "Created timestamp cannot be null");
         this.updatedAt = Objects.requireNonNull(updatedAt, "Updated timestamp cannot be null");
         this.parentId = parentId;
+        this.projectId = projectId;
+        this.visibility = visibility != null ? visibility : "PUBLIC";
+        this.localOnly = localOnly;
     }
     
     @Override
@@ -170,6 +182,21 @@ public class DefaultWorkItem implements WorkItem {
     @Override
     public Optional<UUID> getParentId() {
         return Optional.ofNullable(parentId);
+    }
+    
+    @Override
+    public Optional<UUID> getProjectId() {
+        return Optional.ofNullable(projectId);
+    }
+    
+    @Override
+    public String getVisibility() {
+        return visibility;
+    }
+    
+    @Override
+    public boolean isLocalOnly() {
+        return localOnly;
     }
     
     @Override

@@ -54,7 +54,10 @@ public class DefaultWorkflowServiceTest {
                 "tester",
                 Instant.now(),
                 Instant.now(),
-                null);
+                null,
+                null,
+                "PUBLIC",
+                false);
         
         itemRepository.save(testItem);
         testItemId = testItem.getId();

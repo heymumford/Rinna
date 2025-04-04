@@ -14,13 +14,13 @@ Welcome to the Rinna documentation. Rinna is a developer-centric workflow manage
 - 🧭 [Workflow Philosophy](user-guide/workflow-philosophy.md) - Why Rinna works the way it does
 
 ### For Developers
-- 🧩 [CLI Reference](user-guide/rin-cli.md) - Command line tool reference
+- 🧩 [CLI Reference](user-guide/rin-CLI.md) - Command-Line Interface tool reference
 - 🔧 [Development Guide](development/README.md) - Contributing to Rinna
 - 🏗️ [Architecture](development/architecture.md) - Technical design and principles
 
 ### For System Integrators
 - 📋 [Technical Specification](technical-specification.md) - System requirements
-- 🔄 [API Integration](user-guide/api-integration.md) - Connecting with other systems
+- 🔄 [API Integration](user-guide/API-integration.md) - Connecting with other systems
 - 📐 [Engineering Specification](specifications/engineering_spec.md) - Detailed system design
 
 ## Core Concepts
@@ -67,7 +67,7 @@ Traditional project management tools are designed primarily for reporting to man
   - Java 21 features
 
 - [User Guide](user-guide/README.md)
-  - [CLI Tool](user-guide/rin-cli.md)
+  - [CLI Tool](user-guide/rin-CLI.md)
   - [Workflow](user-guide/workflow.md)
   - [Workflow Philosophy](user-guide/workflow-philosophy.md)
   - [Lota (Development Cycle)](user-guide/lota.md)

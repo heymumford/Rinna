@@ -53,7 +53,7 @@ rin my-history
 rin update ITEM-1 --status "In Progress"
 ```
 
-## Using the CLI Tool
+## Using the CLI (Command-Line Interface) Tool
 
 The Rinna CLI tool (`rin`) provides different output modes for building and testing:
 
@@ -68,4 +68,4 @@ rin -v build
 rin -e all
 ```
 
-For more information on using the CLI tool, see [rin-cli.md](rin-cli.md) or run `rin --help`.
+For more information on using the CLI (Command-Line Interface) tool, see [rin-CLI.md](rin-CLI.md) or run `rin --help`.

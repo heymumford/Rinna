@@ -2,7 +2,7 @@
 
 # Rinna CLI Tool
 
-The `rin` command-line tool simplifies building, testing, and running Rinna with different verbosity levels. It uses the Maven wrapper to ensure consistent builds across different environments without requiring a specific Maven installation.
+The `rin` command-line tool simplifies building, testing, and running Rinna with different verbosity levels. It uses the system Maven installation to provide consistent builds.
 
 ## Installation
 
@@ -206,7 +206,7 @@ rin --help
 
 ## Benefits
 
-- **Environment Independence**: Uses Maven wrapper to ensure consistent builds
+- **Simplified Builds**: Uses system Maven installation for consistent builds
 - **Consistent Interface**: Same command structure regardless of the underlying build system
 - **Execution Tracking**: Shows how long each phase takes, helping identify bottlenecks
 - **Color-Coded Output**: Success, warnings, and errors are color-coded for easy identification
@@ -216,7 +216,7 @@ rin --help
 
 ## Implementation Notes
 
-The `rin` tool is implemented as a clean, focused bash script that uses the Maven wrapper (`./mvnw`) as its underlying build system. The implementation includes robust error handling to ensure that:
+The `rin` tool is implemented as a clean, focused bash script that uses the system Maven installation as its underlying build system. The implementation includes robust error handling to ensure that:
 
 1. Build errors are properly reported
 2. Test failures are clearly indicated

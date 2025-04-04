@@ -9,7 +9,10 @@
 package org.rinna.bdd;
 
 import org.rinna.Rinna;
+import org.rinna.domain.entity.APIToken;
+import org.rinna.domain.entity.Project;
 import org.rinna.domain.entity.Release;
+import org.rinna.domain.entity.WebhookConfig;
 import org.rinna.domain.entity.WorkItem;
 import org.rinna.domain.entity.WorkItemCreateRequest;
 
@@ -28,7 +31,13 @@ public class TestContext {
     private final Map<UUID, Map<String, String>> workItemMetadata;
     private final Map<String, Object> configurationValues;
     private final Set<String> configurationFlags;
+    private final Map<String, APIToken> apiTokens;
+    private final Map<String, Project> projects;
+    private final Map<String, WebhookConfig> webhookConfigs;
+    private final Map<String, String> jsonPayloads;
+    private final Map<String, Map<String, String>> clientReports;
     private Exception lastException;
+    private int lastStatusCode;
     
     /**
      * Constructs a new TestContext with default initialization.
@@ -42,6 +51,12 @@ public class TestContext {
         this.workItemMetadata = new HashMap<>();
         this.configurationValues = new HashMap<>();
         this.configurationFlags = new HashSet<>();
+        this.apiTokens = new HashMap<>();
+        this.projects = new HashMap<>();
+        this.webhookConfigs = new HashMap<>();
+        this.jsonPayloads = new HashMap<>();
+        this.clientReports = new HashMap<>();
+        this.lastStatusCode = 200;
     }
     
     /**
@@ -229,5 +244,123 @@ public class TestContext {
     @SuppressWarnings("unchecked")
     public <T> Optional<T> getConfigurationValue(String key) {
         return Optional.ofNullable((T) configurationValues.get(key));
+    }
+    
+    /**
+     * Saves an API token.
+     * 
+     * @param key the key for the token
+     * @param token the API token
+     */
+    public void saveAPIToken(String key, APIToken token) {
+        apiTokens.put(key, token);
+    }
+    
+    /**
+     * Returns an API token.
+     * 
+     * @param key the key for the token
+     * @return the API token
+     */
+    public APIToken getAPIToken(String key) {
+        return apiTokens.get(key);
+    }
+    
+    /**
+     * Saves a project.
+     * 
+     * @param key the key for the project
+     * @param project the project
+     */
+    public void saveProject(String key, Project project) {
+        projects.put(key, project);
+    }
+    
+    /**
+     * Returns a project.
+     * 
+     * @param key the key for the project
+     * @return the project
+     */
+    public Project getProject(String key) {
+        return projects.get(key);
+    }
+    
+    /**
+     * Saves a webhook configuration.
+     * 
+     * @param key the key for the configuration
+     * @param config the webhook configuration
+     */
+    public void saveWebhookConfig(String key, WebhookConfig config) {
+        webhookConfigs.put(key, config);
+    }
+    
+    /**
+     * Returns a webhook configuration.
+     * 
+     * @param key the key for the configuration
+     * @return the webhook configuration
+     */
+    public WebhookConfig getWebhookConfig(String key) {
+        return webhookConfigs.get(key);
+    }
+    
+    /**
+     * Saves a JSON payload.
+     * 
+     * @param key the key for the payload
+     * @param payload the JSON payload as a string
+     */
+    public void saveJsonPayload(String key, String payload) {
+        jsonPayloads.put(key, payload);
+    }
+    
+    /**
+     * Returns a JSON payload.
+     * 
+     * @param key the key for the payload
+     * @return the JSON payload as a string
+     */
+    public String getJsonPayload(String key) {
+        return jsonPayloads.get(key);
+    }
+    
+    /**
+     * Saves a client report.
+     * 
+     * @param key the key for the report
+     * @param report the report as a map of attributes
+     */
+    public void saveClientReport(String key, Map<String, String> report) {
+        clientReports.put(key, report);
+    }
+    
+    /**
+     * Returns a client report.
+     * 
+     * @param key the key for the report
+     * @return the report as a map of attributes
+     */
+    public Map<String, String> getClientReport(String key) {
+        return clientReports.get(key);
+    }
+    
+    /**
+     * Sets the last HTTP status code.
+     * 
+     * @param statusCode the HTTP status code
+     */
+    public void setStatusCode(int statusCode) {
+        this.lastStatusCode = statusCode;
+    }
+    
+    /**
+     * Returns the last HTTP status code.
+     * 
+     * @return the HTTP status code
+     */
+    public int getStatusCode() {
+        return lastStatusCode;
     }
 }

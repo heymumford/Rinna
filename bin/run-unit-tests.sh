@@ -65,7 +65,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Build the Maven command
-MVN_CMD="./mvnw"
+MVN_CMD="mvn"
 MVN_GOALS="test"
 MVN_PROPS=""
 
