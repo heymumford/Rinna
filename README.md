@@ -172,9 +172,29 @@ bin/rin build
 <dependency>
     <groupId>org.rinna</groupId>
     <artifactId>rinna-core</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
 </dependency>
 ```
+
+### Version Management
+
+Rinna uses semantic versioning with a dedicated version management tool:
+
+```bash
+# View current version information
+bin/rin-version current
+
+# Bump version after fixing bugs
+bin/rin-version patch
+
+# Bump version after adding features
+bin/rin-version minor
+
+# Verify version consistency across all files
+bin/rin-version verify
+```
+
+See the [Version Management Guide](docs/development/version-management.md) for complete details.
 
 ## Requirements
 

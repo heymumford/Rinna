@@ -76,6 +76,7 @@ Traditional project management tools are designed primarily for reporting to man
 - [Development](development/README.md)
   - [Architecture](development/architecture.md)
   - [Design Approach](development/design-approach.md)
+  - [Version Management](development/version-management.md)
   - [Java 21 Features](development/java21-features.md)
   - [Testing Strategy](development/testing.md)
   - [Contributing](development/contribution.md)

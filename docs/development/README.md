@@ -73,6 +73,27 @@ bin/rin -v test
 bin/rin -e build
 ```
 
+### Version Management
+
+Rinna uses semantic versioning and provides a comprehensive version management system via the `bin/rin-version` tool:
+
+```bash
+# Display version information
+bin/rin-version current
+
+# Bump version after bug fixes
+bin/rin-version patch
+
+# Bump version after adding features
+bin/rin-version minor
+
+# Verify version consistency
+bin/rin-version verify
+```
+
+For detailed information about our versioning strategy and workflows, see:
+- [Version Management Guide](version-management.md) - Complete documentation of our versioning approach
+
 ### Common Build Operations
 
 Our project uses Maven for build operations. The `bin/rin` tool provides a convenient interface to these commands:
