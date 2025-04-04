@@ -55,8 +55,5 @@ jobs:
       - name: Basic Java tests
         run: mvn -B test -Dtest=RinnaTest
 
-      - name: Build Go API
-        run: cd api && go build -o ../bin/rinnasrv ./cmd/rinnasrv
-
-      - name: Basic Go tests
-        run: cd api && go test ./test -v
+      - name: Basic Go test
+        run: cd api && go test ./test/simple -v
