@@ -6,6 +6,7 @@ Rinna is a streamlined, modular, open-source software system explicitly designed
 
 ## Core Philosophy
 
+- **Developer-Centric:** Optimize every aspect of the system from the developer's perspective.
 - **Clarity:** Ensure transparent processes, explicit definitions, and intuitive interactions within the software.
 - **Usability:** Prioritize thoughtful, user-centered design to enable seamless operation.
 - **Immutability:** Maintain unique, immutable identifiers for managed work items.
@@ -29,7 +30,7 @@ Found → Triaged → To Do → In Progress → In Test → Done
 
 ## Release Management
 
-Rinna enforces semantic versioning (`major.minor.patch`), limiting patch releases to a maximum of 999 per minor release to encourage disciplined incremental improvements.
+While Rinna provides a clean interface for release management, this is not the primary focus. The system prioritizes work item management from the developer's perspective, with release management maintained as a future integration point. When fully implemented, Rinna will enforce semantic versioning (`major.minor.patch`), limiting patch releases to a maximum of 999 per minor release to encourage disciplined incremental improvements.
 
 ## Lota (Cycle Duration)
 

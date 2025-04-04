@@ -20,6 +20,7 @@ ERRORS_ONLY=0
 RUN_TESTS=0
 BUILD=0
 CLEAN=0
+TEST_TYPE="all"
 TARGET_DIR="./target"
 RINNA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
@@ -39,7 +40,11 @@ function show_help {
     echo "Commands:"
     echo "  build     Build the project"
     echo "  clean     Clean the project"
-    echo "  test      Run tests"
+    echo "  test      Run tests (all tests by default)"
+    echo "    unit         Run unit tests only"
+    echo "    bdd          Run BDD tests only"
+    echo "    workflow     Run workflow BDD tests only"
+    echo "    release      Run release BDD tests only"
     echo "  all       Clean, build, and test (default if no command specified)"
     echo "  version   Version management:"
     echo "    current       Show current version information"
@@ -80,13 +85,34 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         test)
-            RUN_TESTS=1
-            shift
+            # Check for test type
+            if [[ $2 == "unit" ]]; then
+                RUN_TESTS=1
+                TEST_TYPE="unit"
+                shift 2
+            elif [[ $2 == "bdd" ]]; then
+                RUN_TESTS=1
+                TEST_TYPE="bdd"
+                shift 2
+            elif [[ $2 == "workflow" ]]; then
+                RUN_TESTS=1
+                TEST_TYPE="workflow"
+                shift 2
+            elif [[ $2 == "release" ]]; then
+                RUN_TESTS=1
+                TEST_TYPE="release"
+                shift 2
+            else
+                RUN_TESTS=1
+                TEST_TYPE="all"
+                shift
+            fi
             ;;
         all)
             CLEAN=1
             BUILD=1
             RUN_TESTS=1
+            TEST_TYPE="all"
             shift
             ;;
         version)
@@ -207,13 +233,32 @@ fi
 
 # Run tests if requested
 if [[ $RUN_TESTS -eq 1 ]]; then
+    # Set up test command based on test type
+    if [[ $TEST_TYPE == "unit" ]]; then
+        TEST_CMD="./mvnw -Dtest=\"*Test\" test"
+        TEST_DESC="Running unit tests"
+    elif [[ $TEST_TYPE == "bdd" ]]; then
+        TEST_CMD="./bin/run-bdd-tests.sh"
+        TEST_DESC="Running BDD tests"
+    elif [[ $TEST_TYPE == "workflow" ]]; then
+        TEST_CMD="./bin/run-bdd-tests.sh workflow"
+        TEST_DESC="Running workflow BDD tests"
+    elif [[ $TEST_TYPE == "release" ]]; then
+        TEST_CMD="./bin/run-bdd-tests.sh release"
+        TEST_DESC="Running release BDD tests"
+    else
+        TEST_CMD="./mvnw test"
+        TEST_DESC="Running all tests"
+    fi
+    
+    # Run tests with appropriate verbosity
     if [[ $VERBOSE -eq 1 ]]; then
-        run_cmd "./mvnw test" "Running tests"
+        run_cmd "$TEST_CMD" "$TEST_DESC"
     elif [[ $ERRORS_ONLY -eq 1 ]]; then
-        run_cmd "./mvnw -q test" "Running tests"
+        run_cmd "$TEST_CMD -q" "$TEST_DESC"
     else
         # Terse mode - show minimal output
-        run_cmd "./mvnw test" "Running tests"
+        run_cmd "$TEST_CMD" "$TEST_DESC"
     fi
     
     # Show test summary regardless of verbosity

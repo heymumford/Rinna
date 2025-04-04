@@ -9,10 +9,12 @@
 package org.rinna;
 
 import org.junit.jupiter.api.Test;
+import org.rinna.domain.entity.Release;
 import org.rinna.domain.entity.WorkItem;
 import org.rinna.domain.entity.WorkItemCreateRequest;
 import org.rinna.domain.entity.WorkItemType;
 import org.rinna.domain.usecase.ItemService;
+import org.rinna.domain.usecase.ReleaseService;
 import org.rinna.domain.usecase.WorkflowService;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,6 +35,7 @@ public class RinnaTest {
         // Verify that the services are available
         assertNotNull(rinna.items());
         assertNotNull(rinna.workflow());
+        assertNotNull(rinna.releases());
     }
     
     @Test
@@ -40,13 +43,15 @@ public class RinnaTest {
         // Create mock services
         ItemService mockItemService = new MockItemService();
         WorkflowService mockWorkflowService = new MockWorkflowService();
+        ReleaseService mockReleaseService = new MockReleaseService();
         
         // Create a Rinna instance with the mock services
-        Rinna rinna = new Rinna(mockItemService, mockWorkflowService);
+        Rinna rinna = new Rinna(mockItemService, mockWorkflowService, mockReleaseService);
         
         // Verify that the services are the ones we provided
         assertSame(mockItemService, rinna.items());
         assertSame(mockWorkflowService, rinna.workflow());
+        assertSame(mockReleaseService, rinna.releases());
     }
     
     /**
@@ -111,6 +116,66 @@ public class RinnaTest {
         
         @Override
         public java.util.List<org.rinna.domain.entity.WorkflowState> getAvailableTransitions(java.util.UUID itemId) {
+            return java.util.List.of();
+        }
+    }
+    
+    /**
+     * Mock implementation of ReleaseService for testing.
+     */
+    private static class MockReleaseService implements ReleaseService {
+        @Override
+        public Release createRelease(String version, String description) {
+            return null;
+        }
+        
+        @Override
+        public Release createNextMinorVersion(java.util.UUID releaseId, String description) {
+            return null;
+        }
+        
+        @Override
+        public Release createNextPatchVersion(java.util.UUID releaseId, String description) {
+            return null;
+        }
+        
+        @Override
+        public Release createNextMajorVersion(java.util.UUID releaseId, String description) {
+            return null;
+        }
+        
+        @Override
+        public void addWorkItem(java.util.UUID releaseId, java.util.UUID workItemId) {
+            // No-op
+        }
+        
+        @Override
+        public void removeWorkItem(java.util.UUID releaseId, java.util.UUID workItemId) {
+            // No-op
+        }
+        
+        @Override
+        public boolean containsWorkItem(java.util.UUID releaseId, java.util.UUID workItemId) {
+            return false;
+        }
+        
+        @Override
+        public java.util.List<WorkItem> getWorkItems(java.util.UUID releaseId) {
+            return java.util.List.of();
+        }
+        
+        @Override
+        public java.util.Optional<Release> findById(java.util.UUID id) {
+            return java.util.Optional.empty();
+        }
+        
+        @Override
+        public java.util.Optional<Release> findByVersion(String version) {
+            return java.util.Optional.empty();
+        }
+        
+        @Override
+        public java.util.List<Release> findAll() {
             return java.util.List.of();
         }
     }

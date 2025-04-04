@@ -13,13 +13,36 @@ Rinna delivers explicit workflow tracking, release management, and development c
 - **Versioning**: Enforced semantic versioning (major.minor.patch)
 - **Lota**: Configurable development cycles with defined ceremonies
 
+## Architecture
+
+Rinna is built using Clean Architecture principles:
+
+- **Domain Layer**: Core business logic and entities
+- **Use Cases**: Application-specific business rules
+- **Adapters**: Interface with external systems
+- **Frameworks**: External dependencies and delivery mechanisms
+
+This architecture ensures:
+- Separation of concerns
+- Testability
+- Flexibility to change frameworks
+- Independence of business logic from technical details
+
+## Testing
+
+Rinna uses a comprehensive testing approach:
+
+- **Unit Tests**: Testing individual components
+- **BDD Tests**: Behavior-driven tests for verifying system behavior
+- **CI/CD**: Automated testing and deployment through GitHub Actions
+
 ## Integration
 
 ```xml
 <dependency>
     <groupId>org.rinna</groupId>
     <artifactId>rinna-core</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
@@ -29,6 +52,8 @@ Rinna delivers explicit workflow tracking, release management, and development c
 - [User Guide](docs/user-guide/README.md)
 - [Technical Specification](docs/technical-specification.md)
 - [Development Guide](docs/development/README.md)
+- [Testing Strategy](docs/development/testing.md)
+- [Architecture](docs/development/architecture.md)
 
 ## Requirements
 

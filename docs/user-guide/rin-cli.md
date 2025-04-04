@@ -18,10 +18,20 @@ For convenience, you can add the Rinna `bin` directory to your PATH or create a 
 
 | Command | Description |
 |---------|-------------|
+| **Developer Workflow Commands** |
+| `my-work` | Show all work items assigned to you |
+| `next-task` | Show what you should work on next (prioritized) |
+| `progress <id>` | Move an item to the next stage in your workflow |
+| `start <id>` | Start working on an item (assigns to you and moves to In Progress) |
+| `ready-for-test <id>` | Mark an item as ready for testing |
+| `done <id>` | Complete an item |
+| `my-history` | View your work history and statistics |
+| **Build Commands** |
 | `build` | Build the Rinna project |
 | `clean` | Clean build artifacts |
 | `test`  | Run tests |
 | `all`   | Run clean, build, and test (default if no command specified) |
+| **Version Commands** |
 | `version` | Version management (see below) |
 
 ### Version Management Commands
@@ -127,6 +137,30 @@ Tests completed with failures
 
 ## Usage Examples
 
+### Developer Workflow Examples
+
+```bash
+# Show all work items assigned to you
+rin my-work
+
+# Show what you should work on next
+rin next-task
+
+# Start working on a task
+rin start TASK-123
+
+# Mark a task as ready for testing
+rin ready-for-test TASK-123
+
+# Complete a task
+rin done TASK-123
+
+# View your work history and productivity
+rin my-history
+```
+
+### Build Examples
+
 ```bash
 # Build the project
 rin build
@@ -139,7 +173,11 @@ rin -e all
 
 # Run tests in a specific module
 cd rinna-core && ../bin/rin test
+```
 
+### Version Management Examples
+
+```bash
 # Check current version information
 rin version current
 
