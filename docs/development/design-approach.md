@@ -4,10 +4,11 @@ This document outlines our approach to designing and implementing Rinna based on
 
 ## Core Design Principles
 
-1. **Clarity**: All components, interfaces, and interactions must be explicitly defined and easily understood.
-2. **Usability**: The system should be intuitive to use with well-designed APIs.
-3. **Immutability**: Work items have unique, immutable identifiers and follow immutable data patterns.
-4. **Explicit Flow**: Workflow transitions are clearly defined and strictly enforced.
+1. **Developer-Centric**: Tools and workflows are optimized for the developer experience.
+2. **Clarity**: All components, interfaces, and interactions must be explicitly defined and easily understood.
+3. **Usability**: The system should be intuitive to use with well-designed APIs.
+4. **Immutability**: Work items have unique, immutable identifiers and follow immutable data patterns.
+5. **Explicit Flow**: Workflow transitions are clearly defined and strictly enforced.
 
 ## Implementation Approach
 
@@ -19,10 +20,12 @@ We're following the incremental feature-driven development approach from our eng
    - Work Item Types (Goal, Feature, Bug, Chore)
    - Workflow States (Found → Triaged → To Do → In Progress → In Test → Done)
    - Priority Levels
+   - Developer-centric attributes (assignee, effort estimation, tags)
 
 2. **Implement Core Services**
    - WorkflowService: Manage transitions between states
    - ItemService: CRUD operations for work items
+   - QueryService: Developer-focused work item filtering and reporting
 
 3. **Create In-Memory Storage Implementation**
    - Fast development and testing without external dependencies
@@ -99,9 +102,9 @@ Rinna follows a clean architecture approach:
 ## Next Steps
 
 1. Complete the core workflow state machine
-2. Implement release management service
-3. Add GitHub integration
-4. Develop CLI interface
-5. Implement SQLite persistence
+2. Enhance developer-focused query and filtering capabilities
+3. Develop CLI interface with developer-centric commands
+4. Add GitHub integration for seamless workflow management
+5. Implement SQLite persistence with efficient query support
 
 Each step follows TDD principles, with tests written before implementation.

@@ -33,9 +33,27 @@
             <testResource>
                 <directory>src/test/resources</directory>
                 <filtering>false</filtering>
+                <includes>
+                    <include>**/*.feature</include>
+                    <include>**/*.properties</include>
+                </includes>
             </testResource>
         </testResources>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-test-resources</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>testResources</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -72,9 +90,11 @@
                     <skip>false</skip>
                     <includes>
                         <include>**/*Test.java</include>
+                        <include>**/*Runner.java</include>
                     </includes>
                     <systemPropertyVariables>
                         <java.awt.headless>true</java.awt.headless>
+                        <cucumber.junit-platform.naming-strategy>long</cucumber.junit-platform.naming-strategy>
                     </systemPropertyVariables>
                     <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
                     <testSourceDirectory>${project.basedir}/src/test/java</testSourceDirectory>

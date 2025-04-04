@@ -15,15 +15,15 @@ import org.junit.platform.suite.api.SelectClasspathResource;
 import org.junit.platform.suite.api.Suite;
 
 /**
- * Test runner for workflow-related Cucumber BDD tests.
+ * Test runner for release-related Cucumber BDD tests.
  * This class configures the JUnit Platform to run Cucumber tests.
  */
 @Suite
 @IncludeEngines("cucumber")
-@SelectClasspathResource("features/workflow.feature")
+@SelectClasspathResource("features/release.feature")
 @ConfigurationParameter(key = Constants.GLUE_PROPERTY_NAME, value = "org.rinna.bdd")
 @ConfigurationParameter(key = Constants.PLUGIN_PROPERTY_NAME, value = "pretty")
-public class CucumberRunner {
+public class ReleaseRunner {
     // This class is intentionally empty.
     // Its purpose is to be a holder for JUnit Platform Cucumber Suite annotations.
 }

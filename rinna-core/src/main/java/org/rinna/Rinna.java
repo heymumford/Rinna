@@ -10,6 +10,7 @@ package org.rinna;
 
 import org.rinna.config.RinnaConfig;
 import org.rinna.domain.usecase.ItemService;
+import org.rinna.domain.usecase.ReleaseService;
 import org.rinna.domain.usecase.WorkflowService;
 
 /**
@@ -19,16 +20,19 @@ import org.rinna.domain.usecase.WorkflowService;
 public class Rinna {
     private final ItemService itemService;
     private final WorkflowService workflowService;
+    private final ReleaseService releaseService;
     
     /**
      * Constructs a new Rinna instance with the specified services.
      *
      * @param itemService the item service to use
      * @param workflowService the workflow service to use
+     * @param releaseService the release service to use
      */
-    public Rinna(ItemService itemService, WorkflowService workflowService) {
+    public Rinna(ItemService itemService, WorkflowService workflowService, ReleaseService releaseService) {
         this.itemService = itemService;
         this.workflowService = workflowService;
+        this.releaseService = releaseService;
     }
     
     /**
@@ -56,6 +60,15 @@ public class Rinna {
      */
     public static Rinna initialize() {
         RinnaConfig config = new RinnaConfig();
-        return new Rinna(config.getItemService(), config.getWorkflowService());
+        return new Rinna(config.getItemService(), config.getWorkflowService(), config.getReleaseService());
+    }
+    
+    /**
+     * Returns the release service.
+     *
+     * @return the release service
+     */
+    public ReleaseService releases() {
+        return releaseService;
     }
 }

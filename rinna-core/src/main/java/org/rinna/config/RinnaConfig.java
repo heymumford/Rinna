@@ -9,10 +9,14 @@
 package org.rinna.config;
 
 import org.rinna.adapter.persistence.InMemoryItemRepository;
+import org.rinna.adapter.persistence.InMemoryReleaseRepository;
 import org.rinna.adapter.service.DefaultItemService;
+import org.rinna.adapter.service.DefaultReleaseService;
 import org.rinna.adapter.service.DefaultWorkflowService;
 import org.rinna.domain.repository.ItemRepository;
+import org.rinna.domain.repository.ReleaseRepository;
 import org.rinna.domain.usecase.ItemService;
+import org.rinna.domain.usecase.ReleaseService;
 import org.rinna.domain.usecase.WorkflowService;
 
 /**
@@ -22,16 +26,20 @@ import org.rinna.domain.usecase.WorkflowService;
  */
 public class RinnaConfig {
     private ItemRepository itemRepository;
+    private ReleaseRepository releaseRepository;
     private ItemService itemService;
     private WorkflowService workflowService;
+    private ReleaseService releaseService;
     
     /**
      * Initializes the configuration with default components.
      */
     public RinnaConfig() {
         this.itemRepository = new InMemoryItemRepository();
+        this.releaseRepository = new InMemoryReleaseRepository();
         this.itemService = new DefaultItemService(itemRepository);
         this.workflowService = new DefaultWorkflowService(itemRepository);
+        this.releaseService = new DefaultReleaseService(releaseRepository, itemService);
     }
     
     /**
@@ -72,6 +80,7 @@ public class RinnaConfig {
         this.itemRepository = itemRepository;
         this.itemService = new DefaultItemService(itemRepository);
         this.workflowService = new DefaultWorkflowService(itemRepository);
+        this.releaseService = new DefaultReleaseService(releaseRepository, itemService);
         return this;
     }
     
@@ -94,6 +103,48 @@ public class RinnaConfig {
      */
     public RinnaConfig setWorkflowService(WorkflowService workflowService) {
         this.workflowService = workflowService;
+        return this;
+    }
+    
+    /**
+     * Returns the release repository.
+     * 
+     * @return the release repository
+     */
+    public ReleaseRepository getReleaseRepository() {
+        return releaseRepository;
+    }
+    
+    /**
+     * Sets a custom release repository.
+     * This will automatically update the releaseService to use the new repository.
+     * 
+     * @param releaseRepository the release repository
+     * @return this configuration
+     */
+    public RinnaConfig setReleaseRepository(ReleaseRepository releaseRepository) {
+        this.releaseRepository = releaseRepository;
+        this.releaseService = new DefaultReleaseService(releaseRepository, itemService);
+        return this;
+    }
+    
+    /**
+     * Returns the release service.
+     * 
+     * @return the release service
+     */
+    public ReleaseService getReleaseService() {
+        return releaseService;
+    }
+    
+    /**
+     * Sets a custom release service.
+     * 
+     * @param releaseService the release service
+     * @return this configuration
+     */
+    public RinnaConfig setReleaseService(ReleaseService releaseService) {
+        this.releaseService = releaseService;
         return this;
     }
 }
