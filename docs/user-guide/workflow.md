@@ -25,11 +25,28 @@ Items must progress through stages in sequential order. Explicit transitions inc
 
 ```bash
 # Move an item to the next stage
-rinna progress ITEM-1
+rin workflow progress ITEM-1
 
 # Set a specific status (must be valid transition)
-rinna update ITEM-1 --status "In Progress"
+rin workflow update ITEM-1 --status "In Progress"
 
 # View transition history
-rinna history ITEM-1
+rin workflow history ITEM-1
 ```
+
+## Using the CLI Tool
+
+The Rinna CLI tool (`rin`) provides different output modes for building and testing:
+
+```bash
+# Run tests with minimal output
+rin test
+
+# Build with detailed output
+rin -v build
+
+# Run the entire workflow showing only errors
+rin -e all
+```
+
+For more information on using the CLI tool, see [rin-cli.md](rin-cli.md) or run `rin --help`.

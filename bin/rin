@@ -1,0 +1,292 @@
+#!/usr/bin/env bash
+
+#
+# rin - Rinna CLI utility
+#
+# PURPOSE: Command-line utility to simplify building, cleaning, and running tests for Rinna
+# with configurable output verbosity levels.
+#
+# Copyright (c) 2025 Eric C. Mumford (@heymumford)
+# This file is subject to the terms and conditions defined in
+# the LICENSE file, which is part of this source code package.
+# (MIT License)
+#
+
+set -e
+
+# Default settings
+VERBOSE=0
+ERRORS_ONLY=0
+RUN_TESTS=0
+BUILD=0
+CLEAN=0
+TARGET_DIR="./target"
+RINNA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Get project-specific information
+function get_project_info {
+    local PROJECT_NAME="Rinna"
+    local RECENT_CHANGES=""
+    local MODULE_COUNT=0
+    local TEST_COUNT=0
+    local MAIN_MODULE="rinna-core"
+    
+    # Count modules
+    MODULE_COUNT=$(find . -maxdepth 1 -type d -name "*-*" | wc -l)
+    
+    # Count tests
+    TEST_COUNT=$(find . -path "*/src/test/java/*Test.java" | wc -l)
+    
+    # Check for recent changes
+    if git rev-parse --is-inside-work-tree &>/dev/null; then
+        RECENT_CHANGES=$(git diff --name-only HEAD | head -3 | tr '\n' ', ' | sed 's/,$//')
+        if [[ -z "$RECENT_CHANGES" ]]; then
+            RECENT_CHANGES="No recent changes"
+        else
+            RECENT_CHANGES="Recent changes: $RECENT_CHANGES"
+        fi
+    fi
+    
+    echo "$PROJECT_NAME:$MODULE_COUNT:$TEST_COUNT:$MAIN_MODULE:$RECENT_CHANGES"
+}
+
+# Help text
+function show_help {
+    # Get project info
+    local PROJECT_INFO=$(get_project_info)
+    local PROJECT_NAME=$(echo "$PROJECT_INFO" | cut -d':' -f1)
+    local MODULE_COUNT=$(echo "$PROJECT_INFO" | cut -d':' -f2)
+    local TEST_COUNT=$(echo "$PROJECT_INFO" | cut -d':' -f3)
+    local MAIN_MODULE=$(echo "$PROJECT_INFO" | cut -d':' -f4)
+    local RECENT_CHANGES=$(echo "$PROJECT_INFO" | cut -d':' -f5-)
+    
+    # Header
+    echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║                   ${NC}${GREEN}rin - $PROJECT_NAME CLI utility${NC}                ${BLUE}║${NC}"
+    echo -e "${BLUE}╚════════════════════════════════════════════════════════════╝${NC}"
+    echo
+    
+    # Project info
+    echo -e "${YELLOW}PROJECT INFORMATION${NC}"
+    echo -e "  ${BLUE}•${NC} Project modules: ${MODULE_COUNT}"
+    echo -e "  ${BLUE}•${NC} Test cases: ${TEST_COUNT}"
+    echo -e "  ${BLUE}•${NC} Main module: ${MAIN_MODULE}"
+    echo -e "  ${BLUE}•${NC} ${RECENT_CHANGES}"
+    echo
+    
+    # Usage
+    echo -e "${YELLOW}USAGE${NC}"
+    echo -e "  rin [options] [command]"
+    echo
+    
+    # Commands
+    echo -e "${YELLOW}COMMANDS${NC}"
+    echo -e "  ${GREEN}build${NC}     Build the project"
+    echo -e "  ${GREEN}clean${NC}     Clean the project"
+    echo -e "  ${GREEN}test${NC}      Run tests"
+    echo -e "  ${GREEN}all${NC}       Clean, build, and test (default if no command specified)"
+    echo
+    
+    # Options
+    echo -e "${YELLOW}OPTIONS${NC}"
+    echo -e "  ${GREEN}-v, --verbose${NC}    Show all output"
+    echo -e "  ${GREEN}-e, --errors${NC}     Show only errors and related output"
+    echo -e "  ${GREEN}-t, --terse${NC}      Show minimal output (default)"
+    echo -e "  ${GREEN}-h, --help${NC}       Show this help message"
+    echo
+    
+    # Examples
+    echo -e "${YELLOW}CONTEXTUAL EXAMPLES${NC}"
+    
+    # Basic examples
+    echo -e "  ${BLUE}# Run all tests with terse output${NC}"
+    echo -e "  rin test"
+    echo
+    
+    # Custom examples based on project structure
+    if [[ $MODULE_COUNT -gt 1 ]]; then
+        echo -e "  ${BLUE}# Clean and build the project with verbose output${NC}"
+        echo -e "  rin -v clean build"
+        echo
+    fi
+    
+    if [[ $TEST_COUNT -gt 0 ]]; then
+        echo -e "  ${BLUE}# Run tests and show only errors${NC}"
+        echo -e "  rin --errors test"
+        echo
+        
+        if [[ -n "$MAIN_MODULE" ]]; then
+            echo -e "  ${BLUE}# Run the full workflow on just the core module${NC}"
+            echo -e "  cd $MAIN_MODULE && ../bin/rin all"
+            echo
+        fi
+    fi
+    
+    # Full workflow example
+    echo -e "  ${BLUE}# Clean, build, and test the project${NC}"
+    echo -e "  rin all"
+    echo
+    
+    # How it helps
+    echo -e "${YELLOW}HOW IT HELPS${NC}"
+    echo -e "  ${BLUE}•${NC} ${GREEN}Terse mode${NC} shows minimal output with passing summaries and full errors"
+    echo -e "  ${BLUE}•${NC} ${GREEN}Verbose mode${NC} shows all build and test output"
+    echo -e "  ${BLUE}•${NC} ${GREEN}Errors mode${NC} shows only the errors and the steps that lead to them"
+    echo -e "  ${BLUE}•${NC} ${GREEN}Execution tracking${NC} shows how long each phase takes"
+    echo -e "  ${BLUE}•${NC} ${GREEN}Color-coded output${NC} makes success and failure patterns easy to spot"
+    echo
+}
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        build)
+            BUILD=1
+            shift
+            ;;
+        clean)
+            CLEAN=1
+            shift
+            ;;
+        test)
+            RUN_TESTS=1
+            shift
+            ;;
+        all)
+            CLEAN=1
+            BUILD=1
+            RUN_TESTS=1
+            shift
+            ;;
+        -v|--verbose)
+            VERBOSE=1
+            ERRORS_ONLY=0
+            shift
+            ;;
+        -e|--errors)
+            ERRORS_ONLY=1
+            VERBOSE=0
+            shift
+            ;;
+        -t|--terse)
+            VERBOSE=0
+            ERRORS_ONLY=0
+            shift
+            ;;
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+# If no commands specified, do everything
+if [[ $CLEAN -eq 0 && $BUILD -eq 0 && $RUN_TESTS -eq 0 ]]; then
+    CLEAN=1
+    BUILD=1
+    RUN_TESTS=1
+fi
+
+# Go to the Rinna directory
+cd "$RINNA_DIR"
+
+# Function to run a command with appropriate output based on verbosity
+function run_cmd {
+    local cmd="$1"
+    local description="$2"
+    local start_time=$(date +%s)
+    
+    echo -e "${BLUE}[$description]${NC}"
+    
+    if [[ $VERBOSE -eq 1 ]]; then
+        # Show all output
+        eval "$cmd"
+        EXIT_CODE=$?
+    elif [[ $ERRORS_ONLY -eq 1 ]]; then
+        # Capture output and only show on error
+        OUTPUT=$(eval "$cmd" 2>&1)
+        EXIT_CODE=$?
+        if [[ $EXIT_CODE -ne 0 ]]; then
+            echo -e "${RED}Error in $description:${NC}"
+            echo "$OUTPUT"
+        fi
+    else
+        # Terse mode - minimal output, show errors
+        # We pipe the output to a temporary file so we can still capture it
+        temp_output=$(mktemp)
+        eval "$cmd" > "$temp_output" 2>&1
+        EXIT_CODE=$?
+        
+        if [[ $EXIT_CODE -ne 0 ]]; then
+            echo -e "${RED}Error in $description:${NC}"
+            cat "$temp_output"
+        elif [[ $cmd == *"test"* ]]; then
+            # For test commands, show a summary even on success
+            grep -E "Tests run:|Running |FAILURE|ERROR" "$temp_output" || true
+        fi
+        
+        rm -f "$temp_output"
+    fi
+    
+    local end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+    
+    if [[ $EXIT_CODE -eq 0 ]]; then
+        echo -e "${GREEN}✓ $description completed successfully in ${duration}s${NC}"
+    else
+        echo -e "${RED}✗ $description failed in ${duration}s${NC}"
+        exit $EXIT_CODE
+    fi
+}
+
+# Clean if requested
+if [[ $CLEAN -eq 1 ]]; then
+    run_cmd "mvn clean" "Cleaning project"
+fi
+
+# Build if requested
+if [[ $BUILD -eq 1 ]]; then
+    run_cmd "mvn compile" "Building project"
+fi
+
+# Run tests if requested
+if [[ $RUN_TESTS -eq 1 ]]; then
+    if [[ $VERBOSE -eq 1 ]]; then
+        run_cmd "mvn test" "Running tests"
+    elif [[ $ERRORS_ONLY -eq 1 ]]; then
+        run_cmd "mvn -q test" "Running tests"
+    else
+        # Terse mode - show minimal output
+        run_cmd "mvn test" "Running tests"
+    fi
+    
+    # Show test summary regardless of verbosity
+    if [[ -d target/surefire-reports || -d rinna-core/target/surefire-reports ]]; then
+        echo -e "${BLUE}[Test Summary]${NC}"
+        find . -path "*/surefire-reports/TEST-*.xml" -type f -exec grep -l "<failure" {} \; | while read file; do
+            TEST_NAME=$(basename "$file" | sed 's/TEST-//' | sed 's/\.xml//')
+            echo -e "${RED}FAILED: $TEST_NAME${NC}"
+        done
+        
+        # Show test counts
+        total_tests=$(find . -path "*/surefire-reports/TEST-*.xml" -type f | wc -l)
+        failed_tests=$(find . -path "*/surefire-reports/TEST-*.xml" -type f -exec grep -l "<failure" {} \; | wc -l)
+        passed_tests=$((total_tests - failed_tests))
+        
+        echo -e "${GREEN}Tests passed: $passed_tests${NC}, ${RED}Tests failed: $failed_tests${NC}, Total: $total_tests"
+    fi
+fi
+
+echo -e "${GREEN}All operations completed successfully!${NC}"

@@ -12,6 +12,21 @@ Add Rinna to your project using Maven:
 </dependency>
 ```
 
+## Building and Testing
+
+Use the Rinna CLI tool for simplified build and test operations:
+
+```bash
+# Clean and build the project
+rin clean build
+
+# Run tests with verbose output
+rin -v test
+
+# Full workflow with errors-only output
+rin -e all
+```
+
 ## Basic Integration
 
 ```java

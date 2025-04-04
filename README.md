@@ -35,6 +35,24 @@ Rinna delivers explicit workflow tracking, release management, and development c
 - Java 11+
 - Maven 3.6+
 
+## Development
+
+Use the Rinna CLI tool for simplified build and test management:
+
+```bash
+# Show help and usage information
+bin/rin --help
+
+# Clean, build, and test with default output
+bin/rin all
+
+# Run tests with verbose output
+bin/rin -v test
+
+# Build with errors-only output
+bin/rin -e build
+```
+
 ## License
 
 MIT
