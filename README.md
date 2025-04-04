@@ -25,24 +25,19 @@ Java, project management, workflow automation
 
 </div>
 
-## Table of Contents
+<div align="center">
 
-- [What Is Rinna?](#what-is-rinna)
-- [The Problem](#the-problem)
-- [Rinna's Solution](#rinnas-solution)
-- [Work Model](#work-model)
-- [Core Features](#core-features)
-- [Example Usage](#example-usage)
-- [Installation](#installation)
-- [Maven Integration](#maven-integration)
-- [Requirements](#requirements)
-- [Documentation](#documentation)
-- [Contributing](#contributing)
-- [License](#license)
-- [Comparison with Alternatives](#comparison-with-alternatives)
-- [Frequently Asked Questions](#frequently-asked-questions)
-- [Related Projects](#related-projects)
-- [Contact](#contact)
+## Quick Navigation
+
+| **Project Overview** | **Using Rinna** | **Reference** | **Community** |
+|:-------------------:|:---------------:|:-------------:|:-------------:|
+| [What Is Rinna?](#what-is-rinna) | [Example Usage](#example-usage) | [Documentation](#documentation) | [Contributing](#contributing) |
+| [The Problem](#the-problem) | [Installation](#installation) | [Requirements](#requirements) | [License](#license) |
+| [Rinna's Solution](#rinnas-solution) | [Maven Integration](#maven-integration) | [Alternatives](#comparison-with-alternatives) | [Related Projects](#related-projects) |
+| [Work Model](#work-model) | | [FAQ](#frequently-asked-questions) | [Contact](#contact) |
+| [Core Features](#core-features) | | | |
+
+</div>
 
 ## What Is Rinna?
 
