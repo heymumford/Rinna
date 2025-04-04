@@ -15,6 +15,12 @@ Located in `config/spotbugs/`:
 
 - `spotbugs-exclude.xml` - Configuration for excluding certain bug patterns or specific classes from SpotBugs analysis
 
+## SonarQube
+
+Located in `config/sonar/`:
+
+- `sonar-project.properties` - Configuration for SonarQube code quality analysis, including source paths and exclusion patterns
+
 ## Maven Integration
 
 These configuration files are referenced in the root `pom.xml` file and are used during the build process:
