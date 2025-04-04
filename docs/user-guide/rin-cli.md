@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford], Gemini Deep Research, Claude 3.7. -->
+
 # Rinna CLI Tool
 
 The `rin` command-line tool simplifies building, testing, and running Rinna with different verbosity levels. It uses the Maven wrapper to ensure consistent builds across different environments without requiring a specific Maven installation.

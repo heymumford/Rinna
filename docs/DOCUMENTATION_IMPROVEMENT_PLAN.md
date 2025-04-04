@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford], Gemini Deep Research, Claude 3.7. -->
+
 # Documentation Improvement Plan
 
 Based on our documentation review, this plan outlines specific actions to improve Rinna's documentation structure, flow, and conceptual completeness.

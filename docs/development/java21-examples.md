@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford], Gemini Deep Research, Claude 3.7. -->
+
 # Java 21 Code Examples for Rinna
 
 This document provides practical examples of how Java 21 features can be applied within Rinna's codebase.
@@ -187,7 +189,8 @@ public class WorkflowReportGenerator {
             .sorted(Comparator.comparing(WorkItem::getUpdatedAt).reversed())
             .limit(5)
             .map(item -> STR."- \{item.getTitle()} [Completed on \{formatDate(item.getUpdatedAt())}]")
-            .collect(Collectors.joining("\n"));
+            .collect(Collectors.joining("
+"));
     }
     
     private String formatHighPriorityItems(List<WorkItem> items) {
@@ -195,7 +198,8 @@ public class WorkflowReportGenerator {
             .filter(item -> item.getPriority() == Priority.HIGH)
             .filter(item -> item.getStatus() != WorkflowState.DONE)
             .map(item -> STR."- \{item.getTitle()} [\{item.getStatus()}]")
-            .collect(Collectors.joining("\n"));
+            .collect(Collectors.joining("
+"));
     }
     
     private String formatDate(Instant instant) {

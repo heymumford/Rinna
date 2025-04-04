@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford], Gemini Deep Research, Claude 3.7. -->
+
 # Package Refactoring Guide
 
 This document describes the process of refactoring the Rinna package structure from `com.rinna` to `org.rinna` and changing the Maven group ID from `org.samstraumr` to `org.rinna`.
