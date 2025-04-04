@@ -280,4 +280,23 @@
             </plugin>
         </plugins>
     </reporting>
+    
+    <!-- GitHub Packages Repository -->
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/${github.owner}/${github.repo}</url>
+        </repository>
+    </distributionManagement>
+    
+    <profiles>
+        <profile>
+            <id>github</id>
+            <properties>
+                <github.owner>heymumford</github.owner>
+                <github.repo>rinna</github.repo>
+            </properties>
+        </profile>
+    </profiles>
 </project>

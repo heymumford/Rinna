@@ -4,10 +4,10 @@ The `rin` command-line tool simplifies building, testing, and running Rinna with
 
 ## Installation
 
-The `rin` CLI tool is located in the `bin` directory of your Rinna installation. Make sure the script is executable:
+The `rin` CLI tool is located in the `bin` directory of your Rinna installation. Make sure the scripts are executable:
 
 ```bash
-chmod +x bin/rin
+chmod +x bin/rin bin/rin-version
 ```
 
 For convenience, you can add the Rinna `bin` directory to your PATH or create a symlink to the script in a directory that's already in your PATH.
@@ -22,6 +22,28 @@ For convenience, you can add the Rinna `bin` directory to your PATH or create a 
 | `clean` | Clean build artifacts |
 | `test`  | Run tests |
 | `all`   | Run clean, build, and test (default if no command specified) |
+| `version` | Version management (see below) |
+
+### Version Management Commands
+
+The `version` command provides a set of subcommands for managing versions across the project:
+
+| Subcommand | Description |
+|------------|-------------|
+| `current` | Display current version information |
+| `major` | Bump major version (X.0.0) |
+| `minor` | Bump minor version (0.X.0) |
+| `patch` | Bump patch version (0.0.X) |
+| `set <version>` | Set to a specific version (e.g., 1.2.3) |
+| `release` | Create a GitHub release from the current version |
+| `tag` | Create a git tag for the current version |
+
+#### Version Command Options
+
+| Option | Description |
+|--------|-------------|
+| `-m, --message <msg>` | Specify a custom message for commits, tags, or releases |
+| `-d, --dry-run` | Show what would happen without making changes |
 
 ## Verbosity Options
 
@@ -129,6 +151,36 @@ rin -e all
 
 ```bash
 cd rinna-core && ../bin/rin test
+```
+
+### Check current version information
+
+```bash
+rin version current
+```
+
+### Bump minor version (e.g., 1.0.0 → 1.1.0)
+
+```bash
+rin version minor
+```
+
+### Set a specific version with custom message
+
+```bash
+rin version set 2.0.0 -m "Major release with workflow improvements"
+```
+
+### Create a tag for the current version
+
+```bash
+rin version tag -m "Release version 1.2.3"
+```
+
+### Create a GitHub release with automatic publishing to GitHub Packages
+
+```bash
+rin version release
 ```
 
 ## Benefits
