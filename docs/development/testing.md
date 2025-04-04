@@ -1,22 +1,139 @@
 <!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford], Gemini Deep Research, Claude 3.7. -->
 
-# Testing Strategy
+# Rinna Testing Guide
 
-## Overview
+This document outlines the testing approach, tools, and best practices for the Rinna workflow management system.
 
-Rinna follows a comprehensive testing approach to ensure all components work as expected and maintain compatibility. Rinna employs both unit tests and BDD tests to ensure correct behavior at multiple levels.
+## Table of Contents
 
-## Test Levels
+- [Testing Philosophy](#testing-philosophy)
+- [Test Infrastructure](#test-infrastructure)
+- [Running Tests](#running-tests)
+- [Unit Testing](#unit-testing)
+- [BDD Testing](#bdd-testing)
+- [TDD Development](#tdd-development)
+- [Test Coverage](#test-coverage)
+- [Adding New Tests](#adding-new-tests)
 
-### System Tests: BDD with Cucumber
+## Testing Philosophy
 
-Rinna uses Cucumber for Behavior-Driven Development (BDD) testing. These tests are written in Gherkin syntax and located in `src/test/resources/features/`.
+Rinna follows a comprehensive testing approach that combines:
 
-There are two main feature files:
-- `workflow.feature`: Tests for the workflow management functionality
-- `release.feature`: Tests for the release management functionality
+1. **Test-Driven Development (TDD)** for core domain logic
+2. **Behavior-Driven Development (BDD)** for user-facing features
+3. **Clean Architecture Testing** for ensuring adherence to architectural principles
 
-The BDD tests have been refactored to follow Clean Architecture principles:
+Tests are considered first-class citizens in the codebase and are treated with the same care and quality standards as production code.
+
+## Test Infrastructure
+
+The test infrastructure is built on:
+
+- **JUnit 5 (Jupiter)** for unit testing
+- **Cucumber JVM** for BDD testing
+- **Mockito** for mocking dependencies in isolation tests
+- **AssertJ** for fluent assertions
+- **JaCoCo** for code coverage reporting
+
+Key test infrastructure components:
+
+- `TestHelper.java` - Utility for setting up test scenarios
+- `TddTest.java` - Base class for TDD-style development
+- `BDD Runners` - Cucumber test runners for different feature sets
+- `TestContext.java` - Context management for BDD tests
+- Custom test scripts for running different test suites
+
+## Running Tests
+
+### All Tests
+
+Run all tests with:
+
+```bash
+./bin/rin test
+```
+
+### Unit Tests
+
+Run unit tests with:
+
+```bash
+./bin/rin test unit
+# or
+./bin/run-unit-tests.sh
+```
+
+For more targeted unit test execution:
+
+```bash
+# Run a specific test class
+./bin/run-unit-tests.sh --test=DefaultWorkItemTest
+
+# Run with coverage report
+./bin/run-unit-tests.sh --coverage
+
+# Continuously run tests when code changes (requires inotify-tools)
+./bin/run-unit-tests.sh --watch
+```
+
+### BDD Tests
+
+Run BDD tests with:
+
+```bash
+./bin/rin test bdd
+# or
+./bin/run-bdd-tests.sh
+```
+
+For more targeted BDD test execution:
+
+```bash
+# Run workflow feature tests only
+./bin/run-bdd-tests.sh workflow
+
+# Run release feature tests only
+./bin/run-bdd-tests.sh release
+
+# Run with debug output
+./bin/run-bdd-tests.sh --debug
+
+# Stop at first failure
+./bin/run-bdd-tests.sh --fail-fast
+```
+
+## Unit Testing
+
+Unit tests are organized in the following structure:
+
+- `/rinna-core/src/test/java/org/rinna/*.java` - Core system tests
+- `/rinna-core/src/test/java/org/rinna/domain/**/*.java` - Domain layer tests
+- `/rinna-core/src/test/java/org/rinna/service/**/*.java` - Service layer tests
+
+### Unit Test Best Practices
+
+1. **One Assert Per Test**: Focus each test on one specific behavior
+2. **Descriptive Test Names**: Use explicit names that describe the behavior being tested
+3. **Use Test Helpers**: Leverage the `TestHelper` and `TddTest` base classes
+4. **Isolation**: Tests should not depend on other tests or external systems
+5. **Fast Execution**: Unit tests should execute quickly (<100ms per test)
+
+## BDD Testing
+
+BDD tests are written in Gherkin syntax and organized as follows:
+
+- `/rinna-core/src/test/resources/features/*.feature` - Feature files
+- `/rinna-core/src/test/java/org/rinna/bdd/*.java` - Step definitions
+
+### BDD Test Best Practices
+
+1. **Business Language**: Use domain-specific language that business stakeholders understand
+2. **Focus on Behavior**: Test from the user's perspective
+3. **Reusable Steps**: Create reusable step definitions
+4. **Context Management**: Use the `TestContext` class to share state between steps
+5. **Tagged Tests**: Use tags to organize tests (@Release, @Workflow, etc.)
+
+Example feature:
 
 ```gherkin
 Feature: Workflow management
@@ -25,94 +142,72 @@ Feature: Workflow management
   We need explicit workflow enforcement
 
   Scenario: Creating a new Bug item
-    Given the Rinna system is initialized
     When the developer creates a new Bug with title "Login fails"
     Then the Bug should exist with status "FOUND" and priority "MEDIUM"
-
-  Scenario: Valid workflow transition
-    Given a work item in "FOUND" state
-    When I transition the work item to "TRIAGED" state
-    Then the transition should succeed
-    And the work item should be in "TRIAGED" state
-
-  Scenario: Invalid transition
-    Given a work item in "FOUND" state
-    When I transition the work item to "IN_PROGRESS" state
-    Then the transition should fail
 ```
 
-To run the BDD tests, use one of the following commands:
+## TDD Development
+
+Rinna encourages Test-Driven Development for all new features. The workflow is:
+
+1. **RED**: Write a failing test that defines the expected behavior
+2. **GREEN**: Write the minimal code necessary to make the test pass
+3. **REFACTOR**: Clean up the code while ensuring tests still pass
+
+The `TddTest` base class provides utilities to simplify TDD development.
+
+Example TDD test:
+
+```java
+@DisplayName("Item queries")
+class ItemQueryTest extends TddTest {
+
+    @Test
+    @DisplayName("should filter items by status")
+    void shouldFilterItemsByStatus() {
+        // Arrange
+        createSampleWorkItem("Item 1");
+        WorkItem item2 = createSampleWorkItem("Item 2");
+        transitionToState(item2, WorkflowState.TRIAGED);
+        
+        // Act
+        List<WorkItem> foundItems = itemService.findByStatus(WorkflowState.FOUND);
+        List<WorkItem> triagedItems = itemService.findByStatus(WorkflowState.TRIAGED);
+        
+        // Assert
+        assertEquals(1, foundItems.size());
+        assertEquals("Item 1", foundItems.get(0).getTitle());
+        assertEquals(1, triagedItems.size());
+        assertEquals("Item 2", triagedItems.get(0).getTitle());
+    }
+}
+```
+
+## Test Coverage
+
+Code coverage is measured using JaCoCo and can be generated with:
 
 ```bash
-# Run all tests
-mvn test
-
-# Run just the workflow tests
-mvn -Dtest=CucumberRunner test
-
-# Run just the release tests
-mvn -Dtest=ReleaseRunner test
+./bin/run-unit-tests.sh --coverage
 ```
 
-### Unit Tests
+The coverage report is available at `rinna-core/target/site/jacoco/index.html`.
 
-Unit tests cover individual classes and methods. Rinna uses JUnit 5 (Jupiter) for unit testing.
+Coverage goals:
+- Line coverage: 90%+
+- Branch coverage: 80%+
 
-```bash
-# Run all unit tests
-mvn test
+## Adding New Tests
 
-# Run specific test class
-mvn -Dtest=ClassNameTest test
-```
+### Adding a New Unit Test
 
-## Test Architecture
+1. Create a new test class that extends `TddTest` or use `TestHelper` directly
+2. Write test methods using JUnit 5 annotations (@Test, @DisplayName, etc.)
+3. Run the tests with `./bin/run-unit-tests.sh`
 
-The BDD tests are structured to align with Clean Architecture principles:
+### Adding a New BDD Test
 
-1. **Feature files**: Located in `src/test/resources/features/`
-2. **Step definitions**: Located in `org.rinna.bdd` package
-3. **TestContext**: For sharing test state between steps
-4. **Test runners**: For configuring and running Cucumber tests
-
-Unit tests are located in the same package as the code they test, following standard Java package structure.
-
-## Code Coverage
-
-Rinna maintains high test coverage requirements using JaCoCo:
-
-- Core domain logic: >90% coverage
-- Services: >85% coverage 
-- Overall: >80% coverage
-
-To generate a coverage report:
-
-```bash
-mvn verify
-```
-
-The report will be available in `target/site/jacoco/index.html`.
-
-## Running Tests
-
-```bash
-# Compile and run all tests
-mvn clean test
-
-# Run BDD tests only
-mvn -Dtest=CucumberRunner,ReleaseRunner test
-
-# Run unit tests only
-mvn -Dtest="*Test" test
-
-# Generate test coverage report
-mvn jacoco:report
-```
-
-## Writing BDD Tests
-
-1. Add scenarios to the appropriate feature file using Gherkin syntax
-2. Implement step definitions in `WorkflowSteps.java` or `ReleaseSteps.java`
-3. Run the tests to verify the behavior
-
-The test context (`TestContext.java`) allows for sharing state between steps.
+1. Add a new scenario to an existing feature file or create a new .feature file
+2. Implement step definitions in an existing step class or create a new one
+3. Update the appropriate Cucumber runner if necessary
+4. Run the tests with `./bin/run-bdd-tests.sh`
