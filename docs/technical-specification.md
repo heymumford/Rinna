@@ -28,6 +28,8 @@ The software items managed by Rinna flow through the following explicitly define
 Found → Triaged → To Do → In Progress → In Test → Done
 ```
 
+Can you customize the workflow? No, you can't. [That's the point](user-guide/workflow-philosophy.md).
+
 ## Release Management
 
 While Rinna provides a clean interface for release management, this is not the primary focus. The system prioritizes work item management from the developer's perspective, with release management maintained as a future integration point. When fully implemented, Rinna will enforce semantic versioning (`major.minor.patch`), limiting patch releases to a maximum of 999 per minor release to encourage disciplined incremental improvements.

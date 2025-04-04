@@ -11,6 +11,8 @@ Rinna manages work through the following explicit stages optimized for developer
 5. **In Test**: Under verification with automated or manual testing
 6. **Done**: Completed and ready for deployment
 
+Can you customize the workflow? No, you can't. [That's the point](workflow-philosophy.md).
+
 ## Developer-Optimized Stage Transitions
 
 Items progress through stages in sequential order, matching developer workflow:
