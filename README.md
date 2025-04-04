@@ -1,46 +1,12 @@
 <!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford], Gemini Deep Research, Claude 3.7. -->
-<!-- 
-SEO META DESCRIPTION
-Rinna is a developer-centric workflow management system for software engineers who want less process overhead 
-and more productivity. Designed as a lightweight alternative to heavyweight enterprise tools.
-KEYWORDS: workflow management, developer tools, task tracking, agile development, software development process, CLI tool
--->
 
-<!-- JSON-LD for structured data - helps search engines understand the project -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "SoftwareSourceCode",
-  "name": "Rinna",
-  "alternateName": "Rinna Workflow Management",
-  "description": "A developer-centric workflow management system designed for software engineers who want to focus on coding, not on managing tools.",
-  "author": {
-    "@type": "Person",
-    "name": "Eric C. Mumford",
-    "url": "https://github.com/heymumford"
-  },
-  "programmingLanguage": {
-    "@type": "ComputerLanguage",
-    "name": "Java",
-    "version": "21"
-  },
-  "codeRepository": "https://github.com/heymumford/Rinna",
-  "license": "https://opensource.org/licenses/MIT",
-  "keywords": [
-    "workflow management",
-    "developer tools",
-    "task tracking",
-    "agile development",
-    "software development",
-    "CLI tool",
-    "Java",
-    "project management",
-    "workflow automation"
-  ],
-  "applicationCategory": "DeveloperApplication",
-  "operatingSystem": ["Linux", "Windows", "macOS"]
-}
-</script>
+<!--
+Rinna: A developer-centric workflow management system for software engineers who want less process overhead 
+and more productivity. Designed as a lightweight alternative to heavyweight enterprise tools.
+
+Keywords: workflow management, developer tools, task tracking, agile development, software development process, CLI tool, 
+Java, project management, workflow automation
+-->
 
 # Rinna: Developer-Centric Workflow Management for Software Engineers
 
@@ -48,7 +14,7 @@ KEYWORDS: workflow management, developer tools, task tracking, agile development
 
 ![Rinna Workflow Management System](https://via.placeholder.com/800x200?text=Rinna%20Workflow%20Management)
 
-*A streamlined task management CLI designed for developers who code, not for managers who report.*
+*A streamlined task management CLI (Command-Line Interface) designed for developers who code, not for managers who report.*
 
 [![Build Status](https://img.shields.io/badge/build-failing-red.svg)](https://github.com/heymumford/Rinna/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
@@ -103,7 +69,7 @@ We've [seen the problems](docs/user-guide/README.md) with existing tools and bui
 
 Rinna embodies a fundamentally different approach:
 
-- **Lives Where Developers Work**: [Terminal-first interface](docs/user-guide/rin-cli.md) that integrates with [git workflows](docs/user-guide/workflow.md) and IDEs
+- **Lives Where Developers Work**: [Terminal-first interface](docs/user-guide/rin-CLI.md) that integrates with [git workflows](docs/user-guide/workflow.md) and IDEs
 - **Zero-Friction Philosophy**: Never adds more process than [absolutely necessary](docs/technical-specification.md#core-philosophy)
 - **Developer-Owned**: Complete workflow control by the [people doing the work](docs/development/design-approach.md)
 - **Clear Visibility**: Simple, unambiguous [work item tracking](docs/user-guide/lota.md) without the noise
@@ -127,8 +93,8 @@ Can you customize the workflow? No, you can't. [That's the point](docs/user-guid
 
 ## Core Features
 
-- **Terminal-First Interface**: Work directly from your [development environment](docs/user-guide/rin-cli.md)
-- **Git Integration**: Update work status through [commit messages](docs/user-guide/api-integration.md) and branches
+- **Terminal-First Interface**: Work directly from your [development environment](docs/user-guide/rin-CLI.md)
+- **Git Integration**: Update work status through [commit messages](docs/user-guide/API-integration.md) and branches
 - **Self-Contained**: [Lightweight SQLite storage](docs/development/architecture.md#module-structure) with no external dependencies
 - **Clean API**: [Modular Java design](docs/development/architecture.md) with clear interfaces
 - **Language-Agnostic**: [Core concepts](docs/technical-specification.md) apply regardless of programming language
@@ -146,7 +112,7 @@ bin/rin workflow move ITEM-123 in-progress
 bin/rin items list --state in-progress --assignee @me
 ```
 
-[See full CLI reference](docs/user-guide/rin-cli.md)
+[See full CLI (Command-Line Interface) reference](docs/user-guide/rin-CLI.md)
 
 ## Documentation
 
@@ -200,7 +166,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 | Primary focus | Developer experience | Management reporting | Issue tracking | Project management |
 | Workflow customization | No (intentionally) | Extensive | Limited | Moderate |
 | Integration with Git | Native | Plugin | Native | Plugin |
-| CLI interface | Yes | No | Limited | No |
+| CLI (Command-Line Interface) | Yes | No | Limited | No |
 | Terminal-based | Yes | No | No | No |
 | Enterprise mapping | Yes | N/A | Limited | Limited |
 | Ceremony level | Minimal | Extensive | Moderate | Moderate |
@@ -243,3 +209,38 @@ For questions or feedback, please [open an issue](https://github.com/heymumford/
 [![Tweet this project](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fgithub.com%2Fheymumford%2FRinna)](https://twitter.com/intent/tweet?text=Check%20out%20Rinna:%20A%20developer-centric%20workflow%20management%20system%20by%20@heymumford&url=https://github.com/heymumford/Rinna)
 
 </div>
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  "name": "Rinna",
+  "alternateName": "Rinna Workflow Management",
+  "description": "A developer-centric workflow management system designed for software engineers who want to focus on coding, not on managing tools.",
+  "author": {
+    "@type": "Person",
+    "name": "Eric C. Mumford",
+    "url": "https://github.com/heymumford"
+  },
+  "programmingLanguage": {
+    "@type": "ComputerLanguage",
+    "name": "Java",
+    "version": "21"
+  },
+  "codeRepository": "https://github.com/heymumford/Rinna",
+  "license": "https://opensource.org/licenses/MIT",
+  "keywords": [
+    "workflow management",
+    "developer tools",
+    "task tracking",
+    "agile development",
+    "software development",
+    "CLI tool",
+    "Java",
+    "project management",
+    "workflow automation"
+  ],
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": ["Linux", "Windows", "macOS"]
+}
+```
