@@ -257,6 +257,13 @@
                 <version>3.21.0</version>
                 <configuration>
                     <skip>true</skip> <!-- Skip PMD during TDD phase -->
+                    <targetJdk>${java.version}</targetJdk>
+                    <printFailingErrors>true</printFailingErrors>
+                    <linkXRef>false</linkXRef>
+                    <rulesets>
+                        <ruleset>/category/java/bestpractices.xml</ruleset>
+                        <ruleset>/category/java/errorprone.xml</ruleset>
+                    </rulesets>
                 </configuration>
                 <dependencies>
                     <dependency>
@@ -270,15 +277,6 @@
                         <version>${pmd.version}</version>
                     </dependency>
                 </dependencies>
-                <configuration>
-                    <targetJdk>${java.version}</targetJdk>
-                    <printFailingErrors>true</printFailingErrors>
-                    <linkXRef>false</linkXRef>
-                    <rulesets>
-                        <ruleset>/category/java/bestpractices.xml</ruleset>
-                        <ruleset>/category/java/errorprone.xml</ruleset>
-                    </rulesets>
-                </configuration>
                 <executions>
                     <execution>
                         <phase>verify</phase>
