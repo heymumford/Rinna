@@ -11,6 +11,8 @@ Rinna is a developer-centric workflow management system explicitly designed for 
 
 **Rinna isn't trying to replace enterprise tools – it exists to make workflow management work _for_ developers rather than the other way around.**
 
+> Rinna is like a clean moist sponge being run across a chaos of flour and sugar and dough after a weekend afternoon of making cookies with children. Project planning is inherently messy and the intention is always to produce predictable results -- but you can't leave the kitchen a wreck. Stop forcing your team into new SDLCs and paying for a space shuttle of a software management solution when all you need is a sport compact car to get around.
+
 ### The Problem
 
 Traditional project/workflow management tools:
