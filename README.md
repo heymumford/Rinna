@@ -1,21 +1,34 @@
 # Rinna
 
-A streamlined, modular, open-source software system for workflow and release management.
+Streamlined workflow management for self-driven engineering teams.
 
-## Overview
+## Purpose
 
-Rinna provides intentionally selected features that transparently manage software development work, with careful consideration toward refined integration and intuitive user experience.
+Rinna delivers explicit workflow tracking, release management, and development cycle management with intentional clarity and minimum overhead.
 
-## Core Features
+## Core Elements
 
-- **Work Item Management**: Goals, Features, Bugs, and Chores
-- **Explicit Workflow**: Clear, defined stages from Found to Done
-- **Release Management**: Semantic versioning with enforced rules
-- **Lota Management**: Team-defined development cycles
+- **Work Items**: Goals → Features → Bugs/Chores
+- **Workflow**: Found → Triaged → To Do → In Progress → In Test → Done
+- **Versioning**: Enforced semantic versioning (major.minor.patch)
+- **Lota**: Configurable development cycles with defined ceremonies
 
-## Getting Started
+## Integration
 
-See the [documentation](docs/README.md) for installation and usage instructions.
+```xml
+<dependency>
+    <groupId>org.samstraumr</groupId>
+    <artifactId>rinna-core</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
+## Documentation
+
+- [Getting Started](docs/getting-started/README.md)
+- [User Guide](docs/user-guide/README.md)
+- [Technical Specification](docs/technical-specification.md)
+- [Developer Guide](docs/development/README.md)
 
 ## Requirements
 
