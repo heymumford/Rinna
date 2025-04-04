@@ -21,14 +21,40 @@ For our overall implementation approach and design decisions, see:
 
 ```bash
 # Clone the repository
-git clone https://github.com/samstraumr/rinna.git
+git clone https://github.com/heymumford/rinna.git
 
 # Build the project
 cd rinna
-mvn clean install
+./mvnw clean install
 
-# Run tests
-mvn test
+# Make scripts executable
+chmod +x bin/rin bin/rin-version
+```
+
+## Code Style Guidelines
+
+- **Java**: Follow Oracle Java style guide
+- **Naming**: CamelCase for classes, lowerCamelCase for methods/variables
+- **Imports**: Group and order: java.*, javax.*, org.*, com.*
+- **Formatting**: 4-space indentation, 100 char line limit
+- **Error Handling**: Use explicit exceptions with meaningful messages
+- **Types**: Prefer immutable objects, use interfaces for declarations
+- **Documentation**: JavaDoc for all public methods and classes
+- **Testing**: BDD tests for high-level features, JUnit for unit tests
+
+## Development Workflow
+
+Use the Rinna CLI tool for simplified build and test management:
+
+```bash
+# Clean, build, and test the project
+bin/rin all
+
+# Run tests with verbose output
+bin/rin -v test
+
+# Build with errors-only output
+bin/rin -e build
 ```
 
 ## Adding Features
@@ -42,10 +68,25 @@ mvn test
 
 ## Testing
 
-```bash
-# Run unit tests
-mvn test
+We use both JUnit and Cucumber for testing:
 
-# Run Cucumber tests
-cucumber features/
+```bash
+# Run all tests
+bin/rin test
+
+# Run tests with full output
+bin/rin -v test
 ```
+
+## Contributing
+
+Before submitting your code:
+
+1. Ensure all tests pass
+2. Verify code follows the style guidelines
+3. Run static analysis tools
+   ```bash
+   ./mvnw verify
+   ```
+4. Add appropriate documentation
+5. Create a detailed pull request
