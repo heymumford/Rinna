@@ -62,6 +62,7 @@ engineering_spec_v0.3.md
 **/Demo.java
 **/DemoApp.java
 **/Test.java
+/tmp/
 
 # Build and test artifacts
 /bin/run-build.sh
