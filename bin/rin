@@ -30,133 +30,38 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Get project-specific information
-function get_project_info {
-    local PROJECT_NAME="Rinna"
-    local RECENT_CHANGES=""
-    local MODULE_COUNT=0
-    local TEST_COUNT=0
-    local MAIN_MODULE="rinna-core"
-    
-    # Count modules
-    MODULE_COUNT=$(find . -maxdepth 1 -type d -name "*-*" | wc -l)
-    
-    # Count tests
-    TEST_COUNT=$(find . -path "*/src/test/java/*Test.java" | wc -l)
-    
-    # Check for recent changes
-    if git rev-parse --is-inside-work-tree &>/dev/null; then
-        RECENT_CHANGES=$(git diff --name-only HEAD | head -3 | tr '\n' ', ' | sed 's/,$//')
-        if [[ -z "$RECENT_CHANGES" ]]; then
-            RECENT_CHANGES="No recent changes"
-        else
-            RECENT_CHANGES="Recent changes: $RECENT_CHANGES"
-        fi
-    fi
-    
-    echo "$PROJECT_NAME:$MODULE_COUNT:$TEST_COUNT:$MAIN_MODULE:$RECENT_CHANGES"
-}
-
 # Help text
 function show_help {
-    # Get project info
-    local PROJECT_INFO=$(get_project_info)
-    local PROJECT_NAME=$(echo "$PROJECT_INFO" | cut -d':' -f1)
-    local MODULE_COUNT=$(echo "$PROJECT_INFO" | cut -d':' -f2)
-    local TEST_COUNT=$(echo "$PROJECT_INFO" | cut -d':' -f3)
-    local MAIN_MODULE=$(echo "$PROJECT_INFO" | cut -d':' -f4)
-    local RECENT_CHANGES=$(echo "$PROJECT_INFO" | cut -d':' -f5-)
-    
-    # Header
-    echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║                   ${NC}${GREEN}rin - $PROJECT_NAME CLI utility${NC}                ${BLUE}║${NC}"
-    echo -e "${BLUE}╚════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${BLUE}rin${NC} - Rinna CLI utility"
     echo
-    
-    # Project info
-    echo -e "${YELLOW}PROJECT INFORMATION${NC}"
-    echo -e "  ${BLUE}•${NC} Project modules: ${MODULE_COUNT}"
-    echo -e "  ${BLUE}•${NC} Test cases: ${TEST_COUNT}"
-    echo -e "  ${BLUE}•${NC} Main module: ${MAIN_MODULE}"
-    echo -e "  ${BLUE}•${NC} ${RECENT_CHANGES}"
+    echo "Usage: rin [options] [command]"
+    echo 
+    echo "Commands:"
+    echo "  build     Build the project"
+    echo "  clean     Clean the project"
+    echo "  test      Run tests"
+    echo "  all       Clean, build, and test (default if no command specified)"
+    echo "  version   Version management:"
+    echo "    current       Show current version information"
+    echo "    major         Bump major version (x.0.0)"
+    echo "    minor         Bump minor version (0.x.0)"
+    echo "    patch         Bump patch version (0.0.x)"
+    echo "    set <version> Set to specific version (e.g., 1.2.3)"
+    echo "    release       Create a release from current version"
+    echo "    tag           Create a git tag for current version"
     echo
-    
-    # Usage
-    echo -e "${YELLOW}USAGE${NC}"
-    echo -e "  rin [options] [command]"
+    echo "Options:"
+    echo "  -v, --verbose    Show all output"
+    echo "  -e, --errors     Show only errors and related output"
+    echo "  -t, --terse      Show minimal output (default)"
+    echo "  -h, --help       Show this help message"
     echo
-    
-    # Commands
-    echo -e "${YELLOW}COMMANDS${NC}"
-    echo -e "  ${GREEN}build${NC}            Build the project"
-    echo -e "  ${GREEN}clean${NC}            Clean the project"
-    echo -e "  ${GREEN}test${NC}             Run tests"
-    echo -e "  ${GREEN}all${NC}              Clean, build, and test (default if no command specified)"
-    echo -e "  ${GREEN}version${NC}          Version management:"
-    echo -e "    ${GREEN}current${NC}          Show current version information"
-    echo -e "    ${GREEN}major${NC}            Bump major version (x.0.0)"
-    echo -e "    ${GREEN}minor${NC}            Bump minor version (0.x.0)"
-    echo -e "    ${GREEN}patch${NC}            Bump patch version (0.0.x)"
-    echo -e "    ${GREEN}set <version>${NC}    Set to specific version (e.g., 1.2.3)"
-    echo -e "    ${GREEN}release${NC}          Create a release from current version"
-    echo -e "    ${GREEN}tag${NC}              Create a git tag for current version"
-    echo
-    
-    # Options
-    echo -e "${YELLOW}OPTIONS${NC}"
-    echo -e "  ${GREEN}-v, --verbose${NC}    Show all output"
-    echo -e "  ${GREEN}-e, --errors${NC}     Show only errors and related output"
-    echo -e "  ${GREEN}-t, --terse${NC}      Show minimal output (default)"
-    echo -e "  ${GREEN}-h, --help${NC}       Show this help message"
-    echo
-    
-    # Examples
-    echo -e "${YELLOW}CONTEXTUAL EXAMPLES${NC}"
-    
-    # Basic examples
-    echo -e "  ${BLUE}# Run all tests with terse output${NC}"
-    echo -e "  rin test"
-    echo
-    
-    # Custom examples based on project structure
-    if [[ $MODULE_COUNT -gt 1 ]]; then
-        echo -e "  ${BLUE}# Clean and build the project with verbose output${NC}"
-        echo -e "  rin -v clean build"
-        echo
-    fi
-    
-    if [[ $TEST_COUNT -gt 0 ]]; then
-        echo -e "  ${BLUE}# Run tests and show only errors${NC}"
-        echo -e "  rin --errors test"
-        echo
-        
-        if [[ -n "$MAIN_MODULE" ]]; then
-            echo -e "  ${BLUE}# Run the full workflow on just the core module${NC}"
-            echo -e "  cd $MAIN_MODULE && ../bin/rin all"
-            echo
-        fi
-    fi
-    
-    # Full workflow example
-    echo -e "  ${BLUE}# Clean, build, and test the project${NC}"
-    echo -e "  rin all"
-    echo
-    
-    # Version examples
-    echo -e "  ${BLUE}# Check current version information${NC}"
-    echo -e "  rin version current"
-    echo
-    echo -e "  ${BLUE}# Bump minor version and create a tag${NC}"
-    echo -e "  rin version minor -m \"Added new feature XYZ\""
-    echo
-    
-    # How it helps
-    echo -e "${YELLOW}HOW IT HELPS${NC}"
-    echo -e "  ${BLUE}•${NC} ${GREEN}Terse mode${NC} shows minimal output with passing summaries and full errors"
-    echo -e "  ${BLUE}•${NC} ${GREEN}Verbose mode${NC} shows all build and test output"
-    echo -e "  ${BLUE}•${NC} ${GREEN}Errors mode${NC} shows only the errors and the steps that lead to them"
-    echo -e "  ${BLUE}•${NC} ${GREEN}Execution tracking${NC} shows how long each phase takes"
-    echo -e "  ${BLUE}•${NC} ${GREEN}Color-coded output${NC} makes success and failure patterns easy to spot"
+    echo "Examples:"
+    echo "  rin test                  # Run tests with terse output"
+    echo "  rin -v clean build        # Clean and build with verbose output"
+    echo "  rin --errors all          # Run all with errors-only output"
+    echo "  rin version current       # Check current version information"
+    echo "  rin version minor -m msg  # Bump minor version with commit message"
     echo
 }
 
@@ -292,36 +197,38 @@ function run_cmd {
 
 # Clean if requested
 if [[ $CLEAN -eq 1 ]]; then
-    run_cmd "mvn clean" "Cleaning project"
+    run_cmd "./mvnw clean" "Cleaning project"
 fi
 
 # Build if requested
 if [[ $BUILD -eq 1 ]]; then
-    run_cmd "mvn compile" "Building project"
+    run_cmd "./mvnw compile" "Building project"
 fi
 
 # Run tests if requested
 if [[ $RUN_TESTS -eq 1 ]]; then
     if [[ $VERBOSE -eq 1 ]]; then
-        run_cmd "mvn test" "Running tests"
+        run_cmd "./mvnw test" "Running tests"
     elif [[ $ERRORS_ONLY -eq 1 ]]; then
-        run_cmd "mvn -q test" "Running tests"
+        run_cmd "./mvnw -q test" "Running tests"
     else
         # Terse mode - show minimal output
-        run_cmd "mvn test" "Running tests"
+        run_cmd "./mvnw test" "Running tests"
     fi
     
     # Show test summary regardless of verbosity
     if [[ -d target/surefire-reports || -d rinna-core/target/surefire-reports ]]; then
         echo -e "${BLUE}[Test Summary]${NC}"
-        find . -path "*/surefire-reports/TEST-*.xml" -type f -exec grep -l "<failure" {} \; | while read file; do
-            TEST_NAME=$(basename "$file" | sed 's/TEST-//' | sed 's/\.xml//')
-            echo -e "${RED}FAILED: $TEST_NAME${NC}"
-        done
+        failed_tests=$(find . -path "*/surefire-reports/TEST-*.xml" -type f -exec grep -l "<failure" {} \; | wc -l)
+        if [[ $failed_tests -gt 0 ]]; then
+            find . -path "*/surefire-reports/TEST-*.xml" -type f -exec grep -l "<failure" {} \; | while read file; do
+                TEST_NAME=$(basename "$file" | sed 's/TEST-//' | sed 's/\.xml//')
+                echo -e "${RED}FAILED: $TEST_NAME${NC}"
+            done
+        fi
         
         # Show test counts
         total_tests=$(find . -path "*/surefire-reports/TEST-*.xml" -type f | wc -l)
-        failed_tests=$(find . -path "*/surefire-reports/TEST-*.xml" -type f -exec grep -l "<failure" {} \; | wc -l)
         passed_tests=$((total_tests - failed_tests))
         
         echo -e "${GREEN}Tests passed: $passed_tests${NC}, ${RED}Tests failed: $failed_tests${NC}, Total: $total_tests"

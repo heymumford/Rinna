@@ -1,6 +1,6 @@
 # Rinna CLI Tool
 
-The `rin` command-line tool simplifies building, testing, and running Rinna with different verbosity levels. It's designed to make development and testing more efficient by providing a consistent interface with useful output formats.
+The `rin` command-line tool simplifies building, testing, and running Rinna with different verbosity levels. It uses the Maven wrapper to ensure consistent builds across different environments without requiring a specific Maven installation.
 
 ## Installation
 
@@ -65,10 +65,10 @@ The terse mode shows minimal output with success/failure indicators and executio
 
 ```
 [Running tests...]
-Running com.rinna.DemoAppTest
+Running org.rinna.DemoAppTest
 Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 ✓ Running tests completed successfully in 2s
-[Test summary:]
+[Test Summary]
 Tests passed: 1, Tests failed: 0, Total: 1
 
 All operations completed successfully!
@@ -78,15 +78,15 @@ If a test fails, it will show the failure but still keep the output minimal:
 
 ```
 [Running tests...]
-Running com.rinna.DemoAppTest
+Running org.rinna.DemoAppTest
 FAILED: testGetGreeting
 Tests run: 1, Failures: 1, Errors: 0, Skipped: 0
 ✗ Running tests failed in 2s
-[Test summary:]
+[Test Summary]
 Tests passed: 0, Tests failed: 1, Total: 1
 
 Failed tests:
-  • com.rinna.DemoAppTest
+  • org.rinna.DemoAppTest
 
 Completed with some failures
 ```
@@ -97,14 +97,12 @@ The verbose mode shows all output from the underlying build tools, useful for de
 
 ```
 [Running tests...]
-Running tests...
-Running com.rinna.DemoAppTest
+Running org.rinna.DemoAppTest
 Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.051 s
 Test completed
 ✓ Running tests completed successfully in 0s
-[Test summary:]
+[Test Summary]
 Tests passed: 1, Tests failed: 0, Total: 1
-[Total execution time: 0s]
 All operations completed successfully!
 ```
 
@@ -116,99 +114,73 @@ The errors-only mode shows only errors and the steps that lead to them:
 [Running tests...]
 Error: Test failure detected in DemoAppTest
   org.opentest4j.AssertionFailedError: expected: <Hello, Rinna!> but was: <Goodbye, Rinna!>
-  at com.rinna.DemoAppTest.testGetGreeting(DemoAppTest.java:24)
+  at org.rinna.DemoAppTest.testGetGreeting(DemoAppTest.java:24)
 ✗ Running tests failed in 2s
-[Test summary:]
+[Test Summary]
 Tests passed: 0, Tests failed: 1, Total: 1
 
 Failed tests:
-  • com.rinna.DemoAppTest
+  • org.rinna.DemoAppTest
 
 Tests completed with failures
 ```
 
-## Examples
-
-### Build with minimal output
+## Usage Examples
 
 ```bash
+# Build the project
 rin build
-```
 
-### Run tests with full output
-
-```bash
+# Run tests with verbose output
 rin -v test
-```
 
-### Clean, build, and test the project with errors-only output
-
-```bash
+# Clean, build, and test the project with errors-only output
 rin -e all
-```
 
-### Run tests with terse output for the core module
-
-```bash
+# Run tests in a specific module
 cd rinna-core && ../bin/rin test
-```
 
-### Check current version information
-
-```bash
+# Check current version information
 rin version current
-```
 
-### Bump minor version (e.g., 1.0.0 → 1.1.0)
-
-```bash
+# Bump minor version (e.g., 1.0.0 → 1.1.0)
 rin version minor
-```
 
-### Set a specific version with custom message
-
-```bash
+# Set a specific version with custom message
 rin version set 2.0.0 -m "Major release with workflow improvements"
-```
 
-### Create a tag for the current version
-
-```bash
+# Create a tag for the current version
 rin version tag -m "Release version 1.2.3"
+
+# Create a GitHub release with automatic publishing to GitHub Packages
+rin version release
 ```
 
-### Create a GitHub release with automatic publishing to GitHub Packages
+## Help
+
+To see the help text and available commands, use:
 
 ```bash
-rin version release
+rin --help
 ```
 
 ## Benefits
 
-- **Consistent Interface**: Same command structure regardless of the underlying build system.
-- **Execution Tracking**: Shows how long each phase takes, helping identify bottlenecks.
-- **Color-Coded Output**: Success, warnings, and errors are color-coded for easy identification.
-- **Test Summary**: Provides a clean summary of test results with pass/fail counts.
-- **Adaptive Verbosity**: Control how much information is shown based on your needs.
-- **Failed Test Details**: Clearly identifies which tests failed and provides error details.
-- **Time Tracking**: Shows execution time for each phase and the total run time.
+- **Environment Independence**: Uses Maven wrapper to ensure consistent builds
+- **Consistent Interface**: Same command structure regardless of the underlying build system
+- **Execution Tracking**: Shows how long each phase takes, helping identify bottlenecks
+- **Color-Coded Output**: Success, warnings, and errors are color-coded for easy identification
+- **Test Summary**: Provides a clean summary of test results with pass/fail counts
+- **Adaptive Verbosity**: Control how much information is shown based on your needs
+- **Failed Test Details**: Clearly identifies which tests failed and provides error details
 
 ## Implementation Notes
 
-The `rin` tool uses Maven as its underlying build system but encapsulates it with a more user-friendly interface. The script detects project characteristics to provide contextual help and examples.
+The `rin` tool is implemented as a clean, focused bash script that uses the Maven wrapper (`./mvnw`) as its underlying build system. The implementation includes robust error handling to ensure that:
 
-The implementation includes robust error handling to ensure that:
 1. Build errors are properly reported
 2. Test failures are clearly indicated
 3. The appropriate level of detail is shown based on the selected verbosity mode
 4. Color-coding helps quickly identify success and failure states
 
-## Source Code
-
-The `rin` tool is available in multiple versions in the Rinna repository:
-
-- `bin/rin`: Full implementation with project detection and context-aware help
-- `bin/rin-simple`: Simplified implementation that's easier to understand and modify
-- `bin/rin-demo`: Demonstration version for quick testing of the verbosity modes
-
-You can view and modify the source code to suit your specific needs.
+Version management is handled by a separate `rin-version` script that is called when using the `version` command. Both scripts are designed to be minimal and maintainable.
