@@ -17,7 +17,7 @@ Rinna delivers explicit workflow tracking, release management, and development c
 
 ```xml
 <dependency>
-    <groupId>org.samstraumr</groupId>
+    <groupId>org.rinna</groupId>
     <artifactId>rinna-core</artifactId>
     <version>1.0.0</version>
 </dependency>
@@ -28,18 +28,21 @@ Rinna delivers explicit workflow tracking, release management, and development c
 - [Getting Started](docs/getting-started/README.md)
 - [User Guide](docs/user-guide/README.md)
 - [Technical Specification](docs/technical-specification.md)
-- [Developer Guide](docs/development/README.md)
+- [Development Guide](docs/development/README.md)
 
 ## Requirements
 
 - Java 11+
-- Maven 3.6+
+- Maven wrapper (included)
 
 ## Development
 
 Use the Rinna CLI tool for simplified build and test management:
 
 ```bash
+# Make scripts executable
+chmod +x bin/rin bin/rin-version
+
 # Show help and usage information
 bin/rin --help
 
@@ -52,6 +55,8 @@ bin/rin -v test
 # Build with errors-only output
 bin/rin -e build
 ```
+
+See the [CLI documentation](docs/user-guide/rin-cli.md) for more options.
 
 ## License
 

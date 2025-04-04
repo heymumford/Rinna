@@ -6,7 +6,7 @@
 
 ```xml
 <dependency>
-    <groupId>org.samstraumr</groupId>
+    <groupId>org.rinna</groupId>
     <artifactId>rinna-core</artifactId>
     <version>1.0.0</version>
 </dependency>
@@ -16,30 +16,42 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/samstraumr/rinna.git
+git clone https://github.com/heymumford/rinna.git
 
 # Build the project
 cd rinna
-mvn clean install
+./mvnw clean install
 
-# Run CLI
-java -jar target/rinna-cli.jar
+# Make scripts executable
+chmod +x bin/rin bin/rin-version
 ```
 
 ## Quick Start
 
-```bash
-# Initialize Rinna in your project
-rinna init
+### Development Commands
 
+```bash
+# Clean, build, and test the project
+bin/rin all
+
+# Run tests with verbose output
+bin/rin -v test
+
+# Build with errors-only output
+bin/rin -e build
+```
+
+### Workflow Management
+
+```bash
 # Create a feature
-rinna create feature "Add user authentication"
+rin workflow create feature "Add user authentication"
 
 # List all items
-rinna list
+rin workflow list
 
 # Update item status
-rinna update ITEM-1 --status "In Progress"
+rin workflow update ITEM-1 --status "In Progress"
 ```
 
 See the [User Guide](../user-guide/README.md) for more commands and options.
