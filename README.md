@@ -44,6 +44,8 @@ Rinna uses a deliberate, opinionated workflow model built from hard-earned engin
 - **Workflow**: Found → Triaged → To Do → In Progress → In Test → Done
 - **Developer-Focused Attributes**: Effort estimates, assignees, blocking status
 
+Can you customize the workflow? No, you can't. [That's the point](docs/user-guide/workflow-philosophy.md).
+
 **The workflow isn't configurable because it doesn't need to be.** Rather than adapting to inefficient processes, Rinna implements a [battle-tested flow](docs/user-guide/workflow.md) that works. You can map its outputs to other systems if needed, but [we won't compromise on what works](docs/specifications/engineering_spec.md#core-philosophy). 😉
 
 [Explore the workflow model](docs/user-guide/workflow.md)
