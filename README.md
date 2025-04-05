@@ -87,7 +87,7 @@ bin/rin build
 <dependency>
     <groupId>org.rinna</groupId>
     <artifactId>rinna-core</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.2</version>
 </dependency>
 ```
 
@@ -98,7 +98,10 @@ bin/rin-version current   # View version
 bin/rin-version patch     # Bump patch version
 bin/rin-version minor     # Bump minor version
 bin/rin-version verify    # Check consistency
+bin/rin-version update    # Sync with version.properties
 ```
+
+See [Version Management](docs/development/version-management.md) for details on our centralized approach using `version.properties`.
 
 ## Requirements
 
