@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Java Version](https://img.shields.io/badge/java-21-orange.svg)](https://openjdk.java.net/projects/jdk/21/)
 [![Go Version](https://img.shields.io/badge/go-1.21-blue.svg)](https://golang.org/doc/go1.21)
-[![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)](https://github.com/heymumford/Rinna/releases)
+[![Version](https://img.shields.io/badge/version-1.2.2-blue.svg)](https://github.com/heymumford/Rinna/releases)
 [![GitHub Stars](https://img.shields.io/github/stars/heymumford/Rinna?style=social)](https://github.com/heymumford/Rinna/stargazers)
 
 [📥 Download](https://github.com/heymumford/Rinna/releases) • [📚 Documentation](docs/) • [🚀 Getting Started](docs/getting-started/README.md) • [🤝 Contribute](docs/development/contribution.md)
