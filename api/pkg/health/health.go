@@ -18,12 +18,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Build information - these will be set during compilation
-var (
-	Version   = "dev"
-	CommitSHA = "unknown"
-	BuildTime = "unknown"
-)
+// Version information is imported from version.go in this package
 
 // ServiceStatus represents the status of a service
 type ServiceStatus struct {
