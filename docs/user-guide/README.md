@@ -8,14 +8,15 @@ Rinna focuses on providing a streamlined, developer-centric approach to workflow
 
 ## Tools
 
-- [CLI Tool (rin)](rin-CLI.md) - Command-Line Interface utility for managing work and automating developer workflows
-- [Quick Reference](rin-quick-ref.md) - Concise reference for common developer CLI (Command-Line Interface) commands
+- [CLI Tool (rin)](rin-cli.md) - Command-Line Interface utility for managing work and automating developer workflows
+- [Quick Reference](rin-quick-reference.md) - Concise reference for common developer CLI (Command-Line Interface) commands
 - [Document Generation](documents.md) - Generate beautiful reports and documents from your workflow data
+- [Service Management](service-management.md) - Understanding the service architecture and management
 
 ## Metrics and Business Value
 
 - [Workflow Philosophy](workflow-philosophy.md) - Our approach to streamlined workflow management
-- [IT Workflow Metrics](metrics/IT-workflow-metrics.md) - Framework for demonstrating IT's strategic value
+- [IT Workflow Metrics](metrics/it-workflow-metrics.md) - Framework for demonstrating IT's strategic value
 
 ## Work Item Management
 
@@ -125,4 +126,8 @@ rin doc templates
 
 For complete documentation on document generation, see [documents.md](documents.md).
 
-For complete CLI documentation, see [rin-CLI.md](rin-CLI.md) or run `rin --help`.
+For complete CLI documentation, see [rin-cli.md](rin-cli.md) or run `rin --help`.
+
+## Configuration
+
+For details on configuring Rinna, see the [configuration reference](configuration-reference.md) guide.
