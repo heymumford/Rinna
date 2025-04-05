@@ -87,6 +87,12 @@ public class DocmosisDocumentService implements DocumentService {
             String licenseKey = config.getDocmosisLicenseKey().orElseThrow();
             systemManagerClass.getDeclaredMethod("setLicenseKey", String.class).invoke(manager, licenseKey);
             
+            // Set the site information if available
+            if (config.getDocmosisSite().isPresent()) {
+                String site = config.getDocmosisSite().get();
+                systemManagerClass.getDeclaredMethod("setSite", String.class).invoke(manager, site);
+            }
+            
             // Initialize the system
             systemManagerClass.getDeclaredMethod("initialize").invoke(manager);
             

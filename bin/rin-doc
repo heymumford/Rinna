@@ -38,11 +38,11 @@ ${BLUE}rin-doc${NC} - Rinna document generation utility
 Usage: rin-doc [command] [options]
 
 Commands:
-  license <key>      Set the Docmosis license key
-  license-show       Show the current Docmosis license key (masked)
-  config             Show the current document configuration
-  templates          Show available templates
-  generate <type>    Generate a document
+  license <key> [site]  Set the Docmosis license key and optional site
+  license-show          Show the current Docmosis license information
+  config                Show the current document configuration
+  templates             Show available templates
+  generate <type>       Generate a document
     <type>: workitem, project, release, report
   
 Options:
@@ -51,19 +51,22 @@ Options:
   -f, --format       Document format: pdf, docx, html (default: pdf)
   
 Examples:
-  rin-doc license ABC-123-XYZ                  # Set license key
-  rin-doc generate workitem -o report.pdf      # Generate work item document
+  rin-doc license ABC-123-XYZ                          # Set license key
+  rin-doc license ABC-123-XYZ "Free Trial Java"        # Set license key with site
+  rin-doc generate workitem -o report.pdf              # Generate work item document
 EOF
 }
 
 # Manage Docmosis license key
 cmd_license() {
   local license_key="$1"
+  local site="$2"
   
   if [[ -z "$license_key" ]]; then
     error "License key is required"
   fi
   
+  # Update or add license key
   if grep -q "^docmosis.license.key=" "$CONFIG_FILE"; then
     # Update existing key
     sed -i "s/^docmosis.license.key=.*/docmosis.license.key=${license_key}/" "$CONFIG_FILE"
@@ -72,17 +75,30 @@ cmd_license() {
     echo "docmosis.license.key=${license_key}" >> "$CONFIG_FILE"
   fi
   
-  echo -e "${GREEN}Docmosis license key updated${NC}"
+  # Update or add site information
+  if [[ -n "$site" ]]; then
+    if grep -q "^docmosis.site=" "$CONFIG_FILE"; then
+      # Update existing site
+      sed -i "s/^docmosis.site=.*/docmosis.site=${site}/" "$CONFIG_FILE"
+    else
+      # Add new site
+      echo "docmosis.site=${site}" >> "$CONFIG_FILE"
+    fi
+  fi
+  
+  echo -e "${GREEN}Docmosis license information updated${NC}"
   echo "To use your license, restart any running Rinna applications"
 }
 
 # Show the current license key (masked)
 cmd_license_show() {
+  local has_license=false
+  local has_site=false
+  
   if grep -q "^docmosis.license.key=" "$CONFIG_FILE"; then
     local key=$(grep "^docmosis.license.key=" "$CONFIG_FILE" | cut -d'=' -f2)
-    if [[ -z "$key" ]]; then
-      echo -e "${YELLOW}No Docmosis license key configured${NC}"
-    else
+    if [[ -n "$key" ]]; then
+      has_license=true
       local masked=""
       if [[ ${#key} -gt 8 ]]; then
         masked="${key:0:4}$(printf '%*s' $((${#key} - 8)) | tr ' ' '*')${key: -4}"
@@ -91,8 +107,18 @@ cmd_license_show() {
       fi
       echo -e "Current Docmosis license key: ${BLUE}${masked}${NC}"
     fi
-  else
-    echo -e "${YELLOW}No Docmosis license key configured${NC}"
+  fi
+  
+  if grep -q "^docmosis.site=" "$CONFIG_FILE"; then
+    local site=$(grep "^docmosis.site=" "$CONFIG_FILE" | cut -d'=' -f2)
+    if [[ -n "$site" ]]; then
+      has_site=true
+      echo -e "Current Docmosis site: ${BLUE}${site}${NC}"
+    fi
+  fi
+  
+  if [[ "$has_license" == "false" && "$has_site" == "false" ]]; then
+    echo -e "${YELLOW}No Docmosis license information configured${NC}"
   fi
 }
 
@@ -163,7 +189,7 @@ shift
 # Dispatch to appropriate command
 case "$COMMAND" in
   license)
-    cmd_license "$1"
+    cmd_license "$1" "$2"
     ;;
   license-show)
     cmd_license_show

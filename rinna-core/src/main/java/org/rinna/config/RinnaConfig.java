@@ -48,6 +48,7 @@ public class RinnaConfig {
     
     private static final String DEFAULT_CONFIG_FILE = "docmosis.properties";
     private static final String DOCMOSIS_LICENSE_KEY_PROP = "docmosis.license.key";
+    private static final String DOCMOSIS_SITE_PROP = "docmosis.site";
     private static final String DOCMOSIS_TEMPLATES_PATH_PROP = "docmosis.templates.path";
     private static final String DOCMOSIS_PREFERRED_PROP = "docmosis.preferred";
     
@@ -355,6 +356,7 @@ public class RinnaConfig {
      */
     private DocumentConfig createDocumentConfig() {
         String licenseKey = properties.getProperty(DOCMOSIS_LICENSE_KEY_PROP, "");
+        String site = properties.getProperty(DOCMOSIS_SITE_PROP, "");
         String templatesPathStr = properties.getProperty(DOCMOSIS_TEMPLATES_PATH_PROP, "templates");
         boolean preferDocmosis = Boolean.parseBoolean(properties.getProperty(DOCMOSIS_PREFERRED_PROP, "true"));
         
@@ -362,6 +364,7 @@ public class RinnaConfig {
         
         return new DocumentConfig.Builder()
                 .docmosisLicenseKey(licenseKey)
+                .docmosisSite(site)
                 .templatesPath(templatesPath)
                 .preferDocmosis(preferDocmosis)
                 .build();
