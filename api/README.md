@@ -21,7 +21,8 @@ api/
 │   ├── middleware/       # HTTP middleware
 │   └── models/           # Data models
 └── pkg/                  # Public libraries
-    └── config/           # Configuration loader
+    ├── config/           # Configuration loader
+    └── health/           # Health check API
 ```
 
 ## Getting Started
@@ -82,7 +83,9 @@ RINNA_SERVER_PORT=9090 ./bin/rinnasrv
 
 ### Health Check
 
-- `GET /health` - Health check endpoint
+- `GET /health` - Detailed health check endpoint
+- `GET /health/live` - Liveness probe (for Kubernetes)
+- `GET /health/ready` - Readiness probe (for Kubernetes)
 
 ## Configuration
 

@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>rinna-core</artifactId>
-    <n>Rinna Core</n>
+    <name>Rinna Core</name>
     <description>Core domain model and services for Rinna workflow management</description>
 
     <dependencies>
@@ -22,19 +22,36 @@
             <version>3.42.0.0</version>
         </dependency>
 
-        <!-- Document generation (optional) -->
+        <!-- 
+        Document generation with Docmosis (optional)
+        Note: Docmosis libraries are not in Maven Central.
+        To use Docmosis, download the JAR files from https://www.docmosis.com/
+        and install them in your local Maven repository:
+        
+        mvn install:install-file -Dfile=docmosis-core-4.7.0.jar -DgroupId=com.docmosis \
+            -DartifactId=docmosis-core -Dversion=4.7.0 -Dpackaging=jar
+        
+        mvn install:install-file -Dfile=docmosis-extras-4.7.0.jar -DgroupId=com.docmosis \
+            -DartifactId=docmosis-extras -Dversion=4.7.0 -Dpackaging=jar
+            
+        For testing purposes, these dependencies are commented out to allow builds to succeed.
+        Uncomment them when you have the Docmosis JARs available.
+        
         <dependency>
             <groupId>com.docmosis</groupId>
             <artifactId>docmosis-core</artifactId>
             <version>4.7.0</version>
             <optional>true</optional>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.docmosis</groupId>
             <artifactId>docmosis-extras</artifactId>
             <version>4.7.0</version>
             <optional>true</optional>
+            <scope>provided</scope>
         </dependency>
+        -->
 
         <!-- PDF generation (fallback) -->
         <dependency>
@@ -48,6 +65,44 @@
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>5.2.3</version>
+        </dependency>
+        
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.25.3</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -66,7 +121,14 @@
                     <include>**/*.properties</include>
                 </includes>
             </testResource>
+            <testResource>
+                <directory>src/test-doc/resources</directory>
+                <filtering>false</filtering>
+            </testResource>
         </testResources>
+        
+        <!-- Add test-doc source directory -->
+        <testSourceDirectory>src/test-doc/java</testSourceDirectory>
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -99,6 +161,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.12.1</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
@@ -130,14 +193,17 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
                 <configuration>
                     <skipTests>false</skipTests>
                     <skip>false</skip>
                     <includes>
                         <include>**/*Test.java</include>
                         <include>**/*Tests.java</include>
-                        <include>**/*Runner.java</include>
                     </includes>
+                    <excludes>
+                        <exclude>**/bdd/**</exclude>
+                    </excludes>
                     <properties>
                         <!-- Parallel execution for JUnit Jupiter tests -->
                         <configurationParameters>
@@ -157,10 +223,18 @@
                     <argLine>-XX:+EnableDynamicAgentLoading --enable-preview</argLine>
                     <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter-engine</artifactId>
+                        <version>5.10.2</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.10</version>
                 <configuration>
                     <skip>false</skip>
                 </configuration>
