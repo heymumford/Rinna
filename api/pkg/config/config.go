@@ -33,11 +33,12 @@ type ServerConfig struct {
 
 // JavaServiceConfig holds configuration for Java service communication
 type JavaServiceConfig struct {
-	Command     string `mapstructure:"command"`
-	Host        string `mapstructure:"host"`
-	Port        int    `mapstructure:"port"`
-	ConnectTimeout int  `mapstructure:"connectTimeout"`
-	RequestTimeout int  `mapstructure:"requestTimeout"`
+	Command     string            `mapstructure:"command"`
+	Host        string            `mapstructure:"host"`
+	Port        int               `mapstructure:"port"`
+	ConnectTimeout int            `mapstructure:"connectTimeout"`
+	RequestTimeout int            `mapstructure:"requestTimeout"`
+	Endpoints   map[string]string `mapstructure:"endpoints"`
 }
 
 // LoggingConfig holds logging configuration

@@ -39,8 +39,10 @@ func (c *JavaHealthChecker) CheckHealth() health.ServiceStatus {
 	defer cancel()
 	
 	// Ping the Java service
+	log.Println("Checking Java service health...")
 	err := c.client.Ping(ctx)
 	if err != nil {
+		log.Printf("Java service health check failed: %v", err)
 		return health.ServiceStatus{
 			Status:    "error",
 			Message:   err.Error(),
@@ -48,6 +50,7 @@ func (c *JavaHealthChecker) CheckHealth() health.ServiceStatus {
 		}
 	}
 	
+	log.Println("Java service health check succeeded")
 	return health.ServiceStatus{
 		Status:    "ok",
 		Timestamp: time.Now().Format(time.RFC3339),

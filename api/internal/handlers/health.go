@@ -126,27 +126,58 @@ var CheckJavaServiceFunc = CheckJavaService
 
 // CheckJavaService checks the status of the Java service
 func CheckJavaService() ServiceStatus {
-	// This is a simplified version for testing
-	// In a real implementation, we would use the JavaClient to ping the Java service
+	// Make an actual HTTP request to the Java backend
+	// Default Java backend port is 8081
+	javaBackendURL := "http://localhost:8081/health"
 	
-	// For testing, we can simply return a successful status
-	// In production, this would use the client to make an actual health check call
-	/*
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	// Get from environment if set
+	if javaURL := os.Getenv("JAVA_BACKEND_URL"); javaURL != "" {
+		javaBackendURL = javaURL
+	}
 	
-	err := javaClient.Ping(ctx)
+	// Create a client with timeout
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	
+	// Make the request
+	resp, err := client.Get(javaBackendURL)
 	if err != nil {
 		return ServiceStatus{
 			Status:    "error",
-			Message:   err.Error(),
+			Message:   "Java backend connection failed: " + err.Error(),
 			Timestamp: time.Now().Format(time.RFC3339),
 		}
 	}
-	*/
+	defer resp.Body.Close()
+	
+	// Check status code
+	if resp.StatusCode != http.StatusOK {
+		return ServiceStatus{
+			Status:    "error",
+			Message:   "Java backend returned status: " + resp.Status,
+			Timestamp: time.Now().Format(time.RFC3339),
+		}
+	}
+	
+	// Try to parse the response
+	var javaHealthResponse map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&javaHealthResponse); err != nil {
+		return ServiceStatus{
+			Status:    "error",
+			Message:   "Failed to parse Java backend response: " + err.Error(),
+			Timestamp: time.Now().Format(time.RFC3339),
+		}
+	}
+	
+	// Extract status from response
+	status, ok := javaHealthResponse["status"].(string)
+	if !ok {
+		status = "unknown"
+	}
 	
 	return ServiceStatus{
-		Status:    "ok",
+		Status:    status,
 		Timestamp: time.Now().Format(time.RFC3339),
 	}
 }
