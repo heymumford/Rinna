@@ -220,7 +220,11 @@ verify_consistency() {
   
   for version_file in "${go_version_files[@]}"; do
     if [ -f "$version_file" ]; then
-      local go_version=$(grep -o 'Version = "[^"]*"' "$version_file" | cut -d '"' -f 2)
+      local go_version=$(grep -o 'Version\s*=\s*"[^"]*"' "$version_file" | sed -E 's/.*"([^"]*)".*$/\1/')
+      if [[ -z "$go_version" ]]; then
+        # Try again with different formatting
+        go_version=$(grep -o 'Version.*"[^"]*"' "$version_file" | sed -E 's/.*"([^"]*)".*$/\1/')
+      fi
       if [[ "$go_version" != "$root_version" ]]; then
         echo -e "${RED}Go version mismatch in ${version_file}: ${go_version} (should be ${root_version})${NC}"
         ((inconsistencies++))
