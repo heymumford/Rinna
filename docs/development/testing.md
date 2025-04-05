@@ -49,35 +49,75 @@ Key test infrastructure components:
 
 ## Running Tests
 
-Rinna provides two primary approaches for running tests:
+Rinna provides a streamlined, mode-based approach for running tests with two complementary tools:
 
-1. The `rin` CLI utility in the bin directory (streamlined options)
-2. The `run-tests.sh` script with more advanced options
+1. The `rin build` utility with an intuitive command structure
+2. The `run-tests.sh` script for advanced test scenarios
 
-### Using the rin CLI
+### Using Build Modes
+
+The mode-based architecture simplifies common testing workflows:
 
 ```bash
-# Run all tests
-./bin/rin test
+# Quick iterations (skip tests)
+./bin/rin build fast
 
-# Run unit tests only
-./bin/rin test unit
+# Default build with tests
+./bin/rin build test
 
-# Run all BDD tests
-./bin/rin test bdd
+# Full verification with coverage
+./bin/rin build verify
 
-# Run specific feature tests
-./bin/rin test workflow
-./bin/rin test release
-./bin/rin test input
-./bin/rin test api
-./bin/rin test cli
-
-# Run tests with a specific tag
-./bin/rin test tag:json-api
+# Prepare for release (includes tests)
+./bin/rin build prepare-release
 ```
 
-### Using the run-tests.sh script
+### Using Test Categories
+
+Test categories provide a convenient way to run specific test types:
+
+```bash
+# Run unit tests only
+./bin/rin build test unit
+
+# Run all BDD tests
+./bin/rin build test bdd
+
+# Run domain-specific tests
+./bin/rin build test domain:workflow
+./bin/rin build test domain:release
+./bin/rin build test domain:input
+./bin/rin build test domain:api
+./bin/rin build test domain:cli
+
+# Run tests with a specific tag
+./bin/rin build test tag:feature-x
+```
+
+Each domain maps to appropriate test classes or Cucumber tags in the build system, making it easier to run specific tests.
+
+### Using Test Options
+
+Fine-tune test execution with various options:
+
+```bash
+# Control output verbosity
+./bin/rin build test --verbose   # Show detailed output
+./bin/rin build test --terse     # Show minimal output (default)
+./bin/rin build test --errors    # Show only errors
+
+# Test execution control
+./bin/rin build test --parallel  # Run tests in parallel
+./bin/rin build test --fail-fast # Stop at first failure
+./bin/rin build test --coverage  # Generate coverage report
+./bin/rin build test --watch     # Monitor and run tests on changes
+```
+
+The `--watch` option is particularly useful during development as it continuously monitors source files and automatically reruns tests when changes are detected.
+
+### Using the Advanced Test Runner
+
+For more specialized scenarios, the `run-tests.sh` script offers additional options:
 
 ```bash
 # Run all tests
@@ -97,6 +137,26 @@ Rinna provides two primary approaches for running tests:
 
 # Run tests for a specific tag
 ./bin/run-tests.sh tag:client
+
+# Combine options
+./bin/run-tests.sh -p -v tag:workflow
+```
+
+> Note: The `run-tests.sh` script provides complementary options that might be useful for specific CI/CD scenarios or advanced testing needs.
+
+### Combining Commands and Options
+
+Commands and options can be combined for more sophisticated testing workflows:
+
+```bash
+# Run parallel workflow tests with coverage
+./bin/rin build test domain:workflow --parallel --coverage
+
+# Watch for changes and run unit tests
+./bin/rin build test unit --watch
+
+# Full verification with fail-fast behavior
+./bin/rin build verify --fail-fast
 ```
 
 ## Unit Testing
@@ -313,17 +373,37 @@ class ItemQueryTest extends TddTest {
 
 ## Test Coverage
 
-Code coverage is measured using JaCoCo and can be generated with:
+Code coverage is measured using JaCoCo and can be generated in several ways:
 
 ```bash
-mvn verify
+# Using the build system with coverage option
+./bin/rin build test --coverage
+
+# Using the verify mode (includes coverage)
+./bin/rin build verify
+
+# Direct Maven command
+mvn verify -Pjacoco
 ```
 
-The coverage report is available at `rinna-core/target/site/jacoco/index.html`.
+The coverage report is available at `rinna-core/target/site/jacoco/index.html` and summary information is displayed directly in the console when using the build system:
+
+```
+[Coverage Report]
+Line coverage: 92.5%
+Branch coverage: 84.3%
+Report available at: /home/user/Rinna/rinna-core/target/site/jacoco/index.html
+```
 
 Coverage goals:
-- Line coverage: 90%+
-- Branch coverage: 80%+
+- Line coverage: 90%+ (strict enforcement)
+- Branch coverage: 80%+ (target goal)
+
+The build system automatically configures Jacoco with appropriate settings:
+- Excludes test classes
+- Includes all application code
+- Tracks coverage per-package
+- Generates HTML and XML reports for CI/CD integration
 
 ## Adding New Tests
 
