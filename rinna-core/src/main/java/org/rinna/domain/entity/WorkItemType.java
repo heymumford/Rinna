@@ -8,6 +8,9 @@
 
 package org.rinna.domain.entity;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Enumeration of possible work item types in the Rinna system.
  * These types form a hierarchy from highest level (GOAL) to lowest level implementations.
@@ -33,6 +36,14 @@ public enum WorkItemType {
      */
     CHORE;
     
+    // Static mapping of allowed child types
+    private static final Map<WorkItemType, List<WorkItemType>> VALID_CHILD_TYPES = Map.of(
+        GOAL, List.of(FEATURE),
+        FEATURE, List.of(BUG, CHORE),
+        BUG, List.of(),
+        CHORE, List.of()
+    );
+    
     /**
      * Returns whether this type can have children of the given type.
      * 
@@ -40,13 +51,6 @@ public enum WorkItemType {
      * @return true if this type can have children of the given type
      */
     public boolean canHaveChildOfType(WorkItemType childType) {
-        switch (this) {
-            case GOAL:
-                return childType == FEATURE;
-            case FEATURE:
-                return childType == BUG || childType == CHORE;
-            default:
-                return false;
-        }
+        return VALID_CHILD_TYPES.getOrDefault(this, List.of()).contains(childType);
     }
 }
