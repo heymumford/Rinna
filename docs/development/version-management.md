@@ -1,110 +1,96 @@
 # Rinna Version Management
 
-This document explains the version management approach used in the Rinna project.
+This document explains the streamlined version management approach used in the Rinna project.
 
-## Version Source of Truth
+## Overview
 
-The project version information is centrally managed in the `version.properties` file located in the root directory. This file contains the following properties:
+Rinna uses a central properties file as the source of truth for version information, with a single script to manage versions across all files in the repository. This approach follows Clean Code principles to minimize duplication and reduce maintenance overhead.
+
+## Source of Truth: version.properties
+
+The project version is defined in `version.properties` in the root directory:
 
 ```properties
-version=x.y.z         # Project version in semver format (required)
-lastUpdated=YYYY-MM-DD # Date when version was last updated (required)
-releaseType=TYPE      # SNAPSHOT or RELEASE (required)
-buildNumber=n         # Build number, incremented for each build (required)
+version=1.2.2         # Project version in semver format
+lastUpdated=2025-04-04 # Date when version was last updated
+releaseType=SNAPSHOT  # SNAPSHOT or RELEASE
+buildNumber=1         # Build number
 ```
-
-All other version references throughout the codebase (POM files, README badges, etc.) should be generated or updated from this central source.
 
 ## Version Management Tool
 
-The `bin/rin-version` script provides a comprehensive set of commands for managing the Rinna version:
-
-### Basic Commands
+The `bin/rin-version` script provides commands for version management with minimal overhead:
 
 ```bash
-# Show current version information
+# Display current version info
 ./bin/rin-version current
 
-# Verify version consistency across files
-./bin/rin-version verify
+# Verify version consistency
+./bin/rin-version verify 
 
-# Update all files to match version.properties
-./bin/rin-version update
+# Bump major/minor/patch version
+./bin/rin-version [major|minor|patch]
 
-# Bump major version (x.0.0)
-./bin/rin-version major
+# Set to specific version
+./bin/rin-version set 2.0.0
 
-# Bump minor version (0.x.0)
-./bin/rin-version minor
+# Set version with custom message
+./bin/rin-version patch -m "Fix critical bug"
 
-# Bump patch version (0.0.x)
-./bin/rin-version patch
+# Create release
+./bin/rin-version release
 
-# Set specific version
-./bin/rin-version set 1.2.3
-```
-
-### Release Commands
-
-```bash
-# Create a git tag for current version
+# Create git tag
 ./bin/rin-version tag
 
-# Create a release from current version
-./bin/rin-version release
+# Sync all files with version.properties
+./bin/rin-version update
 ```
 
-### Options
+## Managed Files
 
-```bash
-# Custom release/commit message
-./bin/rin-version major -m "Version 2.0.0 release"
+The version management system automatically maintains consistency across:
 
-# Show what would be done without making changes
-./bin/rin-version patch -d
-```
+1. `version.properties` - Source of truth
+2. All POM files - Both project and parent versions  
+3. README.md - Version badge and Maven examples
 
-## Version Consistency
+## Workflow for Version Changes
 
-The version management system ensures consistency across various files:
+To update the project version:
 
-1. `version.properties` - The source of truth
-2. All POM files - Both project and parent versions
-3. README.md - Version badge
-
-The `verify` command checks this consistency and reports any mismatches.
-
-## Workflow for Version Updates
-
-Follow this workflow when updating the project version:
-
-1. Determine the type of version change needed (major, minor, patch)
-2. Run the appropriate version update command:
+1. Determine the type of change (major, minor, patch)
+2. Run the appropriate command:
    ```bash
-   ./bin/rin-version minor -m "Added new feature X"
+   ./bin/rin-version minor -m "Added feature X"
    ```
-3. This will:
+3. The script will:
    - Update version.properties
    - Update all POM files
-   - Update README version badge
-   - Create a git commit with the changes
+   - Update README references
+   - Create a git commit
    - Optionally create a git tag
 
-4. For releasing:
-   ```bash
-   ./bin/rin-version release -m "Release notes for version x.y.z"
-   ```
+## Design Principles
+
+Our version management follows these principles:
+
+1. **Single Source of Truth**: All version information comes from one file
+2. **DRY (Don't Repeat Yourself)**: Common operations are abstracted into functions
+3. **Fail Fast**: Early validation and clear error messages
+4. **Minimal Duplication**: Major/minor/patch changes use a single parameterized function
+5. **Clear UI**: Consistent color coding for success/warnings/errors
 
 ## Integration with Build System
 
-The version properties can be accessed from the build system via the `version.properties` file. This enables consistent versioning across various build artifacts.
+Build systems can access version information directly from version.properties.
 
 ## Best Practices
 
-1. Always use the `rin-version` commands to update versions rather than manual edits
-2. Commit version changes separately from code changes for cleaner history
-3. Use semantic versioning conventions:
-   - MAJOR: Breaking API changes
+1. Always use the `rin-version` commands rather than manual edits
+2. Commit version changes separately from code changes
+3. Follow semantic versioning conventions:
+   - MAJOR: Breaking changes
    - MINOR: New features (backward compatible)
    - PATCH: Bug fixes (backward compatible)
-4. Run `./bin/rin-version verify` before releasing to ensure consistency
+4. Run `verify` before releases to ensure consistency
