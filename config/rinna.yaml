@@ -1,0 +1,115 @@
+# Rinna Configuration - Single Source of Truth
+#
+# This file serves as the centralized configuration for all Rinna components
+# regardless of language (Java, Go, Python).
+#
+# Configuration values set here will be used as defaults for all components.
+# Values can be overridden by:
+# 1. Environment variables with RINNA_ prefix (e.g., RINNA_SERVICE_PORT)
+# 2. Command-line arguments where applicable
+#
+# Environment-specific configuration for development, staging, and production
+# should be placed in corresponding files:
+# - rinna-dev.yaml
+# - rinna-staging.yaml
+# - rinna-prod.yaml
+#
+
+# Global project configuration
+project:
+  name: "Rinna"
+  version: "1.2.5"  # Automatically updated by rin-version
+  environment: "development"  # development, staging, production
+  data_dir: "${HOME}/.rinna/data"
+  temp_dir: "${HOME}/.rinna/temp"
+  config_dir: "${HOME}/.rinna/config"
+
+# Security configuration
+security:
+  api_token_expiration_days: 90
+  webhook_token_expiration_days: 365
+  token_encryption_key: ""  # Set this in environment-specific config or with env var RINNA_SECURITY_TOKEN_ENCRYPTION_KEY
+  enable_cors: true
+  allowed_origins:
+    - "localhost"
+    - "127.0.0.1"
+
+# Java backend configuration
+java:
+  backend:
+    port: 8090
+    context_path: "/api/v1"
+    enable_swagger: true
+    enable_metrics: true
+  persistence:
+    type: "memory"  # memory, sqlite, postgres
+    # SQLite-specific configuration
+    sqlite:
+      database_path: "${project.data_dir}/rinna.db"
+    # PostgreSQL-specific configuration
+    postgres:
+      host: "localhost"
+      port: 5432
+      database: "rinna"
+      username: "rinnauser"
+      password: ""  # Set with env var RINNA_JAVA_PERSISTENCE_POSTGRES_PASSWORD
+      ssl_enabled: false
+  document_service:
+    enabled: true
+    provider: "docmosis"  # docmosis, none
+    templates_path: "${project.data_dir}/templates"
+    docmosis:
+      license_key: ""  # Set with env var RINNA_JAVA_DOCUMENT_SERVICE_DOCMOSIS_LICENSE_KEY
+      site: "Free"
+
+# Go API server configuration
+go:
+  api:
+    port: 8080
+    read_timeout_seconds: 30
+    write_timeout_seconds: 30
+    shutdown_timeout_seconds: 10
+    enable_cors: true
+    log_level: "info"  # debug, info, warning, error
+  health:
+    enabled: true
+    path: "/health"
+  metrics:
+    enabled: true
+    path: "/metrics"
+  backend:
+    java_url: "http://localhost:${java.backend.port}${java.backend.context_path}"
+    connection_timeout_ms: 5000
+    request_timeout_ms: 10000
+
+# CLI configuration
+cli:
+  api_url: "http://localhost:${go.api.port}/api/v1"
+  connection_timeout_ms: 5000
+  request_timeout_ms: 10000
+  color_output: true
+  default_format: "table"  # table, json, yaml
+  cache_dir: "${project.data_dir}/cache"
+
+# Python tools configuration
+python:
+  diagrams:
+    output_dir: "${project.data_dir}/diagrams"
+    lucidchart:
+      api_key: ""  # Set with env var RINNA_PYTHON_DIAGRAMS_LUCIDCHART_API_KEY
+      token: ""    # Set with env var RINNA_PYTHON_DIAGRAMS_LUCIDCHART_TOKEN
+
+# CI/CD configuration
+ci:
+  test_timeout_minutes: 10
+  coverage_threshold: 80
+  static_analysis: true
+  publish_artifacts: true
+  build_docker_images: true
+
+# Development tools configuration
+development:
+  auto_reload: true
+  mock_services: false
+  generate_test_data: true
+  profiling_enabled: false

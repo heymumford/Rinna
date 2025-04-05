@@ -15,6 +15,7 @@ set -e
 
 # Determine project directory
 RINNA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+FIRST_RUN_MARKER="$HOME/.config/rinna/first_run_complete"
 
 # Colors
 RED='\033[0;31m'
@@ -27,6 +28,44 @@ NC='\033[0m' # No Color
 error() {
   echo -e "${RED}Error: $1${NC}" >&2
   exit 1
+}
+
+# Check if we need to run setup
+check_first_run() {
+  # Create config directory if it doesn't exist
+  mkdir -p "$(dirname "$FIRST_RUN_MARKER")"
+  
+  if [[ ! -f "$FIRST_RUN_MARKER" ]]; then
+    echo -e "${BLUE}=====================================================${NC}"
+    echo -e "${BLUE}         First run of Rinna CLI detected!            ${NC}"
+    echo -e "${BLUE}=====================================================${NC}"
+    echo -e "Checking your environment for dependencies..."
+    echo
+    
+    if [[ -x "$RINNA_DIR/bin/rin-setup" ]]; then
+      "$RINNA_DIR/bin/rin-setup" "install"
+      if [[ $? -eq 0 ]]; then
+        echo "Dependencies ready! Creating first-run marker..."
+        touch "$FIRST_RUN_MARKER"
+      else
+        echo -e "${YELLOW}Warning: Some dependencies could not be installed automatically.${NC}"
+        echo -e "You may need to install them manually. Continue with 'rin setup' later."
+        # Continue anyway - we've warned the user
+        touch "$FIRST_RUN_MARKER"
+      fi
+    else
+      echo -e "${YELLOW}Warning: Setup script not found or not executable.${NC}"
+      echo -e "You may need to install dependencies manually."
+      # Create marker anyway to avoid repeated messages
+      touch "$FIRST_RUN_MARKER"
+    fi
+    
+    echo
+    echo -e "${BLUE}=====================================================${NC}"
+    echo -e "${BLUE}         Welcome to Rinna CLI!                       ${NC}"
+    echo -e "${BLUE}=====================================================${NC}"
+    echo
+  fi
 }
 
 # Show help text
@@ -58,6 +97,24 @@ Commands:
     config        Show document configuration
     templates     Show available templates
     generate      Generate documents
+    
+  setup     Environment management:
+    install       Install missing dependencies without prompting
+    check         Check for missing dependencies without installing
+    config        Create or edit configuration file
+    test          Test the development environment
+    
+  config    Configuration management:
+    view          View effective configuration
+    get <key>     Get a specific configuration value
+    set <key>     Set a configuration value
+    validate      Validate the current configuration
+    generate      Generate language-specific configurations
+    create-env    Create a template environment config
+    
+  diagrams  Architecture visualization:
+    --setup       Configure LucidChart API credentials
+    --force       Generate diagrams without credentials check
   
 Test Categories:
   unit            Run unit tests only
@@ -80,7 +137,10 @@ Examples:
   rin build all -v                # Clean, compile, test with verbose output
   rin build test workflow         # Run workflow tests
   rin version patch               # Bump patch version
-  rin doc license YOUR-KEY        # Set Docmosis license key
+  rin setup                       # Check and install missing dependencies
+  rin config view                 # View current configuration
+  rin config set go.api.port 8081 # Change API port
+  rin diagrams                    # Generate architecture diagrams
 EOF
 }
 
@@ -93,6 +153,9 @@ fi
 # First argument is the command category
 CATEGORY="$1"
 shift
+
+# Run first time setup if needed
+check_first_run
 
 # Dispatch to appropriate tool
 case "$CATEGORY" in
@@ -115,6 +178,27 @@ case "$CATEGORY" in
       exec "$RINNA_DIR/bin/rin-doc" "$@"
     else
       error "bin/rin-doc not found or not executable"
+    fi
+    ;;
+  setup)
+    if [[ -x "$RINNA_DIR/bin/rin-setup" ]]; then
+      exec "$RINNA_DIR/bin/rin-setup" "$@"
+    else
+      error "bin/rin-setup not found or not executable"
+    fi
+    ;;
+  config)
+    if [[ -x "$RINNA_DIR/bin/rin-config" ]]; then
+      exec "$RINNA_DIR/bin/rin-config" "$@"
+    else
+      error "bin/rin-config not found or not executable"
+    fi
+    ;;
+  diagrams)
+    if [[ -x "$RINNA_DIR/bin/rin-diagrams" ]]; then
+      exec "$RINNA_DIR/bin/rin-diagrams" "$@"
+    else
+      error "bin/rin-diagrams not found or not executable"
     fi
     ;;
   -h|--help)
