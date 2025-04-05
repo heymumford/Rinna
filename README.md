@@ -77,13 +77,13 @@ curl -X POST "http://localhost:8080/api/v1/workitems" \
 # Clone and build
 git clone https://github.com/heymumford/Rinna.git
 cd Rinna
-chmod +x bin/rin bin/rin-version bin/rin-build
+chmod +x bin/rin bin/rin-version bin/rin-build bin/run-tests.sh
 bin/rin build
 ```
 
 ### Build System
 
-The Rinna build system supports multiple development workflows:
+The Rinna build system supports multiple development workflows with a mode-based architecture:
 
 ```bash
 # Quick iterations during development
@@ -102,6 +102,18 @@ bin/rin build test domain:workflow
 bin/rin build prepare-release
 ```
 
+Advanced options include:
+```bash
+# Run parallel tests with coverage
+bin/rin build test --parallel --coverage
+
+# Monitor file changes and run tests automatically
+bin/rin build test --watch
+
+# Stop tests at first failure
+bin/rin build test --fail-fast
+```
+
 See [Build System](docs/development/build-system.md) for detailed documentation.
 
 ### Maven Integration
@@ -116,15 +128,23 @@ See [Build System](docs/development/build-system.md) for detailed documentation.
 
 ### Version Management
 
+The project uses a centralized version management approach with `version.properties` as the single source of truth:
+
 ```bash
-bin/rin version current   # View version
+bin/rin version current   # View version information
 bin/rin version patch     # Bump patch version
 bin/rin version minor     # Bump minor version
 bin/rin version verify    # Check consistency
-bin/rin version update    # Sync with version.properties
+bin/rin version update    # Sync all files with version.properties
+bin/rin version release   # Create a release with git tag
 ```
 
-See [Version Management](docs/development/version-management.md) for details on our centralized approach using `version.properties`.
+Integration with the build system enables streamlined release workflows:
+```bash
+bin/rin build prepare-release  # Run tests, package, update version
+```
+
+See [Version Management](docs/development/version-management.md) for details on our centralized approach.
 
 ## Requirements
 
