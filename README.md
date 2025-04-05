@@ -77,9 +77,32 @@ curl -X POST "http://localhost:8080/api/v1/workitems" \
 # Clone and build
 git clone https://github.com/heymumford/Rinna.git
 cd Rinna
-chmod +x bin/rin bin/rin-version
+chmod +x bin/rin bin/rin-version bin/rin-build
 bin/rin build
 ```
+
+### Build System
+
+The Rinna build system supports multiple development workflows:
+
+```bash
+# Quick iterations during development
+bin/rin build fast
+
+# Build with tests
+bin/rin build test
+
+# Full verification with coverage
+bin/rin build verify
+
+# Domain-specific tests
+bin/rin build test domain:workflow
+
+# Prepare for release
+bin/rin build prepare-release
+```
+
+See [Build System](docs/development/build-system.md) for detailed documentation.
 
 ### Maven Integration
 
@@ -94,11 +117,11 @@ bin/rin build
 ### Version Management
 
 ```bash
-bin/rin-version current   # View version
-bin/rin-version patch     # Bump patch version
-bin/rin-version minor     # Bump minor version
-bin/rin-version verify    # Check consistency
-bin/rin-version update    # Sync with version.properties
+bin/rin version current   # View version
+bin/rin version patch     # Bump patch version
+bin/rin version minor     # Bump minor version
+bin/rin version verify    # Check consistency
+bin/rin version update    # Sync with version.properties
 ```
 
 See [Version Management](docs/development/version-management.md) for details on our centralized approach using `version.properties`.
