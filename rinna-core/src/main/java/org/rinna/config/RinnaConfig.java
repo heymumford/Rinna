@@ -12,18 +12,31 @@ import org.rinna.adapter.persistence.InMemoryItemRepository;
 import org.rinna.adapter.persistence.InMemoryMetadataRepository;
 import org.rinna.adapter.persistence.InMemoryQueueRepository;
 import org.rinna.adapter.persistence.InMemoryReleaseRepository;
+import org.rinna.adapter.service.DefaultDocumentService;
 import org.rinna.adapter.service.DefaultItemService;
 import org.rinna.adapter.service.DefaultQueueService;
 import org.rinna.adapter.service.DefaultReleaseService;
 import org.rinna.adapter.service.DefaultWorkflowService;
+import org.rinna.adapter.service.DocmosisDocumentService;
+import org.rinna.adapter.service.DocumentServiceFactory;
+import org.rinna.domain.entity.DocumentConfig;
 import org.rinna.domain.repository.ItemRepository;
 import org.rinna.domain.repository.MetadataRepository;
 import org.rinna.domain.repository.QueueRepository;
 import org.rinna.domain.repository.ReleaseRepository;
+import org.rinna.domain.usecase.DocumentService;
 import org.rinna.domain.usecase.ItemService;
 import org.rinna.domain.usecase.QueueService;
 import org.rinna.domain.usecase.ReleaseService;
 import org.rinna.domain.usecase.WorkflowService;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Configuration class for wiring together Rinna components.
@@ -31,6 +44,16 @@ import org.rinna.domain.usecase.WorkflowService;
  * initialized instances of all components.
  */
 public class RinnaConfig {
+    private static final Logger LOGGER = Logger.getLogger(RinnaConfig.class.getName());
+    
+    private static final String DEFAULT_CONFIG_FILE = "docmosis.properties";
+    private static final String DOCMOSIS_LICENSE_KEY_PROP = "docmosis.license.key";
+    private static final String DOCMOSIS_TEMPLATES_PATH_PROP = "docmosis.templates.path";
+    private static final String DOCMOSIS_PREFERRED_PROP = "docmosis.preferred";
+    
+    private final Properties properties;
+    private final DocumentConfig documentConfig;
+    
     private ItemRepository itemRepository;
     private ReleaseRepository releaseRepository;
     private QueueRepository queueRepository;
@@ -39,20 +62,28 @@ public class RinnaConfig {
     private WorkflowService workflowService;
     private ReleaseService releaseService;
     private QueueService queueService;
+    private DocumentService documentService;
     
     /**
      * Initializes the configuration with default components.
      */
     public RinnaConfig() {
+        // Load document configuration
+        this.properties = loadProperties(DEFAULT_CONFIG_FILE);
+        this.documentConfig = createDocumentConfig();
+        
+        // Initialize repositories
         this.itemRepository = new InMemoryItemRepository();
         this.releaseRepository = new InMemoryReleaseRepository();
         this.queueRepository = new InMemoryQueueRepository();
         this.metadataRepository = new InMemoryMetadataRepository();
         
+        // Initialize services
         this.itemService = new DefaultItemService(itemRepository);
         this.workflowService = new DefaultWorkflowService(itemRepository);
         this.releaseService = new DefaultReleaseService(releaseRepository, itemService);
         this.queueService = new DefaultQueueService(queueRepository, itemService, metadataRepository);
+        this.documentService = DocumentServiceFactory.createDocumentService(documentConfig);
     }
     
     /**
@@ -223,5 +254,116 @@ public class RinnaConfig {
     public RinnaConfig setQueueService(QueueService queueService) {
         this.queueService = queueService;
         return this;
+    }
+    
+    /**
+     * Returns the document service.
+     * 
+     * @return the document service
+     */
+    public DocumentService getDocumentService() {
+        return documentService;
+    }
+    
+    /**
+     * Sets a custom document service.
+     * 
+     * @param documentService the document service
+     * @return this configuration
+     */
+    public RinnaConfig setDocumentService(DocumentService documentService) {
+        this.documentService = documentService;
+        return this;
+    }
+    
+    /**
+     * Returns the document configuration.
+     * 
+     * @return the document configuration
+     */
+    public DocumentConfig getDocumentConfig() {
+        return documentConfig;
+    }
+    
+    /**
+     * Gets a property value.
+     * 
+     * @param key the property key
+     * @return the property value, or null if not found
+     */
+    public String getProperty(String key) {
+        return properties.getProperty(key);
+    }
+    
+    /**
+     * Gets a property value with a default.
+     * 
+     * @param key the property key
+     * @param defaultValue the default value if the property is not found
+     * @return the property value, or the default if not found
+     */
+    public String getProperty(String key, String defaultValue) {
+        return properties.getProperty(key, defaultValue);
+    }
+    
+    /**
+     * Sets a configuration property.
+     * 
+     * @param key the property key
+     * @param value the property value
+     */
+    public void setProperty(String key, String value) {
+        properties.setProperty(key, value);
+    }
+    
+    /**
+     * Updates the Docmosis license key.
+     * This will reinitialize the document service.
+     * 
+     * @param licenseKey the Docmosis license key
+     * @return this configuration
+     */
+    public RinnaConfig setDocmosisLicenseKey(String licenseKey) {
+        properties.setProperty(DOCMOSIS_LICENSE_KEY_PROP, licenseKey);
+        DocumentConfig newConfig = createDocumentConfig();
+        this.documentService = DocumentServiceFactory.createDocumentService(newConfig);
+        return this;
+    }
+    
+    /**
+     * Loads properties from the given file.
+     */
+    private Properties loadProperties(String configFile) {
+        Properties props = new Properties();
+        
+        try (InputStream input = getClass().getClassLoader().getResourceAsStream(configFile)) {
+            if (input != null) {
+                props.load(input);
+                LOGGER.info("Loaded configuration from " + configFile);
+            } else {
+                LOGGER.warning("Configuration file not found: " + configFile);
+            }
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Failed to load configuration", e);
+        }
+        
+        return props;
+    }
+    
+    /**
+     * Creates a document configuration from the properties.
+     */
+    private DocumentConfig createDocumentConfig() {
+        String licenseKey = properties.getProperty(DOCMOSIS_LICENSE_KEY_PROP, "");
+        String templatesPathStr = properties.getProperty(DOCMOSIS_TEMPLATES_PATH_PROP, "templates");
+        boolean preferDocmosis = Boolean.parseBoolean(properties.getProperty(DOCMOSIS_PREFERRED_PROP, "true"));
+        
+        Path templatesPath = Paths.get(templatesPathStr);
+        
+        return new DocumentConfig.Builder()
+                .docmosisLicenseKey(licenseKey)
+                .templatesPath(templatesPath)
+                .preferDocmosis(preferDocmosis)
+                .build();
     }
 }
