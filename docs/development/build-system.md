@@ -18,9 +18,30 @@ Categories:
 - `build` - Building and testing operations
 - `version` - Version management operations
 
+## Build Modes
+
+The build system supports intuitive modes for common development workflows:
+
+```bash
+# Quick compilation without tests
+rin build fast
+
+# Build and run tests
+rin build test
+
+# Build and create package
+rin build package
+
+# Full verification with coverage
+rin build verify
+
+# Prepare for release
+rin build release
+```
+
 ## Build Operations
 
-Build operations are handled by the `rin-build` script, accessed via `rin build`:
+Individual build operations are also supported:
 
 ```bash
 # Clean the project
@@ -37,28 +58,29 @@ rin build package
 
 # Clean, compile, and test
 rin build all
+
+# Integrated release preparation
+rin build prepare-release
 ```
 
-## Test Categories
+## Test Categories and Domains
 
-The build system supports various test categories:
+The build system supports various test categories and domain-specific tests:
 
 ```bash
-# Run unit tests only
-rin build test unit
+# Basic test categories
+rin build test unit        # Run unit tests only
+rin build test bdd         # Run BDD tests
 
-# Run BDD tests
-rin build test bdd
+# Domain-specific test categories
+rin build test domain:workflow   # Run workflow domain tests
+rin build test domain:release    # Run release domain tests
+rin build test domain:input      # Run input interface domain tests
+rin build test domain:api        # Run API integration domain tests
+rin build test domain:cli        # Run CLI integration domain tests
 
-# Run specific test categories
-rin build test workflow
-rin build test release
-rin build test input
-rin build test api
-rin build test cli
-
-# Run tests with specific tag
-rin build test tag:feature-x
+# Tag-based tests
+rin build test tag:feature-x     # Run tests with specific tag
 ```
 
 ## Options
@@ -76,44 +98,35 @@ rin build test --parallel  # Run tests in parallel
 rin build test --fail-fast # Stop at first failure
 rin build test --coverage  # Generate coverage report
 rin build test --watch     # Monitor and run tests on changes
+rin build test --skip-tests # Skip tests entirely
 ```
 
-## Version Management
+## Version Management Integration
 
-Version operations are handled by the `rin-version` script:
+The build system integrates with version management:
 
 ```bash
-# Show current version info
-rin version current
+# Prepare for release (tests, version update, package)
+rin build prepare-release
 
-# Verify version consistency
-rin version verify
-
-# Bump versions
-rin version major
-rin version minor
-rin version patch
-
-# Set to specific version
-rin version set 2.0.0
-
-# Create release
-rin version release
-
-# Update all files with version.properties
-rin version update
+# Standard version management operations
+rin version current        # Show current version
+rin version verify         # Check consistency
+rin version patch          # Bump patch version
+rin version release        # Create a release
 ```
 
 ## Design Principles
 
 Our build system follows these principles:
 
-1. **Unified Interface**: One entry point (`rin`) to access all commands
-2. **Composable Commands**: Commands can be combined (e.g., `rin build clean compile test`)
-3. **DRY**: Common operations abstracted into shared functions
-4. **Progressive Disclosure**: Simple commands for common operations, options for advanced use
-5. **Consistent Output**: Standardized formatting and color-coding
-6. **Backward Compatibility**: Support for legacy command patterns
+1. **Mode-Based Architecture**: Intuitive modes for common development workflows
+2. **Domain Mapping**: Smart mapping between user-friendly domains and technical configuration
+3. **Convention Over Configuration**: Smart defaults for most operations
+4. **Unified Interface**: One entry point (`rin`) to access all commands
+5. **Command-Query Separation**: Clear distinction between commands and options
+6. **Composable Commands**: Commands can be combined (e.g., `rin build clean compile test`)
+7. **DRY**: Common operations abstracted into shared functions
 
 ## Integration with Maven
 
@@ -123,6 +136,7 @@ The build system is a thin wrapper around Maven, configured to provide:
 - More user-friendly output formatting
 - Presets for common operations
 - Smart defaults for most operations
+- Jacoco code coverage integration
 
 ## Environment Variables
 
@@ -133,7 +147,8 @@ The build system respects the following environment variables:
 
 ## Best Practices
 
-1. For simple builds: `rin build all`
-2. For development: `rin build test --watch`
-3. For CI/CD: `rin build all --fail-fast`
-4. For release preparation: `rin version verify` then `rin version patch`
+1. For quick development iterations: `rin build fast`
+2. For testing changes: `rin build test --watch`
+3. For comprehensive verification: `rin build verify`
+4. For preparing releases: `rin build prepare-release`
+5. For CI/CD pipelines: `rin build verify --fail-fast`
