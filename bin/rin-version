@@ -111,6 +111,72 @@ update_readme_version() {
   print_success "Updated version in $README_FILE to $new_version"
 }
 
+update_go_version() {
+  local new_version="$1"
+  local go_health_files=(
+    "$RINNA_DIR/api/pkg/health/version.go"
+    "$RINNA_DIR/api/internal/version/version.go"
+  )
+  
+  # Create version.go files if they don't exist
+  mkdir -p "$RINNA_DIR/api/pkg/health"
+  if [ ! -f "$RINNA_DIR/api/pkg/health/version.go" ]; then
+    cat > "$RINNA_DIR/api/pkg/health/version.go" << EOF
+/*
+ * Version information for the Rinna API
+ *
+ * Copyright (c) $(date +%Y) Eric C. Mumford (@heymumford)
+ * This file is subject to the terms and conditions defined in
+ * the LICENSE file, which is part of this source code package.
+ */
+
+package health
+
+// These values are set during the build process
+var (
+	Version = "$new_version"
+	CommitSHA = "runtime"
+	BuildTime = "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+)
+EOF
+    print_success "Created version file at $RINNA_DIR/api/pkg/health/version.go"
+  else
+    # Update existing version.go file
+    sed -i -E "s/Version = \"[^\"]*\"/Version = \"$new_version\"/" "$RINNA_DIR/api/pkg/health/version.go"
+    sed -i -E "s/BuildTime = \"[^\"]*\"/BuildTime = \"$(date -u +'%Y-%m-%dT%H:%M:%SZ')\"/" "$RINNA_DIR/api/pkg/health/version.go"
+  fi
+  
+  # Create internal version package if it doesn't exist
+  mkdir -p "$RINNA_DIR/api/internal/version"
+  if [ ! -f "$RINNA_DIR/api/internal/version/version.go" ]; then
+    cat > "$RINNA_DIR/api/internal/version/version.go" << EOF
+/*
+ * Version information for the Rinna API
+ *
+ * Copyright (c) $(date +%Y) Eric C. Mumford (@heymumford)
+ * This file is subject to the terms and conditions defined in
+ * the LICENSE file, which is part of this source code package.
+ */
+
+package version
+
+// These values are set during the build process
+var (
+	Version = "$new_version"
+	CommitSHA = "runtime"
+	BuildTime = "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+)
+EOF
+    print_success "Created version file at $RINNA_DIR/api/internal/version/version.go"
+  else
+    # Update existing version.go file
+    sed -i -E "s/Version = \"[^\"]*\"/Version = \"$new_version\"/" "$RINNA_DIR/api/internal/version/version.go"
+    sed -i -E "s/BuildTime = \"[^\"]*\"/BuildTime = \"$(date -u +'%Y-%m-%dT%H:%M:%SZ')\"/" "$RINNA_DIR/api/internal/version/version.go"
+  fi
+  
+  print_success "Updated version in Go files to $new_version"
+}
+
 verify_consistency() {
   local root_version=$(get_version)
   local inconsistencies=0
@@ -145,6 +211,22 @@ verify_consistency() {
     echo -e "${RED}README version mismatch: ${readme_version} (should be ${root_version})${NC}"
     ((inconsistencies++))
   fi
+  
+  # Check Go version files
+  local go_version_files=(
+    "$RINNA_DIR/api/pkg/health/version.go"
+    "$RINNA_DIR/api/internal/version/version.go"
+  )
+  
+  for version_file in "${go_version_files[@]}"; do
+    if [ -f "$version_file" ]; then
+      local go_version=$(grep -o 'Version = "[^"]*"' "$version_file" | cut -d '"' -f 2)
+      if [[ "$go_version" != "$root_version" ]]; then
+        echo -e "${RED}Go version mismatch in ${version_file}: ${go_version} (should be ${root_version})${NC}"
+        ((inconsistencies++))
+      fi
+    fi
+  done
   
   # Report result
   if [[ $inconsistencies -eq 0 ]]; then
@@ -212,8 +294,9 @@ cmd_update() {
   print_header "Updating all files to match version.properties (${current_version})"
   update_pom_versions "$current_version"
   update_readme_version "$current_version"
+  update_go_version "$current_version"
   
-  git add "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE"
+  git add "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"
   git commit -m "Sync version files with version.properties (${current_version})"
   print_success "Committed version changes"
   
@@ -230,8 +313,9 @@ cmd_bump_version() {
   update_version_properties "$new_version"
   update_pom_versions "$new_version"
   update_readme_version "$new_version"
+  update_go_version "$new_version"
   
-  git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE"
+  git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"
   git commit -m "Bump version to ${new_version}"
   print_success "Committed version change"
   
@@ -257,8 +341,9 @@ cmd_set() {
   update_version_properties "$new_version"
   update_pom_versions "$new_version"
   update_readme_version "$new_version"
+  update_go_version "$new_version"
   
-  git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE"
+  git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"
   git commit -m "Set version to ${new_version}"
   print_success "Committed version change"
   
