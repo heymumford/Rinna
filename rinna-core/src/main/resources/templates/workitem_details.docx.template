@@ -1,0 +1,24 @@
+This is a sample template for Docmosis. In a real implementation, this would be a proper .docx file with Docmosis templating tags.
+
+Docmosis will look for template tags like:
+
+<<itemId>> - Work Item ID
+<<title>> - Work Item Title
+<<type>> - Work Item Type
+<<status>> - Work Item Status
+<<priority>> - Work Item Priority
+<<assignee>> - Work Item Assignee
+<<createdAt>> - Work Item Creation Date/Time
+<<updatedAt>> - Work Item Update Date/Time
+<<description>> - Work Item Description
+
+When using actual Docmosis, you would create Word documents (.docx) with these template tags and place them in the templates directory.
+
+To use your Docmosis license, run the command:
+./bin/rin-doc license YOUR_LICENSE_KEY_HERE
+
+You can then view the license details with:
+./bin/rin-doc license-show
+
+And check the general configuration with:
+./bin/rin-doc config

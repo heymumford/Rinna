@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+
+#
+# rin-doc - Rinna document generation utility
+#
+# PURPOSE: Command-line utility to manage document generation and Docmosis configuration
+#
+# Copyright (c) 2025 Eric C. Mumford (@heymumford)
+# This file is subject to the terms and conditions defined in
+# the LICENSE file, which is part of this source code package.
+# (MIT License)
+#
+
+set -e
+
+# Determine project directory
+RINNA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CONFIG_FILE="${RINNA_DIR}/rinna-core/src/main/resources/docmosis.properties"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Print error and exit
+error() {
+  echo -e "${RED}Error: $1${NC}" >&2
+  exit 1
+}
+
+# Show help text
+show_help() {
+  cat << EOF
+${BLUE}rin-doc${NC} - Rinna document generation utility
+
+Usage: rin-doc [command] [options]
+
+Commands:
+  license <key>      Set the Docmosis license key
+  license-show       Show the current Docmosis license key (masked)
+  config             Show the current document configuration
+  templates          Show available templates
+  generate <type>    Generate a document
+    <type>: workitem, project, release, report
+  
+Options:
+  -h, --help         Show this help message
+  -o, --output FILE  Output file for document generation (default: output.pdf)
+  -f, --format       Document format: pdf, docx, html (default: pdf)
+  
+Examples:
+  rin-doc license ABC-123-XYZ                  # Set license key
+  rin-doc generate workitem -o report.pdf      # Generate work item document
+EOF
+}
+
+# Manage Docmosis license key
+cmd_license() {
+  local license_key="$1"
+  
+  if [[ -z "$license_key" ]]; then
+    error "License key is required"
+  fi
+  
+  if grep -q "^docmosis.license.key=" "$CONFIG_FILE"; then
+    # Update existing key
+    sed -i "s/^docmosis.license.key=.*/docmosis.license.key=${license_key}/" "$CONFIG_FILE"
+  else
+    # Add new key
+    echo "docmosis.license.key=${license_key}" >> "$CONFIG_FILE"
+  fi
+  
+  echo -e "${GREEN}Docmosis license key updated${NC}"
+  echo "To use your license, restart any running Rinna applications"
+}
+
+# Show the current license key (masked)
+cmd_license_show() {
+  if grep -q "^docmosis.license.key=" "$CONFIG_FILE"; then
+    local key=$(grep "^docmosis.license.key=" "$CONFIG_FILE" | cut -d'=' -f2)
+    if [[ -z "$key" ]]; then
+      echo -e "${YELLOW}No Docmosis license key configured${NC}"
+    else
+      local masked=""
+      if [[ ${#key} -gt 8 ]]; then
+        masked="${key:0:4}$(printf '%*s' $((${#key} - 8)) | tr ' ' '*')${key: -4}"
+      else
+        masked="$(printf '%*s' ${#key} | tr ' ' '*')"
+      fi
+      echo -e "Current Docmosis license key: ${BLUE}${masked}${NC}"
+    fi
+  else
+    echo -e "${YELLOW}No Docmosis license key configured${NC}"
+  fi
+}
+
+# Show the current document configuration
+cmd_config() {
+  echo -e "${BLUE}Document Configuration:${NC}"
+  
+  # Show license info
+  cmd_license_show
+  
+  # Show template path
+  if grep -q "^docmosis.templates.path=" "$CONFIG_FILE"; then
+    local path=$(grep "^docmosis.templates.path=" "$CONFIG_FILE" | cut -d'=' -f2)
+    echo "Template path: $path"
+  else
+    echo "Template path: templates (default)"
+  fi
+  
+  # Show preferred setting
+  if grep -q "^docmosis.preferred=" "$CONFIG_FILE"; then
+    local preferred=$(grep "^docmosis.preferred=" "$CONFIG_FILE" | cut -d'=' -f2)
+    if [[ "$preferred" == "true" ]]; then
+      echo "Preferred engine: Docmosis (when available)"
+    else
+      echo "Preferred engine: Default"
+    fi
+  else
+    echo "Preferred engine: Docmosis (default when available)"
+  fi
+}
+
+# Show available templates
+cmd_templates() {
+  local templates_dir="${RINNA_DIR}/rinna-core/src/main/resources/templates"
+  
+  if [[ ! -d "$templates_dir" ]]; then
+    echo -e "${YELLOW}Templates directory not found: $templates_dir${NC}"
+    echo "You can create it with: mkdir -p $templates_dir"
+    return
+  fi
+  
+  echo -e "${BLUE}Available templates:${NC}"
+  
+  local count=0
+  for template in "$templates_dir"/*.{docx,pdf,html}; do
+    if [[ -f "$template" ]]; then
+      echo "  - $(basename "$template")"
+      ((count++))
+    fi
+  done
+  
+  if [[ $count -eq 0 ]]; then
+    echo -e "${YELLOW}No templates found${NC}"
+    echo "You can add templates to: $templates_dir"
+  fi
+}
+
+# Main execution
+if [[ $# -eq 0 ]]; then
+  show_help
+  exit 0
+fi
+
+# First argument is the command
+COMMAND="$1"
+shift
+
+# Dispatch to appropriate command
+case "$COMMAND" in
+  license)
+    cmd_license "$1"
+    ;;
+  license-show)
+    cmd_license_show
+    ;;
+  config)
+    cmd_config
+    ;;
+  templates)
+    cmd_templates
+    ;;
+  -h|--help)
+    show_help
+    exit 0
+    ;;
+  *)
+    # For backward compatibility
+    show_help
+    ;;
+esac

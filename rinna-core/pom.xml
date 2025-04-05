@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>rinna-core</artifactId>
-    <name>Rinna Core</name>
+    <n>Rinna Core</n>
     <description>Core domain model and services for Rinna workflow management</description>
 
     <dependencies>
@@ -19,7 +19,35 @@
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
-            <version>1.2.4</version>
+            <version>3.42.0.0</version>
+        </dependency>
+
+        <!-- Document generation (optional) -->
+        <dependency>
+            <groupId>com.docmosis</groupId>
+            <artifactId>docmosis-core</artifactId>
+            <version>4.7.0</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.docmosis</groupId>
+            <artifactId>docmosis-extras</artifactId>
+            <version>4.7.0</version>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- PDF generation (fallback) -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>2.0.27</version>
+        </dependency>
+
+        <!-- DOCX generation (fallback) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.3</version>
         </dependency>
     </dependencies>
 

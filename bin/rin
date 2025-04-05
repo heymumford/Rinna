@@ -52,6 +52,12 @@ Commands:
     set <version> Set to specific version
     verify        Verify version consistency
     update        Update all files to match version.properties
+    
+  doc       Document generation:
+    license <key> Set Docmosis license key
+    config        Show document configuration
+    templates     Show available templates
+    generate      Generate documents
   
 Test Categories:
   unit            Run unit tests only
@@ -74,6 +80,7 @@ Examples:
   rin build all -v                # Clean, compile, test with verbose output
   rin build test workflow         # Run workflow tests
   rin version patch               # Bump patch version
+  rin doc license YOUR-KEY        # Set Docmosis license key
 EOF
 }
 
@@ -101,6 +108,13 @@ case "$CATEGORY" in
       exec "$RINNA_DIR/bin/rin-version" "$@"
     else
       error "bin/rin-version not found or not executable"
+    fi
+    ;;
+  doc|document)
+    if [[ -x "$RINNA_DIR/bin/rin-doc" ]]; then
+      exec "$RINNA_DIR/bin/rin-doc" "$@"
+    else
+      error "bin/rin-doc not found or not executable"
     fi
     ;;
   -h|--help)

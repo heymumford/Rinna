@@ -183,6 +183,7 @@ Rinna follows clean architecture principles with well-defined interfaces for ext
 
 - [Getting Started](docs/getting-started/README.md)
 - [User Guide](docs/user-guide/README.md)
+- [Document Generation](docs/user-guide/documents.md)
 - [Architecture](docs/development/architecture.md)
 - [Development Guide](docs/development/README.md)
 - [Build System](docs/development/build-system.md)

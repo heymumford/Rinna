@@ -10,6 +10,7 @@ Rinna focuses on providing a streamlined, developer-centric approach to workflow
 
 - [CLI Tool (rin)](rin-CLI.md) - Command-Line Interface utility for managing work and automating developer workflows
 - [Quick Reference](rin-quick-ref.md) - Concise reference for common developer CLI (Command-Line Interface) commands
+- [Document Generation](documents.md) - Generate beautiful reports and documents from your workflow data
 
 ## Metrics and Business Value
 
@@ -103,5 +104,25 @@ rin -v test
 # Full workflow with errors-only output
 rin -e all
 ```
+
+## Document Generation
+
+Rinna includes a powerful document generation system that supports Docmosis for beautiful reports:
+
+```bash
+# Configure Docmosis license key
+rin doc license YOUR_LICENSE_KEY
+
+# Generate a work item report
+rin doc generate workitem --id ITEM-1 --format pdf
+
+# Show document configuration
+rin doc config
+
+# List available templates
+rin doc templates
+```
+
+For complete documentation on document generation, see [documents.md](documents.md).
 
 For complete CLI documentation, see [rin-CLI.md](rin-CLI.md) or run `rin --help`.
