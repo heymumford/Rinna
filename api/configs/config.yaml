@@ -1,7 +1,7 @@
 # Rinna API Server Configuration
 
 server:
-  port: 8080
+  port: 9080
   host: "localhost"
   shutdownTimeout: 15
 
@@ -11,6 +11,10 @@ java:
   port: 8081
   connectTimeout: 5000
   requestTimeout: 30000
+  # API endpoints
+  endpoints:
+    workitems: "/api/workitems"
+    health: "/health"
 
 logging:
   level: "info"

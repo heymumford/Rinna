@@ -8,6 +8,7 @@
 
 package org.rinna;
 
+import org.rinna.adapter.service.ApiHealthServer;
 import org.rinna.config.RinnaConfig;
 import org.rinna.domain.repository.MetadataRepository;
 import org.rinna.domain.usecase.ItemService;
@@ -15,16 +16,21 @@ import org.rinna.domain.usecase.QueueService;
 import org.rinna.domain.usecase.ReleaseService;
 import org.rinna.domain.usecase.WorkflowService;
 
+import java.io.IOException;
+
 /**
  * Main entry point for the Rinna system.
  * This class provides access to the core services of the system.
  */
 public class Rinna {
+    private static Rinna instance;
+    
     private final ItemService itemService;
     private final WorkflowService workflowService;
     private final ReleaseService releaseService;
     private final QueueService queueService;
     private final MetadataRepository metadataRepository;
+    private ApiHealthServer apiServer;
     
     /**
      * Constructs a new Rinna instance with the specified services.
@@ -68,15 +74,18 @@ public class Rinna {
      *
      * @return a new Rinna instance
      */
-    public static Rinna initialize() {
-        RinnaConfig config = new RinnaConfig();
-        return new Rinna(
-            config.getItemService(), 
-            config.getWorkflowService(), 
-            config.getReleaseService(),
-            config.getQueueService(),
-            config.getMetadataRepository()
-        );
+    public static synchronized Rinna initialize() {
+        if (instance == null) {
+            RinnaConfig config = new RinnaConfig();
+            instance = new Rinna(
+                config.getItemService(), 
+                config.getWorkflowService(), 
+                config.getReleaseService(),
+                config.getQueueService(),
+                config.getMetadataRepository()
+            );
+        }
+        return instance;
     }
     
     /**
@@ -104,5 +113,68 @@ public class Rinna {
      */
     public MetadataRepository getMetadataRepository() {
         return metadataRepository;
+    }
+    
+    /**
+     * Starts the API server.
+     * 
+     * @param port the port to listen on
+     * @return true if the server was started successfully, false otherwise
+     */
+    public boolean startApiServer(int port) {
+        try {
+            apiServer = new ApiHealthServer(port);
+            apiServer.start();
+            return true;
+        } catch (IOException e) {
+            System.err.println("Failed to start API server: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Stops the API server.
+     */
+    public void stopApiServer() {
+        if (apiServer != null) {
+            apiServer.stop();
+            apiServer = null;
+        }
+    }
+    
+    /**
+     * Main method to run the Rinna system.
+     * 
+     * @param args command line arguments
+     */
+    public static void main(String[] args) {
+        // Parse arguments
+        int port = 8081;
+        if (args.length > 0) {
+            try {
+                port = Integer.parseInt(args[0]);
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid port number: " + args[0]);
+                System.exit(1);
+            }
+        }
+        
+        // Initialize the system
+        Rinna rinna = initialize();
+        
+        // Start the API server
+        if (!rinna.startApiServer(port)) {
+            System.exit(1);
+        }
+        
+        // Add a shutdown hook to stop the API server gracefully
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down Rinna...");
+            rinna.stopApiServer();
+        }));
+        
+        System.out.println("Rinna system started on port " + port);
+        System.out.println("Press Ctrl+C to stop");
     }
 }

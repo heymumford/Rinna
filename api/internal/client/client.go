@@ -46,6 +46,7 @@ func NewJavaClient(config *config.JavaServiceConfig) *JavaClient {
 func (c *JavaClient) Request(ctx context.Context, method, path string, payload interface{}, response interface{}) error {
 	// Build the URL
 	url := fmt.Sprintf("http://%s:%d%s", c.config.Host, c.config.Port, path)
+	fmt.Printf("Sending request to Java service: %s %s\n", method, url)
 
 	// Marshall the payload
 	var body []byte
@@ -100,11 +101,17 @@ func (c *JavaClient) Ping(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Duration(c.config.ConnectTimeout)*time.Millisecond)
 	defer cancel()
 
+	// Get the health endpoint from config, or use default
+	endpoint := "/health"
+	if c.config.Endpoints != nil && c.config.Endpoints["health"] != "" {
+		endpoint = c.config.Endpoints["health"]
+	}
+
 	// Send a request to the health endpoint
 	var response struct {
 		Status string `json:"status"`
 	}
-	err := c.Request(ctx, http.MethodGet, "/health", nil, &response)
+	err := c.Request(ctx, http.MethodGet, endpoint, nil, &response)
 	if err != nil {
 		return fmt.Errorf("failed to ping Java service: %v", err)
 	}
@@ -118,6 +125,12 @@ func (c *JavaClient) Ping(ctx context.Context) error {
 
 // ListWorkItems retrieves a list of work items from the Java service
 func (c *JavaClient) ListWorkItems(ctx context.Context, status string, page, pageSize int) (*models.WorkItemListResponse, error) {
+	// Get the workitems endpoint from config, or use default
+	endpoint := "/api/workitems"
+	if c.config.Endpoints != nil && c.config.Endpoints["workitems"] != "" {
+		endpoint = c.config.Endpoints["workitems"]
+	}
+
 	// Build query parameters
 	query := ""
 	if status != "" {
@@ -140,7 +153,7 @@ func (c *JavaClient) ListWorkItems(ctx context.Context, status string, page, pag
 
 	// Send the request
 	var response models.WorkItemListResponse
-	err := c.Request(ctx, http.MethodGet, "/api/workitems"+query, nil, &response)
+	err := c.Request(ctx, http.MethodGet, endpoint+query, nil, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list work items: %v", err)
 	}
@@ -150,9 +163,15 @@ func (c *JavaClient) ListWorkItems(ctx context.Context, status string, page, pag
 
 // CreateWorkItem creates a new work item in the Java service
 func (c *JavaClient) CreateWorkItem(ctx context.Context, request models.WorkItemCreateRequest) (*models.WorkItem, error) {
+	// Get the workitems endpoint from config, or use default
+	endpoint := "/api/workitems"
+	if c.config.Endpoints != nil && c.config.Endpoints["workitems"] != "" {
+		endpoint = c.config.Endpoints["workitems"]
+	}
+
 	// Send the request
 	var response models.WorkItem
-	err := c.Request(ctx, http.MethodPost, "/api/workitems", request, &response)
+	err := c.Request(ctx, http.MethodPost, endpoint, request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create work item: %v", err)
 	}
@@ -162,9 +181,15 @@ func (c *JavaClient) CreateWorkItem(ctx context.Context, request models.WorkItem
 
 // GetWorkItem retrieves a work item by ID from the Java service
 func (c *JavaClient) GetWorkItem(ctx context.Context, id string) (*models.WorkItem, error) {
+	// Get the workitems endpoint from config, or use default
+	endpoint := "/api/workitems"
+	if c.config.Endpoints != nil && c.config.Endpoints["workitems"] != "" {
+		endpoint = c.config.Endpoints["workitems"]
+	}
+
 	// Send the request
 	var response models.WorkItem
-	err := c.Request(ctx, http.MethodGet, "/api/workitems/"+id, nil, &response)
+	err := c.Request(ctx, http.MethodGet, endpoint+"/"+id, nil, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get work item: %v", err)
 	}
@@ -174,9 +199,15 @@ func (c *JavaClient) GetWorkItem(ctx context.Context, id string) (*models.WorkIt
 
 // UpdateWorkItem updates a work item in the Java service
 func (c *JavaClient) UpdateWorkItem(ctx context.Context, id string, request models.WorkItemUpdateRequest) (*models.WorkItem, error) {
+	// Get the workitems endpoint from config, or use default
+	endpoint := "/api/workitems"
+	if c.config.Endpoints != nil && c.config.Endpoints["workitems"] != "" {
+		endpoint = c.config.Endpoints["workitems"]
+	}
+
 	// Send the request
 	var response models.WorkItem
-	err := c.Request(ctx, http.MethodPut, "/api/workitems/"+id, request, &response)
+	err := c.Request(ctx, http.MethodPut, endpoint+"/"+id, request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update work item: %v", err)
 	}
@@ -186,9 +217,15 @@ func (c *JavaClient) UpdateWorkItem(ctx context.Context, id string, request mode
 
 // TransitionWorkItem transitions a work item in the Java service
 func (c *JavaClient) TransitionWorkItem(ctx context.Context, id string, request models.WorkItemTransitionRequest) (*models.WorkItem, error) {
+	// Get the workitems endpoint from config, or use default
+	endpoint := "/api/workitems"
+	if c.config.Endpoints != nil && c.config.Endpoints["workitems"] != "" {
+		endpoint = c.config.Endpoints["workitems"]
+	}
+
 	// Send the request
 	var response models.WorkItem
-	err := c.Request(ctx, http.MethodPost, "/api/workitems/"+id+"/transitions", request, &response)
+	err := c.Request(ctx, http.MethodPost, endpoint+"/"+id+"/transitions", request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("failed to transition work item: %v", err)
 	}
