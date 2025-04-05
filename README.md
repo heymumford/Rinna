@@ -4,14 +4,14 @@
 
 *A terminal-based task management tool for developers who code, not managers who report.*
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/heymumford/Rinna/actions)
+[![Rinna CI](https://github.com/heymumford/Rinna/actions/workflows/rin-ci.yml/badge.svg)](https://github.com/heymumford/Rinna/actions/workflows/rin-ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Java Version](https://img.shields.io/badge/java-21-orange.svg)](https://openjdk.java.net/projects/jdk/21/)
 [![Go Version](https://img.shields.io/badge/go-1.21-blue.svg)](https://golang.org/doc/go1.21)
 [![Version](https://img.shields.io/badge/version-1.2.4-blue.svg)](https://github.com/heymumford/Rinna/releases)
 [![GitHub Stars](https://img.shields.io/github/stars/heymumford/Rinna?style=social)](https://github.com/heymumford/Rinna/stargazers)
 
-[📥 Download](https://github.com/heymumford/Rinna/releases) • [📚 Documentation](docs/) • [🚀 Getting Started](docs/getting-started/README.md) • [🤝 Contribute](docs/development/contribution.md) • [📋 Changelog](CHANGELOG.md) • [📁 Folders](FOLDERS.md)
+[📥 Download](https://github.com/heymumford/Rinna/releases) • [📚 Documentation](docs/) • [🚀 Getting Started](docs/getting-started/README.md) • [🤝 Contribute](docs/development/contribution.md) • [📋 Changelog](CHANGELOG.md) • [📁 Folders](FOLDERS.md) • [🔄 CI Status](docs/development/ci-workflow.md)
 
 </div>
 
@@ -188,6 +188,7 @@ Rinna follows clean architecture principles with well-defined interfaces for ext
 - [Development Guide](docs/development/README.md)
 - [Build System](docs/development/build-system.md)
 - [Version Management](docs/development/version-management.md)
+- [CI Workflow](docs/development/ci-workflow.md)
 - [Changelog](CHANGELOG.md)
 - [Folder Structure](FOLDERS.md)
 

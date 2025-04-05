@@ -1,0 +1,25 @@
+# Rinna API Server Configuration
+
+server:
+  port: 8080
+  host: "localhost"
+  shutdownTimeout: 15
+
+java:
+  command: "java"
+  host: "localhost"
+  port: 8081
+  connectTimeout: 5000
+  requestTimeout: 30000
+
+logging:
+  level: "info"
+  format: "json"
+  file: ""
+
+auth:
+  tokenSecret: "rinna-development-secret-key"
+  tokenExpiry: 1440  # 1 day in minutes
+  allowedOrigins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
