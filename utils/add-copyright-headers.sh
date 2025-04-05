@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Script to add copyright headers to all documentation files
-# Copyright (c) 2025 Eric C. Mumford [@heymumford], Gemini Deep Research, Claude 3.7.
+# Copyright (c) 2025 Eric C. Mumford [@heymumford]
 
 # Define the copyright notice
-COPYRIGHT_HEADER="<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford], Gemini Deep Research, Claude 3.7. -->\n\n"
+COPYRIGHT_HEADER="<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford] -->\n\n"
 
 # Find all markdown files in the docs directory
 find docs -type f -name "*.md" | while read file; do

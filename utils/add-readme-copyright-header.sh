@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Script to add copyright header to the main README.md file
-# Copyright (c) 2025 Eric C. Mumford [@heymumford], Gemini Deep Research, Claude 3.7.
+# Copyright (c) 2025 Eric C. Mumford [@heymumford]
 
 # Define the copyright notice
-COPYRIGHT_HEADER="<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford], Gemini Deep Research, Claude 3.7. -->\n\n"
+COPYRIGHT_HEADER="<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford] -->\n\n"
 
 # Main README.md file
 README_FILE="README.md"

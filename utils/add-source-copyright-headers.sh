@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Script to add copyright headers to all Java source files
-# Copyright (c) 2025 Eric C. Mumford [@heymumford], Gemini Deep Research, Claude 3.7.
+# Copyright (c) 2025 Eric C. Mumford [@heymumford]
 
 # Define the copyright notice for Java files
-JAVA_COPYRIGHT_HEADER="/*\n * Copyright (c) 2025 Eric C. Mumford (@heymumford), Gemini Deep Research, Claude 3.7.\n * This file is subject to the terms and conditions defined in\n * the LICENSE file, which is part of this source code package.\n */\n\n"
+JAVA_COPYRIGHT_HEADER="/*\n * Copyright (c) 2025 Eric C. Mumford (@heymumford)\n * This file is subject to the terms and conditions defined in\n * the LICENSE file, which is part of this source code package.\n */\n\n"
 
 # Find all Java source files
 find . -type f -name "*.java" | while read file; do
