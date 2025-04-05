@@ -321,6 +321,12 @@ rin list --type=BUG --priority=HIGH
 # Updating work items
 rin update WI-601 --status=IN_DEV
 rin update WI-602 --assignee=developer1
+
+# Service management
+rin server status
+rin server start
+rin server stop
+rin server restart
 ```
 
 ### Running CLI Integration Tests
