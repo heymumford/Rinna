@@ -11,7 +11,7 @@
 [![Version](https://img.shields.io/badge/version-1.2.4-blue.svg)](https://github.com/heymumford/Rinna/releases)
 [![GitHub Stars](https://img.shields.io/github/stars/heymumford/Rinna?style=social)](https://github.com/heymumford/Rinna/stargazers)
 
-[📥 Download](https://github.com/heymumford/Rinna/releases) • [📚 Documentation](docs/) • [🚀 Getting Started](docs/getting-started/README.md) • [🤝 Contribute](docs/development/contribution.md)
+[📥 Download](https://github.com/heymumford/Rinna/releases) • [📚 Documentation](docs/) • [🚀 Getting Started](docs/getting-started/README.md) • [🤝 Contribute](docs/development/contribution.md) • [📋 Changelog](CHANGELOG.md) • [📁 Folders](FOLDERS.md)
 
 </div>
 
@@ -165,6 +165,10 @@ Rinna follows clean architecture principles with well-defined interfaces for ext
 - [User Guide](docs/user-guide/README.md)
 - [Architecture](docs/development/architecture.md)
 - [Development Guide](docs/development/README.md)
+- [Build System](docs/development/build-system.md)
+- [Version Management](docs/development/version-management.md)
+- [Changelog](CHANGELOG.md)
+- [Folder Structure](FOLDERS.md)
 
 ## License
 
