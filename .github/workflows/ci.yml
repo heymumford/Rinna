@@ -49,11 +49,17 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: ${{ runner.os }}-go-
 
+      - name: Install Maven
+        run: |
+          apt-get update
+          apt-get install -y maven
+        shell: bash
+
       - name: Compile Java code
-        run: mvn -B -DskipTests compile
+        run: cd rinna-core && mvn -B -DskipTests compile
 
       - name: Basic Java tests
-        run: mvn -B test -Dtest=RinnaTest
+        run: cd rinna-core && mvn -B test -Dtest=RinnaTest
 
       - name: Basic Go test
         run: cd api && go test ./test/simple -v
