@@ -3,8 +3,7 @@
 #
 # rin - Rinna CLI utility
 #
-# PURPOSE: Command-line utility to simplify building, cleaning, and running tests for Rinna
-# with configurable output verbosity levels.
+# PURPOSE: Command-line utility to simplify Rinna operations with a unified interface
 #
 # Copyright (c) 2025 Eric C. Mumford (@heymumford)
 # This file is subject to the terms and conditions defined in
@@ -14,14 +13,7 @@
 
 set -e
 
-# Default settings
-VERBOSE=0
-ERRORS_ONLY=0
-RUN_TESTS=0
-BUILD=0
-CLEAN=0
-TEST_TYPE="all"
-TARGET_DIR="./target"
+# Determine project directory
 RINNA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Colors
@@ -31,277 +23,97 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Help text
-function show_help {
-    echo -e "${BLUE}rin${NC} - Rinna CLI utility"
-    echo
-    echo "Usage: rin [options] [command]"
-    echo 
-    echo "Commands:"
-    echo "  build     Build the project"
-    echo "  clean     Clean the project"
-    echo "  test      Run tests (all tests by default)"
-    echo "    unit         Run unit tests only"
-    echo "    bdd          Run BDD tests only"
-    echo "    workflow     Run workflow BDD tests only"
-    echo "    release      Run release BDD tests only"
-    echo "    input        Run input interface BDD tests only"
-    echo "    cli          Run CLI integration BDD tests only"
-    echo "    api          Run API integration BDD tests only"
-    echo "  all       Clean, build, and test (default if no command specified)"
-    echo "  version   Version management:"
-    echo "    current       Show current version information"
-    echo "    major         Bump major version (x.0.0)"
-    echo "    minor         Bump minor version (0.x.0)"
-    echo "    patch         Bump patch version (0.0.x)"
-    echo "    set <version> Set to specific version (e.g., 1.2.3)"
-    echo "    release       Create a release from current version"
-    echo "    tag           Create a git tag for current version"
-    echo
-    echo "Options:"
-    echo "  -v, --verbose    Show all output"
-    echo "  -e, --errors     Show only errors and related output"
-    echo "  -t, --terse      Show minimal output (default)"
-    echo "  -h, --help       Show this help message"
-    echo
-    echo "Examples:"
-    echo "  rin test                  # Run tests with terse output"
-    echo "  rin -v clean build        # Clean and build with verbose output"
-    echo "  rin --errors all          # Run all with errors-only output"
-    echo "  rin version current       # Check current version information"
-    echo "  rin version minor -m msg  # Bump minor version with commit message"
-    echo
+# Print error and exit
+error() {
+  echo -e "${RED}Error: $1${NC}" >&2
+  exit 1
 }
 
-# Parse arguments
-VERSION_COMMAND=""
-VERSION_ARGS=""
+# Show help text
+show_help() {
+  cat << EOF
+${BLUE}rin${NC} - Rinna CLI utility
 
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        build)
-            BUILD=1
-            shift
-            ;;
-        clean)
-            CLEAN=1
-            shift
-            ;;
-        test)
-            # Check for test type
-            if [[ $2 == "unit" ]]; then
-                RUN_TESTS=1
-                TEST_TYPE="unit"
-                shift 2
-            elif [[ $2 == "bdd" ]]; then
-                RUN_TESTS=1
-                TEST_TYPE="bdd"
-                shift 2
-            elif [[ $2 == "workflow" ]]; then
-                RUN_TESTS=1
-                TEST_TYPE="workflow"
-                shift 2
-            elif [[ $2 == "release" ]]; then
-                RUN_TESTS=1
-                TEST_TYPE="release"
-                shift 2
-            elif [[ $2 == "input" ]]; then
-                RUN_TESTS=1
-                TEST_TYPE="input"
-                shift 2
-            elif [[ $2 == "cli" ]]; then
-                RUN_TESTS=1
-                TEST_TYPE="cli"
-                shift 2
-            elif [[ $2 == "api" ]]; then
-                RUN_TESTS=1
-                TEST_TYPE="api"
-                shift 2
-            else
-                RUN_TESTS=1
-                TEST_TYPE="all"
-                shift
-            fi
-            ;;
-        all)
-            CLEAN=1
-            BUILD=1
-            RUN_TESTS=1
-            TEST_TYPE="all"
-            shift
-            ;;
-        version)
-            # Collect all version-related arguments
-            VERSION_COMMAND="version"
-            shift
-            while [[ $# -gt 0 && "$1" != "build" && "$1" != "clean" && "$1" != "test" && "$1" != "all" ]]; do
-                VERSION_ARGS="$VERSION_ARGS $1"
-                shift
-            done
-            ;;
-        -v|--verbose)
-            VERBOSE=1
-            ERRORS_ONLY=0
-            shift
-            ;;
-        -e|--errors)
-            ERRORS_ONLY=1
-            VERBOSE=0
-            shift
-            ;;
-        -t|--terse)
-            VERBOSE=0
-            ERRORS_ONLY=0
-            shift
-            ;;
-        -h|--help)
-            show_help
-            exit 0
-            ;;
-        *)
-            echo -e "${RED}Unknown option: $1${NC}"
-            show_help
-            exit 1
-            ;;
-    esac
-done
+Usage: rin [command] [options]
 
-# If no commands specified, do everything
-if [[ $CLEAN -eq 0 && $BUILD -eq 0 && $RUN_TESTS -eq 0 && -z "$VERSION_COMMAND" ]]; then
-    CLEAN=1
-    BUILD=1
-    RUN_TESTS=1
+Commands:
+  build     Build operations:
+    clean         Clean the project
+    compile       Compile the source code
+    test          Run tests (all tests by default)
+    package       Package the application
+    all           Clean, compile, test
+    
+  version   Version management:
+    current       Show current version information
+    major         Bump major version (x.0.0)
+    minor         Bump minor version (0.x.0)
+    patch         Bump patch version (0.0.x)
+    set <version> Set to specific version
+    verify        Verify version consistency
+    update        Update all files to match version.properties
+  
+Test Categories:
+  unit            Run unit tests only
+  bdd             Run all BDD tests
+  workflow        Run workflow BDD tests
+  release         Run release BDD tests
+  input           Run input interface BDD tests
+  api             Run API integration BDD tests
+  cli             Run CLI integration BDD tests
+  tag:<name>      Run tests with specific tag
+
+Options:
+  -v, --verbose   Show detailed output
+  -t, --terse     Show minimal output (default)
+  -e, --errors    Show only errors
+  -h, --help      Show this help message
+
+Examples:
+  rin build test                  # Run tests
+  rin build all -v                # Clean, compile, test with verbose output
+  rin build test workflow         # Run workflow tests
+  rin version patch               # Bump patch version
+EOF
+}
+
+# Main execution
+if [[ $# -eq 0 ]]; then
+  show_help
+  exit 0
 fi
 
-# Go to the Rinna directory
-cd "$RINNA_DIR"
+# First argument is the command category
+CATEGORY="$1"
+shift
 
-# Handle version command if specified
-if [[ -n "$VERSION_COMMAND" ]]; then
-    # Check if rin-version exists and is executable
+# Dispatch to appropriate tool
+case "$CATEGORY" in
+  build)
+    if [[ -x "$RINNA_DIR/bin/rin-build" ]]; then
+      exec "$RINNA_DIR/bin/rin-build" "$@"
+    else
+      error "bin/rin-build not found or not executable"
+    fi
+    ;;
+  version)
     if [[ -x "$RINNA_DIR/bin/rin-version" ]]; then
-        exec "$RINNA_DIR/bin/rin-version" $VERSION_ARGS
+      exec "$RINNA_DIR/bin/rin-version" "$@"
     else
-        echo -e "${RED}Error: bin/rin-version script not found or not executable${NC}"
-        exit 1
+      error "bin/rin-version not found or not executable"
     fi
-fi
-
-# Function to run a command with appropriate output based on verbosity
-function run_cmd {
-    local cmd="$1"
-    local description="$2"
-    local start_time=$(date +%s)
-    
-    echo -e "${BLUE}[$description]${NC}"
-    
-    if [[ $VERBOSE -eq 1 ]]; then
-        # Show all output
-        eval "$cmd"
-        EXIT_CODE=$?
-    elif [[ $ERRORS_ONLY -eq 1 ]]; then
-        # Capture output and only show on error
-        OUTPUT=$(eval "$cmd" 2>&1)
-        EXIT_CODE=$?
-        if [[ $EXIT_CODE -ne 0 ]]; then
-            echo -e "${RED}Error in $description:${NC}"
-            echo "$OUTPUT"
-        fi
+    ;;
+  -h|--help)
+    show_help
+    exit 0
+    ;;
+  *)
+    # For backward compatibility, if the first arg isn't build/version,
+    # assume it's a build command
+    if [[ -x "$RINNA_DIR/bin/rin-build" ]]; then
+      exec "$RINNA_DIR/bin/rin-build" "$CATEGORY" "$@"
     else
-        # Terse mode - minimal output, show errors
-        # We pipe the output to a temporary file so we can still capture it
-        temp_output=$(mktemp)
-        eval "$cmd" > "$temp_output" 2>&1
-        EXIT_CODE=$?
-        
-        if [[ $EXIT_CODE -ne 0 ]]; then
-            echo -e "${RED}Error in $description:${NC}"
-            cat "$temp_output"
-        elif [[ $cmd == *"test"* ]]; then
-            # For test commands, show a summary even on success
-            grep -E "Tests run:|Running |FAILURE|ERROR" "$temp_output" || true
-        fi
-        
-        rm -f "$temp_output"
+      error "bin/rin-build not found or not executable"
     fi
-    
-    local end_time=$(date +%s)
-    local duration=$((end_time - start_time))
-    
-    if [[ $EXIT_CODE -eq 0 ]]; then
-        echo -e "${GREEN}✓ $description completed successfully in ${duration}s${NC}"
-    else
-        echo -e "${RED}✗ $description failed in ${duration}s${NC}"
-        exit $EXIT_CODE
-    fi
-}
-
-# Clean if requested
-if [[ $CLEAN -eq 1 ]]; then
-    run_cmd "mvn clean" "Cleaning project"
-fi
-
-# Build if requested
-if [[ $BUILD -eq 1 ]]; then
-    run_cmd "mvn compile" "Building project"
-fi
-
-# Run tests if requested
-if [[ $RUN_TESTS -eq 1 ]]; then
-    # Set up test command based on test type
-    if [[ $TEST_TYPE == "unit" ]]; then
-        TEST_CMD="mvn -Dtest=\"*Test\" test"
-        TEST_DESC="Running unit tests"
-    elif [[ $TEST_TYPE == "bdd" ]]; then
-        TEST_CMD="./bin/run-bdd-tests.sh"
-        TEST_DESC="Running BDD tests"
-    elif [[ $TEST_TYPE == "workflow" ]]; then
-        TEST_CMD="./bin/run-bdd-tests.sh workflow"
-        TEST_DESC="Running workflow BDD tests"
-    elif [[ $TEST_TYPE == "release" ]]; then
-        TEST_CMD="./bin/run-bdd-tests.sh release"
-        TEST_DESC="Running release BDD tests"
-    elif [[ $TEST_TYPE == "input" ]]; then
-        TEST_CMD="./bin/run-bdd-tests.sh input"
-        TEST_DESC="Running input interface BDD tests"
-    elif [[ $TEST_TYPE == "cli" ]]; then
-        TEST_CMD="./bin/run-tests.sh cli"
-        TEST_DESC="Running CLI integration BDD tests"
-    elif [[ $TEST_TYPE == "api" ]]; then
-        TEST_CMD="./bin/run-tests.sh api"
-        TEST_DESC="Running API integration BDD tests"
-    else
-        TEST_CMD="mvn test"
-        TEST_DESC="Running all tests"
-    fi
-    
-    # Run tests with appropriate verbosity
-    if [[ $VERBOSE -eq 1 ]]; then
-        run_cmd "$TEST_CMD" "$TEST_DESC"
-    elif [[ $ERRORS_ONLY -eq 1 ]]; then
-        run_cmd "$TEST_CMD -q" "$TEST_DESC"
-    else
-        # Terse mode - show minimal output
-        run_cmd "$TEST_CMD" "$TEST_DESC"
-    fi
-    
-    # Show test summary regardless of verbosity
-    if [[ -d target/surefire-reports || -d rinna-core/target/surefire-reports ]]; then
-        echo -e "${BLUE}[Test Summary]${NC}"
-        failed_tests=$(find . -path "*/surefire-reports/TEST-*.xml" -type f -exec grep -l "<failure" {} \; | wc -l)
-        if [[ $failed_tests -gt 0 ]]; then
-            find . -path "*/surefire-reports/TEST-*.xml" -type f -exec grep -l "<failure" {} \; | while read file; do
-                TEST_NAME=$(basename "$file" | sed 's/TEST-//' | sed 's/\.xml//')
-                echo -e "${RED}FAILED: $TEST_NAME${NC}"
-            done
-        fi
-        
-        # Show test counts
-        total_tests=$(find . -path "*/surefire-reports/TEST-*.xml" -type f | wc -l)
-        passed_tests=$((total_tests - failed_tests))
-        
-        echo -e "${GREEN}Tests passed: $passed_tests${NC}, ${RED}Tests failed: $failed_tests${NC}, Total: $total_tests"
-    fi
-fi
-
-echo -e "${GREEN}All operations completed successfully!${NC}"
+    ;;
+esac
