@@ -1,260 +1,110 @@
-# Version Management in Rinna
+# Rinna Version Management
 
-This document explains Rinna's approach to version management, including semantic versioning principles, workflow, and practical examples.
-
-## Semantic Versioning
-
-Rinna follows [Semantic Versioning 2.0.0](https://semver.org/) (`MAJOR.MINOR.PATCH`):
-
-- **MAJOR**: Incompatible API changes
-- **MINOR**: New functionality that's backward-compatible 
-- **PATCH**: Backward-compatible bug fixes
-
-Additionally, we use Git tags prefixed with "v" (e.g., `v1.2.0`) to mark specific releases.
+This document explains the version management approach used in the Rinna project.
 
 ## Version Source of Truth
 
-The canonical source of truth for Rinna's version is the root `pom.xml` file. The version management script maintains consistency across:
+The project version information is centrally managed in the `version.properties` file located in the root directory. This file contains the following properties:
 
-1. Root `pom.xml` file (project version)
-2. Module `pom.xml` files (both parent references and their project versions)
-3. README.md version badge
-4. Git tags
-5. GitHub releases (when applicable)
+```properties
+version=x.y.z         # Project version in semver format (required)
+lastUpdated=YYYY-MM-DD # Date when version was last updated (required)
+releaseType=TYPE      # SNAPSHOT or RELEASE (required)
+buildNumber=n         # Build number, incremented for each build (required)
+```
+
+All other version references throughout the codebase (POM files, README badges, etc.) should be generated or updated from this central source.
 
 ## Version Management Tool
 
-Rinna includes a version management tool at `bin/rin-version` that handles all version-related operations. This tool maintains version consistency, creates git tags, and prepares releases.
+The `bin/rin-version` script provides a comprehensive set of commands for managing the Rinna version:
 
-### Available Commands
+### Basic Commands
 
 ```bash
-# Display current version and check consistency
-bin/rin-version current
+# Show current version information
+./bin/rin-version current
 
-# Verify version consistency across all files
-bin/rin-version verify
+# Verify version consistency across files
+./bin/rin-version verify
 
-# Bump major version (e.g., 1.2.3 -> 2.0.0)
-bin/rin-version major
+# Update all files to match version.properties
+./bin/rin-version update
 
-# Bump minor version (e.g., 1.2.3 -> 1.3.0)
-bin/rin-version minor
+# Bump major version (x.0.0)
+./bin/rin-version major
 
-# Bump patch version (e.g., 1.2.3 -> 1.2.4)
-bin/rin-version patch
+# Bump minor version (0.x.0)
+./bin/rin-version minor
+
+# Bump patch version (0.0.x)
+./bin/rin-version patch
 
 # Set specific version
-bin/rin-version set 1.5.0
+./bin/rin-version set 1.2.3
+```
 
-# Create git tag for current version
-bin/rin-version tag
+### Release Commands
 
-# Create formal release (tag + GitHub release)
-bin/rin-version release
+```bash
+# Create a git tag for current version
+./bin/rin-version tag
+
+# Create a release from current version
+./bin/rin-version release
 ```
 
 ### Options
 
 ```bash
-# Add a custom message to version commits/tags
-bin/rin-version patch -m "Fixed critical login bug"
+# Custom release/commit message
+./bin/rin-version major -m "Version 2.0.0 release"
 
-# Preview changes without applying them
-bin/rin-version minor --dry-run
+# Show what would be done without making changes
+./bin/rin-version patch -d
 ```
 
-## Version Management Workflow
+## Version Consistency
 
-### Development Cycle
+The version management system ensures consistency across various files:
 
-1. Development work occurs on feature branches or main branch
-2. After significant changes, bump the version:
+1. `version.properties` - The source of truth
+2. All POM files - Both project and parent versions
+3. README.md - Version badge
+
+The `verify` command checks this consistency and reports any mismatches.
+
+## Workflow for Version Updates
+
+Follow this workflow when updating the project version:
+
+1. Determine the type of version change needed (major, minor, patch)
+2. Run the appropriate version update command:
    ```bash
-   bin/rin-version patch  # For bug fixes
-   # or
-   bin/rin-version minor  # For new features
+   ./bin/rin-version minor -m "Added new feature X"
    ```
-3. The script automatically:
-   - Updates all version references
-   - Commits the changes
-   - Creates a git tag
+3. This will:
+   - Update version.properties
+   - Update all POM files
+   - Update README version badge
+   - Create a git commit with the changes
+   - Optionally create a git tag
 
-### Release Process
-
-1. Complete and test all changes for release
-2. Bump version appropriately:
+4. For releasing:
    ```bash
-   bin/rin-version minor  # For typical feature releases
-   ```
-3. Create a formal release (optional):
-   ```bash
-   bin/rin-version release -m "Spring 2025 release with project management features"
+   ./bin/rin-version release -m "Release notes for version x.y.z"
    ```
 
-### Maven Releases
+## Integration with Build System
 
-For Maven deployments to GitHub packages or other repositories, include the appropriate credentials and run:
+The version properties can be accessed from the build system via the `version.properties` file. This enables consistent versioning across various build artifacts.
 
-```bash
-bin/rin-version release
-```
+## Best Practices
 
-## Version Strategy and Examples
-
-### When to Bump Major Version
-
-Bump the major version when making incompatible API changes:
-
-```bash
-bin/rin-version major -m "Overhauled workflow API with breaking changes"
-```
-
-Examples:
-- Changing method signatures
-- Removing public APIs
-- Restructuring core domain model
-- Changing database schema incompatibly
-
-### When to Bump Minor Version
-
-Bump the minor version when adding features in a backward-compatible manner:
-
-```bash
-bin/rin-version minor -m "Added GitHub webhook integration"
-```
-
-Examples:
-- Adding new API endpoints
-- Implementing new features
-- Adding optional parameters to existing methods
-- Expanding functionality without breaking changes
-
-### When to Bump Patch Version
-
-Bump the patch version for backward-compatible bug fixes:
-
-```bash
-bin/rin-version patch -m "Fixed issue with parent POM versioning"
-```
-
-Examples:
-- Bug fixes
-- Performance improvements
-- Small refactorings
-- Documentation updates
-- Non-functional changes
-
-## Pre-release and Build Metadata
-
-For pre-release versions, use the format `MAJOR.MINOR.PATCH-PRERELEASE`:
-
-```bash
-bin/rin-version set 1.2.0-alpha.1
-bin/rin-version set 1.2.0-beta.2
-bin/rin-version set 1.2.0-rc.1
-```
-
-## Handling Version Inconsistencies
-
-If version inconsistencies are detected, run the verification and resolve them:
-
-```bash
-# Check for inconsistencies
-bin/rin-version verify
-
-# Fix by setting the correct version
-bin/rin-version set 1.2.0
-```
-
-## Continuous Integration and Versioning
-
-Our CI pipeline checks version consistency as part of the build process. If versions are inconsistent, the build will fail.
-
-To avoid these issues:
-1. Always use the `bin/rin-version` tool to manage versions
-2. Verify consistency before pushing: `bin/rin-version verify`
-3. Resolve any inconsistencies immediately
-
-## Practical Examples
-
-### Example 1: Bug Fix Release
-
-```bash
-# Fix a bug in the code
-git checkout -b bugfix/login-error
-# Make changes...
-git add .
-git commit -m "Fix login error handling"
-git push
-
-# Create PR and merge to main
-git checkout main
-git pull
-
-# Bump patch version
-bin/rin-version patch -m "Fix login error handling"
-git push --tags
-```
-
-### Example 2: Feature Release
-
-```bash
-# Implement new feature
-git checkout -b feature/github-integration
-# Make changes...
-git add .
-git commit -m "Implement GitHub webhook integration"
-git push
-
-# Create PR and merge to main
-git checkout main
-git pull
-
-# Bump minor version
-bin/rin-version minor -m "Add GitHub webhook integration"
-git push --tags
-
-# Create GitHub release
-bin/rin-version release -m "Release v1.3.0 with GitHub integration features"
-```
-
-### Example 3: Major Release with Breaking Changes
-
-```bash
-# Implement breaking changes
-git checkout -b feature/api-v2
-# Make changes...
-git add .
-git commit -m "Overhaul API to v2"
-git push
-
-# Create PR and merge to main
-git checkout main
-git pull
-
-# Bump major version
-bin/rin-version major -m "Release API v2 with breaking changes"
-git push --tags
-
-# Create GitHub release with detailed notes
-bin/rin-version release -m "Release v2.0.0 - Major API overhaul"
-```
-
-## FAQ
-
-**Q: Why not use Maven Release Plugin?**  
-A: Our `bin/rin-version` tool is tailored to Rinna's polyglot architecture (Java + Go) and handles more than just Maven artifacts.
-
-**Q: How are version numbers shown to users?**  
-A: Version information is exposed via:
-- API version endpoints (`/api/v1/version`)
-- CLI version flag (`rin --version`)
-- Build artifacts (Maven, Go binaries)
-- GitHub releases
-
-**Q: Can I use pre-release versions in production?**  
-A: Pre-release versions (e.g., `-alpha`, `-beta`) should never be used in production environments.
-
-**Q: Do we maintain multiple release branches?**  
-A: For major versions, we maintain separate branches (e.g., `1.x` and `2.x`). Bug fixes may be backported as needed.
+1. Always use the `rin-version` commands to update versions rather than manual edits
+2. Commit version changes separately from code changes for cleaner history
+3. Use semantic versioning conventions:
+   - MAJOR: Breaking API changes
+   - MINOR: New features (backward compatible)
+   - PATCH: Bug fixes (backward compatible)
+4. Run `./bin/rin-version verify` before releasing to ensure consistency

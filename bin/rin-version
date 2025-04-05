@@ -23,6 +23,7 @@ NC='\033[0m' # No Color
 
 # Constants
 RINNA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+VERSION_FILE="$RINNA_DIR/version.properties"
 GITHUB_OWNER="heymumford" # Update this to the appropriate GitHub owner/organization
 GITHUB_REPO="Rinna"       # Update this to the appropriate GitHub repo name
 
@@ -41,6 +42,7 @@ function show_help {
     echo "  release                 Create a release from current version"
     echo "  tag                     Create a git tag for current version"
     echo "  verify                  Verify version consistency across files"
+    echo "  update                  Update all files to match version.properties"
     echo
     echo "Options:"
     echo "  -m, --message <msg>     Custom release/commit message"
@@ -51,6 +53,7 @@ function show_help {
     echo "  rin-version current     # Show current version information"
     echo "  rin-version minor       # Bump minor version (e.g., 1.0.0 -> 1.1.0)"
     echo "  rin-version verify      # Check version consistency across files"
+    echo "  rin-version update      # Sync all files with version.properties"
     echo "  rin-version major -m \"Version 2.0.0 release\" # Bump major with custom message"
     echo
 }
@@ -63,7 +66,7 @@ DRY_RUN=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        current|major|minor|patch|release|tag|verify)
+        current|major|minor|patch|release|tag|verify|update)
             COMMAND="$1"
             shift
             ;;
@@ -111,10 +114,45 @@ if [[ -z "$COMMAND" ]]; then
     exit 1
 fi
 
-# Function to get current version from the root pom.xml
+# Create version.properties if it doesn't exist
+if [[ ! -f "$VERSION_FILE" ]]; then
+    current_version=$(grep -m 1 "<version>" "$RINNA_DIR/pom.xml" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
+    echo -e "${YELLOW}version.properties not found, creating with version $current_version${NC}"
+    cat > "$VERSION_FILE" << EOF
+version=$current_version
+lastUpdated=$(date +%Y-%m-%d)
+releaseType=SNAPSHOT
+buildNumber=1
+EOF
+fi
+
+# Function to get current version from version.properties
 function get_current_version {
-    local version=$(grep -m 1 "<version>" "$RINNA_DIR/pom.xml" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
-    echo "$version"
+    if [[ ! -f "$VERSION_FILE" ]]; then
+        echo -e "${RED}Error: version.properties not found${NC}"
+        exit 1
+    fi
+    
+    grep -m 1 "^version=" "$VERSION_FILE" | cut -d'=' -f2
+}
+
+# Function to update version in version.properties
+function update_version_properties {
+    local new_version="$1"
+    local dry_run="$2"
+    
+    if [[ "$dry_run" == "true" ]]; then
+        echo -e "${BLUE}Would update version in ${VERSION_FILE} to ${new_version}${NC}"
+    else
+        # Update version
+        sed -i "s/^version=.*/version=${new_version}/" "$VERSION_FILE"
+        # Update lastUpdated
+        sed -i "s/^lastUpdated=.*/lastUpdated=$(date +%Y-%m-%d)/" "$VERSION_FILE"
+        # Reset buildNumber on version change
+        sed -i "s/^buildNumber=.*/buildNumber=1/" "$VERSION_FILE"
+        
+        echo -e "${GREEN}Updated version in ${VERSION_FILE} to ${new_version}${NC}"
+    fi
 }
 
 # Function to parse version into components
@@ -204,28 +242,27 @@ function verify_version_consistency {
     local inconsistencies=0
     
     echo -e "${BLUE}Verifying version consistency across files...${NC}"
-    echo -e "Root version: ${GREEN}${root_version}${NC}"
+    echo -e "Root version (from version.properties): ${GREEN}${root_version}${NC}"
     
     # Check POM files
     local pom_files=$(find_pom_files)
     for pom_file in $pom_files; do
-        if [[ "$pom_file" != "$RINNA_DIR/pom.xml" ]]; then
-            # Check parent version
-            if grep -q "<parent>" "$pom_file"; then
-                local parent_version=$(grep -A 3 "<parent>" "$pom_file" | grep "<version>" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
-                if [[ "$parent_version" != "$root_version" ]]; then
-                    echo -e "${RED}Parent version mismatch in ${pom_file}: ${parent_version} (should be ${root_version})${NC}"
-                    inconsistencies=$((inconsistencies + 1))
-                fi
+        # Check project version
+        local project_version=""
+        if grep -q "<version>" "$pom_file" && ! grep -q "<parent>" "$pom_file"; then
+            project_version=$(grep -m 1 "<version>" "$pom_file" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
+            if [[ "$project_version" != "$root_version" ]]; then
+                echo -e "${RED}Project version mismatch in ${pom_file}: ${project_version} (should be ${root_version})${NC}"
+                inconsistencies=$((inconsistencies + 1))
             fi
-            
-            # Check project version
-            if grep -q "<version>" "$pom_file" && ! grep -q "<parent>" "$pom_file"; then
-                local project_version=$(grep -m 1 "<version>" "$pom_file" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
-                if [[ "$project_version" != "$root_version" ]]; then
-                    echo -e "${RED}Project version mismatch in ${pom_file}: ${project_version} (should be ${root_version})${NC}"
-                    inconsistencies=$((inconsistencies + 1))
-                fi
+        fi
+        
+        # Check parent version
+        if grep -q "<parent>" "$pom_file"; then
+            local parent_version=$(grep -A 3 "<parent>" "$pom_file" | grep "<version>" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
+            if [[ "$parent_version" != "$root_version" ]]; then
+                echo -e "${RED}Parent version mismatch in ${pom_file}: ${parent_version} (should be ${root_version})${NC}"
+                inconsistencies=$((inconsistencies + 1))
             fi
         fi
     done
@@ -328,9 +365,17 @@ function cmd_current {
     local current_version=$(get_current_version)
     read -r major minor patch < <(parse_version "$current_version")
     
+    # Get other properties from version.properties
+    local last_updated=$(grep -m 1 "^lastUpdated=" "$VERSION_FILE" | cut -d'=' -f2)
+    local release_type=$(grep -m 1 "^releaseType=" "$VERSION_FILE" | cut -d'=' -f2)
+    local build_number=$(grep -m 1 "^buildNumber=" "$VERSION_FILE" | cut -d'=' -f2)
+    
     echo -e "${BLUE}Current version information:${NC}"
     echo -e "  Version: ${GREEN}${current_version}${NC}"
     echo -e "  Major: ${major}, Minor: ${minor}, Patch: ${patch}"
+    echo -e "  Last Updated: ${last_updated}"
+    echo -e "  Release Type: ${release_type}"
+    echo -e "  Build Number: ${build_number}"
     
     # Check for existing git tags
     local git_tags=$(git tag -l "v${current_version}")
@@ -360,6 +405,25 @@ function cmd_verify {
     verify_version_consistency
 }
 
+# Command: update - Update all files to match version.properties
+function cmd_update {
+    local current_version=$(get_current_version)
+    
+    echo -e "${BLUE}Updating all files to match version.properties (${current_version})${NC}"
+    
+    update_pom_versions "$current_version" "$DRY_RUN"
+    update_readme_version "$current_version" "$DRY_RUN"
+    
+    if [[ "$DRY_RUN" != "true" ]]; then
+        # Commit the version change
+        git add "$RINNA_DIR/pom.xml" $(find_pom_files | grep -v "$RINNA_DIR/pom.xml") "$RINNA_DIR/README.md"
+        git commit -m "Sync version files with version.properties (${current_version})"
+        echo -e "${GREEN}Committed version changes${NC}"
+    fi
+    
+    verify_version_consistency
+}
+
 # Command: major - Bump major version
 function cmd_major {
     local current_version=$(get_current_version)
@@ -370,12 +434,13 @@ function cmd_major {
     
     echo -e "${BLUE}Bumping major version:${NC} ${current_version} → ${GREEN}${new_version}${NC}"
     
+    update_version_properties "$new_version" "$DRY_RUN"
     update_pom_versions "$new_version" "$DRY_RUN"
     update_readme_version "$new_version" "$DRY_RUN"
     
     if [[ "$DRY_RUN" != "true" ]]; then
         # Commit the version change
-        git add "$RINNA_DIR/pom.xml" $(find_pom_files | grep -v "$RINNA_DIR/pom.xml") "$RINNA_DIR/README.md"
+        git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find_pom_files | grep -v "$RINNA_DIR/pom.xml") "$RINNA_DIR/README.md"
         git commit -m "Bump version to ${new_version}"
         echo -e "${GREEN}Committed version change${NC}"
         
@@ -394,12 +459,13 @@ function cmd_minor {
     
     echo -e "${BLUE}Bumping minor version:${NC} ${current_version} → ${GREEN}${new_version}${NC}"
     
+    update_version_properties "$new_version" "$DRY_RUN"
     update_pom_versions "$new_version" "$DRY_RUN"
     update_readme_version "$new_version" "$DRY_RUN"
     
     if [[ "$DRY_RUN" != "true" ]]; then
         # Commit the version change
-        git add "$RINNA_DIR/pom.xml" $(find_pom_files | grep -v "$RINNA_DIR/pom.xml") "$RINNA_DIR/README.md"
+        git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find_pom_files | grep -v "$RINNA_DIR/pom.xml") "$RINNA_DIR/README.md"
         git commit -m "Bump version to ${new_version}"
         echo -e "${GREEN}Committed version change${NC}"
         
@@ -418,12 +484,13 @@ function cmd_patch {
     
     echo -e "${BLUE}Bumping patch version:${NC} ${current_version} → ${GREEN}${new_version}${NC}"
     
+    update_version_properties "$new_version" "$DRY_RUN"
     update_pom_versions "$new_version" "$DRY_RUN"
     update_readme_version "$new_version" "$DRY_RUN"
     
     if [[ "$DRY_RUN" != "true" ]]; then
         # Commit the version change
-        git add "$RINNA_DIR/pom.xml" $(find_pom_files | grep -v "$RINNA_DIR/pom.xml") "$RINNA_DIR/README.md"
+        git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find_pom_files | grep -v "$RINNA_DIR/pom.xml") "$RINNA_DIR/README.md"
         git commit -m "Bump version to ${new_version}"
         echo -e "${GREEN}Committed version change${NC}"
         
@@ -442,12 +509,13 @@ function cmd_set {
     local current_version=$(get_current_version)
     echo -e "${BLUE}Setting version:${NC} ${current_version} → ${GREEN}${VERSION}${NC}"
     
+    update_version_properties "$VERSION" "$DRY_RUN"
     update_pom_versions "$VERSION" "$DRY_RUN"
     update_readme_version "$VERSION" "$DRY_RUN"
     
     if [[ "$DRY_RUN" != "true" ]]; then
         # Commit the version change
-        git add "$RINNA_DIR/pom.xml" $(find_pom_files | grep -v "$RINNA_DIR/pom.xml") "$RINNA_DIR/README.md"
+        git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find_pom_files | grep -v "$RINNA_DIR/pom.xml") "$RINNA_DIR/README.md"
         git commit -m "Set version to ${VERSION}"
         echo -e "${GREEN}Committed version change${NC}"
         
@@ -464,7 +532,7 @@ function cmd_release {
     verify_version_consistency
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}Cannot create release due to version inconsistencies.${NC}"
-        echo -e "${YELLOW}Run 'rin-version verify' to see details.${NC}"
+        echo -e "${YELLOW}Run 'rin-version verify' to see details, or 'rin-version update' to sync files.${NC}"
         exit 1
     fi
     
@@ -473,6 +541,13 @@ function cmd_release {
     fi
     
     echo -e "${BLUE}Creating release for version:${NC} ${GREEN}${current_version}${NC}"
+    
+    # Update release type in version.properties
+    if [[ "$DRY_RUN" != "true" ]]; then
+        sed -i "s/^releaseType=.*/releaseType=RELEASE/" "$VERSION_FILE"
+        git add "$VERSION_FILE"
+        git commit -m "Update release type for version ${current_version}"
+    fi
     
     # Create git tag if it doesn't exist
     if ! git tag -l "v${current_version}" | grep -q "v${current_version}"; then
@@ -496,7 +571,7 @@ function cmd_tag {
     verify_version_consistency
     if [[ $? -ne 0 ]]; then
         echo -e "${RED}Cannot create tag due to version inconsistencies.${NC}"
-        echo -e "${YELLOW}Run 'rin-version verify' to see details.${NC}"
+        echo -e "${YELLOW}Run 'rin-version verify' to see details, or 'rin-version update' to sync files.${NC}"
         exit 1
     fi
     
@@ -517,6 +592,9 @@ case "$COMMAND" in
         ;;
     verify)
         cmd_verify
+        ;;
+    update)
+        cmd_update
         ;;
     major)
         cmd_major
