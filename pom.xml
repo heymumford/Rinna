@@ -6,7 +6,7 @@
     
     <groupId>org.rinna</groupId>
     <artifactId>rinna</artifactId>
-    <version>1.2.2</version>
+    <version>1.2.3</version>
     <name>Rinna</name>
     <description>Workflow management system for developers</description>
 
