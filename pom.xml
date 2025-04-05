@@ -117,6 +117,16 @@
                 </plugins>
             </build>
         </profile>
+        
+        <!-- Disable quality checks profile (for faster builds when needed) -->
+        <profile>
+            <id>skip-quality</id>
+            <properties>
+                <checkstyle.skip>true</checkstyle.skip>
+                <pmd.skip>true</pmd.skip>
+                <spotbugs.skip>true</spotbugs.skip>
+            </properties>
+        </profile>
     </profiles>
 
     <build>
@@ -145,6 +155,53 @@
                         <nonFilteredFileExtensions>
                             <nonFilteredFileExtension>feature</nonFilteredFileExtension>
                         </nonFilteredFileExtensions>
+                    </configuration>
+                </plugin>
+                <!-- Quality checks plugins in pluginManagement section -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>3.6.0</version>
+                    <configuration>
+                        <configLocation>config/checkstyle/checkstyle.xml</configLocation>
+                        <suppressionsLocation>config/checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
+                        <consoleOutput>true</consoleOutput>
+                        <failsOnError>true</failsOnError>
+                        <linkXRef>false</linkXRef>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>4.9.3.0</version>
+                    <configuration>
+                        <excludeFilterFile>config/spotbugs/spotbugs-exclude.xml</excludeFilterFile>
+                        <failOnError>true</failOnError>
+                        <effort>Max</effort>
+                        <threshold>Medium</threshold>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>3.26.0</version>
+                    <configuration>
+                        <linkXRef>false</linkXRef>
+                        <failOnViolation>true</failOnViolation>
+                        <printFailingErrors>true</printFailingErrors>
+                        <rulesets>
+                            <ruleset>/category/java/bestpractices.xml</ruleset>
+                            <ruleset>/category/java/security.xml</ruleset>
+                        </rulesets>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.owasp</groupId>
+                    <artifactId>dependency-check-maven</artifactId>
+                    <version>9.0.9</version>
+                    <configuration>
+                        <failBuildOnCVSS>8</failBuildOnCVSS>
+                        <suppressionFile>config/owasp/suppressions.xml</suppressionFile>
                     </configuration>
                 </plugin>
             </plugins>
@@ -196,6 +253,48 @@
                     </execution>
                 </executions>
             </plugin>
+            
+            <!-- Automatically run quality checks -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>validate-checkstyle</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>spotbugs-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>pmd-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>

@@ -199,6 +199,10 @@ public class DocmosisDocumentService implements DocumentService {
             // Prepare data for the template
             Map<String, Object> data = new HashMap<>();
             data.put("release", release);
+            data.put("releaseId", release.getId().toString());
+            data.put("version", release.getVersion());
+            data.put("description", release.getDescription());
+            data.put("createdAt", release.getCreatedAt().toString());
             
             renderDocument(getTemplateName(templateType), data, format, output);
         } catch (Exception e) {

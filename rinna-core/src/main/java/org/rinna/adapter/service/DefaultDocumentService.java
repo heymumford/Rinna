@@ -106,7 +106,7 @@ public class DefaultDocumentService implements DocumentService {
                 # Release Notes
                 
                 - Release: \{release.getVersion()}
-                - Date: \{release.getReleaseDate()}
+                - Date: \{release.getCreatedAt()}
                 
                 ## Description
                 
