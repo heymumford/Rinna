@@ -17,6 +17,7 @@ import java.util.Optional;
  */
 public class DocumentConfig {
     private final String docmosisLicenseKey;
+    private final String docmosisSite;
     private final Path templatesPath;
     private final boolean preferDocmosis;
     
@@ -24,11 +25,13 @@ public class DocumentConfig {
      * Creates a new DocumentConfig with the given settings.
      * 
      * @param docmosisLicenseKey the Docmosis license key (can be null or empty if not using Docmosis)
+     * @param docmosisSite the Docmosis site identifier (can be null or empty if not using Docmosis)
      * @param templatesPath the path to document templates
      * @param preferDocmosis whether to prefer Docmosis over other document engines when available
      */
-    public DocumentConfig(String docmosisLicenseKey, Path templatesPath, boolean preferDocmosis) {
+    public DocumentConfig(String docmosisLicenseKey, String docmosisSite, Path templatesPath, boolean preferDocmosis) {
         this.docmosisLicenseKey = docmosisLicenseKey;
+        this.docmosisSite = docmosisSite;
         this.templatesPath = templatesPath;
         this.preferDocmosis = preferDocmosis;
     }
@@ -43,6 +46,18 @@ public class DocumentConfig {
             return Optional.empty();
         }
         return Optional.of(docmosisLicenseKey);
+    }
+    
+    /**
+     * Returns the Docmosis site identifier.
+     * 
+     * @return an Optional containing the site identifier, or empty if not configured
+     */
+    public Optional<String> getDocmosisSite() {
+        if (docmosisSite == null || docmosisSite.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(docmosisSite);
     }
     
     /**
@@ -77,6 +92,7 @@ public class DocumentConfig {
      */
     public static class Builder {
         private String docmosisLicenseKey;
+        private String docmosisSite;
         private Path templatesPath = Path.of("templates");
         private boolean preferDocmosis = true;
         
@@ -88,6 +104,17 @@ public class DocumentConfig {
          */
         public Builder docmosisLicenseKey(String licenseKey) {
             this.docmosisLicenseKey = licenseKey;
+            return this;
+        }
+        
+        /**
+         * Sets the Docmosis site identifier.
+         * 
+         * @param site the site identifier
+         * @return this builder
+         */
+        public Builder docmosisSite(String site) {
+            this.docmosisSite = site;
             return this;
         }
         
@@ -119,7 +146,7 @@ public class DocumentConfig {
          * @return a new DocumentConfig
          */
         public DocumentConfig build() {
-            return new DocumentConfig(docmosisLicenseKey, templatesPath, preferDocmosis);
+            return new DocumentConfig(docmosisLicenseKey, docmosisSite, templatesPath, preferDocmosis);
         }
     }
 }
