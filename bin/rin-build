@@ -33,6 +33,23 @@ COVERAGE=false
 PARALLEL=false
 FAIL_FAST=false
 WATCH=false
+SKIP_TESTS=false
+
+# Build modes
+declare -A BUILD_MODES
+BUILD_MODES[fast]="skip_tests=true"
+BUILD_MODES[test]="skip_tests=false"
+BUILD_MODES[package]="skip_tests=true package=true"
+BUILD_MODES[verify]="skip_tests=false coverage=true fail_fast=true"
+BUILD_MODES[release]="skip_tests=false package=true coverage=true"
+
+# Test domain mapping
+declare -A TEST_DOMAINS
+TEST_DOMAINS[workflow]="cucumber.filter.tags=@workflow"
+TEST_DOMAINS[release]="test=org.rinna.bdd.ReleaseRunner"
+TEST_DOMAINS[input]="test=org.rinna.bdd.InputInterfaceRunner"
+TEST_DOMAINS[api]="test=org.rinna.bdd.APIIntegrationRunner"
+TEST_DOMAINS[cli]="test=org.rinna.bdd.CLIIntegrationRunner"
 
 # UI Functions
 print_header() { echo -e "${BLUE}$1${NC}"; }
@@ -46,7 +63,14 @@ show_help() {
   cat << EOF
 ${BLUE}rin-build${NC} - Streamlined Rinna build system
 
-Usage: rin-build [command] [options]
+Usage: rin-build [mode|command] [options]
+
+Build Modes:
+  fast                    Quick build without tests
+  test                    Build and run tests
+  package                 Build and create package
+  verify                  Build with full verification
+  release                 Prepare for release
 
 Commands:
   clean                   Clean build artifacts
@@ -54,15 +78,16 @@ Commands:
   test                    Run tests (default: all tests)
   package                 Package the application
   all                     Clean, compile, test
+  prepare-release         Run tests, bump version, package
   
 Test Categories:
   unit                    Run unit tests only
   bdd                     Run all BDD tests
-  workflow                Run workflow BDD tests
-  release                 Run release BDD tests
-  input                   Run input interface BDD tests
-  api                     Run API integration BDD tests
-  cli                     Run CLI integration BDD tests
+  domain:workflow         Run workflow domain tests
+  domain:release          Run release domain tests
+  domain:input            Run input interface domain tests
+  domain:api              Run API integration domain tests
+  domain:cli              Run CLI integration domain tests
   tag:<name>              Run tests with specific tag
 
 Options:
@@ -76,10 +101,11 @@ Options:
   --help                  Show this help message
 
 Examples:
-  rin-build compile test unit  # Compile and run unit tests
-  rin-build all --verbose      # Clean, compile, test with verbose output
-  rin-build test workflow      # Run workflow tests
-  rin-build test --coverage    # Run tests with coverage report
+  rin-build fast          # Quick build without tests
+  rin-build test          # Build and run tests
+  rin-build verify        # Full verification with coverage
+  rin-build domain:workflow # Run workflow domain tests
+  rin-build prepare-release # Prepare for a release
 EOF
 }
 
@@ -147,34 +173,23 @@ get_version() {
 # Configure Maven command with appropriate options
 configure_maven_cmd() {
   local base_cmd="mvn"
-  local opts=""
+  local opts="$MAVEN_OPTS"
   
   # Add verbosity
   case $VERBOSITY in
-    verbose) opts="$opts" ;;
+    verbose) ;;
     errors) opts="$opts -q" ;;
     terse) opts="$opts -q" ;;
   esac
   
   # Add test category if specified
-  if [[ -n "$TEST_CATEGORY" && "$TEST_CATEGORY" != "all" ]]; then
+  if [[ -n "$TEST_CATEGORY" && "$TEST_CATEGORY" != "all" && "$TEST_CATEGORY" != "custom" ]]; then
     if [[ "$TEST_CATEGORY" == "unit" ]]; then
       opts="$opts -Dtest='*Test,!*Runner'"
     elif [[ "$TEST_CATEGORY" == "bdd" ]]; then
       opts="$opts -Dtest='org.rinna.bdd.CucumberRunner'"
-    elif [[ "$TEST_CATEGORY" == "workflow" ]]; then
-      opts="$opts -Dtest='org.rinna.bdd.CucumberRunner' -Dcucumber.filter.tags='@workflow'"
-    elif [[ "$TEST_CATEGORY" == "release" ]]; then
-      opts="$opts -Dtest='org.rinna.bdd.ReleaseRunner'"
-    elif [[ "$TEST_CATEGORY" == "input" ]]; then
-      opts="$opts -Dtest='org.rinna.bdd.InputInterfaceRunner'"
-    elif [[ "$TEST_CATEGORY" == "api" ]]; then
-      opts="$opts -Dtest='org.rinna.bdd.APIIntegrationRunner'"
-    elif [[ "$TEST_CATEGORY" == "cli" ]]; then
-      opts="$opts -Dtest='org.rinna.bdd.CLIIntegrationRunner'"
-    elif [[ "$TEST_CATEGORY" =~ ^tag:(.+)$ ]]; then
-      local tag=${BASH_REMATCH[1]}
-      opts="$opts -Dtest='org.rinna.bdd.TaggedTestsRunner' -Dcucumber.filter.tags='@$tag'"
+    elif [[ "$TEST_CATEGORY" == "tag" && -n "$TAG_NAME" ]]; then
+      opts="$opts -Dtest='org.rinna.bdd.TaggedTestsRunner' -Dcucumber.filter.tags='@$TAG_NAME'"
     fi
   fi
   
@@ -271,6 +286,35 @@ cmd_all() {
   cmd_test
 }
 
+# Command: prepare-release
+cmd_prepare_release() {
+  local current_version=$(get_version)
+  print_header "Preparing release for version $current_version"
+  
+  # Verify version consistency first
+  if [[ -x "$RINNA_DIR/bin/rin-version" ]]; then
+    run_cmd "$RINNA_DIR/bin/rin-version verify" "Verifying version consistency"
+  else
+    print_warning "bin/rin-version not found, skipping version verification"
+  fi
+  
+  # Run tests with coverage
+  COVERAGE=true
+  cmd_test
+  
+  # Package the application
+  cmd_package
+  
+  # Update version for release
+  if [[ -x "$RINNA_DIR/bin/rin-version" ]]; then
+    run_cmd "$RINNA_DIR/bin/rin-version release" "Updating version for release"
+  else
+    print_warning "bin/rin-version not found, skipping version update"
+  fi
+  
+  print_success "Release preparation complete for version $current_version"
+}
+
 # Continuous testing mode
 start_watch_mode() {
   print_header "Starting watch mode for continuous testing"
@@ -293,17 +337,105 @@ start_watch_mode() {
 
 # Parse command line arguments
 COMMANDS=()
+PACKAGE=false
+DO_RELEASE=false
+
+process_mode() {
+  local mode="$1"
+  
+  if [[ -z "${BUILD_MODES[$mode]}" ]]; then
+    print_error_exit "Unknown build mode: $mode"
+  fi
+  
+  # Process mode settings
+  local settings="${BUILD_MODES[$mode]}"
+  for setting in $settings; do
+    local key="${setting%%=*}"
+    local value="${setting#*=}"
+    
+    case $key in
+      skip_tests) SKIP_TESTS=$value ;;
+      package) PACKAGE=$value ;;
+      coverage) COVERAGE=$value ;;
+      fail_fast) FAIL_FAST=$value ;;
+    esac
+  done
+  
+  # Add appropriate commands based on mode
+  COMMANDS+=("clean" "compile")
+  
+  if [[ "$SKIP_TESTS" != "true" ]]; then
+    COMMANDS+=("test")
+  fi
+  
+  if [[ "$PACKAGE" == "true" ]]; then
+    COMMANDS+=("package")
+  fi
+}
+
+process_domain() {
+  local domain="${1#domain:}"
+  
+  if [[ -n "${TEST_DOMAINS[$domain]}" ]]; then
+    local setting="${TEST_DOMAINS[$domain]}"
+    local key="${setting%%=*}"
+    local value="${setting#*=}"
+    
+    case $key in
+      cucumber.filter.tags) 
+        TEST_CATEGORY="bdd"
+        MAVEN_OPTS="$MAVEN_OPTS -D$key=$value"
+        ;;
+      test)
+        TEST_CATEGORY="custom"
+        MAVEN_OPTS="$MAVEN_OPTS -D$key=$value"
+        ;;
+    esac
+  else
+    print_error_exit "Unknown domain: $domain"
+  fi
+}
 
 while [[ $# -gt 0 ]]; do
   case $1 in
+    # Build modes
+    fast|test|package|verify|release)
+      process_mode "$1"
+      shift
+      ;;
+    # Standard commands
     clean|compile|test|package|all)
       COMMANDS+=("$1")
       shift
       ;;
-    unit|bdd|workflow|release|input|api|cli|tag:*)
+    # Special combined command
+    prepare-release)
+      COMMANDS+=("clean" "compile" "test" "package")
+      DO_RELEASE=true
+      shift
+      ;;
+    # Test categories
+    unit|bdd)
       TEST_CATEGORY="$1"
       shift
       ;;
+    # Domain-specific test categories
+    domain:*)
+      process_domain "$1"
+      shift
+      ;;
+    # Legacy test categories - map to domains
+    workflow|release|input|api|cli)
+      process_domain "domain:$1"
+      shift
+      ;;
+    # Tag-based tests
+    tag:*)
+      TEST_CATEGORY="tag"
+      TAG_NAME="${1#tag:}"
+      shift
+      ;;
+    # Options
     --verbose)
       VERBOSITY="verbose"
       shift
@@ -332,6 +464,10 @@ while [[ $# -gt 0 ]]; do
       WATCH=true
       shift
       ;;
+    --skip-tests)
+      SKIP_TESTS=true
+      shift
+      ;;
     --help|-h)
       show_help
       exit 0
@@ -347,6 +483,9 @@ if [[ ${#COMMANDS[@]} -eq 0 ]]; then
   COMMANDS=("all")
 fi
 
+# Maven options
+MAVEN_OPTS=""
+
 # Change to project directory
 cd "$RINNA_DIR"
 
@@ -361,10 +500,21 @@ for cmd in "${COMMANDS[@]}"; do
   case $cmd in
     clean) cmd_clean ;;
     compile) cmd_compile ;;
-    test) cmd_test ;;
+    test) 
+      if [[ "$SKIP_TESTS" != "true" ]]; then
+        cmd_test
+      else
+        print_warning "Skipping tests as requested"
+      fi
+      ;;
     package) cmd_package ;;
     all) cmd_all ;;
   esac
 done
+
+# Handle special integrated commands
+if [[ "$DO_RELEASE" == "true" ]]; then
+  cmd_prepare_release
+fi
 
 print_success "All operations completed successfully!"
