@@ -20,14 +20,16 @@ For convenience, you can add the Rinna `bin` directory to your PATH or create a 
 
 | Command | Description |
 |---------|-------------|
-| **Developer Workflow Commands** |
-| `my-work` | Show all work items assigned to you |
-| `next-task` | Show what you should work on next (prioritized) |
-| `progress <id>` | Move an item to the next stage in your workflow |
-| `start <id>` | Start working on an item (assigns to you and moves to In Progress) |
-| `ready-for-test <id>` | Mark an item as ready for testing |
-| `done <id>` | Complete an item |
-| `my-history` | View your work history and statistics |
+| **Work Item Commands** |
+| `add` | Create a new work item |
+| `view <id>` | View details of a work item |
+| `list [filters]` | List work items with optional filters |
+| `update <id> [options]` | Update a work item's properties |
+| **Service Commands** |
+| `server status` | Check status of Rinna services |
+| `server start` | Start Rinna services |
+| `server stop` | Stop Rinna services |
+| `server restart` | Restart Rinna services |
 | **Build Commands** |
 | `build` | Build the Rinna project |
 | `clean` | Clean build artifacts |
@@ -57,7 +59,19 @@ The `version` command provides a set of subcommands for managing versions across
 | `-m, --message <msg>` | Specify a custom message for commits, tags, or releases |
 | `-d, --dry-run` | Show what would happen without making changes |
 
-## Verbosity Options
+## Global Options
+
+`rin` provides several global options that can be used with any command:
+
+| Option | Description |
+|--------|-------------|
+| `-v, --verbose` | Shows detailed output, useful for debugging. |
+| `-c, --config <path>` | Specifies a custom configuration file path. |
+| `--no-auto-start` | Prevents automatic starting of services. |
+| `-h, --help` | Shows help information for a command. |
+| `--version` | Shows the CLI version information. |
+
+### Verbosity Options
 
 `rin` provides three output modes to control how much information is displayed:
 
@@ -139,26 +153,42 @@ Tests completed with failures
 
 ## Usage Examples
 
-### Developer Workflow Examples
+### Work Item Examples
 
 ```bash
-# Show all work items assigned to you
-rin my-work
+# Create a new work item
+rin add "Implement payment gateway" --type=FEATURE --priority=HIGH
 
-# Show what you should work on next
-rin next-task
+# View a work item
+rin view WI-123
 
-# Start working on a task
-rin start TASK-123
+# List all high priority bugs
+rin list --type=BUG --priority=HIGH
 
-# Mark a task as ready for testing
-rin ready-for-test TASK-123
+# Update a work item's status
+rin update WI-123 --status=IN_PROGRESS --assignee=johndoe
+```
 
-# Complete a task
-rin done TASK-123
+### Service Management Examples
 
-# View your work history and productivity
-rin my-history
+```bash
+# Check status of all services
+rin server status
+
+# Start all services
+rin server start
+
+# Start all services in verbose mode
+rin -v server start
+
+# Stop all services
+rin server stop
+
+# Restart all services
+rin server restart
+
+# Run a command without auto-starting services
+rin --no-auto-start list
 ```
 
 ### Build Examples
@@ -204,23 +234,58 @@ To see the help text and available commands, use:
 rin --help
 ```
 
+## Configuration
+
+Rinna uses a layered configuration system:
+
+1. **Default configuration**: Built-in defaults
+2. **Global configuration**: `~/.rinna/config.conf`
+3. **Project configuration**: `.rinna.yaml` in the project root
+4. **Command-line options**: Override other settings
+
+### Configuration File Format
+
+The project configuration file (`.rinna.yaml`) uses YAML format:
+
+```yaml
+# Project information
+project:
+  name: "Rinna"
+  description: "Developer-Centric Workflow Management"
+  version: "1.2.5"
+
+# API configuration
+api:
+  endpoint: "http://localhost:9080/api/v1"
+  
+  # Backend services
+  backend:
+    java:
+      host: "localhost"
+      port: 8081
+  
+# Service management
+service:
+  auto_start: true
+  startup_timeout: 30
+```
+
+For more details on service configuration, see [Service Management](service-management.md).
+
 ## Benefits
 
-- **Simplified Builds**: Uses system Maven installation for consistent builds
-- **Consistent Interface**: Same command structure regardless of the underlying build system
+- **Automated Service Management**: Services start automatically when needed
+- **Simplified Workflow**: Focus on tasks, not infrastructure management
+- **Polyglot Architecture**: Seamless integration between Java and Go components
+- **Consistent Interface**: Same command structure regardless of the underlying system
+- **Configuration Flexibility**: Customize behavior per-project or globally
 - **Execution Tracking**: Shows how long each phase takes, helping identify bottlenecks
 - **Color-Coded Output**: Success, warnings, and errors are color-coded for easy identification
-- **Test Summary**: Provides a clean summary of test results with pass/fail counts
 - **Adaptive Verbosity**: Control how much information is shown based on your needs
-- **Failed Test Details**: Clearly identifies which tests failed and provides error details
 
-## Implementation Notes
+## Related Documentation
 
-The `rin` tool is implemented as a clean, focused bash script that uses the system Maven installation as its underlying build system. The implementation includes robust error handling to ensure that:
-
-1. Build errors are properly reported
-2. Test failures are clearly indicated
-3. The appropriate level of detail is shown based on the selected verbosity mode
-4. Color-coding helps quickly identify success and failure states
-
-Version management is handled by a separate `rin-version` script that is called when using the `version` command. Both scripts are designed to be minimal and maintainable.
+- [Service Management](service-management.md) - Detailed documentation on service architecture
+- [Configuration Reference](configuration-reference.md) - Complete configuration options
+- [Build System](../development/build-system.md) - Information about the build system
+- [Version Management](../development/version-management.md) - Version control details
