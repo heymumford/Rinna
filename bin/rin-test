@@ -1,0 +1,330 @@
+#!/usr/bin/env bash
+#
+# rin-test - Advanced Rinna test runner
+#
+# PURPOSE: Provides a unified interface for running tests with advanced features
+# Integrates with smart-test-runner.sh to use the testing pyramid approach
+#
+# Copyright (c) 2025 Eric C. Mumford (@heymumford)
+# This file is subject to the terms and conditions defined in
+# the LICENSE file, which is part of this source code package.
+# (MIT License)
+#
+
+set -e
+
+# Constants
+RINNA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CONFIG_FILE="${RINNA_DIR}/version.properties"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+BOLD="\033[1m"
+
+# Defaults
+VERBOSITY="terse"
+TEST_CATEGORY="all"
+PARALLEL=true
+FAIL_FAST=false
+COVERAGE=false
+WATCH=false
+DEBUG=false
+MAX_WORKERS=4
+
+# UI Functions
+print_header() { echo -e "${BLUE}${BOLD}$1${NC}"; }
+print_success() { echo -e "${GREEN}$1${NC}"; }
+print_warning() { echo -e "${YELLOW}$1${NC}"; }
+print_error() { echo -e "${RED}$1${NC}"; }
+print_error_exit() { echo -e "${RED}$1${NC}"; exit 1; }
+
+# Show help text
+show_help() {
+  cat << EOF
+${BLUE}${BOLD}rin-test${NC} - Advanced Rinna test runner
+
+Usage: rin test [test_type] [options]
+
+Test Types:
+  all                  Run all tests (default)
+  unit                 Run only unit tests
+  component            Run only component tests
+  integration          Run only integration tests
+  acceptance           Run only acceptance tests
+  bdd                  Run only BDD tests (same as acceptance)
+  performance          Run only performance tests
+  fast                 Run unit and component tests only (quick feedback)
+  essential            Run unit, component, and integration tests
+
+  # Legacy Domain-Specific Categories:
+  workflow             Run workflow domain BDD tests
+  release              Run release domain BDD tests
+  input                Run input interface domain BDD tests
+  api                  Run API integration tests
+  cli                  Run CLI integration tests
+  tag:<name>           Run tests with specific tag
+
+Options:
+  --no-parallel        Disable parallel test execution
+  --fail-fast          Stop on first test failure
+  --coverage           Generate code coverage report
+  --watch              Monitor file changes and run tests automatically
+  --debug              Enable debug output
+  --workers <n>        Set maximum number of parallel workers (default: 4)
+  --verbose            Show detailed output
+  --terse              Show minimal output (default)
+  --errors             Show only errors
+  --help               Show this help message
+
+Examples:
+  rin test                    # Run all tests
+  rin test unit               # Run unit tests only
+  rin test workflow           # Run workflow BDD tests
+  rin test fast --fail-fast   # Run fast tests and stop on first failure
+  rin test --coverage         # Run tests with coverage report
+  rin test --watch            # Watch for changes and run tests automatically
+EOF
+}
+
+# Detect if we should use smart test runner
+use_smart_runner() {
+  if [[ -x "$RINNA_DIR/bin/smart-test-runner.sh" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# Map legacy domains to smart test runner options
+map_domain_to_options() {
+  local domain=$1
+  
+  case $domain in
+    workflow)
+      echo "bdd --skip-unit --skip-component --skip-integration --skip-performance" 
+      ;;
+    release)
+      echo "bdd --skip-unit --skip-component --skip-integration --skip-performance"
+      export CUCUMBER_FILTER_TAGS="@release"
+      ;;
+    input)
+      echo "bdd --skip-unit --skip-component --skip-integration --skip-performance"
+      export CUCUMBER_FILTER_TAGS="@input"
+      ;;
+    api)
+      echo "integration --skip-unit --skip-component --skip-acceptance --skip-performance"
+      export TEST_INCLUDE_PATTERN="*APIIntegration*"
+      ;;
+    cli)
+      echo "integration --skip-unit --skip-component --skip-acceptance --skip-performance"
+      export TEST_INCLUDE_PATTERN="*CLIIntegration*"
+      ;;
+    *)
+      echo ""
+      ;;
+  esac
+}
+
+# Function to run the Maven legacy tests (for backward compatibility)
+run_maven_tests() {
+  local category=$1
+  shift
+  
+  # Build Maven command
+  local mvn_cmd="mvn test"
+  
+  # Add profile based on category
+  case $category in
+    unit)
+      mvn_cmd="$mvn_cmd -P unit-tests"
+      ;;
+    component)
+      mvn_cmd="$mvn_cmd -P component-tests"
+      ;;
+    integration)
+      mvn_cmd="$mvn_cmd -P integration-tests"
+      ;;
+    acceptance|bdd)
+      mvn_cmd="$mvn_cmd -P acceptance-tests"
+      ;;
+    performance)
+      mvn_cmd="$mvn_cmd -P performance-tests"
+      ;;
+    workflow)
+      mvn_cmd="$mvn_cmd -Dtest=org.rinna.bdd.CucumberRunner -Dcucumber.filter.tags='@workflow'"
+      ;;
+    release)
+      mvn_cmd="$mvn_cmd -Dtest=org.rinna.bdd.ReleaseRunner"
+      ;;
+    input)
+      mvn_cmd="$mvn_cmd -Dtest=org.rinna.bdd.InputInterfaceRunner"
+      ;;
+    api)
+      mvn_cmd="$mvn_cmd -Dtest=org.rinna.bdd.APIIntegrationRunner"
+      ;;
+    cli)
+      mvn_cmd="$mvn_cmd -Dtest=org.rinna.bdd.CLIIntegrationRunner"
+      ;;
+  esac
+  
+  # Add options
+  if [[ "$VERBOSITY" == "verbose" ]]; then
+    mvn_cmd="$mvn_cmd -X"
+  elif [[ "$VERBOSITY" == "terse" ]]; then
+    mvn_cmd="$mvn_cmd -q"
+  elif [[ "$VERBOSITY" == "errors" ]]; then
+    mvn_cmd="$mvn_cmd -q"
+  fi
+  
+  if [[ "$PARALLEL" == "true" ]]; then
+    mvn_cmd="$mvn_cmd -Djunit.jupiter.execution.parallel.enabled=true"
+  else
+    mvn_cmd="$mvn_cmd -Djunit.jupiter.execution.parallel.enabled=false"
+  fi
+  
+  if [[ "$FAIL_FAST" == "true" ]]; then
+    mvn_cmd="$mvn_cmd -Dsurefire.skipAfterFailureCount=1"
+  fi
+  
+  if [[ "$COVERAGE" == "true" ]]; then
+    mvn_cmd="$mvn_cmd -Pjacoco"
+  fi
+  
+  # Run the tests
+  print_header "Running $category tests..."
+  
+  if [[ "$WATCH" == "true" ]]; then
+    print_header "Starting watch mode (press Ctrl+C to stop)..."
+    
+    # First run
+    eval "$mvn_cmd"
+    
+    # Then watch for changes
+    while true; do
+      print_header "Watching for changes..."
+      inotifywait -r -e modify,create,delete "$RINNA_DIR/src" || true
+      
+      print_header "Changes detected, running tests again..."
+      eval "$mvn_cmd"
+    done
+  else
+    eval "$mvn_cmd"
+  fi
+}
+
+# Parse command line arguments
+SMART_RUNNER_ARGS=""
+LANGUAGE_FILTER=""
+
+# First check for test type (the first non-option argument)
+if [[ $# -gt 0 && ! "$1" =~ ^-- ]]; then
+  TEST_CATEGORY="$1"
+  
+  # Check if this is a language-specific test (e.g., java:unit)
+  if [[ "$TEST_CATEGORY" =~ ^(java|go|python|bash): ]]; then
+    # Extract language and test type
+    LANGUAGE_FILTER="${TEST_CATEGORY%%:*}"
+    TEST_CATEGORY="${TEST_CATEGORY#*:}"
+    export TEST_LANGUAGE_FILTER="$LANGUAGE_FILTER"
+  fi
+  
+  shift
+fi
+
+# Then process the remaining options
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --no-parallel)
+      PARALLEL=false
+      SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --no-parallel"
+      shift
+      ;;
+    --fail-fast)
+      FAIL_FAST=true
+      SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --fail-fast"
+      shift
+      ;;
+    --coverage)
+      COVERAGE=true
+      SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --coverage"
+      shift
+      ;;
+    --watch)
+      WATCH=true
+      shift
+      ;;
+    --workers)
+      MAX_WORKERS="$2"
+      SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --workers $2"
+      shift 2
+      ;;
+    --debug)
+      DEBUG=true
+      SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --debug"
+      shift
+      ;;
+    --verbose)
+      VERBOSITY="verbose"
+      SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --verbose"
+      shift
+      ;;
+    --terse)
+      VERBOSITY="terse"
+      shift
+      ;;
+    --errors)
+      VERBOSITY="errors"
+      SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --errors"
+      shift
+      ;;
+    --help)
+      show_help
+      exit 0
+      ;;
+    *)
+      print_error_exit "Unknown option: $1"
+      ;;
+  esac
+done
+
+# Check if tag: prefix is used
+if [[ "$TEST_CATEGORY" =~ ^tag: ]]; then
+  TAG_NAME="${TEST_CATEGORY#tag:}"
+  SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --tag $TAG_NAME"
+  TEST_CATEGORY="tag"
+fi
+
+# Main execution
+cd "$RINNA_DIR"
+
+# Check if we should use the smart test runner
+if use_smart_runner; then
+  print_header "Using advanced testing pyramid approach"
+  
+  # Check if we need to map a legacy domain to smart runner options
+  if [[ "$TEST_CATEGORY" =~ ^(workflow|release|input|api|cli)$ ]]; then
+    DOMAIN_OPTS=$(map_domain_to_options "$TEST_CATEGORY")
+    if [[ -n "$DOMAIN_OPTS" ]]; then
+      SMART_RUNNER_ARGS="$DOMAIN_OPTS $SMART_RUNNER_ARGS"
+    else
+      print_warning "Unknown domain: $TEST_CATEGORY. Falling back to all tests."
+      TEST_CATEGORY="all"
+    fi
+  elif [[ "$TEST_CATEGORY" == "all" ]]; then
+    # No mapping needed
+    SMART_RUNNER_ARGS="all $SMART_RUNNER_ARGS"
+  else
+    # For standard categories, just pass through
+    SMART_RUNNER_ARGS="$TEST_CATEGORY $SMART_RUNNER_ARGS"
+  fi
+  
+  # Run the smart test runner
+  exec "$RINNA_DIR/bin/smart-test-runner.sh" $SMART_RUNNER_ARGS
+else
+  print_warning "Advanced testing tools not available, using legacy test approach."
+  run_maven_tests "$TEST_CATEGORY"
+fi
