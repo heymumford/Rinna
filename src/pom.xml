@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.rinna</groupId>
         <artifactId>Rinna</artifactId>
-        <version>1.3.12</version>
+        <version>1.3.13</version>
     </parent>
 
     <artifactId>rinna-src</artifactId>
