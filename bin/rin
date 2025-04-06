@@ -13,8 +13,9 @@
 
 set -e
 
-# Determine project directory
-RINNA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Determine script and project directories
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RINNA_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 FIRST_RUN_MARKER="$HOME/.config/rinna/first_run_complete"
 
 # Colors
@@ -42,8 +43,8 @@ check_first_run() {
     echo -e "Checking your environment for dependencies..."
     echo
     
-    if [[ -x "$RINNA_DIR/bin/rin-setup" ]]; then
-      "$RINNA_DIR/bin/rin-setup" "install"
+    if [[ -x "$SCRIPT_DIR/rin-setup" ]]; then
+      "$SCRIPT_DIR/rin-setup" "install"
       if [[ $? -eq 0 ]]; then
         echo "Dependencies ready! Creating first-run marker..."
         touch "$FIRST_RUN_MARKER"
@@ -161,53 +162,54 @@ check_first_run
 # Dispatch to appropriate tool
 case "$CATEGORY" in
   build)
-    if [[ -x "$RINNA_DIR/bin/rin-build" ]]; then
-      exec "$RINNA_DIR/bin/rin-build" "$@"
+    if [[ -x "$SCRIPT_DIR/rin-build" ]]; then
+      exec "$SCRIPT_DIR/rin-build" "$@"
     else
       error "bin/rin-build not found or not executable"
     fi
     ;;
   version)
-    if [[ -x "$RINNA_DIR/bin/rin-version" ]]; then
-      exec "$RINNA_DIR/bin/rin-version" "$@"
+    if [[ -x "$SCRIPT_DIR/rin-version" ]]; then
+      exec "$SCRIPT_DIR/rin-version" "$@"
     else
       error "bin/rin-version not found or not executable"
     fi
     ;;
   doc|document)
-    if [[ -x "$RINNA_DIR/bin/rin-doc" ]]; then
-      exec "$RINNA_DIR/bin/rin-doc" "$@"
+    if [[ -x "$SCRIPT_DIR/rin-doc" ]]; then
+      exec "$SCRIPT_DIR/rin-doc" "$@"
     else
       error "bin/rin-doc not found or not executable"
     fi
     ;;
   setup)
-    if [[ -x "$RINNA_DIR/bin/rin-setup" ]]; then
-      exec "$RINNA_DIR/bin/rin-setup" "$@"
+    if [[ -x "$SCRIPT_DIR/rin-setup" ]]; then
+      exec "$SCRIPT_DIR/rin-setup" "$@"
     else
       error "bin/rin-setup not found or not executable"
     fi
     ;;
   config)
-    if [[ -x "$RINNA_DIR/bin/rin-config" ]]; then
-      exec "$RINNA_DIR/bin/rin-config" "$@"
+    if [[ -x "$SCRIPT_DIR/rin-config" ]]; then
+      exec "$SCRIPT_DIR/rin-config" "$@"
     else
       error "bin/rin-config not found or not executable"
     fi
     ;;
   diagrams)
-    if [[ -x "$RINNA_DIR/bin/rin-diagrams" ]]; then
-      exec "$RINNA_DIR/bin/rin-diagrams" "$@"
+    if [[ -x "$SCRIPT_DIR/rin-diagrams" ]]; then
+      exec "$SCRIPT_DIR/rin-diagrams" "$@"
     else
       error "bin/rin-diagrams not found or not executable"
     fi
     ;;
   --version)
     # Handle version flag by using the version command
-    if [[ -x "$RINNA_DIR/bin/rin-version" ]]; then
-      exec "$RINNA_DIR/bin/rin-version" "current"
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    if [[ -x "$SCRIPT_DIR/rin-version" ]]; then
+      exec "$SCRIPT_DIR/rin-version" "current"
     else
-      error "bin/rin-version not found or not executable"
+      error "bin/rin-version not found or not executable at $SCRIPT_DIR"
     fi
     ;;
   -h|--help)
@@ -217,8 +219,8 @@ case "$CATEGORY" in
   *)
     # For backward compatibility, if the first arg isn't build/version,
     # assume it's a build command
-    if [[ -x "$RINNA_DIR/bin/rin-build" ]]; then
-      exec "$RINNA_DIR/bin/rin-build" "$CATEGORY" "$@"
+    if [[ -x "$SCRIPT_DIR/rin-build" ]]; then
+      exec "$SCRIPT_DIR/rin-build" "$CATEGORY" "$@"
     else
       error "bin/rin-build not found or not executable"
     fi
