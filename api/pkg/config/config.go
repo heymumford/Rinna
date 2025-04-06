@@ -81,6 +81,15 @@ type BackendConfig struct {
 	RequestTimeoutMS    int    `mapstructure:"request_timeout_ms"`
 }
 
+// JavaServiceConfig contains Java service connection configuration
+type JavaServiceConfig struct {
+	Host           string            `json:"host"`
+	Port           int               `json:"port"`
+	ConnectTimeout int               `json:"connect_timeout"`
+	RequestTimeout int               `json:"request_timeout"`
+	Endpoints      map[string]string `json:"endpoints"`
+}
+
 const (
 	// Environment variable prefix for Rinna configuration
 	envPrefix = "RINNA"

@@ -65,7 +65,15 @@ func main() {
 	}
 	
 	exeDir := filepath.Dir(exePath)
-	projectRoot := filepath.Clean(filepath.Join(exeDir, ".."))
+	
+	// If we're running from the bin directory in the version service, adjust the path
+	if filepath.Base(exeDir) == "bin" && filepath.Base(filepath.Dir(exeDir)) == "version-service" {
+		exeDir = filepath.Dir(filepath.Dir(exeDir))
+	} else if filepath.Base(exeDir) == "version-service" {
+		exeDir = filepath.Dir(exeDir)
+	}
+	
+	projectRoot := exeDir
 	propertiesPath := filepath.Join(projectRoot, "version.properties")
 	
 	// Create version registry
@@ -87,24 +95,55 @@ func main() {
 }
 
 func registerHandlers(registry *core.PropertiesRegistry, projectRoot string) {
-	// Register Go handler
-	goHandler := go_adapter.NewGoFileHandler([]string{
-		filepath.Join(projectRoot, "api", "pkg", "health", "version.go"),
-		filepath.Join(projectRoot, "api", "internal", "version", "version.go"),
-	})
-	registry.RegisterHandler(goHandler)
+	// Verify key directories exist before registering handlers
+	apiDir := filepath.Join(projectRoot, "api")
+	apiPkgDir := filepath.Join(apiDir, "pkg", "health")
+	apiInternalDir := filepath.Join(apiDir, "internal", "version")
 	
-	// Register Maven handler
-	mavenHandler := java_adapter.NewMavenFileHandler(projectRoot)
-	registry.RegisterHandler(mavenHandler)
+	// Register Go handler if the directories exist
+	if dirExists(apiPkgDir) || dirExists(apiInternalDir) {
+		goHandler := go_adapter.NewGoFileHandler([]string{
+			filepath.Join(apiPkgDir, "version.go"),
+			filepath.Join(apiInternalDir, "version.go"),
+		})
+		registry.RegisterHandler(goHandler)
+	}
 	
-	// Register Python handler
-	pythonHandler := python_adapter.NewPythonFileHandler(projectRoot)
-	registry.RegisterHandler(pythonHandler)
+	// Register Maven handler if pom.xml exists
+	if fileExists(filepath.Join(projectRoot, "pom.xml")) {
+		mavenHandler := java_adapter.NewMavenFileHandler(projectRoot)
+		registry.RegisterHandler(mavenHandler)
+	}
 	
-	// Register README handler
-	readmeHandler := bash_adapter.NewReadmeFileHandler(projectRoot)
-	registry.RegisterHandler(readmeHandler)
+	// Register Python handler if Python files exist
+	if fileExists(filepath.Join(projectRoot, "bin", "rinna_config.py")) {
+		pythonHandler := python_adapter.NewPythonFileHandler(projectRoot)
+		registry.RegisterHandler(pythonHandler)
+	}
+	
+	// Register README handler if README.md exists
+	if fileExists(filepath.Join(projectRoot, "README.md")) {
+		readmeHandler := bash_adapter.NewReadmeFileHandler(projectRoot)
+		registry.RegisterHandler(readmeHandler)
+	}
+}
+
+// Helper function to check if a directory exists
+func dirExists(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return info.IsDir()
+}
+
+// Helper function to check if a file exists
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return !info.IsDir()
 }
 
 func executeCommand(registry *core.PropertiesRegistry) error {
