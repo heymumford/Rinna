@@ -11,6 +11,7 @@ package org.rinna.adapter.service;
 import org.rinna.domain.entity.DefaultWorkItem;
 import org.rinna.domain.entity.WorkItem;
 import org.rinna.domain.entity.WorkItemCreateRequest;
+import org.rinna.domain.entity.WorkItemRecord;
 import org.rinna.domain.repository.ItemRepository;
 import org.rinna.domain.usecase.ItemService;
 
@@ -68,12 +69,15 @@ public class DefaultItemService implements ItemService {
         WorkItem item = findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(STR."Work item not found: \{id}"));
         
-        return switch (item) {
-            case DefaultWorkItem defaultItem -> 
-                itemRepository.save(defaultItem.setAssignee(assignee));
-            default -> 
-                throw new UnsupportedOperationException("Cannot update non-default work item");
+        // Handle both implementations for backward compatibility
+        WorkItem updatedItem = switch (item) {
+            case WorkItemRecord record -> record.withAssignee(assignee);
+            case DefaultWorkItem defaultItem -> defaultItem.toRecord().withAssignee(assignee);
+            case null -> throw new IllegalArgumentException("Item cannot be null");
+            default -> throw new UnsupportedOperationException("Unsupported WorkItem implementation: " + item.getClass().getName());
         };
+        
+        return itemRepository.save(updatedItem);
     }
     
     @Override

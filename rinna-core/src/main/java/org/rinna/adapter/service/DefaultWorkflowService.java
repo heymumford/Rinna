@@ -10,6 +10,7 @@ package org.rinna.adapter.service;
 
 import org.rinna.domain.entity.DefaultWorkItem;
 import org.rinna.domain.entity.WorkItem;
+import org.rinna.domain.entity.WorkItemRecord;
 import org.rinna.domain.entity.WorkflowState;
 import org.rinna.domain.repository.ItemRepository;
 import org.rinna.domain.usecase.InvalidTransitionException;
@@ -46,12 +47,15 @@ public class DefaultWorkflowService implements WorkflowService {
             throw new InvalidTransitionException(itemId, currentState, targetState);
         }
         
-        return switch (item) {
-            case DefaultWorkItem defaultItem -> 
-                itemRepository.save(defaultItem.setStatus(targetState));
-            default -> 
-                throw new UnsupportedOperationException("Cannot transition non-default work item");
+        // Handle both default and record implementations
+        WorkItem updatedItem = switch (item) {
+            case WorkItemRecord record -> record.withStatus(targetState);
+            case DefaultWorkItem defaultItem -> defaultItem.toRecord().withStatus(targetState);
+            case null -> throw new IllegalArgumentException("Item cannot be null");
+            default -> throw new UnsupportedOperationException("Unsupported WorkItem implementation: " + item.getClass().getName());
         };
+        
+        return itemRepository.save(updatedItem);
     }
     
     @Override
