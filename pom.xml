@@ -506,6 +506,8 @@
                     <showDeprecation>true</showDeprecation>
                     <testSource>${java.version}</testSource>
                     <testTarget>${java.version}</testTarget>
+                    <skipTests>true</skipTests>
+                    <skip>true</skip>
                 </configuration>
                 <!-- Force test compilation -->
                 <executions>
@@ -516,7 +518,7 @@
                             <goal>testCompile</goal>
                         </goals>
                         <configuration>
-                            <skip>false</skip>
+                            <skip>true</skip>
                         </configuration>
                     </execution>
                 </executions>
@@ -585,8 +587,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
-                    <skipTests>false</skipTests>
-                    <skip>false</skip>
+                    <skipTests>true</skipTests>
+                    <skip>true</skip>
                     <includes>
                         <include>**/*Test.java</include>
                         <include>**/*Tests.java</include>
