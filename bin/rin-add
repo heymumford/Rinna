@@ -1,0 +1,193 @@
+#!/bin/bash
+# rin-add - Add a new work item to the Rinna repository
+#
+# This command adds a new work item with required and optional attributes
+# and stores it in the Rinna repository.
+
+set -e
+
+# Get the project root directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Source common utilities
+if [ -f "$SCRIPT_DIR/common/rinna_utils.sh" ]; then
+    source "$SCRIPT_DIR/common/rinna_utils.sh"
+else
+    # Create a minimal version of utilities if not found
+    function echo_info() { echo -e "\033[0;34m$1\033[0m"; }
+    function echo_success() { echo -e "\033[0;32m$1\033[0m"; }
+    function echo_warning() { echo -e "\033[0;33m$1\033[0m"; }
+    function echo_error() { echo -e "\033[0;31m$1\033[0m"; }
+    
+    # Default functions for work item types and statuses
+    function get_work_item_types() { echo "BUG FEATURE TASK"; }
+    function get_work_item_statuses() { echo "TODO IN_PROGRESS REVIEW DONE"; }
+    function get_work_item_priorities() { echo "LOW MEDIUM HIGH CRITICAL"; }
+    function to_uppercase() { echo "$1" | tr '[:lower:]' '[:upper:]'; }
+    function create_uuid() { cat /proc/sys/kernel/random/uuid; }
+fi
+
+# Default values
+TITLE=""
+DESCRIPTION=""
+TYPE="TASK"
+PRIORITY="MEDIUM"
+STATUS="TODO"
+ASSIGNEE=""
+PROJECT=""
+
+# Function to show usage instructions
+show_usage() {
+    cat << EOF
+Usage: rin add [options]
+
+Add a new work item to the repository.
+
+Options:
+  -t, --type TYPE          Work item type (FEATURE, BUG, TASK)
+  -T, --title TITLE        Title of the work item (required)
+  -d, --description DESC   Description of the work item
+  -p, --priority PRIORITY  Priority (LOW, MEDIUM, HIGH, CRITICAL)
+  -s, --status STATUS      Status (TODO, IN_PROGRESS, REVIEW, DONE)
+  -a, --assignee USER      Assignee username
+  -P, --project PROJECT    Project name
+  -h, --help               Show this help message
+
+Examples:
+  rin add --title "Implement login form" --type FEATURE
+  rin add --title "Fix authentication bug" --type BUG --priority HIGH
+  rin add --title "Update documentation" --type TASK --assignee "alice"
+EOF
+}
+
+# Parse command-line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -t|--type)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo_error "Error: --type requires a value"
+                exit 1
+            fi
+            TYPE=$(to_uppercase "$2")
+            shift 2
+            ;;
+        -T|--title)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo_error "Error: --title requires a value"
+                exit 1
+            fi
+            TITLE="$2"
+            shift 2
+            ;;
+        -d|--description)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo_error "Error: --description requires a value"
+                exit 1
+            fi
+            DESCRIPTION="$2"
+            shift 2
+            ;;
+        -p|--priority)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo_error "Error: --priority requires a value"
+                exit 1
+            fi
+            PRIORITY=$(to_uppercase "$2")
+            shift 2
+            ;;
+        -s|--status)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo_error "Error: --status requires a value"
+                exit 1
+            fi
+            STATUS=$(to_uppercase "$2")
+            shift 2
+            ;;
+        -a|--assignee)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo_error "Error: --assignee requires a value"
+                exit 1
+            fi
+            ASSIGNEE="$2"
+            shift 2
+            ;;
+        -P|--project)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo_error "Error: --project requires a value"
+                exit 1
+            fi
+            PROJECT="$2"
+            shift 2
+            ;;
+        -h|--help)
+            show_usage
+            exit 0
+            ;;
+        *)
+            echo_error "Error: Unknown option: $1"
+            show_usage
+            exit 1
+            ;;
+    esac
+done
+
+# Validate required arguments
+if [ -z "$TITLE" ]; then
+    echo_error "Error: --title is required"
+    show_usage
+    exit 1
+fi
+
+# Validate TYPE
+VALID_TYPES=$(get_work_item_types)
+if [[ ! " $VALID_TYPES " =~ " $TYPE " ]]; then
+    echo_error "Error: Invalid type: $TYPE. Must be one of: $VALID_TYPES"
+    exit 1
+fi
+
+# Validate STATUS
+VALID_STATUSES=$(get_work_item_statuses)
+if [[ ! " $VALID_STATUSES " =~ " $STATUS " ]]; then
+    echo_error "Error: Invalid status: $STATUS. Must be one of: $VALID_STATUSES"
+    exit 1
+fi
+
+# Validate PRIORITY
+VALID_PRIORITIES=$(get_work_item_priorities)
+if [[ ! " $VALID_PRIORITIES " =~ " $PRIORITY " ]]; then
+    echo_error "Error: Invalid priority: $PRIORITY. Must be one of: $VALID_PRIORITIES"
+    exit 1
+fi
+
+# Initialize Rinna directory
+RINNA_DIR=$(init_rinna_dir "$PROJECT_ROOT")
+ITEMS_DIR="$RINNA_DIR/items"
+
+# Create item ID (UUID)
+ITEM_ID=$(create_uuid)
+
+# Store the work item
+ITEM_FILE=$(store_work_item "$RINNA_DIR" "$ITEM_ID" "$TITLE" "$DESCRIPTION" "$TYPE" "$PRIORITY" "$STATUS" "$ASSIGNEE")
+
+# Check result (set -e would exit on failure, but we want to handle it gracefully)
+if [ -n "$ITEM_FILE" ] && [ -f "$ITEM_FILE" ]; then
+    echo_success "Work item created successfully!"
+    echo
+    echo "ID: $ITEM_ID"
+    echo "Title: $TITLE"
+    echo "Type: $TYPE"
+    echo "Priority: $PRIORITY"
+    echo "Status: $STATUS"
+    
+    if [ -n "$ASSIGNEE" ]; then
+        echo "Assignee: $ASSIGNEE"
+    fi
+    
+    echo
+    echo "Use 'rin list' to see all work items"
+    exit 0
+else
+    echo_error "Error: Failed to create work item"
+    exit 1
+fi

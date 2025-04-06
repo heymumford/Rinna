@@ -1,0 +1,281 @@
+#!/bin/bash
+# rin-list - List work items managed by Rinna
+#
+# This command lists all work items in the repository
+# with options for filtering by type, status, and other attributes.
+
+set -e
+
+# Get the project root directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Source common utilities
+if [ -f "$SCRIPT_DIR/common/rinna_utils.sh" ]; then
+    source "$SCRIPT_DIR/common/rinna_utils.sh"
+else
+    # Create a minimal version of utilities if not found
+    function echo_info() { echo -e "\033[0;34m$1\033[0m"; }
+    function echo_success() { echo -e "\033[0;32m$1\033[0m"; }
+    function echo_warning() { echo -e "\033[0;33m$1\033[0m"; }
+    function echo_error() { echo -e "\033[0;31m$1\033[0m"; }
+fi
+
+# Default values
+TYPE=""
+STATUS=""
+PRIORITY=""
+ASSIGNEE=""
+PROJECT=""
+LIMIT=20
+FORMAT="table"
+
+# Function to show usage instructions
+show_usage() {
+    cat << EOF
+Usage: rin list [options]
+
+List work items in the repository with optional filtering.
+
+Options:
+  -t, --type TYPE          Filter by type (FEATURE, BUG, TASK)
+  -s, --status STATUS      Filter by status (TODO, IN_PROGRESS, REVIEW, DONE)
+  -p, --priority PRIORITY  Filter by priority (LOW, MEDIUM, HIGH, CRITICAL)
+  -a, --assignee USER      Filter by assignee
+  -P, --project PROJECT    Filter by project
+  -l, --limit NUMBER       Maximum number of items to show (default: 20)
+  --format FORMAT          Output format (table, json) (default: table)
+  -h, --help               Show this help message
+
+Examples:
+  rin list                      # List all work items
+  rin list --type FEATURE       # List only features
+  rin list --status TODO        # List only items in TODO status
+  rin list --assignee alice     # List items assigned to alice
+EOF
+}
+
+# Parse command-line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -t|--type)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo_error "Error: --type requires a value"
+                exit 1
+            fi
+            TYPE="$2"
+            shift 2
+            ;;
+        -s|--status)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo_error "Error: --status requires a value"
+                exit 1
+            fi
+            STATUS="$2"
+            shift 2
+            ;;
+        -p|--priority)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo_error "Error: --priority requires a value"
+                exit 1
+            fi
+            PRIORITY="$2"
+            shift 2
+            ;;
+        -a|--assignee)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo_error "Error: --assignee requires a value"
+                exit 1
+            fi
+            ASSIGNEE="$2"
+            shift 2
+            ;;
+        -P|--project)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo_error "Error: --project requires a value"
+                exit 1
+            fi
+            PROJECT="$2"
+            shift 2
+            ;;
+        -l|--limit)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo_error "Error: --limit requires a value"
+                exit 1
+            fi
+            LIMIT="$2"
+            shift 2
+            ;;
+        --format)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo_error "Error: --format requires a value"
+                exit 1
+            fi
+            FORMAT="$2"
+            shift 2
+            ;;
+        -h|--help)
+            show_usage
+            exit 0
+            ;;
+        *)
+            echo_error "Error: Unknown option: $1"
+            show_usage
+            exit 1
+            ;;
+    esac
+done
+
+# Validate format
+if [[ "$FORMAT" != "table" && "$FORMAT" != "json" ]]; then
+    echo_error "Error: Invalid format: $FORMAT. Must be 'table' or 'json'"
+    exit 1
+fi
+
+# Check for .rinna directory and config
+RINNA_DIR="$PROJECT_ROOT/.rinna"
+ITEMS_DIR="$RINNA_DIR/items"
+
+if [ ! -d "$RINNA_DIR" ]; then
+    # No Rinna configuration found, create it
+    mkdir -p "$RINNA_DIR" "$ITEMS_DIR"
+    echo_info "Initialized Rinna repository structure"
+fi
+
+# Get work items
+if [ -d "$ITEMS_DIR" ]; then
+    # Get all work item files
+    ITEM_FILES=$(find "$ITEMS_DIR" -type f -name "*.json" | sort -r)
+    
+    # Apply filters if specified
+    if [ -n "$TYPE" ]; then
+        ITEM_FILES=$(grep -l "\"type\": \"$TYPE\"" $ITEM_FILES 2>/dev/null)
+    fi
+    
+    if [ -n "$STATUS" ]; then
+        ITEM_FILES=$(grep -l "\"status\": \"$STATUS\"" $ITEM_FILES 2>/dev/null)
+    fi
+    
+    if [ -n "$PRIORITY" ]; then
+        ITEM_FILES=$(grep -l "\"priority\": \"$PRIORITY\"" $ITEM_FILES 2>/dev/null)
+    fi
+    
+    if [ -n "$ASSIGNEE" ]; then
+        ITEM_FILES=$(grep -l "\"assignee\": \"$ASSIGNEE\"" $ITEM_FILES 2>/dev/null)
+    fi
+    
+    if [ -n "$PROJECT" ]; then
+        ITEM_FILES=$(grep -l "\"project\": \"$PROJECT\"" $ITEM_FILES 2>/dev/null)
+    fi
+    
+    # Count matching items
+    ITEM_COUNT=$(echo "$ITEM_FILES" | wc -w)
+else
+    ITEM_COUNT=0
+    ITEM_FILES=""
+fi
+
+# Display results
+if [ "$ITEM_COUNT" -eq 0 ]; then
+    echo "📋 Work Items"
+    echo "============================================================="
+    echo
+    echo "No work items found in your workspace."
+    echo
+    
+    # Check for workspace config
+    RINNA_WORKSPACE_DIR="$PROJECT_ROOT/.rinna"
+    WORKSPACE_CONFIG_FILE="$RINNA_WORKSPACE_DIR/workspace.yaml"
+    
+    # Show workflow stages
+    echo "Default workflow stages:"
+    if [ -f "$WORKSPACE_CONFIG_FILE" ] && grep -q "workflow_stages:" "$WORKSPACE_CONFIG_FILE"; then
+        # Extract from config
+        STAGES=$(grep -A 20 "workflow_stages:" "$WORKSPACE_CONFIG_FILE" | grep -E "name:|description:" | paste -d ' ' - - | sed 's/name: "\([^"]*\)" description: "\([^"]*\)"/  • \1 - \2/g')
+        echo "$STAGES"
+    else
+        # Default stages
+        echo "  • TODO         - Work that needs to be done"
+        echo "  • IN_PROGRESS  - Work currently being done"
+        echo "  • REVIEW       - Work ready for review"
+        echo "  • DONE         - Completed work"
+    fi
+    
+    # Show permissions
+    echo
+    echo "Your permissions:"
+    echo "  • You are authorized for all CRUD operations (Create, Read, Update, Delete)"
+    echo "  • You can manage work items of types: FEATURE, BUG, TASK"
+    echo
+    
+    # Show how to add items
+    USERNAME=$(whoami)
+    echo "To add a new work item, use:"
+    echo "  rin add --title \"Your feature title\" --type FEATURE"
+    echo "  rin add --title \"Bug description\" --type BUG --priority HIGH"
+    echo "  rin add --title \"Task to do\" --type TASK --assignee \"$USERNAME\""
+    exit 0
+fi
+
+if [ "$FORMAT" == "json" ]; then
+    # JSON output
+    echo "{"
+    echo "  \"items\": ["
+    
+    # Process each item
+    FIRST=true
+    for ITEM_FILE in $ITEM_FILES; do
+        if [ "$FIRST" = true ]; then
+            FIRST=false
+        else
+            echo ","
+        fi
+        cat "$ITEM_FILE" | sed 's/^/    /'
+    done
+    
+    echo "  ],"
+    echo "  \"count\": $ITEM_COUNT,"
+    echo "  \"limit\": $LIMIT"
+    echo "}"
+else
+    # Table output
+    echo "Work Items:"
+    echo "--------------------------------------------------------------------------------"
+    printf "%-36s %-40s %-10s %-10s %-12s %s\n" "ID" "TITLE" "TYPE" "PRIORITY" "STATUS" "ASSIGNEE"
+    echo "--------------------------------------------------------------------------------"
+    
+    # Process each item up to limit
+    COUNT=0
+    for ITEM_FILE in $ITEM_FILES; do
+        if [ $COUNT -ge $LIMIT ]; then
+            break
+        fi
+        
+        # Extract values from JSON
+        ID=$(grep -o '"id": "[^"]*"' "$ITEM_FILE" | cut -d'"' -f4)
+        TITLE=$(grep -o '"title": "[^"]*"' "$ITEM_FILE" | cut -d'"' -f4)
+        TYPE=$(grep -o '"type": "[^"]*"' "$ITEM_FILE" | cut -d'"' -f4)
+        PRIORITY=$(grep -o '"priority": "[^"]*"' "$ITEM_FILE" | cut -d'"' -f4)
+        STATUS=$(grep -o '"status": "[^"]*"' "$ITEM_FILE" | cut -d'"' -f4)
+        ASSIGNEE=$(grep -o '"assignee": "[^"]*"' "$ITEM_FILE" | cut -d'"' -f4)
+        
+        # Format and truncate title
+        if [ ${#TITLE} -gt 37 ]; then
+            TITLE="${TITLE:0:37}..."
+        fi
+        
+        # Handle empty assignee
+        if [ -z "$ASSIGNEE" ]; then
+            ASSIGNEE="-"
+        fi
+        
+        printf "%-36s %-40s %-10s %-10s %-12s %s\n" "$ID" "$TITLE" "$TYPE" "$PRIORITY" "$STATUS" "$ASSIGNEE"
+        
+        COUNT=$((COUNT + 1))
+    done
+    
+    echo "--------------------------------------------------------------------------------"
+    echo "Displaying $COUNT of $ITEM_COUNT item(s)"
+fi
+
+exit 0

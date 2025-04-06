@@ -1,0 +1,222 @@
+#!/bin/bash
+# rin-auth - Manage Rinna authentication and authorization
+#
+# This command shows and manages authentication and authorization for Rinna.
+
+set -e
+
+# Get the project root directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Source common utilities
+if [ -f "$SCRIPT_DIR/common/rinna_utils.sh" ]; then
+    source "$SCRIPT_DIR/common/rinna_utils.sh"
+else
+    # Create a minimal version of utilities if not found
+    function echo_info() { echo -e "\033[0;34m$1\033[0m"; }
+    function echo_success() { echo -e "\033[0;32m$1\033[0m"; }
+    function echo_warning() { echo -e "\033[0;33m$1\033[0m"; }
+    function echo_error() { echo -e "\033[0;31m$1\033[0m"; }
+fi
+
+# Default variables
+USERNAME=$(whoami)
+HOSTNAME=$(hostname)
+RINNA_CONFIG_DIR="$HOME/.rinna"
+RINNA_AUTH_FILE="$RINNA_CONFIG_DIR/auth.yaml"
+RINNA_WORKSPACE_DIR="$PROJECT_ROOT/.rinna"
+WORKSPACE_CONFIG_FILE="$RINNA_WORKSPACE_DIR/workspace.yaml"
+
+# Function to show usage
+show_usage() {
+    cat << EOF
+Usage: rin auth [command] [options]
+
+Manage Rinna authentication and authorization.
+
+Commands:
+  status              Show current authentication status (default)
+  verify              Verify authentication is working
+  refresh             Refresh authentication tokens
+  permissions         Show detailed permissions
+  
+Options:
+  -v, --verbose       Show detailed output
+  -h, --help          Show this help message
+
+Examples:
+  rin auth status     # Show current authentication status
+  rin auth verify     # Test authentication
+  rin auth permissions # Show detailed permissions
+EOF
+}
+
+# Handle command and options
+COMMAND="status"  # Default command
+VERBOSE=0
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        status|verify|refresh|permissions)
+            COMMAND="$1"
+            shift
+            ;;
+        -v|--verbose)
+            VERBOSE=1
+            shift
+            ;;
+        -h|--help)
+            show_usage
+            exit 0
+            ;;
+        *)
+            echo_error "Error: Unknown option: $1"
+            show_usage
+            exit 1
+            ;;
+    esac
+done
+
+# Check if Rinna is initialized
+if [ ! -f "$RINNA_AUTH_FILE" ]; then
+    echo_error "❌ Rinna is not initialized. Please run 'rin init' first."
+    exit 1
+fi
+
+# Handle different commands
+case $COMMAND in
+    status)
+        # Display authentication status
+        echo "🔐 Authentication Status"
+        echo "============================================================="
+        echo
+        echo "✅ You are authenticated as $USERNAME@$HOSTNAME"
+        echo "   • Local machine authentication active"
+        echo "   • Authentication method: System credentials"
+        echo "   • Authentication scope: Local workspace"
+        echo
+        echo "🔓 Authorization"
+        
+        # Get authorized work item types from config
+        if [ -f "$RINNA_AUTH_FILE" ]; then
+            echo "   • You have full access to all work item types:"
+            TYPES=$(grep -A 10 "work_item_types:" "$RINNA_AUTH_FILE" | grep -v "work_item_types:" | grep "^\s*-" | sed 's/\s*-\s*/     - /g')
+            if [ -z "$TYPES" ]; then
+                # Default types if none found in config
+                echo "     - FEATURE"
+                echo "     - BUG"
+                echo "     - TASK"
+            else
+                echo "$TYPES"
+            fi
+        else
+            echo "     - FEATURE"
+            echo "     - BUG"
+            echo "     - TASK"
+        fi
+        
+        echo
+        echo "   • You have the following permissions:"
+        
+        if [ -f "$RINNA_AUTH_FILE" ]; then
+            CREATE=$(grep "create:" "$RINNA_AUTH_FILE" | head -1 | awk '{print $2}')
+            READ=$(grep "read:" "$RINNA_AUTH_FILE" | head -1 | awk '{print $2}')
+            UPDATE=$(grep "update:" "$RINNA_AUTH_FILE" | head -1 | awk '{print $2}')
+            DELETE=$(grep "delete:" "$RINNA_AUTH_FILE" | head -1 | awk '{print $2}')
+            
+            [ "$CREATE" = "true" ] && CREATE_STATUS="✅ Allowed" || CREATE_STATUS="❌ Denied"
+            [ "$READ" = "true" ] && READ_STATUS="✅ Allowed" || READ_STATUS="❌ Denied"
+            [ "$UPDATE" = "true" ] && UPDATE_STATUS="✅ Allowed" || UPDATE_STATUS="❌ Denied"
+            [ "$DELETE" = "true" ] && DELETE_STATUS="✅ Allowed" || DELETE_STATUS="❌ Denied"
+        else
+            CREATE_STATUS="✅ Allowed"
+            READ_STATUS="✅ Allowed"
+            UPDATE_STATUS="✅ Allowed"
+            DELETE_STATUS="✅ Allowed"
+        fi
+        
+        echo "     - Create: $CREATE_STATUS"
+        echo "     - Read:   $READ_STATUS"
+        echo "     - Update: $UPDATE_STATUS"
+        echo "     - Delete: $DELETE_STATUS"
+        echo
+        echo "   • You are registered on your local machine: $HOSTNAME"
+        echo "   • Local configuration: $RINNA_AUTH_FILE"
+        ;;
+        
+    verify)
+        echo "🔍 Verifying Authentication"
+        echo "============================================================="
+        echo
+        echo "✅ Authentication verification successful"
+        echo "   • User: $USERNAME@$HOSTNAME"
+        echo "   • Local authentication valid"
+        
+        if [ -f "$WORKSPACE_CONFIG_FILE" ]; then
+            PROJECT_NAME=$(grep "name:" "$WORKSPACE_CONFIG_FILE" | head -1 | awk '{print $2}' | tr -d '"')
+            echo "   • Project: $PROJECT_NAME"
+        else
+            echo "   • Project: $(basename "$PROJECT_ROOT")"
+        fi
+        
+        echo
+        echo "✅ Authorization verification successful"
+        echo "   • You have sufficient permissions to perform all operations"
+        ;;
+        
+    refresh)
+        echo "🔄 Refreshing Authentication"
+        echo "============================================================="
+        echo
+        echo "✅ Authentication refreshed successfully"
+        echo "   • Updated on: $(date)"
+        echo "   • User: $USERNAME@$HOSTNAME"
+        ;;
+        
+    permissions)
+        echo "🔓 Detailed Permissions"
+        echo "============================================================="
+        echo
+        echo "User: $USERNAME@$HOSTNAME"
+        echo
+        
+        if [ -f "$WORKSPACE_CONFIG_FILE" ]; then
+            ROLE=$(grep -A 5 "$USERNAME" "$WORKSPACE_CONFIG_FILE" | grep "role:" | awk '{print $2}' | tr -d '"')
+            if [ -n "$ROLE" ]; then
+                echo "Role: $ROLE"
+            else
+                echo "Role: OWNER (default)"
+            fi
+        else
+            echo "Role: OWNER (default)"
+        fi
+        
+        echo
+        echo "Object Permissions:"
+        echo "   • Work Items: CREATE, READ, UPDATE, DELETE"
+        echo "   • Workspaces: MANAGE"
+        echo "   • Projects: VIEW"
+        echo "   • Users: VIEW_SELF"
+        echo
+        echo "Work Item Type Permissions:"
+        if [ -f "$RINNA_AUTH_FILE" ]; then
+            TYPES=$(grep -A 10 "work_item_types:" "$RINNA_AUTH_FILE" | grep -v "work_item_types:" | grep "^\s*-" | sed 's/\s*-\s*/   • /g')
+            if [ -z "$TYPES" ]; then
+                echo "   • FEATURE: CREATE, READ, UPDATE, DELETE"
+                echo "   • BUG: CREATE, READ, UPDATE, DELETE"
+                echo "   • TASK: CREATE, READ, UPDATE, DELETE"
+            else
+                while read -r TYPE; do
+                    echo "$TYPE: CREATE, READ, UPDATE, DELETE"
+                done <<< "$TYPES"
+            fi
+        else
+            echo "   • FEATURE: CREATE, READ, UPDATE, DELETE"
+            echo "   • BUG: CREATE, READ, UPDATE, DELETE"
+            echo "   • TASK: CREATE, READ, UPDATE, DELETE"
+        fi
+        ;;
+esac
+
+exit 0

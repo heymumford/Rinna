@@ -50,6 +50,13 @@ mvn dependency-check:check  # Run OWASP dependency check
 ./bin/python-quality types    # Run only type checking (MyPy)
 ./bin/python-quality security # Run only security checks (Bandit)
 ./bin/python-quality --fix    # Run checks and fix issues where possible
+```
+
+### Shell Scripts
+```bash
+# Run Shell Script quality checks
+./bin/shell-quality           # Run basic checks for all shell scripts
+./bin/shell-quality --fix     # Auto-fix common issues when possible
 
 # Run Python tests
 python -m pytest python/tests     # Run all Python tests
@@ -108,6 +115,7 @@ Use the `rin` CLI utility located in the bin directory:
 ./bin/run-tests.sh all               # Run all tests with legacy runner
 ./bin/run-tests.sh unit              # Run only unit tests with legacy runner
 ./bin/run-tests.sh -p bdd            # Run all BDD tests in parallel mode
+./bin/run-new-tests.sh               # Test only the CLI commands
 ./bin/rinna-tests.sh                 # Run Java, Go, and Python tests
 ./bin/rinna-tests.sh minimal         # Run minimal tests for CI
 

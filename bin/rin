@@ -33,7 +33,7 @@ error() {
   exit 1
 }
 
-# Check if we need to run setup
+# Check if we need to run setup and init
 check_first_run() {
   # Create config directory if it doesn't exist
   mkdir -p "$(dirname "$FIRST_RUN_MARKER")"
@@ -42,25 +42,30 @@ check_first_run() {
     echo -e "${BLUE}=====================================================${NC}"
     echo -e "${BLUE}         First run of Rinna CLI detected!            ${NC}"
     echo -e "${BLUE}=====================================================${NC}"
-    echo -e "Checking your environment for dependencies..."
-    echo
     
-    if [[ -x "$SCRIPT_DIR/rin-setup" ]]; then
-      "$SCRIPT_DIR/rin-setup" "install"
-      if [[ $? -eq 0 ]]; then
-        echo "Dependencies ready! Creating first-run marker..."
-        touch "$FIRST_RUN_MARKER"
-      else
-        echo -e "${YELLOW}Warning: Some dependencies could not be installed automatically.${NC}"
-        echo -e "You may need to install them manually. Continue with 'rin setup' later."
-        # Continue anyway - we've warned the user
+    # Check if we have the graphical installer
+    GRAPHICS_INSTALLER="$SCRIPT_DIR/install-rinna.sh"
+    if [[ -x "$GRAPHICS_INSTALLER" ]]; then
+      echo -e "Starting interactive graphical installer..."
+      if "$GRAPHICS_INSTALLER"; then
         touch "$FIRST_RUN_MARKER"
       fi
     else
-      echo -e "${YELLOW}Warning: Setup script not found or not executable.${NC}"
-      echo -e "You may need to install dependencies manually."
-      # Create marker anyway to avoid repeated messages
-      touch "$FIRST_RUN_MARKER"
+      # Fall back to standard installer if graphics not available
+      echo -e "Checking your environment for dependencies..."
+      echo
+      
+      if [[ -x "$SCRIPT_DIR/rin-setup" ]]; then
+        if "$SCRIPT_DIR/rin-setup" "install"; then
+          echo "Dependencies ready!"
+        else
+          echo -e "${YELLOW}Warning: Some dependencies could not be installed automatically.${NC}"
+          echo -e "You may need to install them manually. Continue with 'rin setup' later."
+        fi
+      else
+        echo -e "${YELLOW}Warning: Setup script not found or not executable.${NC}"
+        echo -e "You may need to install dependencies manually."
+      fi
     fi
     
     echo
@@ -68,6 +73,20 @@ check_first_run() {
     echo -e "${BLUE}         Welcome to Rinna CLI!                       ${NC}"
     echo -e "${BLUE}=====================================================${NC}"
     echo
+    
+    # Initialize Rinna with the user's credentials
+    if [[ -x "$SCRIPT_DIR/rin-init" ]]; then
+      echo -e "Setting up Rinna with your user credentials..."
+      echo
+      "$SCRIPT_DIR/rin-init"
+      # Create marker after initialization
+      touch "$FIRST_RUN_MARKER"
+    else
+      echo -e "${YELLOW}Warning: Automatic initialization not available.${NC}"
+      echo -e "You should run 'rin init' to set up your workspace."
+      # Create marker anyway to avoid repeated messages
+      touch "$FIRST_RUN_MARKER"
+    fi
   fi
 }
 
@@ -95,6 +114,28 @@ Commands:
     verify        Verify version consistency
     update        Update all files to match version.properties
     
+  init      Initialize Rinna for the current user
+    --username    Override detected username
+    --project     Override detected project name
+    --force       Reinitialize even if already initialized
+    
+  auth      Authentication and authorization:
+    status        Show authentication status (default)
+    verify        Verify authentication
+    permissions   Show detailed permissions
+    
+  workspace Workspace management:
+    status        Show workspace status (default)
+    list          List available workspaces
+    create        Create a new workspace
+    switch <name> Switch to another workspace
+    
+  Work Item Management:
+    list          List work items with optional filtering
+    add           Add a new work item
+    view          View details of a work item
+    update        Update an existing work item
+    
   doc       Document generation:
     license <key> Set Docmosis license key
     config        Show document configuration
@@ -106,6 +147,10 @@ Commands:
     check         Check for missing dependencies without installing
     config        Create or edit configuration file
     test          Test the development environment
+    python        Set up Python virtual environment with dependencies
+    graphics      Run the interactive graphical installer
+      -f, --fast    Use fast mode (no animations, text-only output)
+      --quick       Use quicker animation speed
     
   config    Configuration management:
     view          View effective configuration
@@ -143,13 +188,16 @@ Options:
   -h, --help      Show this help message
 
 Examples:
+  rin init                        # Initialize Rinna for first use
+  rin list                        # List work items
+  rin add --title "Task" --type TASK # Add a work item
+  rin auth status                 # Show authentication status
+  rin workspace status            # Show workspace status
   rin build test                  # Run tests
   rin build all -v                # Clean, compile, test with verbose output
-  rin build test workflow         # Run workflow tests
   rin version patch               # Bump patch version
   rin setup                       # Check and install missing dependencies
   rin config view                 # View current configuration
-  rin config set go.api.port 8081 # Change API port
   rin diagrams                    # Generate architecture diagrams
 EOF
 }
@@ -218,8 +266,48 @@ case "$CATEGORY" in
       error "bin/rin-diagrams not found or not executable"
     fi
     ;;
-  add|list|view|update)
-    # Work item commands - handled by rin-cli
+  init)
+    # Initialize Rinna 
+    if [[ -x "$SCRIPT_DIR/rin-init" ]]; then
+      exec "$SCRIPT_DIR/rin-init" "$@"
+    else
+      error "bin/rin-init not found or not executable"
+    fi
+    ;;
+  auth)
+    # Authentication management
+    if [[ -x "$SCRIPT_DIR/rin-auth" ]]; then
+      exec "$SCRIPT_DIR/rin-auth" "$@"
+    else
+      error "bin/rin-auth not found or not executable"
+    fi
+    ;;
+  workspace)
+    # Workspace management
+    if [[ -x "$SCRIPT_DIR/rin-workspace" ]]; then
+      exec "$SCRIPT_DIR/rin-workspace" "$@"
+    else
+      error "bin/rin-workspace not found or not executable"
+    fi
+    ;;
+  list)
+    # List work items command
+    if [[ -x "$SCRIPT_DIR/rin-list" ]]; then
+      exec "$SCRIPT_DIR/rin-list" "$@"
+    else
+      error "bin/rin-list not found or not executable"
+    fi
+    ;;
+  add)
+    # Add work item command
+    if [[ -x "$SCRIPT_DIR/rin-add" ]]; then
+      exec "$SCRIPT_DIR/rin-add" "$@"
+    else
+      error "bin/rin-add not found or not executable"
+    fi
+    ;;
+  view|update)
+    # Other work item commands - handled by rin-cli
     if [[ -x "$SCRIPT_DIR/rin-cli" ]]; then
       exec "$SCRIPT_DIR/rin-cli" "$CATEGORY" "$@"
     else
@@ -237,6 +325,25 @@ case "$CATEGORY" in
   -h|--help)
     show_help
     exit 0
+    ;;
+  test)
+    # Check for CLI test option
+    if [[ $1 == "cli" ]]; then
+      shift
+      if [[ -x "$SCRIPT_DIR/run-new-tests.sh" ]]; then
+        exec "$SCRIPT_DIR/run-new-tests.sh" "$@"
+      else
+        error "bin/run-new-tests.sh not found or not executable"
+      fi
+    # Handle test command specially - use the new rin-test if available
+    elif [[ -x "$SCRIPT_DIR/rin-test" ]]; then
+      exec "$SCRIPT_DIR/rin-test" "$@"
+    elif [[ -x "$SCRIPT_DIR/rin-build" ]]; then
+      # Fall back to rin-build for legacy support
+      exec "$SCRIPT_DIR/rin-build" "test" "$@"
+    else
+      error "Neither bin/rin-test nor bin/rin-build found or not executable"
+    fi
     ;;
   *)
     # For backward compatibility, if the first arg isn't build/version,
