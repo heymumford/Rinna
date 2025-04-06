@@ -14,10 +14,10 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.junit.jupiter.api.Assertions;
-import org.rinna.domain.entity.Priority;
-import org.rinna.domain.entity.WorkItem;
-import org.rinna.domain.entity.WorkItemType;
-import org.rinna.domain.entity.WorkflowState;
+import org.rinna.domain.model.Priority;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.domain.model.WorkflowState;
 
 import java.io.BufferedReader;
 import java.io.IOException;

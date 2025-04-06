@@ -11,8 +11,8 @@ package org.rinna.bdd;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.rinna.domain.entity.Release;
-import org.rinna.domain.entity.WorkItem;
+import org.rinna.domain.model.Release;
+import org.rinna.domain.model.WorkItem;
 
 import java.util.UUID;
 

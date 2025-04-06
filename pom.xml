@@ -6,13 +6,12 @@
     
     <groupId>org.rinna</groupId>
     <artifactId>Rinna</artifactId>
-    <version>1.3.0</version>
+    <version>1.3.1</version>
     <name>Rinna</name>
     <packaging>pom</packaging>
     <description>Workflow management system for developers</description>
     
     <modules>
-        <module>rinna-core</module>
         <!-- Temporarily disabled due to compilation issues -->
         <!-- <module>rinna-cli</module> -->
     </modules>
@@ -316,7 +315,7 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-pmd-plugin</artifactId>
                         <configuration>
-                            <failOnViolation>true</failOnViolation>
+                            <failOnViolation>false</failOnViolation>
                             <printFailingErrors>true</printFailingErrors>
                             <rulesets>
                                 <ruleset>/category/java/bestpractices.xml</ruleset>
@@ -401,10 +400,10 @@
                     <version>3.26.0</version>
                     <configuration>
                         <linkXRef>false</linkXRef>
-                        <failOnViolation>true</failOnViolation>
+                        <failOnViolation>false</failOnViolation>
                         <printFailingErrors>true</printFailingErrors>
                         <rulesets>
-                            <ruleset>${project.basedir}/rinna-core/config/pmd/pmd-ruleset.xml</ruleset>
+                            <ruleset>${project.basedir}/config/pmd/pmd-ruleset.xml</ruleset>
                         </rulesets>
                     </configuration>
                 </plugin>

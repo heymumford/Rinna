@@ -8,8 +8,8 @@
 
 package org.rinna.adapter.service;
 
-import org.rinna.domain.entity.DocumentConfig;
-import org.rinna.domain.usecase.DocumentService;
+import org.rinna.domain.model.DocumentConfig;
+import org.rinna.domain.service.DocumentService;
 
 import java.util.logging.Logger;
 

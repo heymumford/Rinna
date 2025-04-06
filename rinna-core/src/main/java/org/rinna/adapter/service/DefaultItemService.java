@@ -8,12 +8,12 @@
 
 package org.rinna.adapter.service;
 
-import org.rinna.domain.entity.DefaultWorkItem;
-import org.rinna.domain.entity.WorkItem;
-import org.rinna.domain.entity.WorkItemCreateRequest;
-import org.rinna.domain.entity.WorkItemRecord;
-import org.rinna.domain.repository.ItemRepository;
-import org.rinna.domain.usecase.ItemService;
+import org.rinna.domain.model.DefaultWorkItem;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
+import org.rinna.domain.model.WorkItemRecord;
+import org.rinna.repository.ItemRepository;
+import org.rinna.domain.service.ItemService;
 
 import java.util.List;
 import java.util.Objects;

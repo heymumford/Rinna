@@ -10,16 +10,16 @@ package org.rinna.service.impl;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.rinna.adapter.persistence.InMemoryItemRepository;
-import org.rinna.adapter.service.DefaultWorkflowService;
-import org.rinna.domain.entity.DefaultWorkItem;
-import org.rinna.domain.entity.Priority;
-import org.rinna.domain.entity.WorkItem;
-import org.rinna.domain.entity.WorkItemCreateRequest;
-import org.rinna.domain.entity.WorkItemType;
-import org.rinna.domain.entity.WorkflowState;
-import org.rinna.domain.repository.ItemRepository;
-import org.rinna.domain.usecase.InvalidTransitionException;
+import org.rinna.persistence.InMemoryItemRepository;
+import org.rinna.service.DefaultWorkflowService;
+import org.rinna.domain.model.DefaultWorkItem;
+import org.rinna.domain.model.Priority;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.domain.model.WorkflowState;
+import org.rinna.repository.ItemRepository;
+import org.rinna.domain.service.InvalidTransitionException;
 
 import java.time.Instant;
 import java.util.List;

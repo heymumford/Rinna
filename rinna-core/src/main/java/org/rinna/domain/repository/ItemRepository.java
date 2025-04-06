@@ -8,8 +8,8 @@
 
 package org.rinna.domain.repository;
 
-import org.rinna.domain.entity.WorkItem;
-import org.rinna.domain.entity.WorkItemCreateRequest;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
 
 import java.util.List;
 import java.util.Optional;

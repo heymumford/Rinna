@@ -8,7 +8,7 @@
 
 package org.rinna.domain.repository;
 
-import org.rinna.domain.entity.WorkItemMetadata;
+import org.rinna.domain.model.WorkItemMetadata;
 
 import java.util.List;
 import java.util.Map;

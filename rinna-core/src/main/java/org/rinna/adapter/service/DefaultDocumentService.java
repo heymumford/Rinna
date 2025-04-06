@@ -15,11 +15,11 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
-import org.rinna.domain.entity.DocumentConfig;
-import org.rinna.domain.entity.Project;
-import org.rinna.domain.entity.Release;
-import org.rinna.domain.entity.WorkItem;
-import org.rinna.domain.usecase.DocumentService;
+import org.rinna.domain.model.DocumentConfig;
+import org.rinna.domain.model.Project;
+import org.rinna.domain.model.Release;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.service.DocumentService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -27,15 +27,15 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Default document service implementation that uses Apache POI and PDFBox.
  * This is a fallback service when Docmosis is not available.
  */
 public class DefaultDocumentService implements DocumentService {
-    private static final Logger LOGGER = Logger.getLogger(DefaultDocumentService.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultDocumentService.class);
     
     private final DocumentConfig config;
     
@@ -70,8 +70,8 @@ public class DefaultDocumentService implements DocumentService {
             
             generateDocument(content, format, output);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to generate work item document", e);
-            throw new RuntimeException("Document generation failed", e);
+            LOGGER.error("Failed to generate work item document", e);
+            throw new IllegalStateException("Document generation failed", e);
         }
     }
     
@@ -94,8 +94,8 @@ public class DefaultDocumentService implements DocumentService {
             
             generateDocument(content, format, output);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to generate project document", e);
-            throw new RuntimeException("Document generation failed", e);
+            LOGGER.error("Failed to generate project document", e);
+            throw new IllegalStateException("Document generation failed", e);
         }
     }
     
@@ -115,8 +115,8 @@ public class DefaultDocumentService implements DocumentService {
             
             generateDocument(content, format, output);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to generate release document", e);
-            throw new RuntimeException("Document generation failed", e);
+            LOGGER.error("Failed to generate release document", e);
+            throw new IllegalStateException("Document generation failed", e);
         }
     }
     
@@ -137,8 +137,8 @@ public class DefaultDocumentService implements DocumentService {
             
             generateDocument(content.toString(), format, output);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to generate work items document", e);
-            throw new RuntimeException("Document generation failed", e);
+            LOGGER.error("Failed to generate work items document", e);
+            throw new IllegalStateException("Document generation failed", e);
         }
     }
     
@@ -155,8 +155,8 @@ public class DefaultDocumentService implements DocumentService {
             
             generateDocument(content.toString(), format, output);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to generate custom document", e);
-            throw new RuntimeException("Document generation failed", e);
+            LOGGER.error("Failed to generate custom document", e);
+            throw new IllegalStateException("Document generation failed", e);
         }
     }
     
@@ -266,7 +266,7 @@ public class DefaultDocumentService implements DocumentService {
         boolean inParagraph = false;
         
         for (String line : lines) {
-            if (line.trim().isEmpty()) {
+            if (line.isBlank()) {
                 if (inParagraph) {
                     html.append("</p>\n");
                     inParagraph = false;

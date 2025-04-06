@@ -8,7 +8,7 @@
 
 package org.rinna.domain.repository;
 
-import org.rinna.domain.entity.Release;
+import org.rinna.domain.model.Release;
 
 import java.util.List;
 import java.util.Optional;

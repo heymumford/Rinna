@@ -10,10 +10,10 @@ package org.rinna;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.rinna.domain.entity.*;
-import org.rinna.domain.usecase.ItemService;
-import org.rinna.domain.usecase.ReleaseService;
-import org.rinna.domain.usecase.WorkflowService;
+import org.rinna.domain.*;
+import org.rinna.domain.service.ItemService;
+import org.rinna.domain.service.ReleaseService;
+import org.rinna.domain.service.WorkflowService;
 
 import java.util.ArrayList;
 import java.util.List;

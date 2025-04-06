@@ -8,12 +8,12 @@
 
 package org.rinna.adapter.service;
 
-import org.rinna.domain.entity.DefaultRelease;
-import org.rinna.domain.entity.Release;
-import org.rinna.domain.entity.WorkItem;
-import org.rinna.domain.repository.ReleaseRepository;
-import org.rinna.domain.usecase.ItemService;
-import org.rinna.domain.usecase.ReleaseService;
+import org.rinna.domain.model.DefaultRelease;
+import org.rinna.domain.model.Release;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.repository.ReleaseRepository;
+import org.rinna.domain.service.ItemService;
+import org.rinna.domain.service.ReleaseService;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -8,19 +8,20 @@
 
 package org.rinna.adapter.service;
 
-import org.rinna.domain.entity.DocumentConfig;
-import org.rinna.domain.entity.Project;
-import org.rinna.domain.entity.Release;
-import org.rinna.domain.entity.WorkItem;
-import org.rinna.domain.usecase.DocumentService;
+import org.rinna.domain.model.DocumentConfig;
+import org.rinna.domain.model.Project;
+import org.rinna.domain.model.Release;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.service.DocumentService;
 
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Document service implementation that uses Docmosis for document generation.
@@ -28,7 +29,7 @@ import java.util.logging.Logger;
  * and a valid license key is provided.
  */
 public class DocmosisDocumentService implements DocumentService {
-    private static final Logger LOGGER = Logger.getLogger(DocmosisDocumentService.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(DocmosisDocumentService.class);
     
     // Use lazy initialization pattern to avoid class loading errors if Docmosis isn't available
     private static class DocmosisHolder {
@@ -46,7 +47,7 @@ public class DocmosisDocumentService implements DocumentService {
                 available = true;
                 LOGGER.info("Docmosis library detected on classpath");
             } catch (ClassNotFoundException e) {
-                LOGGER.warning("Docmosis library not available: " + e.getMessage());
+                LOGGER.warn("Docmosis library not available: {}", e.getMessage());
                 available = false;
             }
             DOCMOSIS_AVAILABLE = available;
@@ -54,7 +55,7 @@ public class DocmosisDocumentService implements DocumentService {
     }
     
     private final DocumentConfig config;
-    private final Object systemManager; // Object instead of SystemManager to avoid direct dependency
+    private Object systemManager; // Object instead of SystemManager to avoid direct dependency
     private boolean initialized = false;
     
     /**
@@ -64,17 +65,35 @@ public class DocmosisDocumentService implements DocumentService {
      */
     public DocmosisDocumentService(DocumentConfig config) {
         this.config = config;
-        this.systemManager = initializeDocmosis();
+        // Defer initialization to avoid this-escape
+        this.systemManager = null;
+    }
+    
+    /**
+     * Lazily initializes Docmosis when first needed.
+     * 
+     * @return true if initialization was successful, false otherwise
+     */
+    private synchronized boolean lazyInit() {
+        if (systemManager == null) {
+            Object mgr = initializeDocmosis();
+            if (mgr != null) {
+                this.systemManager = mgr;
+                return true;
+            }
+            return false;
+        }
+        return systemManager != null;
     }
     
     private Object initializeDocmosis() {
-        if (!isAvailable()) {
-            LOGGER.warning("Docmosis is not available, initialization skipped");
+        if (!DocmosisHolder.DOCMOSIS_AVAILABLE) {
+            LOGGER.warn("Docmosis is not available, initialization skipped");
             return null;
         }
         
         if (!config.isDocmosisConfigured()) {
-            LOGGER.warning("Docmosis license key not configured, initialization skipped");
+            LOGGER.warn("Docmosis license key not configured, initialization skipped");
             return null;
         }
         
@@ -105,10 +124,10 @@ public class DocmosisDocumentService implements DocumentService {
                     templateStore, templatesPath.toAbsolutePath().toString());
             
             initialized = true;
-            LOGGER.info("Docmosis initialized successfully with templates from: " + templatesPath);
+            LOGGER.info("Docmosis initialized successfully with templates from: {}", templatesPath);
             return manager;
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to initialize Docmosis", e);
+            LOGGER.error("Failed to initialize Docmosis", e);
             return null;
         }
     }
@@ -139,7 +158,7 @@ public class DocmosisDocumentService implements DocumentService {
     
     @Override
     public void generateWorkItemDocument(WorkItem workItem, Format format, TemplateType templateType, OutputStream output) {
-        if (!isAvailable() || !initialized) {
+        if (!isAvailable() || (!initialized && !lazyInit())) {
             throw new IllegalStateException("Docmosis document service is not available");
         }
         
@@ -147,7 +166,7 @@ public class DocmosisDocumentService implements DocumentService {
             // Prepare data for the template
             Map<String, Object> data = new HashMap<>();
             data.put("workItem", workItem);
-            data.put("itemId", workItem.getId().toString());
+            data.put("itemId", workItem.getId());
             data.put("title", workItem.getTitle());
             data.put("description", workItem.getDescription());
             data.put("type", workItem.getType().name());
@@ -158,15 +177,21 @@ public class DocmosisDocumentService implements DocumentService {
             data.put("updatedAt", workItem.getUpdatedAt().toString());
             
             renderDocument(getTemplateName(templateType), data, format, output);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to generate work item document", e);
-            throw new RuntimeException("Document generation failed", e);
+        } catch (ReflectiveOperationException e) {
+            LOGGER.error("Failed to generate work item document: reflection error", e);
+            throw new IllegalStateException("Document generation failed due to reflection error", e);
+        } catch (SecurityException | IllegalArgumentException e) {
+            LOGGER.error("Failed to generate work item document: invalid arguments", e);
+            throw new IllegalStateException("Document generation failed due to invalid arguments", e);
+        } catch (NullPointerException e) {
+            LOGGER.error("Failed to generate work item document: null value encountered", e);
+            throw new IllegalStateException("Document generation failed due to null value", e);
         }
     }
     
     @Override
     public void generateProjectDocument(Project project, Format format, TemplateType templateType, OutputStream output) {
-        if (!isAvailable() || !initialized) {
+        if (!isAvailable() || (!initialized && !lazyInit())) {
             throw new IllegalStateException("Docmosis document service is not available");
         }
         
@@ -174,7 +199,7 @@ public class DocmosisDocumentService implements DocumentService {
             // Prepare data for the template
             Map<String, Object> data = new HashMap<>();
             data.put("project", project);
-            data.put("projectId", project.getId().toString());
+            data.put("projectId", project.getId());
             data.put("key", project.getKey());
             data.put("name", project.getName());
             data.put("description", project.getDescription());
@@ -183,15 +208,21 @@ public class DocmosisDocumentService implements DocumentService {
             data.put("active", project.isActive());
             
             renderDocument(getTemplateName(templateType), data, format, output);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to generate project document", e);
-            throw new RuntimeException("Document generation failed", e);
+        } catch (ReflectiveOperationException e) {
+            LOGGER.error("Failed to generate project document: reflection error", e);
+            throw new IllegalStateException("Document generation failed due to reflection error", e);
+        } catch (SecurityException | IllegalArgumentException e) {
+            LOGGER.error("Failed to generate project document: invalid arguments", e);
+            throw new IllegalStateException("Document generation failed due to invalid arguments", e);
+        } catch (NullPointerException e) {
+            LOGGER.error("Failed to generate project document: null value encountered", e);
+            throw new IllegalStateException("Document generation failed due to null value", e);
         }
     }
     
     @Override
     public void generateReleaseDocument(Release release, Format format, TemplateType templateType, OutputStream output) {
-        if (!isAvailable() || !initialized) {
+        if (!isAvailable() || (!initialized && !lazyInit())) {
             throw new IllegalStateException("Docmosis document service is not available");
         }
         
@@ -199,21 +230,27 @@ public class DocmosisDocumentService implements DocumentService {
             // Prepare data for the template
             Map<String, Object> data = new HashMap<>();
             data.put("release", release);
-            data.put("releaseId", release.getId().toString());
+            data.put("releaseId", release.getId());
             data.put("version", release.getVersion());
             data.put("description", release.getDescription());
             data.put("createdAt", release.getCreatedAt().toString());
             
             renderDocument(getTemplateName(templateType), data, format, output);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to generate release document", e);
-            throw new RuntimeException("Document generation failed", e);
+        } catch (ReflectiveOperationException e) {
+            LOGGER.error("Failed to generate release document: reflection error", e);
+            throw new IllegalStateException("Document generation failed due to reflection error", e);
+        } catch (SecurityException | IllegalArgumentException e) {
+            LOGGER.error("Failed to generate release document: invalid arguments", e);
+            throw new IllegalStateException("Document generation failed due to invalid arguments", e);
+        } catch (NullPointerException e) {
+            LOGGER.error("Failed to generate release document: null value encountered", e);
+            throw new IllegalStateException("Document generation failed due to null value", e);
         }
     }
     
     @Override
     public void generateWorkItemsDocument(List<WorkItem> workItems, Format format, TemplateType templateType, OutputStream output) {
-        if (!isAvailable() || !initialized) {
+        if (!isAvailable() || (!initialized && !lazyInit())) {
             throw new IllegalStateException("Docmosis document service is not available");
         }
         
@@ -224,23 +261,35 @@ public class DocmosisDocumentService implements DocumentService {
             data.put("itemCount", workItems.size());
             
             renderDocument(getTemplateName(templateType), data, format, output);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to generate work items document", e);
-            throw new RuntimeException("Document generation failed", e);
+        } catch (ReflectiveOperationException e) {
+            LOGGER.error("Failed to generate work items document: reflection error", e);
+            throw new IllegalStateException("Document generation failed due to reflection error", e);
+        } catch (SecurityException | IllegalArgumentException e) {
+            LOGGER.error("Failed to generate work items document: invalid arguments", e);
+            throw new IllegalStateException("Document generation failed due to invalid arguments", e);
+        } catch (NullPointerException e) {
+            LOGGER.error("Failed to generate work items document: null value encountered", e);
+            throw new IllegalStateException("Document generation failed due to null value", e);
         }
     }
     
     @Override
     public void generateCustomDocument(String templatePath, Map<String, Object> data, Format format, OutputStream output) {
-        if (!isAvailable() || !initialized) {
+        if (!isAvailable() || (!initialized && !lazyInit())) {
             throw new IllegalStateException("Docmosis document service is not available");
         }
         
         try {
             renderDocument(templatePath, data, format, output);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to generate custom document", e);
-            throw new RuntimeException("Document generation failed", e);
+        } catch (ReflectiveOperationException e) {
+            LOGGER.error("Failed to generate custom document: reflection error", e);
+            throw new IllegalStateException("Document generation failed due to reflection error", e);
+        } catch (SecurityException | IllegalArgumentException e) {
+            LOGGER.error("Failed to generate custom document: invalid arguments", e);
+            throw new IllegalStateException("Document generation failed due to invalid arguments", e);
+        } catch (NullPointerException e) {
+            LOGGER.error("Failed to generate custom document: null value encountered", e);
+            throw new IllegalStateException("Document generation failed due to null value", e);
         }
     }
     
@@ -248,7 +297,7 @@ public class DocmosisDocumentService implements DocumentService {
      * Renders a document using Docmosis.
      */
     private void renderDocument(String templateName, Map<String, Object> data, Format format, OutputStream output) 
-            throws Exception {
+            throws ReflectiveOperationException, SecurityException, IllegalArgumentException {
         // Use reflection to avoid direct dependency
         Class<?> rendererClass = Class.forName("com.docmosis.renderer.DocumentRenderer");
         Object renderer = Class.forName("com.docmosis.SystemManager")

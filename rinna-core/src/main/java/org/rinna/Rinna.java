@@ -10,11 +10,11 @@ package org.rinna;
 
 import org.rinna.adapter.service.ApiHealthServer;
 import org.rinna.config.RinnaConfig;
-import org.rinna.domain.repository.MetadataRepository;
-import org.rinna.domain.usecase.ItemService;
-import org.rinna.domain.usecase.QueueService;
-import org.rinna.domain.usecase.ReleaseService;
-import org.rinna.domain.usecase.WorkflowService;
+import org.rinna.repository.MetadataRepository;
+import org.rinna.domain.service.ItemService;
+import org.rinna.domain.service.QueueService;
+import org.rinna.domain.service.ReleaseService;
+import org.rinna.domain.service.WorkflowService;
 
 import java.io.IOException;
 
@@ -80,10 +80,10 @@ public class Rinna {
             // In a real application, services should be properly injected using a DI framework
             
             // Create in-memory repositories
-            var itemRepository = new org.rinna.adapter.persistence.InMemoryItemRepository();
-            var queueRepository = new org.rinna.adapter.persistence.InMemoryQueueRepository();
-            var releaseRepository = new org.rinna.adapter.persistence.InMemoryReleaseRepository();
-            var metadataRepository = new org.rinna.adapter.persistence.InMemoryMetadataRepository();
+            var itemRepository = new org.rinna.adapter.repository.InMemoryItemRepository();
+            var queueRepository = new org.rinna.adapter.repository.InMemoryQueueRepository();
+            var releaseRepository = new org.rinna.adapter.repository.InMemoryReleaseRepository();
+            var metadataRepository = new org.rinna.adapter.repository.InMemoryMetadataRepository();
             
             // Create services
             var itemService = new org.rinna.adapter.service.DefaultItemService(itemRepository);

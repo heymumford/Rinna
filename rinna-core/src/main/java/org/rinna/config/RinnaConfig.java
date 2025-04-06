@@ -8,7 +8,7 @@
 
 package org.rinna.config;
 
-import java.io.FileInputStream;
+// FileInputStream replaced with Files.newInputStream
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,8 +16,8 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Unified configuration for the Rinna system.
@@ -33,8 +33,8 @@ import java.util.logging.Logger;
  * <p>
  * Configuration is loaded lazily when first accessed and cached.
  */
-public class RinnaConfig {
-    private static final Logger LOGGER = Logger.getLogger(RinnaConfig.class.getName());
+public final class RinnaConfig {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RinnaConfig.class);
     
     private static final String ENV_VAR_PREFIX = "RINNA_";
     private static final String CONFIG_DIR_ENV = ENV_VAR_PREFIX + "PROJECT_CONFIG_DIR";
@@ -54,9 +54,11 @@ public class RinnaConfig {
      *
      * @return the configuration instance
      */
-    public static synchronized RinnaConfig getInstance() {
+    public static RinnaConfig getInstance() {
+        synchronized (RinnaConfig.class) {
         if (instance == null) {
             instance = new RinnaConfig();
+        }
         }
         return instance;
     }
@@ -120,7 +122,7 @@ public class RinnaConfig {
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            LOGGER.log(Level.WARNING, "Invalid integer value for key " + key + ": " + value);
+            LOGGER.warn("Invalid integer value for key {}: {}", key, value);
             return defaultValue;
         }
     }
@@ -157,7 +159,7 @@ public class RinnaConfig {
         try {
             return Long.parseLong(value);
         } catch (NumberFormatException e) {
-            LOGGER.log(Level.WARNING, "Invalid long value for key " + key + ": " + value);
+            LOGGER.warn("Invalid long value for key {}: {}", key, value);
             return defaultValue;
         }
     }
@@ -178,7 +180,7 @@ public class RinnaConfig {
         try {
             return Double.parseDouble(value);
         } catch (NumberFormatException e) {
-            LOGGER.log(Level.WARNING, "Invalid double value for key " + key + ": " + value);
+            LOGGER.warn("Invalid double value for key {}: {}", key, value);
             return defaultValue;
         }
     }
@@ -192,12 +194,7 @@ public class RinnaConfig {
     public boolean hasKey(String key) {
         // Check environment variables
         String envKey = toEnvVarName(key);
-        if (System.getenv(envKey) != null) {
-            return true;
-        }
-        
-        // Check properties
-        return properties.containsKey(key);
+        return System.getenv(envKey) != null || properties.containsKey(key);
     }
     
     /**
@@ -214,15 +211,15 @@ public class RinnaConfig {
         
         // Load from properties file if it exists
         if (Files.exists(javaConfigPath)) {
-            try (FileInputStream fis = new FileInputStream(javaConfigPath.toFile())) {
+            try (java.io.InputStream fis = Files.newInputStream(javaConfigPath)) {
                 properties.load(fis);
-                LOGGER.info("Loaded configuration from " + javaConfigPath);
+                LOGGER.info("Loaded configuration from {}", javaConfigPath);
             } catch (IOException e) {
-                LOGGER.log(Level.WARNING, "Failed to load configuration from " + javaConfigPath, e);
+                LOGGER.warn("Failed to load configuration from {}", javaConfigPath, e);
             }
         } else {
-            LOGGER.warning("Java configuration file not found: " + javaConfigPath);
-            LOGGER.warning("Create with: rin config generate");
+            LOGGER.warn("Java configuration file not found: {}", javaConfigPath);
+            LOGGER.warn("Create with: rin config generate");
         }
     }
     

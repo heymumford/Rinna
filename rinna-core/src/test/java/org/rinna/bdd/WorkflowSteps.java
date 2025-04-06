@@ -11,12 +11,12 @@ package org.rinna.bdd;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.rinna.domain.entity.Priority;
-import org.rinna.domain.entity.WorkItem;
-import org.rinna.domain.entity.WorkItemCreateRequest;
-import org.rinna.domain.entity.WorkItemType;
-import org.rinna.domain.entity.WorkflowState;
-import org.rinna.domain.usecase.InvalidTransitionException;
+import org.rinna.domain.model.Priority;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.domain.model.WorkflowState;
+import org.rinna.domain.service.InvalidTransitionException;
 
 import java.util.List;
 import java.util.Optional;
