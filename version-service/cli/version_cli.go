@@ -14,10 +14,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/heymumford/Rinna/version-service/adapters/bash"
-	"github.com/heymumford/Rinna/version-service/adapters/go"
-	"github.com/heymumford/Rinna/version-service/adapters/java"
-	"github.com/heymumford/Rinna/version-service/adapters/python"
+	bash_adapter "github.com/heymumford/Rinna/version-service/adapters/bash"
+	go_adapter "github.com/heymumford/Rinna/version-service/adapters/go"
+	java_adapter "github.com/heymumford/Rinna/version-service/adapters/java"
+	python_adapter "github.com/heymumford/Rinna/version-service/adapters/python"
 	"github.com/heymumford/Rinna/version-service/core"
 )
 
