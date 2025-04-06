@@ -15,11 +15,13 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/heymumford/rinna/api/internal/client"
 	"github.com/heymumford/rinna/api/internal/middleware"
 	"github.com/heymumford/rinna/api/internal/models"
+	"github.com/heymumford/rinna/api/pkg/logger"
 )
 
 // WebhookHandler handles webhook-related requests
@@ -48,9 +50,29 @@ func RegisterWebhookRoutes(router *mux.Router, javaClient *client.JavaClient, au
 
 // HandleGitHubWebhook handles GitHub webhook requests
 func (h *WebhookHandler) HandleGitHubWebhook(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+
+	// Add request ID for better tracking
+	requestID := r.Header.Get("X-Request-ID")
+	if requestID == "" {
+		requestID = fmt.Sprintf("webhook-%d", time.Now().UnixNano())
+	}
+
+	// Create a logger with context fields
+	log := logger.WithFields(map[string]interface{}{
+		"requestID": requestID,
+		"source":    "github",
+		"path":      r.URL.Path,
+	})
+
+	log.Info("Received GitHub webhook")
+
 	// Get the project key from the query parameter
 	projectKey := r.URL.Query().Get("project")
+	log = log.WithField("project", projectKey)
+	
 	if projectKey == "" {
+		log.Warn("Missing project key in webhook request")
 		http.Error(w, "Project key is required", http.StatusBadRequest)
 		return
 	}
@@ -58,6 +80,7 @@ func (h *WebhookHandler) HandleGitHubWebhook(w http.ResponseWriter, r *http.Requ
 	// Get the signature from the header
 	signature := r.Header.Get("X-Hub-Signature-256")
 	if !strings.HasPrefix(signature, "sha256=") {
+		log.Warn("Missing or invalid signature format in webhook request")
 		http.Error(w, "Missing or invalid signature", http.StatusUnauthorized)
 		return
 	}
@@ -65,7 +88,10 @@ func (h *WebhookHandler) HandleGitHubWebhook(w http.ResponseWriter, r *http.Requ
 
 	// Get the event type
 	eventType := r.Header.Get("X-GitHub-Event")
+	log = log.WithField("eventType", eventType)
+	
 	if eventType == "" {
+		log.Warn("Missing event type in webhook request")
 		http.Error(w, "Missing event type", http.StatusBadRequest)
 		return
 	}
@@ -73,15 +99,23 @@ func (h *WebhookHandler) HandleGitHubWebhook(w http.ResponseWriter, r *http.Requ
 	// Read the request body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		log.WithField("error", err).Error("Failed to read webhook request body")
 		http.Error(w, "Failed to read request body: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// Log payload size for debugging
+	log = log.WithField("payloadSize", len(body))
+	log.Debug("Validating webhook signature")
+
 	// Validate the signature with the auth service
 	if err := h.authService.ValidateWebhookSignature(r.Context(), projectKey, "github", signature, body); err != nil {
+		log.WithField("error", err).Warn("Invalid webhook signature")
 		http.Error(w, "Invalid webhook signature: "+err.Error(), http.StatusUnauthorized)
 		return
 	}
+
+	log.Debug("Webhook signature validated successfully")
 
 	// Parse the payload based on the event type
 	var response interface{}
@@ -106,12 +140,24 @@ func (h *WebhookHandler) HandleGitHubWebhook(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err != nil {
+		log.WithField("error", err).Error("Failed to handle webhook")
 		http.Error(w, "Failed to handle webhook: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// Calculate processing time
+	duration := time.Since(start)
+	
+	// Log the result
+	log.WithFields(map[string]interface{}{
+		"duration": duration.String(),
+		"status":   "success",
+	}).Info("Webhook processed successfully")
+	
 	// Return the response
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Request-ID", requestID)
+	w.Header().Set("X-Processing-Time", duration.String())
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -300,4 +346,3 @@ func (h *WebhookHandler) handleIssuesEvent(projectKey string, payload []byte) (i
 		"workItem": workItem,
 	}, nil
 }
-
