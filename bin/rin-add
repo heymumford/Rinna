@@ -3,6 +3,14 @@
 #
 # This command adds a new work item with required and optional attributes
 # and stores it in the Rinna repository.
+#
+# Copyright (c) 2025 Eric C. Mumford (@heymumford)
+# 
+# Developed with analytical assistance from AI tools.
+# All rights reserved.
+# 
+# This source code is licensed under the MIT License
+# found in the LICENSE file in the root directory of this source tree.
 
 set -e
 

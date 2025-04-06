@@ -6,9 +6,12 @@
 # PURPOSE: Command-line utility to simplify Rinna operations with a unified interface
 #
 # Copyright (c) 2025 Eric C. Mumford (@heymumford)
-# This file is subject to the terms and conditions defined in
-# the LICENSE file, which is part of this source code package.
-# (MIT License)
+# 
+# Developed with analytical assistance from AI tools.
+# All rights reserved.
+# 
+# This source code is licensed under the MIT License
+# found in the LICENSE file in the root directory of this source tree.
 #
 
 set -e

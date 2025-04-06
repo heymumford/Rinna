@@ -283,9 +283,20 @@ Rinna follows clean architecture principles with well-defined interfaces for ext
 - [Changelog](CHANGELOG.md)
 - [Folder Structure](FOLDERS.md)
 
-## License
+## License and Acknowledgments
 
-[MIT License](LICENSE)
+This project is licensed under the [MIT License](LICENSE) - see the 
+[LICENSE](LICENSE) file for details.
+
+### Development Tools
+
+This project was developed with analytical assistance from:
+- Claude 3.7 Sonnet LLM by Anthropic
+- Claude Code executable
+- Google Gemini Deep Research LLM
+
+These AI tools were used as paid analytical services to assist in development.
+All intellectual property rights remain with Eric C. Mumford (@heymumford).
 
 <div align="center">
 

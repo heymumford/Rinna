@@ -3,6 +3,14 @@
 #
 # This file contains shared functions used by multiple Rinna CLI commands.
 # It should be sourced by other scripts, not executed directly.
+#
+# Copyright (c) 2025 Eric C. Mumford (@heymumford)
+# 
+# Developed with analytical assistance from AI tools.
+# All rights reserved.
+# 
+# This source code is licensed under the MIT License
+# found in the LICENSE file in the root directory of this source tree.
 
 # Use set -e when running as a standalone script (not when sourced)
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

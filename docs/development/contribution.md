@@ -1,6 +1,24 @@
-<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford] -->
+<!-- 
+/**
+ * Copyright (c) 2025 Eric C. Mumford (@heymumford)
+ * 
+ * Developed with analytical assistance from AI tools.
+ * All rights reserved.
+ * 
+ * This source code is licensed under the MIT License
+ * found in the LICENSE file in the root directory of this source tree.
+ */
+-->
 
 # Contribution Guidelines
+
+## Intellectual Property
+
+By contributing to this project, you confirm that your contributions are your 
+own original work. If you use AI assistance tools in creating your contribution, 
+please disclose this in your pull request description. Use of such tools does not 
+affect your ownership of your contribution, but transparency helps maintain clear 
+provenance of the project's intellectual property.
 
 ## Getting Started
 
