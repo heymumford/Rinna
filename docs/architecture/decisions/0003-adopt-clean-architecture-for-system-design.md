@@ -58,6 +58,10 @@ The package structure will reflect this layered approach:
 
 We will enforce the dependency rule rigorously: source code dependencies must point only inward, with nothing in an inner circle knowing anything about an outer circle.
 
+![Clean Architecture Diagram](../../diagrams/rinna_clean_architecture_diagram.svg)
+
+*Figure: Visualization of the Clean Architecture layers and dependencies*
+
 ## Consequences
 
 Adopting Clean Architecture has the following consequences:

@@ -586,6 +586,73 @@ class C4DiagramGenerator:
             logger.error(f"Error uploading to Lucidchart: {e}")
             return False
     
+    def generate_clean_architecture_diagram(self) -> str:
+        """Generate a diagram showing the Clean Architecture layers.
+        
+        Returns:
+            Path to the generated diagram file
+        """
+        if not diagrams_available:
+            logger.error("Diagrams library not available. Cannot generate clean architecture diagram.")
+            return ""
+        
+        output_file = self.output_dir / f"rinna_clean_architecture_diagram.{self.output_format}"
+        
+        try:
+            from diagrams.onprem.monitoring import Grafana
+            from diagrams.custom import Custom
+            
+            with Diagram(
+                "Rinna Clean Architecture",
+                filename=str(output_file.with_suffix("")),
+                outformat=self.output_format,
+                show=False,
+                direction="TB",
+                curvestyle="ortho",
+            ):
+                with Cluster("Core Domain"):
+                    entity = Java("Entities")
+                
+                with Cluster("Use Cases"):
+                    usecases = Java("Use Cases")
+                    
+                with Cluster("Interface Adapters"):
+                    with Cluster("Input Adapters"):
+                        controllers = Java("Controllers")
+                        presenters = Java("Presenters")
+                    
+                    with Cluster("Output Adapters"):
+                        gateways = Java("Gateways")
+                        repositories = Java("Repositories")
+                
+                with Cluster("Frameworks & Drivers"):
+                    with Cluster("UI"):
+                        web = Spring("Web UI")
+                        cli = Python("CLI")
+                    
+                    with Cluster("External Interfaces"):
+                        db = SQLite3("Database")
+                        external_api = Go("External APIs")
+                    
+                # Dependency Rule: Arrows point inward
+                web >> controllers
+                cli >> controllers
+                controllers >> usecases
+                presenters >> usecases
+                usecases >> entity
+                repositories >> db
+                gateways >> external_api
+                usecases >> repositories
+                usecases >> gateways
+                presenters >> web
+                
+            logger.info(f"Generated clean architecture diagram: {output_file}")
+            return str(output_file)
+        
+        except Exception as e:
+            logger.error(f"Failed to generate clean architecture diagram: {e}")
+            return ""
+
     def generate_all(self, upload: bool = False) -> List[str]:
         """Generate all C4 diagrams.
         
@@ -625,6 +692,13 @@ class C4DiagramGenerator:
             if upload and code_file:
                 self.upload_to_lucidchart(code_file, "Rinna Code Diagram")
         
+        # Clean architecture diagram
+        clean_arch_file = self.generate_clean_architecture_diagram()
+        if clean_arch_file:
+            files.append(clean_arch_file)
+            if upload and clean_arch_file:
+                self.upload_to_lucidchart(clean_arch_file, "Rinna Clean Architecture Diagram")
+        
         return files
 
 
@@ -633,7 +707,7 @@ def main():
     parser = argparse.ArgumentParser(description="Generate C4 model diagrams for Rinna")
     parser.add_argument(
         "--type", 
-        choices=["context", "container", "component", "code", "all"],
+        choices=["context", "container", "component", "code", "clean", "all"],
         default="all",
         help="Type of C4 diagram to generate (default: all)"
     )
@@ -681,6 +755,11 @@ def main():
         file = generator.generate_code_diagram()
         if args.upload and file:
             generator.upload_to_lucidchart(file, "Rinna Code Diagram")
+    
+    elif args.type == "clean":
+        file = generator.generate_clean_architecture_diagram()
+        if args.upload and file:
+            generator.upload_to_lucidchart(file, "Rinna Clean Architecture Diagram")
     
     else:  # "all"
         generator.generate_all(upload=args.upload)

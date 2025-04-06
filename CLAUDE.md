@@ -69,6 +69,7 @@ python -m unittest bin/test_c4_diagrams.py  # Run C4 diagram tests
 ./bin/generate-diagrams.sh --type container # Generate container diagram only
 ./bin/generate-diagrams.sh --type component # Generate component diagram only
 ./bin/generate-diagrams.sh --type code     # Generate code diagram only
+./bin/generate-diagrams.sh --type clean    # Generate clean architecture diagram
 ./bin/generate-diagrams.sh --format svg    # Generate in SVG format (default)
 ./bin/generate-diagrams.sh --format png    # Generate in PNG format
 ./bin/generate-diagrams.sh --async         # Generate diagrams asynchronously

@@ -53,12 +53,18 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --help)
-      echo "Usage: ./bin/generate-diagrams.sh [--async] [--format png|svg|pdf] [--type context|container|component|code|all] [--output-dir path] [--clean]"
+      echo "Usage: ./bin/generate-diagrams.sh [--async] [--format png|svg|pdf] [--type context|container|component|code|clean|all] [--output-dir path] [--clean]"
       echo ""
       echo "Options:"
       echo "  --async      Generate diagrams asynchronously (default: false)"
       echo "  --format     Output format for diagrams (default: svg)"
-      echo "  --type       Type of diagrams to generate (default: all)"
+      echo "  --type       Type of diagrams to generate:"
+      echo "               - context:   System context diagram"
+      echo "               - container: Container diagram showing major components"
+      echo "               - component: Component diagram showing system structure"
+      echo "               - code:      Code diagram showing key classes"
+      echo "               - clean:     Clean Architecture diagram showing layers"
+      echo "               - all:       Generate all diagram types (default)"
       echo "  --output-dir Output directory for diagrams (default: docs/diagrams)"
       echo "  --clean      Clean existing diagrams before generating new ones"
       echo "  --help       Show this help message"
