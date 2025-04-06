@@ -28,10 +28,16 @@ jobs:
           cache: maven
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.22'
           check-latest: true
+          
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
 
       - name: Cache Maven packages
         uses: actions/cache@v3
@@ -48,12 +54,33 @@ jobs:
             ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: ${{ runner.os }}-go-
+      
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements-dev.txt') }}
+          restore-keys: ${{ runner.os }}-pip-
 
-      - name: Install Maven
+      - name: Install dependencies
         run: |
-          apt-get update
-          apt-get install -y maven
-        shell: bash
+          # Install Maven
+          sudo apt-get update
+          sudo apt-get install -y maven
+          
+          # Install Python dependencies
+          if [ -f "config/python/requirements-dev.txt" ]; then
+            pip install -r config/python/requirements-dev.txt
+          fi
+          if [ -f "python/setup.py" ]; then
+            pip install -e python/
+          fi
+
+      - name: Make scripts executable
+        run: |
+          chmod +x bin/rinna-tests.sh
+          chmod +x bin/python-quality 2>/dev/null || true
+          chmod +x api/build.sh 2>/dev/null || true
 
       - name: Compile Java code
         run: cd rinna-core && mvn -B -DskipTests compile
@@ -63,3 +90,19 @@ jobs:
 
       - name: Basic Go test
         run: cd api && go test ./test/simple -v
+        
+      - name: Basic Python quality check
+        run: |
+          if [ -f "bin/python-quality" ]; then
+            ./bin/python-quality lint
+          else
+            echo "Python quality script not found, skipping..."
+          fi
+          
+      - name: Basic Python tests
+        run: |
+          if [ -d "python/tests" ]; then
+            python -m pytest python/tests/test_config_manager.py -v
+          else
+            echo "Python tests not found, skipping..."
+          fi

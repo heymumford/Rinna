@@ -25,6 +25,7 @@ echo "Environment Information:"
 echo "======================="
 echo "Using Java: $(java -version 2>&1 | head -1)"
 echo "Using Go: $(go version 2>&1)"
+echo "Using Python: $(python --version 2>&1)"
 echo "Working directory: $(pwd)"
 echo "======================="
 
@@ -71,6 +72,41 @@ if [ "$TEST_SCOPE" = "minimal" ]; then
 else
   echo "Running all Go tests..."
   go test -v ./...
+fi
+
+cd $PROJECT_ROOT
+
+# Run Python quality checks and tests
+echo "Running Python quality checks and tests..."
+# First run quality checks
+if [ -f "./bin/python-quality" ]; then
+  if [ "$TEST_SCOPE" = "minimal" ]; then
+    # Run only linting in minimal mode
+    ./bin/python-quality lint
+  else
+    # Run all checks in full mode
+    ./bin/python-quality all
+  fi
+else
+  echo "Python quality script not found, skipping quality checks..."
+fi
+
+# Then run Python unit tests
+if [ -d "./python" ]; then
+  echo "Running Python tests..."
+  if [ "$TEST_SCOPE" = "minimal" ]; then
+    # Run minimal Python tests in CI
+    python -m pytest python/tests/test_config_manager.py -v
+  else
+    # Run all Python tests
+    python -m pytest python/tests -v
+    # Also run any additional test files
+    if [ -f "./bin/test_c4_diagrams.py" ]; then
+      python -m unittest bin/test_c4_diagrams.py
+    fi
+  fi
+else
+  echo "Python directory not found, skipping Python tests..."
 fi
 
 echo "All tests completed successfully!"
