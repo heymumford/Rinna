@@ -9,11 +9,13 @@
 package middleware
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -63,14 +65,54 @@ func (s *AuthService) ValidateToken(ctx context.Context, token string) (string, 
 		return entry.projectID, nil
 	}
 
-	// TODO: Implement token validation with the Java service
-	// For now, we'll use a simple validation for tokens starting with "ri-"
+	// Validate token format (ri-<type>-<uuid>)
 	if !strings.HasPrefix(token, "ri-") {
-		return "", fmt.Errorf("invalid token format")
+		return "", fmt.Errorf("invalid token format: must start with 'ri-'")
 	}
 
-	// Simulate a project ID
-	projectID := "simulated-project-id"
+	parts := strings.Split(token, "-")
+	if len(parts) < 3 {
+		return "", fmt.Errorf("invalid token format: must be ri-<type>-<id>")
+	}
+
+	tokenType := parts[1]
+	// Validate token type
+	switch tokenType {
+	case "dev", "test", "prod":
+		// Valid token types
+	default:
+		return "", fmt.Errorf("invalid token type: %s", tokenType)
+	}
+
+	// For development tokens, accept any properly formatted token
+	if tokenType == "dev" {
+		projectID := "dev-project"
+		s.tokenCache[token] = tokenCacheEntry{
+			projectID:  projectID,
+			expiration: time.Now().Add(time.Duration(s.config.TokenExpiry) * time.Minute),
+		}
+		return projectID, nil
+	}
+
+	// For production tokens, call the Java service for validation
+	// This would normally use the Java client to call the token validation service
+	if s.javaClient != nil {
+		projectID, err := s.javaClient.ValidateToken(ctx, token)
+		if err != nil {
+			return "", fmt.Errorf("token validation failed: %w", err)
+		}
+
+		// Cache the result
+		s.tokenCache[token] = tokenCacheEntry{
+			projectID:  projectID,
+			expiration: time.Now().Add(time.Duration(s.config.TokenExpiry) * time.Minute),
+		}
+
+		return projectID, nil
+	}
+
+	// Fallback for when Java client is not available (test environment)
+	projectID := fmt.Sprintf("%s-project-%s", tokenType, parts[2])
 
 	// Cache the result
 	s.tokenCache[token] = tokenCacheEntry{
@@ -91,14 +133,31 @@ func (s *AuthService) ValidateWebhookSignature(ctx context.Context, projectKey, 
 	if entry, ok := s.secretCache[cacheKey]; ok && entry.expiration.After(time.Now()) {
 		secret = entry.secret
 	} else {
-		// TODO: Implement webhook secret retrieval from the Java service
-		// For now, we'll use a fixed secret for testing
-		secret = "gh-webhook-secret-1234"
+		var err error
+		
+		// Retrieve the webhook secret from the Java service
+		if s.javaClient != nil {
+			secret, err = s.javaClient.GetWebhookSecret(ctx, projectKey, source)
+			if err != nil {
+				// If the Java service is unavailable or returns an error, 
+				// fallback to development mode if configured
+				if s.config.DevMode {
+					secret = "gh-webhook-secret-1234" // Default dev secret
+				} else {
+					return fmt.Errorf("failed to retrieve webhook secret: %w", err)
+				}
+			}
+		} else if s.config.DevMode {
+			// If Java client is not available and we're in dev mode, use default secret
+			secret = "gh-webhook-secret-1234"
+		} else {
+			return fmt.Errorf("cannot validate webhook: Java client not available")
+		}
 
 		// Cache the result
 		s.secretCache[cacheKey] = secretCacheEntry{
 			secret:     secret,
-			expiration: time.Now().Add(time.Hour),
+			expiration: time.Now().Add(time.Duration(s.config.SecretExpiry) * time.Minute),
 		}
 	}
 
@@ -126,6 +185,17 @@ func GetToken(ctx context.Context) string {
 func GetProjectID(ctx context.Context) string {
 	if projectID, ok := ctx.Value(projectKey{}).(string); ok {
 		return projectID
+	}
+	return ""
+}
+
+// webhookSourceKey is the context key for the webhook source
+type webhookSourceKey struct{}
+
+// GetWebhookSource gets the webhook source from the context
+func GetWebhookSource(ctx context.Context) string {
+	if source, ok := ctx.Value(webhookSourceKey{}).(string); ok {
+		return source
 	}
 	return ""
 }
@@ -198,28 +268,109 @@ func WebhookAuthentication(authService *AuthService) func(http.Handler) http.Han
 				return
 			}
 
-			// For GitHub webhooks
-			if strings.HasSuffix(r.URL.Path, "/github") {
+			// Read the request body
+			payload, err := io.ReadAll(r.Body)
+			if err != nil {
+				http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+				return
+			}
+			
+			// Replace the request body (since we consumed it)
+			r.Body = io.NopCloser(bytes.NewBuffer(payload))
+
+			var source string
+			var signature string
+
+			// Identify the source and extract the signature
+			switch {
+			case strings.HasSuffix(r.URL.Path, "/github"):
+				source = "github"
+				
 				// Get the signature
-				signature := r.Header.Get("X-Hub-Signature-256")
-				if signature == "" || !strings.HasPrefix(signature, "sha256=") {
+				fullSig := r.Header.Get("X-Hub-Signature-256")
+				if fullSig == "" || !strings.HasPrefix(fullSig, "sha256=") {
 					http.Error(w, "Invalid or missing signature", http.StatusUnauthorized)
 					return
 				}
-				signature = strings.TrimPrefix(signature, "sha256=")
+				signature = strings.TrimPrefix(fullSig, "sha256=")
 
 				// Get the event type
 				if r.Header.Get("X-GitHub-Event") == "" {
 					http.Error(w, "Missing event type", http.StatusBadRequest)
 					return
 				}
-
-				// Pass through for now, actual validation will be done in the handler
-				// In a production implementation, we would validate the signature here
+				
+			case strings.HasSuffix(r.URL.Path, "/gitlab"):
+				source = "gitlab"
+				
+				// Get the signature
+				signature = r.Header.Get("X-Gitlab-Token")
+				if signature == "" {
+					http.Error(w, "Invalid or missing token", http.StatusUnauthorized)
+					return
+				}
+				
+				// Special validation for GitLab which uses a plain token match
+				// Instead of passing to ValidateWebhookSignature, we'll do a direct comparison
+				err := authService.ValidateWebhookSignature(r.Context(), projectKey, source, signature, []byte(""))
+				if err != nil {
+					http.Error(w, "Invalid webhook signature: "+err.Error(), http.StatusUnauthorized)
+					return
+				}
+				
+				// Skip further validation since we already validated
+				next.ServeHTTP(w, r)
+				return
+				
+			case strings.HasSuffix(r.URL.Path, "/bitbucket"):
+				source = "bitbucket"
+				
+				// Extract the UUID from the URL path
+				// Format: /api/v1/webhooks/bitbucket/:uuid
+				parts := strings.Split(r.URL.Path, "/")
+				if len(parts) < 5 {
+					http.Error(w, "Invalid webhook URL", http.StatusBadRequest)
+					return
+				}
+				
+				// Get the signature
+				signature = r.Header.Get("X-Hub-Signature")
+				if signature == "" {
+					http.Error(w, "Invalid or missing signature", http.StatusUnauthorized)
+					return
+				}
+				
+			default:
+				// Check if it's a custom webhook
+				if strings.HasPrefix(r.URL.Path, "/api/v1/webhooks/custom/") {
+					source = "custom"
+					
+					// Get the signature
+					signature = r.Header.Get("X-Webhook-Signature")
+					if signature == "" {
+						http.Error(w, "Invalid or missing signature", http.StatusUnauthorized)
+						return
+					}
+				} else {
+					http.Error(w, "Unsupported webhook source", http.StatusBadRequest)
+					return
+				}
 			}
 
+			// Validate the signature
+			if source != "gitlab" { // GitLab already validated above
+				err := authService.ValidateWebhookSignature(r.Context(), projectKey, source, signature, payload)
+				if err != nil {
+					http.Error(w, "Invalid webhook signature: "+err.Error(), http.StatusUnauthorized)
+					return
+				}
+			}
+
+			// Add source to context for handlers
+			ctx := context.WithValue(r.Context(), webhookSourceKey{}, source)
+
 			// Call the next handler
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }

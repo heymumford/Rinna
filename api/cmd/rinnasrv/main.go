@@ -12,7 +12,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -25,6 +24,7 @@ import (
 	"github.com/heymumford/rinna/api/internal/middleware"
 	"github.com/heymumford/rinna/api/pkg/config"
 	"github.com/heymumford/rinna/api/pkg/health"
+	"github.com/heymumford/rinna/api/pkg/logger"
 )
 
 // JavaHealthChecker implements the health.DependencyChecker interface for Java service
@@ -39,10 +39,10 @@ func (c *JavaHealthChecker) CheckHealth() health.ServiceStatus {
 	defer cancel()
 	
 	// Ping the Java service
-	log.Println("Checking Java service health...")
+	logger.Info("Checking Java service health...")
 	err := c.client.Ping(ctx)
 	if err != nil {
-		log.Printf("Java service health check failed: %v", err)
+		logger.Error("Java service health check failed", logger.Field("error", err))
 		return health.ServiceStatus{
 			Status:    "error",
 			Message:   err.Error(),
@@ -50,7 +50,7 @@ func (c *JavaHealthChecker) CheckHealth() health.ServiceStatus {
 		}
 	}
 	
-	log.Println("Java service health check succeeded")
+	logger.Info("Java service health check succeeded")
 	return health.ServiceStatus{
 		Status:    "ok",
 		Timestamp: time.Now().Format(time.RFC3339),
@@ -64,10 +64,34 @@ func main() {
 	serverHost := flag.String("host", "", "Server host (overrides config)")
 	flag.Parse()
 
+	// Configure the logger
+	logLevel := logger.InfoLevel
+	if os.Getenv("RINNA_LOG_LEVEL") == "DEBUG" {
+		logLevel = logger.DebugLevel
+	}
+	
+	// Setup logging to file and stdout
+	logDir := os.Getenv("RINNA_LOG_DIR")
+	if logDir == "" {
+		homeDir, _ := os.UserHomeDir()
+		logDir = homeDir + "/.rinna/logs"
+	}
+	
+	// Ensure log directory exists
+	os.MkdirAll(logDir, 0755)
+	
+	logger.Configure(logger.Config{
+		Level:      logLevel,
+		TimeFormat: time.RFC3339,
+		LogFile:    logDir + "/rinna-api.log",
+		ShowCaller: true,
+	})
+	
 	// Load configuration
-	cfg, err := config.Load(*configPath)
+	logger.Debug("Loading configuration", logger.Field("path", *configPath))
+	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
+		logger.Fatal("Failed to load configuration", logger.Field("error", err))
 	}
 
 	// Override config with command line flags if provided
@@ -104,8 +128,8 @@ func main() {
 
 	// Register routes
 	handlers.RegisterWorkItemRoutes(api, javaClient)
-	handlers.RegisterReleaseRoutes(api)
-	handlers.RegisterProjectRoutes(api)
+	handlers.RegisterReleaseRoutes(api, javaClient)
+	handlers.RegisterProjectRoutes(api, javaClient)
 	handlers.RegisterWebhookRoutes(api, javaClient)
 	
 	// Create health handler with Java client checker
@@ -127,9 +151,13 @@ func main() {
 
 	// Start server in the background
 	go func() {
-		log.Printf("Starting Rinna API server on %s", serverAddr)
+		logger.WithFields(map[string]interface{}{
+			"address": serverAddr,
+			"version": health.Version,
+		}).Info("Starting Rinna API server")
+		
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to start server: %v", err)
+			logger.Fatal("Failed to start server", logger.Field("error", err))
 		}
 	}()
 
@@ -144,9 +172,12 @@ func main() {
 	defer cancel()
 
 	// Shut down server gracefully
-	log.Println("Shutting down server...")
+	logger.Info("Shutting down server...")
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Server shutdown failed: %v", err)
+		logger.Fatal("Server shutdown failed", logger.Field("error", err))
 	}
-	log.Println("Server stopped gracefully")
+	logger.Info("Server stopped gracefully")
+	
+	// Close the logger to flush any buffered logs
+	logger.Close()
 }

@@ -20,9 +20,31 @@ import (
 
 // RinnaConfig represents the full configuration for the Rinna API server.
 type RinnaConfig struct {
-	Project  ProjectConfig  `mapstructure:"project"`
-	Security SecurityConfig `mapstructure:"security"`
-	Go       GoConfig       `mapstructure:"go"`
+	Project  ProjectConfig     `mapstructure:"project"`
+	Security SecurityConfig    `mapstructure:"security"`
+	Auth     AuthConfig        `mapstructure:"auth"`
+	Go       GoConfig          `mapstructure:"go"`
+	Server   ServerConfig      `mapstructure:"server"`
+	Java     JavaServiceConfig `mapstructure:"java"`
+}
+
+// AuthConfig contains authentication-related configuration.
+type AuthConfig struct {
+	TokenExpiry         int      `mapstructure:"token_expiry_minutes"`
+	SecretExpiry        int      `mapstructure:"secret_expiry_minutes"`
+	WebhookSecretExpiry int      `mapstructure:"webhook_secret_expiry_minutes"`
+	AllowedSources      []string `mapstructure:"allowed_sources"`
+	AllowedOrigins      []string `mapstructure:"allowed_origins"`
+	DevMode             bool     `mapstructure:"dev_mode"`
+}
+
+// ServerConfig contains the API server configuration.
+type ServerConfig struct {
+	Host           string `mapstructure:"host"`
+	Port           int    `mapstructure:"port"`
+	ReadTimeout    int    `mapstructure:"read_timeout"`
+	WriteTimeout   int    `mapstructure:"write_timeout"`
+	ShutdownTimeout int   `mapstructure:"shutdown_timeout"`
 }
 
 // ProjectConfig contains general project configuration.
@@ -202,6 +224,53 @@ func setDefaultValues(cfg *RinnaConfig) {
 	
 	if cfg.Security.WebhookTokenExpirationDays == 0 {
 		cfg.Security.WebhookTokenExpirationDays = 365
+	}
+	
+	// Auth defaults
+	if cfg.Auth.TokenExpiry == 0 {
+		cfg.Auth.TokenExpiry = 60 // 60 minutes
+	}
+	
+	if cfg.Auth.SecretExpiry == 0 {
+		cfg.Auth.SecretExpiry = 60 // 60 minutes
+	}
+	
+	if cfg.Auth.WebhookSecretExpiry == 0 {
+		cfg.Auth.WebhookSecretExpiry = 1440 // 24 hours
+	}
+	
+	if len(cfg.Auth.AllowedSources) == 0 {
+		cfg.Auth.AllowedSources = []string{"github", "gitlab", "bitbucket"}
+	}
+	
+	if len(cfg.Auth.AllowedOrigins) == 0 {
+		cfg.Auth.AllowedOrigins = []string{"*"}
+	}
+	
+	// Set DevMode based on environment
+	if cfg.Project.Environment == "development" {
+		cfg.Auth.DevMode = true
+	}
+	
+	// Server defaults
+	if cfg.Server.Host == "" {
+		cfg.Server.Host = "0.0.0.0"
+	}
+	
+	if cfg.Server.Port == 0 {
+		cfg.Server.Port = 8080
+	}
+	
+	if cfg.Server.ReadTimeout == 0 {
+		cfg.Server.ReadTimeout = 30
+	}
+	
+	if cfg.Server.WriteTimeout == 0 {
+		cfg.Server.WriteTimeout = 30
+	}
+	
+	if cfg.Server.ShutdownTimeout == 0 {
+		cfg.Server.ShutdownTimeout = 10
 	}
 	
 	// API defaults

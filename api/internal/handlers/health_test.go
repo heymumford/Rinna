@@ -19,6 +19,20 @@ import (
 
 // TestHealthCheck tests the health check handler
 func TestHealthCheck(t *testing.T) {
+	// Save the original function and restore it at the end
+	originalCheckJavaService := CheckJavaServiceFunc
+	defer func() {
+		CheckJavaServiceFunc = originalCheckJavaService
+	}()
+	
+	// Mock the Java service check
+	CheckJavaServiceFunc = func() ServiceStatus {
+		return ServiceStatus{
+			Status:    "ok",
+			Timestamp: "2025-04-06T12:00:00Z",
+		}
+	}
+	
 	// Create a request to pass to our handler
 	req, err := http.NewRequest("GET", "/health", nil)
 	if err != nil {
@@ -117,6 +131,20 @@ func TestLivenessCheck(t *testing.T) {
 
 // TestReadinessCheck tests the readiness check handler
 func TestReadinessCheck(t *testing.T) {
+	// Save the original function and restore it at the end
+	originalCheckJavaService := CheckJavaServiceFunc
+	defer func() {
+		CheckJavaServiceFunc = originalCheckJavaService
+	}()
+	
+	// Mock the Java service check
+	CheckJavaServiceFunc = func() ServiceStatus {
+		return ServiceStatus{
+			Status:    "ok",
+			Timestamp: "2025-04-06T12:00:00Z",
+		}
+	}
+	
 	// Create a request to pass to our handler
 	req, err := http.NewRequest("GET", "/health/ready", nil)
 	if err != nil {
