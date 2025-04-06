@@ -76,13 +76,27 @@ public class Rinna {
      */
     public static synchronized Rinna initialize() {
         if (instance == null) {
-            RinnaConfig config = new RinnaConfig();
+            // This is a simplified initialization for demonstration purposes
+            // In a real application, services should be properly injected using a DI framework
+            
+            // Create in-memory repositories
+            var itemRepository = new org.rinna.adapter.persistence.InMemoryItemRepository();
+            var queueRepository = new org.rinna.adapter.persistence.InMemoryQueueRepository();
+            var releaseRepository = new org.rinna.adapter.persistence.InMemoryReleaseRepository();
+            var metadataRepository = new org.rinna.adapter.persistence.InMemoryMetadataRepository();
+            
+            // Create services
+            var itemService = new org.rinna.adapter.service.DefaultItemService(itemRepository);
+            var releaseService = new org.rinna.adapter.service.DefaultReleaseService(releaseRepository, itemService);
+            var queueService = new org.rinna.adapter.service.DefaultQueueService(queueRepository, itemService, metadataRepository);
+            var workflowService = new org.rinna.adapter.service.DefaultWorkflowService(itemRepository);
+            
             instance = new Rinna(
-                config.getItemService(), 
-                config.getWorkflowService(), 
-                config.getReleaseService(),
-                config.getQueueService(),
-                config.getMetadataRepository()
+                itemService, 
+                workflowService, 
+                releaseService,
+                queueService,
+                metadataRepository
             );
         }
         return instance;
