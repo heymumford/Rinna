@@ -127,6 +127,7 @@ Test Categories:
   tag:<name>      Run tests with specific tag
 
 Options:
+  --version       Show version information
   -v, --verbose   Show detailed output
   -t, --terse     Show minimal output (default)
   -e, --errors    Show only errors
@@ -199,6 +200,14 @@ case "$CATEGORY" in
       exec "$RINNA_DIR/bin/rin-diagrams" "$@"
     else
       error "bin/rin-diagrams not found or not executable"
+    fi
+    ;;
+  --version)
+    # Handle version flag by using the version command
+    if [[ -x "$RINNA_DIR/bin/rin-version" ]]; then
+      exec "$RINNA_DIR/bin/rin-version" "current"
+    else
+      error "bin/rin-version not found or not executable"
     fi
     ;;
   -h|--help)
