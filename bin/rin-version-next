@@ -17,6 +17,11 @@ RINNA_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 VERSION_SERVICE_DIR="$RINNA_DIR/version-service"
 VERSION_CLI="$VERSION_SERVICE_DIR/bin/version-cli"
 
+# Ensure the version_service directory exists
+if [ ! -d "$VERSION_SERVICE_DIR" ]; then
+  error "Version service directory not found: $VERSION_SERVICE_DIR"
+fi
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
