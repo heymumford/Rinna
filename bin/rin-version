@@ -54,6 +54,46 @@ increment_version() {
   echo "${parts[0]}.${parts[1]}.${parts[2]}"
 }
 
+# Determine if a version should have a GitHub release
+# Based on: major/minor versions always get releases,
+# patch versions only get releases for significant changes or if marked as RELEASE
+should_create_github_release() {
+  local version="$1" release_type="$2"
+  IFS='.' read -r major minor patch <<< "$version"
+  
+  # Always create releases for major and minor versions
+  if [[ "$patch" == "0" ]]; then
+    return 0 # true
+  fi
+  
+  # Create releases for explicitly marked RELEASE versions
+  if [[ "$release_type" == "RELEASE" ]]; then
+    return 0 # true
+  fi
+  
+  # Check for significant patch (patches with PR information)
+  local significant_changes=false
+  if git tag -l "v${version}" &> /dev/null; then
+    # Tag exists, check commit message
+    local commit_msg=$(git tag -l --format='%(contents)' "v${version}")
+    if [[ -n "$commit_msg" && "$commit_msg" != *"minor fix"* && "$commit_msg" != *"typo"* ]]; then
+      # If commit message is substantial, consider it significant
+      significant_changes=true
+    fi
+  fi
+  
+  # Check last minor version without a patch
+  local base_version="${major}.${minor}.0"
+  
+  # If this patch has significant changes or is explicitly marked
+  if $significant_changes; then
+    return 0 # true
+  fi
+  
+  # Default to not creating a release for regular patches
+  return 1 # false
+}
+
 update_version_properties() {
   local new_version="$1"
   sed -i "s/^version=.*/version=$new_version/" "$VERSION_FILE"
@@ -285,6 +325,13 @@ cmd_current() {
     echo -e "  GitHub release: ${YELLOW}v${current_version}${NC} does not exist"
   fi
   
+  # Show release eligibility
+  if should_create_github_release "$current_version" "$release_type"; then
+    echo -e "  GitHub release: ${BLUE}Eligible for GitHub release${NC}"
+  else
+    echo -e "  GitHub release: ${YELLOW}Not eligible for GitHub release${NC} (minor patch or SNAPSHOT)"
+  fi
+  
   verify_consistency
 }
 
@@ -389,7 +436,7 @@ cmd_set() {
 }
 
 cmd_release() {
-  local current_version=$(get_version) message="$1"
+  local current_version=$(get_version) message="$1" force_github="$2"
   
   verify_consistency || print_error "Cannot create release due to version inconsistencies"
   
@@ -411,14 +458,53 @@ cmd_release() {
     echo -e "${YELLOW}Git tag v${current_version} already exists${NC}"
   fi
   
-  # Create GitHub release if gh is available
-  if command -v gh &> /dev/null; then
-    if gh release create "v${current_version}" -t "Rinna ${current_version}" -n "$message"; then
+  # Determine if this version should have a GitHub release
+  local create_gh_release="$force_github"
+  if [[ "$create_gh_release" != "true" ]]; then
+    if should_create_github_release "$current_version" "RELEASE"; then
+      create_gh_release="true"
+      print_header "Version ${current_version} qualifies for a GitHub release"
+    else
+      print_warning "Version ${current_version} does not qualify for automatic GitHub release"
+      
+      # Ask if user wants to create one anyway
+      read -p "Create GitHub release anyway? [y/N] " -r
+      if [[ $REPLY =~ ^[Yy]$ ]]; then
+        create_gh_release="true"
+      fi
+    fi
+  fi
+  
+  # Create GitHub release if appropriate
+  if [[ "$create_gh_release" == "true" ]] && command -v gh &> /dev/null; then
+    # Collect release notes
+    local notes=""
+    if [[ -f "CHANGELOG.md" ]]; then
+      # Try to extract this version's notes from CHANGELOG
+      local changelog_section=$(sed -n "/## \[${current_version}\]/,/## \[/p" CHANGELOG.md | sed '$d')
+      if [[ -n "$changelog_section" ]]; then
+        notes="$changelog_section"
+      fi
+    fi
+    
+    # If no notes from changelog, generate from commits
+    if [[ -z "$notes" ]]; then
+      # Find the previous tag to compare against
+      local prev_tag=$(git describe --abbrev=0 --tags "v${current_version}^" 2>/dev/null || echo "")
+      if [[ -n "$prev_tag" ]]; then
+        notes="## Changes since ${prev_tag}\n\n$(git log --pretty=format:"* %s" ${prev_tag}..v${current_version})"
+      else
+        notes="$message"
+      fi
+    fi
+    
+    # Create the GitHub release
+    if echo -e "$notes" | gh release create "v${current_version}" -t "Rinna ${current_version}" -F -; then
       print_success "Created GitHub release: v${current_version}"
     else
       print_error "Failed to create GitHub release"
     fi
-  else
+  elif [[ "$create_gh_release" == "true" ]]; then
     print_warning "GitHub CLI not installed. Cannot create GitHub release."
   fi
 }
@@ -456,12 +542,24 @@ Commands:
 
 Options:
   -m, --message <msg>     Custom release/commit message
+  -g, --github            Force GitHub release creation (regardless of version type)
   -h, --help              Show this help message
+
+Release Behavior:
+  - Git tags are created for ALL version changes
+  - GitHub releases are automatically created for:
+    • Major versions (x.0.0)
+    • Minor versions (0.x.0) 
+    • Significant patch versions (based on commit message)
+    • Versions explicitly marked as RELEASE type
+  - For other patch versions, you'll be prompted to create a GitHub release
+  - Use --github to force GitHub release creation for any version
 
 Examples:
   rin-version current     # Show current version information
   rin-version patch       # Bump patch version
   rin-version set 2.0.0   # Set version to 2.0.0
+  rin-version release -g  # Force GitHub release creation
 EOF
 }
 
@@ -469,6 +567,7 @@ EOF
 COMMAND=""
 VERSION=""
 MESSAGE=""
+FORCE_GITHUB="false"
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -493,6 +592,10 @@ while [[ $# -gt 0 ]]; do
       else
         print_error "Message must be provided after -m/--message"
       fi
+      shift
+      ;;
+    -g|--github)
+      FORCE_GITHUB="true"
       shift
       ;;
     -h|--help)
@@ -541,7 +644,7 @@ case "$COMMAND" in
     cmd_set "$VERSION" "$MESSAGE"
     ;;
   release)
-    cmd_release "$MESSAGE"
+    cmd_release "$MESSAGE" "$FORCE_GITHUB"
     ;;
   tag)
     cmd_tag "$MESSAGE"
