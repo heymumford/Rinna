@@ -9,12 +9,12 @@
 package org.rinna.bdd;
 
 import org.rinna.Rinna;
-import org.rinna.domain.entity.APIToken;
-import org.rinna.domain.entity.Project;
-import org.rinna.domain.entity.Release;
-import org.rinna.domain.entity.WebhookConfig;
-import org.rinna.domain.entity.WorkItem;
-import org.rinna.domain.entity.WorkItemCreateRequest;
+import org.rinna.domain.APIToken;
+import org.rinna.domain.model.Project;
+import org.rinna.domain.model.Release;
+import org.rinna.domain.WebhookConfig;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
 
 import java.util.*;
 

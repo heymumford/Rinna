@@ -6,7 +6,7 @@
  * the LICENSE file, which is part of this source code package.
  */
 
-package org.rinna.domain.usecase;
+package org.rinna.domain.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,11 +16,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.rinna.adapter.persistence.InMemoryReleaseRepository;
-import org.rinna.adapter.service.DefaultReleaseService;
-import org.rinna.domain.entity.Release;
-import org.rinna.domain.entity.WorkItem;
-import org.rinna.domain.repository.ReleaseRepository;
+import org.rinna.persistence.InMemoryReleaseRepository;
+import org.rinna.service.DefaultReleaseService;
+import org.rinna.domain.model.Release;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.repository.ReleaseRepository;
 
 import java.util.List;
 import java.util.Optional;

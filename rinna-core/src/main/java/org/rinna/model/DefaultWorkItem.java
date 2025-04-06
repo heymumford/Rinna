@@ -16,7 +16,7 @@ import java.util.UUID;
 /**
  * Default implementation of the WorkItem interface.
  */
-public class DefaultWorkItem implements WorkItem {
+public final class DefaultWorkItem implements WorkItem {
     private final UUID id;
     private final String title;
     private final String description;
@@ -159,7 +159,7 @@ public class DefaultWorkItem implements WorkItem {
          * @return a new DefaultWorkItem instance
          */
         public DefaultWorkItem build() {
-            if (title == null || title.trim().isEmpty()) {
+            if (title == null || title.isBlank()) {
                 throw new IllegalStateException("Title is required");
             }
             if (type == null) {

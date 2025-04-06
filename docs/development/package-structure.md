@@ -1,129 +1,112 @@
-# Package Structure Refactoring
+# Rinna Package Structure
 
-## Optimizing Folder Depth While Preserving Clean Architecture
+This document describes the package structure of the Rinna application, following clean architecture principles with a simplified and flattened hierarchy.
 
-This document outlines our strategy for reducing the maximum folder depth in the Rinna codebase from 13 to 9 levels while maintaining clean architecture principles and improving code maintainability.
+## Overview
 
-## Current vs. Proposed Package Structure
-
-| Layer | Current Structure | Proposed Structure |
-|-------|------------------|-------------------|
-| **Domain Entities** | org.rinna.domain.entity | org.rinna.domain |
-| **Repository Interfaces** | org.rinna.domain.repository | org.rinna.repository |
-| **Service Interfaces** | org.rinna.domain.usecase | org.rinna.usecase |
-| **Repository Implementations** | org.rinna.adapter.persistence | org.rinna.persistence |
-| **Service Implementations** | org.rinna.adapter.service | org.rinna.service |
-
-## Clean Architecture Layers
-
-Despite the flatter structure, our code will still adhere to clean architecture principles:
-
-1. **Core Domain Layer**
-   - Contains entities (`org.rinna.domain`)
-   - Contains business rules and logic
-   - Has no dependencies on outer layers
-
-2. **Interface Layer**
-   - Contains repository interfaces (`org.rinna.repository`)
-   - Contains service interfaces (`org.rinna.usecase`)
-   - Depends only on the domain layer
-
-3. **Implementation Layer**
-   - Contains repository implementations (`org.rinna.persistence`)
-   - Contains service implementations (`org.rinna.service`)
-   - Implements interfaces from the interface layer
-   - Depends on domain and interface layers
-
-4. **Application Layer**
-   - Contains application-specific logic
-   - Orchestrates use cases
-   - Depends on all inner layers
-
-5. **Infrastructure Layer**
-   - Contains frameworks, tools, and drivers
-   - Depends on all inner layers
-
-## Dependency Flow
-
-The dependency flow remains the same in our refactored structure:
+The Rinna package structure follows the principles of Clean Architecture, which separates code into distinct layers with clear dependencies flowing from the outside in:
 
 ```
-Infrastructure → Application → Implementation → Interface → Domain
+org.rinna
+  ├── adapter       # Framework adapters (outside layer)
+  │   ├── repository  # Concrete repository implementations
+  │   └── service     # Service implementations
+  ├── config        # Application configuration
+  ├── domain        # Core domain (inner layer)
+  │   ├── model       # Domain model entities
+  │   ├── repository  # Repository interfaces
+  │   └── service     # Service interfaces
+  └── [legacy]      # Legacy packages (for backward compatibility)
 ```
 
-The arrows point toward dependencies, showing that inner layers don't depend on outer layers.
+## Package Responsibilities
 
-## File Organization
+### Domain Layer
 
-With a flatter structure, files within each package will be organized by feature or concept:
+The domain layer contains the core business logic and entities of the application. It has no dependencies on other layers.
 
-- **Domain Package** (`org.rinna.domain`):
-  - Work items: `WorkItem.java`, `DefaultWorkItem.java`
-  - Releases: `Release.java`, `DefaultRelease.java` 
-  - Projects: `Project.java`, `DefaultProject.java`
-  - States: `WorkflowState.java`, `Priority.java`
+#### `org.rinna.domain.model`
 
-- **Repository Package** (`org.rinna.repository`):
-  - `ItemRepository.java`
-  - `ReleaseRepository.java`
-  - `ProjectRepository.java`
+Contains the domain model classes that represent the core business entities. These classes are pure Java and have no dependencies on frameworks or libraries.
 
-- **Service Package** (`org.rinna.usecase`):
-  - `WorkflowService.java`
-  - `ItemService.java`
-  - `ReleaseService.java`
+Examples:
+- `WorkItem`
+- `WorkQueue`
+- `Release`
+- `Priority` (enum)
+- `WorkflowState` (enum)
 
-## Module Structure
+#### `org.rinna.domain.service`
 
-In addition to flattening the package structure, we'll also simplify the module structure:
+Contains the service interfaces that define the business operations available in the domain. Previously known as `usecase`.
 
-1. Move core functionality from `rinna-core/src` directly into `src`
-2. Maintain Maven's standard directory structure (`src/main/java`, `src/test/java`)
+Examples:
+- `ItemService`
+- `WorkflowService`
+- `ReleaseService`
+- `QueueService`
 
-## Migration Strategy
+#### `org.rinna.domain.repository`
 
-We'll implement this change incrementally:
+Contains the repository interfaces that define the data access operations available in the domain.
 
-1. Create the new package structure
-2. Move one package at a time, starting with domain entities
-3. Update import statements for each package after migration
-4. Run tests after each package migration to catch issues early
-5. Update build files as needed
+Examples:
+- `ItemRepository`
+- `ReleaseRepository`
+- `QueueRepository`
+- `MetadataRepository`
 
-## Tooling Support
+### Adapter Layer
 
-We'll create migration scripts to help with:
+The adapter layer contains implementations of the interfaces defined in the domain layer. It depends on the domain layer but not vice versa.
 
-1. Updating package declarations in Java files
-2. Updating import statements throughout the codebase
-3. Moving files to their new locations
-4. Validating the correctness of the migration
+#### `org.rinna.adapter.service`
 
-## Example Migration
+Contains implementations of the service interfaces defined in the domain layer. Previously known as `service.impl`.
 
-For the `WorkItem` entity:
+Examples:
+- `DefaultItemService`
+- `DefaultWorkflowService`
+- `DefaultReleaseService`
+- `DefaultQueueService`
 
-**Current:**
-```java
-// File: rinna-core/src/main/java/org/rinna/domain/entity/WorkItem.java
-package org.rinna.domain.entity;
-// ...
-```
+#### `org.rinna.adapter.repository`
 
-**Proposed:**
-```java
-// File: src/main/java/org/rinna/domain/WorkItem.java
-package org.rinna.domain;
-// ...
-```
+Contains implementations of the repository interfaces defined in the domain layer. Previously known as `persistence`.
 
-## Benefits
+Examples:
+- `InMemoryItemRepository`
+- `InMemoryReleaseRepository`
+- `InMemoryQueueRepository`
+- `InMemoryMetadataRepository`
 
-This refactoring will:
+### Configuration
 
-1. Reduce cognitive load by simplifying the folder structure
-2. Make it easier to find and navigate between related files
-3. Align better with Java community practices
-4. Improve build times with shorter paths
-5. Preserve clean architecture principles
-6. Make the codebase more approachable for new developers
+#### `org.rinna.config`
+
+Contains configuration classes for the application.
+
+Example:
+- `RinnaConfig`
+- `LoggingBridge`
+
+## Legacy Packages
+
+The following packages are maintained for backward compatibility but are deprecated and should not be used in new code:
+
+- `org.rinna.model` → use `org.rinna.domain.model` instead
+- `org.rinna.repository` → use `org.rinna.domain.repository` instead  
+- `org.rinna.usecase` → use `org.rinna.domain.service` instead
+
+## Migration Guide
+
+If you're working with existing code that uses the old package structure, you should use the following mappings:
+
+| Old Package | New Package |
+|-------------|-------------|
+| `org.rinna.domain.entity` | `org.rinna.domain.model` |
+| `org.rinna.domain.usecase` | `org.rinna.domain.service` |
+| `org.rinna.service.impl` | `org.rinna.adapter.service` |
+| `org.rinna.persistence` | `org.rinna.adapter.repository` |
+
+You can use the migration scripts in `bin/migration/` to automate the updates of import statements in your code.

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Console appender -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- File appender -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${user.home}/.rinna/logs/rinna-core.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${user.home}/.rinna/logs/rinna-core.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>100MB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <!-- Root logger configuration -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+    
+    <!-- Application layers with appropriate log levels -->
+    <logger name="org.rinna.domain" level="INFO" />
+    <logger name="org.rinna.adapter" level="INFO" />
+    <logger name="org.rinna.config" level="INFO" />
+    <logger name="org.rinna.model" level="INFO" />
+    
+    <!-- Set document services to DEBUG for more details on document operations -->
+    <logger name="org.rinna.adapter.service.DocmosisDocumentService" level="DEBUG" />
+    <logger name="org.rinna.adapter.service.DefaultDocumentService" level="DEBUG" />
+
+    <!-- Set third-party libraries to WARN level to reduce noise -->
+    <logger name="org.apache.pdfbox" level="WARN" />
+    <logger name="org.apache.poi" level="WARN" />
+</configuration>

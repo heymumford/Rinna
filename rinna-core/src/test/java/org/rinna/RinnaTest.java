@@ -9,17 +9,17 @@
 package org.rinna;
 
 import org.junit.jupiter.api.Test;
-import org.rinna.domain.entity.Priority;
-import org.rinna.domain.entity.Release;
-import org.rinna.domain.entity.WorkItem;
-import org.rinna.domain.entity.WorkItemCreateRequest;
-import org.rinna.domain.entity.WorkItemType;
-import org.rinna.domain.entity.WorkQueue;
-import org.rinna.domain.repository.MetadataRepository;
-import org.rinna.domain.usecase.ItemService;
-import org.rinna.domain.usecase.QueueService;
-import org.rinna.domain.usecase.ReleaseService;
-import org.rinna.domain.usecase.WorkflowService;
+import org.rinna.domain.model.Priority;
+import org.rinna.domain.model.Release;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.domain.model.WorkQueue;
+import org.rinna.repository.MetadataRepository;
+import org.rinna.domain.service.ItemService;
+import org.rinna.domain.service.QueueService;
+import org.rinna.domain.service.ReleaseService;
+import org.rinna.domain.service.WorkflowService;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -115,18 +115,18 @@ public class RinnaTest {
      */
     private static class MockWorkflowService implements WorkflowService {
         @Override
-        public WorkItem transition(java.util.UUID itemId, org.rinna.domain.entity.WorkflowState targetState) 
-                throws org.rinna.domain.usecase.InvalidTransitionException {
+        public WorkItem transition(java.util.UUID itemId, org.rinna.domain.model.WorkflowState targetState) 
+                throws org.rinna.domain.service.InvalidTransitionException {
             return null;
         }
         
         @Override
-        public boolean canTransition(java.util.UUID itemId, org.rinna.domain.entity.WorkflowState targetState) {
+        public boolean canTransition(java.util.UUID itemId, org.rinna.domain.model.WorkflowState targetState) {
             return false;
         }
         
         @Override
-        public java.util.List<org.rinna.domain.entity.WorkflowState> getAvailableTransitions(java.util.UUID itemId) {
+        public java.util.List<org.rinna.domain.model.WorkflowState> getAvailableTransitions(java.util.UUID itemId) {
             return java.util.List.of();
         }
     }
@@ -226,7 +226,7 @@ public class RinnaTest {
         }
         
         @Override
-        public java.util.List<WorkItem> getQueueItemsByState(java.util.UUID queueId, org.rinna.domain.entity.WorkflowState state) {
+        public java.util.List<WorkItem> getQueueItemsByState(java.util.UUID queueId, org.rinna.domain.model.WorkflowState state) {
             return java.util.List.of();
         }
         
@@ -337,22 +337,22 @@ public class RinnaTest {
      */
     private static class MockMetadataRepository implements MetadataRepository {
         @Override
-        public org.rinna.domain.entity.WorkItemMetadata save(org.rinna.domain.entity.WorkItemMetadata metadata) {
+        public org.rinna.domain.model.WorkItemMetadata save(org.rinna.domain.model.WorkItemMetadata metadata) {
             return metadata;
         }
         
         @Override
-        public java.util.Optional<org.rinna.domain.entity.WorkItemMetadata> findById(java.util.UUID id) {
+        public java.util.Optional<org.rinna.domain.model.WorkItemMetadata> findById(java.util.UUID id) {
             return java.util.Optional.empty();
         }
         
         @Override
-        public java.util.List<org.rinna.domain.entity.WorkItemMetadata> findByWorkItemId(java.util.UUID workItemId) {
+        public java.util.List<org.rinna.domain.model.WorkItemMetadata> findByWorkItemId(java.util.UUID workItemId) {
             return java.util.List.of();
         }
         
         @Override
-        public java.util.Optional<org.rinna.domain.entity.WorkItemMetadata> findByWorkItemIdAndKey(
+        public java.util.Optional<org.rinna.domain.model.WorkItemMetadata> findByWorkItemIdAndKey(
                 java.util.UUID workItemId, String key) {
             return java.util.Optional.empty();
         }
@@ -378,7 +378,7 @@ public class RinnaTest {
         }
         
         @Override
-        public java.util.List<org.rinna.domain.entity.WorkItemMetadata> findAll() {
+        public java.util.List<org.rinna.domain.model.WorkItemMetadata> findAll() {
             return java.util.List.of();
         }
     }

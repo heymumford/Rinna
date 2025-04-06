@@ -8,19 +8,19 @@
 
 package org.rinna.adapter.service;
 
-import org.rinna.domain.entity.DefaultWorkQueue;
-import org.rinna.domain.entity.Priority;
-import org.rinna.domain.entity.WorkItem;
-import org.rinna.domain.entity.WorkItemCreateRequest;
-import org.rinna.domain.entity.WorkItemMetadata;
-import org.rinna.domain.entity.WorkItemType;
-import org.rinna.domain.entity.WorkQueue;
-import org.rinna.domain.entity.WorkflowState;
-import org.rinna.domain.repository.QueueRepository;
-import org.rinna.domain.repository.MetadataRepository;
-import org.rinna.domain.usecase.InvalidTransitionException;
-import org.rinna.domain.usecase.ItemService;
-import org.rinna.domain.usecase.QueueService;
+import org.rinna.domain.model.DefaultWorkQueue;
+import org.rinna.domain.model.Priority;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
+import org.rinna.domain.model.WorkItemMetadata;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.domain.model.WorkQueue;
+import org.rinna.domain.model.WorkflowState;
+import org.rinna.repository.QueueRepository;
+import org.rinna.repository.MetadataRepository;
+import org.rinna.domain.service.InvalidTransitionException;
+import org.rinna.domain.service.ItemService;
+import org.rinna.domain.service.QueueService;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -37,7 +37,7 @@ public class DefaultQueueService implements QueueService {
     private final QueueRepository queueRepository;
     private final ItemService itemService;
     private final MetadataRepository metadataRepository;
-    private final UUID defaultQueueId;
+    private UUID defaultQueueId;
     
     /**
      * Creates a new DefaultQueueService with the given repositories and services.
@@ -52,8 +52,21 @@ public class DefaultQueueService implements QueueService {
         this.itemService = itemService;
         this.metadataRepository = metadataRepository;
         
-        // Create the default queue if it doesn't exist
-        this.defaultQueueId = createDefaultQueue().getId();
+        // Defer creation of the default queue to avoid this-escape
+        this.defaultQueueId = null;
+    }
+    
+    /**
+     * Initializes the defaultQueueId if it hasn't been set yet.
+     * This is to avoid this-escape during construction.
+     */
+    private synchronized UUID getOrCreateDefaultQueueId() {
+        if (defaultQueueId == null) {
+            // Use internal method to avoid this-escape
+            WorkQueue defaultQueue = findOrCreateDefaultQueue();
+            return defaultQueue.getId();
+        }
+        return defaultQueueId;
     }
     
     @Override
@@ -289,7 +302,12 @@ public class DefaultQueueService implements QueueService {
         metadataRepository.save(new WorkItemMetadata(workItem.getId(), "urgent", "true"));
         
         // Add to the default queue
-        addWorkItemToQueue(defaultQueueId, workItem.getId());
+        UUID queueId = defaultQueueId;
+        if (queueId == null) {
+            queueId = getOrCreateDefaultQueueId();
+            defaultQueueId = queueId; // Cache the ID
+        }
+        addWorkItemToQueue(queueId, workItem.getId());
         
         return workItem;
     }
@@ -312,7 +330,12 @@ public class DefaultQueueService implements QueueService {
         metadataRepository.save(new WorkItemMetadata(workItem.getId(), "source", "feature_request"));
         
         // Add to the default queue
-        addWorkItemToQueue(defaultQueueId, workItem.getId());
+        UUID queueId = defaultQueueId;
+        if (queueId == null) {
+            queueId = getOrCreateDefaultQueueId();
+            defaultQueueId = queueId; // Cache the ID
+        }
+        addWorkItemToQueue(queueId, workItem.getId());
         
         return workItem;
     }
@@ -335,7 +358,12 @@ public class DefaultQueueService implements QueueService {
         metadataRepository.save(new WorkItemMetadata(workItem.getId(), "source", "technical_task"));
         
         // Add to the default queue
-        addWorkItemToQueue(defaultQueueId, workItem.getId());
+        UUID queueId = defaultQueueId;
+        if (queueId == null) {
+            queueId = getOrCreateDefaultQueueId();
+            defaultQueueId = queueId; // Cache the ID
+        }
+        addWorkItemToQueue(queueId, workItem.getId());
         
         return workItem;
     }
@@ -374,13 +402,23 @@ public class DefaultQueueService implements QueueService {
         metadataRepository.save(new WorkItemMetadata(workItem.getId(), "source", "child_item"));
         
         // Add to the default queue
-        addWorkItemToQueue(defaultQueueId, workItem.getId());
+        UUID queueId = defaultQueueId;
+        if (queueId == null) {
+            queueId = getOrCreateDefaultQueueId();
+            defaultQueueId = queueId; // Cache the ID
+        }
+        addWorkItemToQueue(queueId, workItem.getId());
         
         return workItem;
     }
     
-    @Override
-    public WorkQueue createDefaultQueue() {
+    /**
+     * Internal method to find or create the default queue.
+     * This avoids potential this-escape issues in the constructor.
+     * 
+     * @return the default queue
+     */
+    private WorkQueue findOrCreateDefaultQueue() {
         Optional<WorkQueue> existing = queueRepository.findByName("Default Queue");
         if (existing.isPresent()) {
             return existing.get();
@@ -389,11 +427,27 @@ public class DefaultQueueService implements QueueService {
         return queueRepository.save(new DefaultWorkQueue("Default Queue", 
                 "Default queue for all work items"));
     }
+
+    @Override
+    public WorkQueue createDefaultQueue() {
+        WorkQueue queue = findOrCreateDefaultQueue();
+        // Make sure we update our default queue ID
+        if (defaultQueueId == null) {
+            defaultQueueId = queue.getId();
+        }
+        return queue;
+    }
     
     @Override
     public WorkQueue getDefaultQueue() {
-        return queueRepository.findById(defaultQueueId)
-                .orElseThrow(() -> new IllegalStateException(STR."Default queue not found with ID: \{defaultQueueId}"));
+        UUID queueId = defaultQueueId;
+        if (queueId == null) {
+            queueId = getOrCreateDefaultQueueId();
+            defaultQueueId = queueId; // Cache the ID
+        }
+        final UUID finalQueueId = queueId;
+        return queueRepository.findById(finalQueueId)
+                .orElseThrow(() -> new IllegalStateException(STR."Default queue not found with ID: \{finalQueueId}"));
     }
     
     @Override
@@ -412,7 +466,12 @@ public class DefaultQueueService implements QueueService {
         metadataRepository.save(new WorkItemMetadata(workItemId, "urgent", urgent ? "true" : "false"));
         
         // Reprioritize the default queue to account for the change
-        reprioritizeQueue(defaultQueueId);
+        UUID queueId = defaultQueueId;
+        if (queueId == null) {
+            queueId = getOrCreateDefaultQueueId();
+            defaultQueueId = queueId; // Cache the ID
+        }
+        reprioritizeQueue(queueId);
     }
     
     @Override

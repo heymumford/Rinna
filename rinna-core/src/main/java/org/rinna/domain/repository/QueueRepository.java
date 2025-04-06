@@ -8,7 +8,7 @@
 
 package org.rinna.domain.repository;
 
-import org.rinna.domain.entity.WorkQueue;
+import org.rinna.domain.model.WorkQueue;
 
 import java.util.List;
 import java.util.Optional;

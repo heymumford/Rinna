@@ -4,16 +4,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.rinna.adapter.persistence.InMemoryItemRepository;
-import org.rinna.adapter.service.DefaultItemService;
-import org.rinna.domain.entity.WorkItem;
-import org.rinna.domain.entity.WorkItemCreateRequest;
-import org.rinna.domain.entity.Priority;
-import org.rinna.domain.entity.WorkItemType;
-import org.rinna.domain.repository.ItemRepository;
-import org.rinna.domain.usecase.ItemService;
-import org.rinna.domain.usecase.WorkflowService;
-import org.rinna.adapter.service.DefaultWorkflowService;
+import org.rinna.persistence.InMemoryItemRepository;
+import org.rinna.service.DefaultItemService;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
+import org.rinna.domain.model.Priority;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.repository.ItemRepository;
+import org.rinna.domain.service.ItemService;
+import org.rinna.domain.service.WorkflowService;
+import org.rinna.service.DefaultWorkflowService;
 
 import static org.junit.jupiter.api.Assertions.*;
 

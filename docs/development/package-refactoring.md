@@ -1,107 +1,102 @@
-<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford] -->
-
-# Package Refactoring Guide
-
-This document describes the process of refactoring the Rinna package structure from `com.rinna` to `org.rinna` and changing the Maven group ID from `org.samstraumr` to `org.rinna`.
+# Package Structure Refactoring
 
 ## Overview
 
-The Rinna project originally used the `com.rinna` package namespace and `org.samstraumr` Maven group ID. To better align with open-source standards and the project's governance model, we migrated to the `org.rinna` namespace for both Java packages and Maven artifacts.
+The Rinna project has undergone a significant package structure refactoring to flatten the hierarchy and improve maintainability. This document explains the changes made and provides guidance for working with both the old and new package structures.
 
-## Automated Refactoring Tool
+## Changes Made
 
-The refactoring process is automated using the `bin/refactor-package.sh` script, which handles the following tasks:
+- Domain entities moved from `org.rinna.domain.entity` to `org.rinna.domain.model` 
+- Service interfaces moved from `org.rinna.domain.usecase` to `org.rinna.domain.service`
+- Service implementations moved from `org.rinna.service.impl` to `org.rinna.adapter.service`
+- Repository implementations moved from `org.rinna.persistence` to `org.rinna.adapter.repository`
 
-1. Copying Java files to their new package locations
-2. Updating package declarations and import statements
-3. Updating references in POM files
-4. Updating references in feature files
-5. Updating references in shell scripts
+## New Package Structure
 
-### Usage
-
-```bash
-# Make sure the script is executable
-chmod +x bin/refactor-package.sh
-
-# Run the refactoring script
-./bin/refactor-package.sh
+```
+org.rinna
+  ├── adapter       # Framework adapters (outside layer)
+  │   ├── repository  # Concrete repository implementations
+  │   └── service     # Service implementations
+  ├── config        # Application configuration
+  ├── domain        # Core domain (inner layer)
+  │   ├── model       # Domain model entities
+  │   ├── repository  # Repository interfaces
+  │   └── service     # Service interfaces
 ```
 
-## Manual Steps After Refactoring
+## Transition Status
 
-After running the automated refactoring, some manual steps may be necessary:
+| Module | Status | Notes |
+|--------|--------|-------|
+| rinna-core | ✅ Complete | All tests passing with new structure |
+| src (main) | 🔄 In Progress | Work in progress |
+| API | 🔄 In Progress | Planned for next phase |
+| CLI | 🔄 In Progress | Planned for next phase |
 
-1. **Add serialVersionUID to Exception Classes**: For proper serialization compatibility
-   ```java
-   private static final long serialVersionUID = 1L;
-   ```
+## Working with the New Structure
 
-2. **Update Reflection Code**: Any code using reflection to reference class names needs to be updated manually.
+### Importing Classes
 
-3. **Update Maven Group ID**: Change the Maven group ID in all POM files
-   ```xml
-   <!-- From -->
-   <groupId>org.samstraumr</groupId>
-   
-   <!-- To -->
-   <groupId>org.rinna</groupId>
-   ```
+Use the new package structure for imports:
 
-4. **Update Documentation**: Ensure all documentation references the new package structure.
+```java
+// OLD
+import org.rinna.domain.entity.WorkItem;
+import org.rinna.domain.usecase.ItemService;
+import org.rinna.service.impl.DefaultItemService;
+import org.rinna.persistence.InMemoryItemRepository;
 
-5. **Verify Build and Tests**: Run the build and tests in verbose mode to catch any issues:
-   ```bash
-   bin/rin -v all
-   ```
+// NEW 
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.service.ItemService;
+import org.rinna.adapter.service.DefaultItemService;
+import org.rinna.adapter.repository.InMemoryItemRepository;
+```
 
-## Verification Checklist
+### Creating Services
 
-- [ ] All Java files have been moved to the new package structure
-- [ ] All package declarations have been updated from `com.rinna` to `org.rinna`
-- [ ] All import statements have been updated
-- [ ] All references in POM files have been updated
-- [ ] Maven group ID has been changed from `org.samstraumr` to `org.rinna`
-- [ ] All references in feature files have been updated
-- [ ] All references in shell scripts have been updated
-- [ ] All serialVersionUID fields have been added to Exception classes
-- [ ] All tests pass in verbose mode
+```java
+// Create repositories
+var itemRepo = new InMemoryItemRepository();
+var metadataRepo = new InMemoryMetadataRepository();
 
-## Troubleshooting
+// Create service
+ItemService itemService = new DefaultItemService(itemRepo);
+```
 
-### Common Issues
+### Using Rinna's Initialization
 
-1. **Maven Build Failures**: Check for missed references to the old package name in the Maven configuration.
+The simplest way to get started is to use Rinna's factory initialization:
 
-2. **Test Failures**: Look for hardcoded references to the old package name in test files.
+```java
+// Initialize with default implementations
+Rinna rinna = Rinna.initialize();
 
-3. **ClassNotFoundException**: This usually indicates a missed reference to the old package structure.
+// Access services
+ItemService itemService = rinna.items();
+WorkflowService workflowService = rinna.workflow();
+ReleaseService releaseService = rinna.releases();
+QueueService queueService = rinna.queue();
+```
 
-### Solutions
+## Migration Scripts
 
-1. Use the `grep` command to find remaining references to the old package:
-   ```bash
-   grep -r "com\.rinna" --include="*.java" .
-   grep -r "com\.rinna" --include="*.xml" .
-   ```
+Several scripts have been created to help with the migration:
 
-2. Check Java reflection code that might reference class names as strings:
-   ```bash
-   grep -r "\"com\.rinna" --include="*.java" .
-   ```
+- `bin/migration/fix-test-imports.sh`: Updates import statements in test files
+- `bin/migration/setup-src-structure.sh`: Sets up the correct directory structure for the src directory
 
-## Notes for Future Package Changes
+## Recommendations
 
-When making future package structure changes:
+1. **For New Code**: Always use the new package structure
+2. **For Existing Code**: 
+   - When making changes to existing files, update import statements to use the new package structure
+   - Run tests to ensure compatibility
 
-1. Create a comprehensive plan first
-2. Back up all code before refactoring
-3. Use automation to reduce errors
-4. Test thoroughly after refactoring
-5. Update all documentation to reflect changes
+## Next Steps
 
-## Learn More
-
-For more information on Java package conventions and best practices, see:
-- [Oracle Java Package Naming Conventions](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html)
-- [Maven Module Naming Conventions](https://maven.apache.org/guides/mini/guide-naming-conventions.html)
+1. Complete the migration of the src (main) module
+2. Migrate the API module
+3. Migrate the CLI module
+4. Remove legacy compatibility classes

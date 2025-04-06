@@ -14,7 +14,7 @@ import java.util.UUID;
 /**
  * Request object for creating a new work item.
  */
-public class WorkItemCreateRequest {
+public final class WorkItemCreateRequest {
     private final String title;
     private final String description;
     private final WorkItemType type;
@@ -177,7 +177,7 @@ public class WorkItemCreateRequest {
          * @return a new WorkItemCreateRequest instance
          */
         public WorkItemCreateRequest build() {
-            if (title == null || title.trim().isEmpty()) {
+            if (title == null || title.isBlank()) {
                 throw new IllegalStateException("Title is required");
             }
             if (type == null) {

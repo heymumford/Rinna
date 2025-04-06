@@ -8,13 +8,13 @@
 
 package org.rinna.adapter.service;
 
-import org.rinna.domain.entity.DefaultWorkItem;
-import org.rinna.domain.entity.WorkItem;
-import org.rinna.domain.entity.WorkItemRecord;
-import org.rinna.domain.entity.WorkflowState;
-import org.rinna.domain.repository.ItemRepository;
-import org.rinna.domain.usecase.InvalidTransitionException;
-import org.rinna.domain.usecase.WorkflowService;
+import org.rinna.domain.model.DefaultWorkItem;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemRecord;
+import org.rinna.domain.model.WorkflowState;
+import org.rinna.repository.ItemRepository;
+import org.rinna.domain.service.InvalidTransitionException;
+import org.rinna.domain.service.WorkflowService;
 
 import java.util.List;
 import java.util.Objects;

@@ -5,13 +5,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.rinna.adapter.service.DefaultItemService;
-import org.rinna.domain.entity.WorkItem;
-import org.rinna.domain.entity.WorkItemCreateRequest;
-import org.rinna.domain.entity.Priority;
-import org.rinna.domain.entity.WorkItemType;
-import org.rinna.domain.repository.ItemRepository;
-import org.rinna.domain.usecase.ItemService;
+import org.rinna.service.DefaultItemService;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
+import org.rinna.domain.model.Priority;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.repository.ItemRepository;
+import org.rinna.domain.service.ItemService;
 
 import static org.junit.jupiter.api.Assertions.*;
 
