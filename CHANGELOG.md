@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Comprehensive test pyramid strategy following Uncle Bob and Martin Fowler principles
+- Five distinct test categories (unit, component, integration, acceptance, performance)
+- JUnit 5 Tag-based test categorization system
+- Maven profiles for selective test execution
+- Enhanced CI workflow with stage-appropriate test execution
+- Detailed testing strategy documentation
+- Sample test class demonstrating tag usage
 - Mode-based build system with fast, test, package, verify, and release modes
 - Domain-specific test categories with smart mapping (workflow, release, input, api, cli)
 - Integrated version management with prepare-release command

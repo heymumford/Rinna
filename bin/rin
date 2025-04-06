@@ -121,7 +121,13 @@ Commands:
   
 Test Categories:
   unit            Run unit tests only
-  bdd             Run all BDD tests
+  component       Run component tests only
+  integration     Run integration tests only
+  acceptance      Run acceptance tests (same as bdd)
+  bdd             Run BDD/acceptance tests (legacy alias)
+  performance     Run performance tests only
+  
+  # Legacy Domain-Specific Test Categories:
   workflow        Run workflow BDD tests
   release         Run release BDD tests
   input           Run input interface BDD tests

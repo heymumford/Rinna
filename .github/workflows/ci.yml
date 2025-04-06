@@ -13,10 +13,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  basic-check:
+  # Setup and basic checks job - runs on all events
+  setup:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
@@ -79,30 +79,97 @@ jobs:
       - name: Make scripts executable
         run: |
           chmod +x bin/rinna-tests.sh
+          chmod +x bin/rin
+          chmod +x bin/rin-build
           chmod +x bin/python-quality 2>/dev/null || true
           chmod +x api/build.sh 2>/dev/null || true
 
       - name: Compile Java code
         run: cd rinna-core && mvn -B -DskipTests compile
+      
+      - name: Compile Go code
+        run: cd api && go build ./...
 
-      - name: Basic Java tests
-        run: cd rinna-core && mvn -B test -Dtest=RinnaTest
+  # Fast tests (unit + component) - run on every push
+  fast-tests:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Run unit tests
+        run: ./bin/rin-build test unit
 
-      - name: Basic Go test
+      - name: Run component tests
+        run: ./bin/rin-build test component
+
+      - name: Basic Go tests
         run: cd api && go test ./test/simple -v
+
+  # Integration tests - run on pull requests only
+  integration-tests:
+    needs: fast-tests
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Run integration tests
+        run: ./bin/rin-build test integration
+      
+      - name: API Integration tests
+        run: cd api && go test ./test/integration -v
+
+  # Acceptance tests - run on pull requests only
+  acceptance-tests:
+    needs: fast-tests
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Run acceptance tests
+        run: ./bin/rin-build test acceptance
         
-      - name: Basic Python quality check
-        run: |
-          if [ -f "bin/python-quality" ]; then
-            ./bin/python-quality lint
-          else
-            echo "Python quality script not found, skipping..."
-          fi
-          
-      - name: Basic Python tests
-        run: |
-          if [ -d "python/tests" ]; then
-            python -m pytest python/tests/test_config_manager.py -v
-          else
-            echo "Python tests not found, skipping..."
-          fi
+  # Performance tests - run only on release branches
+  performance-tests:
+    needs: [fast-tests, integration-tests, acceptance-tests]
+    if: startsWith(github.ref, 'refs/heads/release/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Run performance tests
+        run: ./bin/rin-build test performance
