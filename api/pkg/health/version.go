@@ -12,5 +12,5 @@ package health
 var (
 	Version   = "1.2.6"
 	CommitSHA = "runtime"
-	BuildTime = "2025-04-06T00:00:28Z"
+	BuildTime = "2025-04-06T00:34:12Z"
 )
