@@ -15,6 +15,7 @@
 
     <properties>
         <picocli.version>4.7.5</picocli.version>
+        <rinna.version>${project.parent.version}</rinna.version>
     </properties>
 
     <dependencies>
@@ -22,7 +23,7 @@
         <dependency>
             <groupId>org.rinna</groupId>
             <artifactId>rinna-core</artifactId>
-            <version>1.3.7</version>
+            <version>${rinna.version}</version>
         </dependency>
 
         <!-- Command line parsing -->
