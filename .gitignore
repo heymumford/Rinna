@@ -126,10 +126,28 @@ engineering_spec_v0.3.md
 activate-java.sh
 activate-python.sh
 
-## Binary files
+## Binary files 
 /bin/rin-cli
 
+# Important bin scripts that should be tracked (DO NOT IGNORE THESE)
+# /bin/rin
+# /bin/rin-version 
+# /bin/rin-config
+# /bin/rin-setup
+# /bin/check-versions.sh
+# /bin/update-versions.sh
+# /bin/run-tests.sh
+# /bin/rinna-tests.sh
+# /bin/rinna_config.py
+# /bin/start-java-server.sh
+# /bin/start-services.sh
+# /bin/test-end-to-end.sh
+# /bin/maven-cross-tests.sh
+# /bin/c4_diagrams.py
+# /bin/test_c4_diagrams.py
+
 ## Build and test artifacts
+# Note: These are specifically excluded since they are auto-generated or temporary
 /bin/run-build.sh
 /bin/fix-java-files.sh
 /bin/restore-files.sh
