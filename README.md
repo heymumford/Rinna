@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Java Version](https://img.shields.io/badge/java-21-orange.svg)](https://openjdk.java.net/projects/jdk/21/)
 [![Go Version](https://img.shields.io/badge/go-1.21-blue.svg)](https://golang.org/doc/go1.21)
-[![Version](https://img.shields.io/badge/version-1.3.14-blue.svg)](https://github.com/heymumford/Rinna/releases)
+[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](https://github.com/heymumford/Rinna/releases)
 [![GitHub Stars](https://img.shields.io/github/stars/heymumford/Rinna?style=social)](https://github.com/heymumford/Rinna/stargazers)
 
 [📥 Download](https://github.com/heymumford/Rinna/releases) • [📚 Documentation](docs/) • [🚀 Getting Started](docs/getting-started/README.md) • [🧪 Testing](docs/testing/TESTING_STRATEGY.md) • [🤝 Contribute](docs/development/contribution.md) • [📋 Changelog](CHANGELOG.md) • [📁 Folders](FOLDERS.md) • [🔄 CI Status](docs/development/ci-workflow.md)
@@ -127,7 +127,7 @@ See [Build System](docs/development/build-system.md) for detailed documentation.
 <dependency>
     <groupId>org.rinna</groupId>
     <artifactId>rinna-core</artifactId>
-    <version>1.3.14</version>
+    <version>1.5.0</version>
 </dependency>
 ```
 
@@ -164,17 +164,77 @@ See [Version Management](docs/development/version-management.md) for details on 
 - Maven 3.8+
 - `jq` for CLI client
 
-## Testing Philosophy
+## Testing as a First-Class Citizen
 
-Rinna follows a comprehensive testing strategy inspired by Uncle Bob (Robert C. Martin) and Martin Fowler's best practices:
+At Rinna, testing is not an afterthought but a core part of our development philosophy. We believe that quality and testing are essential components of modern application delivery, embedded in every stage of development.
 
-1. **Unit Tests** - Fast, focused tests of individual components
-2. **Component Tests** - Tests of related components within a bounded context
-3. **Integration Tests** - Tests of module boundaries and external dependencies
-4. **Acceptance Tests** - BDD tests of end-to-end workflows and user requirements
-5. **Performance Tests** - Benchmarks for critical paths and system performance
+### Testing Pyramid Architecture
 
-See our [Testing Strategy](docs/testing/TESTING_STRATEGY.md) for details on implementation and usage.
+```
+        ▲ Fewer
+        │
+        │    ┌───────────────┐
+        │    │  Performance  │ Slowest, most complex
+        │    └───────────────┘
+        │    ┌───────────────┐
+        │    │  Acceptance   │ End-to-end workflows
+        │    └───────────────┘
+        │    ┌───────────────┐
+        │    │  Integration  │ Tests between modules
+        │    └───────────────┘
+        │    ┌───────────────┐
+        │    │   Component   │ Tests within modules
+        │    └───────────────┘
+        │    ┌───────────────┐
+        │    │     Unit      │ Fastest, most granular
+        │    └───────────────┘
+        │
+        ▼ More
+```
+
+### Why This Approach is Timeless
+
+We believe the testing pyramid represents a foundational approach to quality that transcends technological shifts:
+
+- **Aligned with System Complexity**: Maps to how all complex systems are composed of simpler components
+- **Technology-Agnostic**: Remains valid across programming languages, architecture styles, and infrastructure models
+- **Mirrors Human Cognition**: Matches how people naturally think about and decompose problems
+- **Economically Sound**: The cost/benefit ratio of each test level remains consistent regardless of technology
+- **Empirically Validated**: Proven effective across multiple technology eras from mainframes to AI
+
+These principles make our testing approach not just a current best practice, but a future-proof foundation for quality engineering in any era. [Read more about our testing philosophy](docs/testing/PHILOSOPHY.md).
+
+### Implementation Across Languages
+
+Our testing strategy spans multiple languages (Java, Go, Python, and Bash) and provides:
+
+- **Base Test Classes** - Standardized parent classes for all test types
+- **Layered Discovery** - Intelligent categorization of tests by purpose
+- **Smart Test Runner** - Optimized execution based on the testing pyramid
+- **Advanced CLI** - Seamless integration with our build system
+
+### Running Tests
+
+```bash
+# Run tests by pyramid layer
+bin/rin test unit          # Run unit tests only
+bin/rin test component     # Run component tests only 
+bin/rin test integration   # Run integration tests only
+bin/rin test acceptance    # Run acceptance tests only
+bin/rin test performance   # Run performance tests only
+
+# Run test combinations
+bin/rin test fast          # Run unit and component tests (quick feedback)
+bin/rin test essential     # Run unit, component, and integration tests (no UI)
+
+# Configure execution
+bin/rin test --coverage    # Generate code coverage report
+bin/rin test --watch       # Monitor files and run tests on changes
+bin/rin test --fail-fast   # Stop on first failure
+bin/rin test --no-parallel # Disable parallel execution
+```
+
+See our [Testing Strategy](docs/testing/TESTING_STRATEGY.md) for implementation details and our [Testing Philosophy](docs/testing/PHILOSOPHY.md) for our philosophical approach to quality in the age of AI.
 
 ## Comparison
 
@@ -186,7 +246,11 @@ See our [Testing Strategy](docs/testing/TESTING_STRATEGY.md) for details on impl
 | Terminal-based | Yes | No | No | No |
 | CLI | Full-featured | No | Limited | No |
 | API | Go-powered | Yes | Yes | Yes |
-| Test pyramid | Comprehensive | Limited | Limited | Limited |
+| Test pyramid | First-class citizen | Limited | Limited | Limited |
+| Cross-language testing | Comprehensive | No | No | No |
+| Test discovery | Intelligent | Manual | Basic | Manual |
+| Test automation | Advanced | Plugin-dependent | Basic | Limited |
+| Quality gate integration | Built-in | Plugin | Limited | Plugin |
 | Learning curve | Low | High | Medium | Medium |
 
 ## FAQ

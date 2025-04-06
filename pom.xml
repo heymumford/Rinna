@@ -6,7 +6,7 @@
     
     <groupId>org.rinna</groupId>
     <artifactId>Rinna</artifactId>
-    <version>1.4.0</version>
+    <version>1.5.0</version>
     <name>Rinna</name>
     <packaging>pom</packaging>
     <description>Workflow management system for developers</description>
@@ -506,8 +506,8 @@
                     <showDeprecation>true</showDeprecation>
                     <testSource>${java.version}</testSource>
                     <testTarget>${java.version}</testTarget>
-                    <skipTests>true</skipTests>
-                    <skip>true</skip>
+                    <skipTests>false</skipTests>
+                    <skip>false</skip>
                 </configuration>
                 <!-- Force test compilation -->
                 <executions>
@@ -518,7 +518,7 @@
                             <goal>testCompile</goal>
                         </goals>
                         <configuration>
-                            <skip>true</skip>
+                            <skip>false</skip>
                         </configuration>
                     </execution>
                 </executions>
@@ -587,12 +587,11 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
-                    <skipTests>true</skipTests>
-                    <skip>true</skip>
+                    <skipTests>false</skipTests>
+                    <skip>false</skip>
                     <includes>
-                        <include>**/*Test.java</include>
-                        <include>**/*Tests.java</include>
-                        <include>**/*Runner.java</include>
+                        <include>**/bdd/NewUserAuth*.java</include>
+                        <include>**/bdd/WorkItem*.java</include>
                     </includes>
                     <properties>
                         <!-- Parallel execution for JUnit Jupiter tests -->

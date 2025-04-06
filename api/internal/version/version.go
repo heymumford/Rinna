@@ -10,7 +10,7 @@ package version
 
 // These values are set during the build process
 var (
-	Version   = "1.3.14"
+	Version   = "1.5.0"
 	CommitSHA = "runtime"
-	BuildTime = "2025-04-06T12:48:11Z"
+	BuildTime = "2025-04-06T14:53:18Z"
 )
