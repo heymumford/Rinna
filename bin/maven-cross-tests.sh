@@ -52,9 +52,14 @@ fi
 
 # Generate C4 diagrams for documentation
 echo "Generating C4 model diagrams..."
-if [ -f "./bin/c4_diagrams.py" ]; then
-  mkdir -p ./docs/diagrams
-  python ./bin/c4_diagrams.py --type all --output svg --dir ./docs/diagrams || echo "C4 diagram generation failed"
+if [ -f "./bin/generate-diagrams.sh" ]; then
+  # Use async mode in CI environment, synchronous otherwise
+  if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ] || [ -n "$JENKINS_URL" ]; then
+    echo "CI environment detected, using asynchronous diagram generation..."
+    ./bin/generate-diagrams.sh --async --clean || echo "Asynchronous C4 diagram generation started"
+  else
+    ./bin/generate-diagrams.sh || echo "C4 diagram generation failed"
+  fi
   echo "Diagrams generated in ./docs/diagrams"
 else
   echo "C4 diagram generator not found, skipping diagram generation"

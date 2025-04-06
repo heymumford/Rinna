@@ -64,13 +64,24 @@ python -m pytest python/tests -v  # Run tests with verbose output
 python -m unittest bin/test_c4_diagrams.py  # Run C4 diagram tests
 
 # C4 Diagram Generation
-./bin/c4_diagrams.py --type all            # Generate all diagram types
-./bin/c4_diagrams.py --type context        # Generate context diagram
-./bin/c4_diagrams.py --type container      # Generate container diagram
-./bin/c4_diagrams.py --type component      # Generate component diagram
-./bin/c4_diagrams.py --type code           # Generate code diagram
-./bin/c4_diagrams.py --output svg          # Generate in SVG format
-./bin/c4_diagrams.py --upload              # Upload to LucidChart
+./bin/generate-diagrams.sh                 # Generate all diagram types
+./bin/generate-diagrams.sh --type context  # Generate context diagram only
+./bin/generate-diagrams.sh --type container # Generate container diagram only
+./bin/generate-diagrams.sh --type component # Generate component diagram only
+./bin/generate-diagrams.sh --type code     # Generate code diagram only
+./bin/generate-diagrams.sh --format svg    # Generate in SVG format (default)
+./bin/generate-diagrams.sh --format png    # Generate in PNG format
+./bin/generate-diagrams.sh --async         # Generate diagrams asynchronously
+./bin/generate-diagrams.sh --clean         # Clean before generating
+
+# Generate diagrams using Maven
+mvn -P diagrams                           # Generate diagrams with dedicated profile
+mvn package                               # Normal build includes async diagram generation
+
+# Legacy diagram generation (direct access to Python script)
+./bin/c4_diagrams.py --type all           # Generate all diagram types
+./bin/c4_diagrams.py --output svg         # Generate in SVG format
+./bin/c4_diagrams.py --upload             # Upload to LucidChart
 ```
 
 ## Project-Specific CLI Commands

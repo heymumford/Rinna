@@ -217,6 +217,37 @@
             </build>
         </profile>
         
+        <!-- Profile to generate architecture diagrams -->
+        <profile>
+            <id>diagrams</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.2.0</version>
+                        <executions>
+                            <execution>
+                                <id>generate-c4-diagrams</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>${project.basedir}/bin/generate-diagrams.sh</executable>
+                                    <workingDirectory>${project.basedir}</workingDirectory>
+                                    <!-- Run synchronously during explicit diagram generation -->
+                                    <arguments>
+                                        <argument>--clean</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
         <profile>
             <id>all-tests</id>
             <activation>
@@ -238,6 +269,21 @@
                                 <configuration>
                                     <executable>${project.basedir}/bin/maven-cross-tests.sh</executable>
                                     <workingDirectory>${project.basedir}</workingDirectory>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>generate-c4-diagrams-async</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>${project.basedir}/bin/generate-diagrams.sh</executable>
+                                    <workingDirectory>${project.basedir}</workingDirectory>
+                                    <!-- Run asynchronously during normal builds -->
+                                    <arguments>
+                                        <argument>--async</argument>
+                                    </arguments>
                                 </configuration>
                             </execution>
                         </executions>
