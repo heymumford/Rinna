@@ -1,48 +1,82 @@
-# Repository Cleanup Notes
+# Rinna Codebase Cleanup Guide
 
-Date: 2025-04-06
+This document provides guidance for maintaining a clean codebase in the Rinna project.
 
-## Files Backed Up
+## Regular Cleaning Tasks
 
-The following redundant or temporary files have been backed up to `backup/src-20250406105932/`:
+### Java/Maven Artifacts
 
-1. CLAUDE.local.md - Temporary file containing IP documentation notes
-2. Duplicate source code in src/ directory
+```bash
+# Clean all Maven artifacts
+mvn clean
 
-## Project Structure Analysis
+# Clean specific modules
+mvn clean -pl rinna-core
+mvn clean -pl rinna-cli
 
-During the cleanup process, we identified that the project appears to be in the middle of a migration:
+# Remove all target directories
+find . -name "target" -type d -exec rm -rf {} +
+```
 
-1. According to FOLDERS.md, the project is migrating from a deeply nested structure:
-   ```
-   /home/emumford/NativeLinuxProjects/Rinna/rinna-core/src/main/java/org/rinna/domain/entity/DefaultWorkItem.java
-   ```
+### Python Artifacts
 
-   To a flatter structure:
-   ```
-   /home/emumford/NativeLinuxProjects/Rinna/src/main/java/org/rinna/domain/DefaultWorkItem.java
-   ```
+```bash
+# Remove Python compiled files
+find . -name "*.pyc" -delete
+find . -name "__pycache__" -type d -exec rm -rf {} +
+find . -name "*.egg-info" -type d -exec rm -rf {} +
 
-2. The migration involves:
-   - Eliminating the `rinna-core` module nesting
-   - Flattening package structures (e.g., `org.rinna.domain.entity` to `org.rinna.domain`)
-   - Using more descriptive file names
+# Clean up virtual environments (if needed)
+# Warning: only run when you want to recreate venvs
+# rm -rf .venv
+```
 
-3. The migration is not yet complete:
-   - The main pom.xml still references `rinna-core` and `rinna-cli` modules, not `src`
-   - There are duplicate files in both the old and new locations
+### Go Artifacts
 
-## Action Taken
+```bash
+# Remove Go test executables
+find ./api -name "*.test" -delete
 
-Instead of removing files that might be needed for the migration, we've:
-- Backed up the duplicate `src` directory to preserve all files
-- Backed up temporary files
-- Left the project structure intact so the migration can continue
-- Created documentation in the backup directory explaining the backup process
+# Remove compiled Go binaries (only if needed)
+find ./api/cmd -name "healthcheck" -type f -perm -100 -delete
+find ./api/cmd -name "rinnasrv" -type f -perm -100 -delete
+```
 
-## Recommendations
+### Temporary and Test Files
 
-1. Complete the migration according to the FOLDERS.md plan
-2. After the migration is complete, remove any backup directories
-3. Ensure the build process is updated to use the new structure
-4. Remove this CLEANUP.md file once the migration is finished and cleanup is no longer needed
+```bash
+# Remove test temp directories
+rm -rf .test-tmp
+
+# Remove test log files
+find . -name "*.log" -not -path "*/.git/*" -delete
+```
+
+## Before Committing
+
+1. Run `mvn clean` to remove build artifacts
+2. Clear Python cache with `find . -name "__pycache__" -type d -exec rm -rf {} +`
+3. Remove any backup files with `find . -name "*.bak" -o -name "*.backup" -o -name "*~" -delete`
+4. Check for large files with `find . -type f -size +5M -not -path "*/\.*"`
+
+## CI Cleanup
+
+The CI pipeline automatically cleans up artifacts, but for local development, it's good practice to regularly run cleanup tasks.
+
+## Recommended Directory Structure
+
+```
+Rinna/
+├── api/              # Go API server
+├── bin/              # CLI scripts and tools
+├── config/           # Configuration files
+├── docs/             # Documentation
+├── python/           # Python modules
+├── rinna-cli/        # Java CLI application
+├── rinna-core/       # Core Java domain model
+├── src/              # Main application source
+├── utils/            # Utility scripts
+└── version-service/  # Version management service
+```
+
+Always maintain this structure and avoid creating temporary directories in the root folder.

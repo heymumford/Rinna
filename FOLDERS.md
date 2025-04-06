@@ -1,79 +1,133 @@
 # Rinna Project Folder Structure
 
-This document proposes changes to the Rinna project folder structure to reduce the maximum folder depth from 13 to 9 levels while maintaining clean architecture principles and code maintainability.
+This document outlines the folder structure of the Rinna project, current status of the migration to a flatter structure, and guidelines for maintaining the organization.
 
 ## Current Structure
 
-The current path to Java files follows this pattern:
-```
-/home/emumford/NativeLinuxProjects/Rinna/rinna-core/src/main/java/org/rinna/domain/entity/DefaultWorkItem.java
-```
-
-This is 13 levels deep (including the file itself).
-
-## Proposed Structure
-
-We propose flattening the folder structure to a maximum of 9 levels:
-```
-/home/emumford/NativeLinuxProjects/Rinna/src/main/java/org/rinna/domain/DefaultWorkItem.java
-```
-
-## Key Changes
-
-1. **Eliminate the `rinna-core` module nesting**
-   - Move core functionality directly into `src/main/java`
-   - This eliminates one level of nesting
-
-2. **Flatten the package structure**
-   - Move from `org.rinna.domain.entity` to `org.rinna.domain`
-   - Move from `org.rinna.domain.repository` to `org.rinna.repository`
-   - Move from `org.rinna.domain.usecase` to `org.rinna.usecase`
-   - Move from `org.rinna.adapter.service` to `org.rinna.service`
-   - Move from `org.rinna.adapter.persistence` to `org.rinna.persistence`
-
-3. **Use more descriptive file names**
-   - Since we're flattening the packages, file names must be more descriptive
-   - Example: `DefaultWorkItem.java` in the `domain` package
-
-## Java Package Structure
-
-Our refactored package structure adheres to clean architecture but with a flatter hierarchy:
+The Rinna project is currently organized into several core modules:
 
 ```
-org.rinna.*          → Base package for all code
-org.rinna.domain     → Domain entities (formerly org.rinna.domain.entity)
-org.rinna.repository → Repository interfaces (formerly org.rinna.domain.repository)
-org.rinna.usecase    → Service interfaces (formerly org.rinna.domain.usecase)
-org.rinna.service    → Service implementations (formerly org.rinna.adapter.service)
-org.rinna.persistence → Repository implementations (formerly org.rinna.adapter.persistence)
-org.rinna.api        → API-related code
-org.rinna.config     → Configuration code
+Rinna/
+├── api/              # Go API server
+│   ├── cmd/          # API command-line tools
+│   ├── configs/      # API configuration
+│   ├── internal/     # Internal API packages
+│   ├── pkg/          # Reusable API packages
+│   └── test/         # API test suite
+├── bin/              # CLI scripts and tools
+├── config/           # Project-wide configuration
+├── docs/             # Documentation
+│   ├── architecture/ # Architecture diagrams and docs
+│   ├── development/  # Developer guidelines
+│   ├── getting-started/ # Onboarding docs
+│   ├── specifications/ # Technical specifications
+│   ├── testing/      # Testing strategies
+│   └── user-guide/   # End-user documentation
+├── python/           # Python modules
+│   └── tests/        # Python tests
+├── rinna-cli/        # Java CLI application
+│   └── src/          # CLI source code
+├── rinna-core/       # Core Java domain model
+│   └── src/          # Core source code
+├── src/              # Main application source
+│   ├── main/         # Main application code
+│   ├── test/         # Test code
+│   └── test-doc/     # Test documentation
+├── utils/            # Utility scripts
+└── version-service/  # Version management service
+    ├── adapters/     # Language adapters
+    ├── cli/          # Version CLI
+    └── core/         # Core version service
 ```
 
-## File Naming Conventions
+## Package Structure Migration
 
-With a flatter structure, file naming becomes more important:
+We are in the process of migrating to a cleaner package structure following Clean Architecture principles:
 
-- Domain entities: `WorkItem.java`, `WorkItemImpl.java`
-- Repository interfaces: `WorkItemRepository.java`
-- Repository implementations: `InMemoryWorkItemRepository.java`
-- Service interfaces: `WorkflowService.java`
-- Service implementations: `DefaultWorkflowService.java`
+### Old Structure (Being Phased Out)
+```
+org.rinna.domain.entity    → Domain entities
+org.rinna.domain.usecase   → Service interfaces
+org.rinna.service.impl     → Service implementations
+org.rinna.persistence      → Repository implementations
+```
 
-## Benefits of This Approach
+### New Structure (Being Adopted)
+```
+org.rinna.domain.model     → Domain entities
+org.rinna.domain.service   → Service interfaces
+org.rinna.domain.repository → Repository interfaces
+org.rinna.adapter.service  → Service implementations
+org.rinna.adapter.repository → Repository implementations
+```
 
-1. **Reduced complexity** - Fewer folder levels to navigate
-2. **Improved build times** - Shorter paths for build tools to traverse
-3. **Easier file location** - More intuitive structure for developers
-4. **Preserved architecture** - Clean architecture principles are maintained
-5. **Better alignment with Java conventions** - Most Java projects don't use deeply nested packages
+## Migration Status
 
-## Implementation Plan
+| Module | Status | Notes |
+|--------|--------|-------|
+| rinna-core | ✅ Complete | All tests passing with new structure |
+| src (main) | 🔄 In Progress | Work in progress |
+| API | 🔄 In Progress | Planned for next phase |
+| CLI | 🔄 In Progress | Planned for next phase |
 
-1. Create the new directory structure
-2. Move files with updated package declarations
-3. Update import statements across the codebase
-4. Update build files to reflect the new structure
-5. Run comprehensive tests to ensure functionality is preserved
+## Guidelines for Code Organization
 
-This approach will result in a maximum folder depth of 9 levels while maintaining or improving code maintainability.
+1. **Follow Clean Architecture Principles**
+   - Domain layer should have no dependencies on outer layers
+   - Service interfaces belong in the domain layer
+   - Implementations belong in adapter packages
+
+2. **Maintain Module Separation**
+   - Each module should have a clear responsibility
+   - Minimize dependencies between modules
+   - Use interfaces for cross-module communication
+
+3. **Package by Feature, Not Layer**
+   - Group related functionality within modules
+   - Avoid generic packages like "util" or "misc"
+   - Aim for high cohesion within packages
+
+4. **File Naming Conventions**
+   - Domain entities: `WorkItem.java`, `DefaultWorkItem.java`
+   - Repository interfaces: `ItemRepository.java`
+   - Repository implementations: `InMemoryItemRepository.java`
+   - Service interfaces: `WorkflowService.java`
+   - Service implementations: `DefaultWorkflowService.java`
+
+## Cross-Language Integration
+
+Rinna uses multiple languages. Here's how they should interact:
+
+1. **Java Core Domain**
+   - Central domain model in Java
+   - Service interfaces for domain operations
+
+2. **Go API**
+   - REST API implemented in Go
+   - Communicates with Java services via client
+
+3. **Python Tools**
+   - Utilities and automation in Python
+   - Documentation generation
+   - Testing tools
+
+4. **CLI**
+   - Java-based CLI
+   - Interfaces with core services
+
+## Tools for Structure Maintenance
+
+Several tools are available to help maintain the directory structure:
+
+```bash
+# View package dependency graph
+./bin/package-viz.sh
+
+# Check for package structure violations
+./bin/check-dependencies.sh
+
+# Fix imports after moving classes
+./bin/fix-imports.sh
+```
+
+For detailed information on package dependencies and architectural rules, see the `docs/development/package-structure.md` document.

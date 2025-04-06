@@ -53,6 +53,9 @@ wheels/
 htmlcov/
 .ruff_cache/
 .mypy_cache/
+.test-tmp/
+test-output/
+surefire-reports/
 
 # IDE and editors
 ## IntelliJ IDEA
@@ -155,9 +158,12 @@ activate-python.sh
 
 ## Backup directories
 backup/
+**/src-*/
+**/*.backup/
 
 # Generated files
 /docs/architecture/diagrams/
 
 # Allow specific files that would otherwise be ignored
 !CLAUDE.md
+**/CLAUDE.local.md
