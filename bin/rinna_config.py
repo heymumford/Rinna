@@ -77,10 +77,13 @@ class RinnaConfig:
     
     def _set_defaults(self) -> None:
         """Set default values for missing configuration."""
+        # Read version from version.properties file
+        project_version = self._read_version_from_properties()
+        
         defaults = {
             "project": {
                 "name": "Rinna",
-                "version": "1.0.0",
+                "version": project_version,
                 "environment": "development",
                 "data_dir": os.path.expanduser("~/.rinna/data"),
                 "temp_dir": os.path.expanduser("~/.rinna/temp"),
@@ -99,6 +102,34 @@ class RinnaConfig:
         
         # Merge defaults with loaded config
         self._merge_defaults(defaults)
+        
+    def _read_version_from_properties(self) -> str:
+        """Read version from the central version.properties file."""
+        # Find the project root directory
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(script_dir, ".."))
+        version_file = os.path.join(project_root, "version.properties")
+        
+        default_version = "1.0.0"  # Fallback version
+        
+        if not os.path.isfile(version_file):
+            print(f"Warning: version.properties file not found at {version_file}", file=sys.stderr)
+            return default_version
+            
+        try:
+            # Read version from properties file
+            with open(version_file, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("version="):
+                        return line.split("=", 1)[1].strip()
+            
+            print("Warning: version not found in version.properties", file=sys.stderr)
+            return default_version
+            
+        except Exception as e:
+            print(f"Error reading version from properties file: {e}", file=sys.stderr)
+            return default_version
     
     def _merge_defaults(self, defaults: Dict[str, Any], path: str = "") -> None:
         """Recursively merge defaults into the configuration."""
