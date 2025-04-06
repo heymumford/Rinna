@@ -14,7 +14,9 @@
 set -e
 
 # Determine script and project directories
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlinks to find the actual script directory
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
 RINNA_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 FIRST_RUN_MARKER="$HOME/.config/rinna/first_run_complete"
 
@@ -205,7 +207,6 @@ case "$CATEGORY" in
     ;;
   --version)
     # Handle version flag by using the version command
-    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     if [[ -x "$SCRIPT_DIR/rin-version" ]]; then
       exec "$SCRIPT_DIR/rin-version" "current"
     else
