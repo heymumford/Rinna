@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+#
+# rin-version-next - Next-gen Rinna version management utility based on Clean Architecture
+#
+# Copyright (c) 2025 Eric C. Mumford (@heymumford)
+# This file is subject to the terms and conditions defined in
+# the LICENSE file, which is part of this source code package.
+# (MIT License)
+#
+
+set -e
+
+# Determine script and project directories
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+RINNA_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+VERSION_SERVICE_DIR="$RINNA_DIR/version-service"
+VERSION_CLI="$VERSION_SERVICE_DIR/bin/version-cli"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Print error and exit
+error() {
+  echo -e "${RED}Error: $1${NC}" >&2
+  exit 1
+}
+
+# Check if the version CLI tool exists, build it if it doesn't
+ensure_version_cli() {
+  if [ ! -x "$VERSION_CLI" ]; then
+    echo -e "${YELLOW}Building version CLI tool...${NC}"
+    mkdir -p "$VERSION_SERVICE_DIR/bin"
+    
+    # Check if Go is installed
+    if ! command -v go &> /dev/null; then
+      error "Go is required to build the version CLI tool"
+    fi
+    
+    # Build the CLI tool
+    (cd "$VERSION_SERVICE_DIR" && go build -o bin/version-cli cli/version_cli.go)
+    
+    if [ ! -x "$VERSION_CLI" ]; then
+      error "Failed to build version CLI tool"
+    else
+      echo -e "${GREEN}Version CLI tool built successfully${NC}"
+    fi
+  fi
+}
+
+# Show help text
+show_help() {
+  cat << EOF
+${BLUE}rin-version-next${NC} - Next-gen Rinna version management utility based on Clean Architecture
+
+Usage: rin-version-next <command> [options]
+
+Commands:
+  current          Show current version information
+  major            Bump major version (x.0.0)
+  minor            Bump minor version (0.x.0)
+  patch            Bump patch version (0.0.x)
+  set <version>    Set to specific version (e.g., 1.2.3)
+  verify           Verify version consistency across files
+  update           Update all files to match version.properties
+  release          Create a release from current version
+  tag              Create a git tag for current version
+
+Options:
+  -m, --message <message>    Custom release/commit message
+  -g, --github               Force GitHub release creation
+  -h, --help                 Show this help message
+EOF
+}
+
+# Ensure that the version CLI tool exists
+ensure_version_cli
+
+# Process command line arguments
+COMMAND=""
+VERSION=""
+OPTIONS=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    current|major|minor|patch|verify|update|release|tag)
+      COMMAND="$1"
+      shift
+      ;;
+    set)
+      COMMAND="set"
+      if [[ $# -gt 1 && ! "$2" =~ ^- ]]; then
+        VERSION="$2"
+        shift
+      else
+        error "Version must be provided after 'set' command"
+      fi
+      shift
+      ;;
+    -m|--message)
+      if [[ $# -gt 1 && ! "$2" =~ ^- ]]; then
+        OPTIONS+=("--message" "$2")
+        shift
+      else
+        error "Message must be provided after -m/--message"
+      fi
+      shift
+      ;;
+    -g|--github)
+      OPTIONS+=("--github")
+      shift
+      ;;
+    -h|--help)
+      show_help
+      exit 0
+      ;;
+    *)
+      error "Unknown option or command: $1"
+      ;;
+  esac
+done
+
+# If no command is provided, show help
+if [[ -z "$COMMAND" ]]; then
+  show_help
+  exit 0
+fi
+
+# Run the appropriate command
+case "$COMMAND" in
+  current)
+    "$VERSION_CLI" --current
+    ;;
+  major)
+    "$VERSION_CLI" --major "${OPTIONS[@]}"
+    ;;
+  minor)
+    "$VERSION_CLI" --minor "${OPTIONS[@]}"
+    ;;
+  patch)
+    "$VERSION_CLI" --patch "${OPTIONS[@]}"
+    ;;
+  set)
+    "$VERSION_CLI" --set "$VERSION" "${OPTIONS[@]}"
+    ;;
+  verify)
+    "$VERSION_CLI" --verify
+    ;;
+  update)
+    "$VERSION_CLI" --update
+    ;;
+  release)
+    "$VERSION_CLI" --release "${OPTIONS[@]}"
+    ;;
+  tag)
+    "$VERSION_CLI" --tag "${OPTIONS[@]}"
+    ;;
+  *)
+    error "Unknown command: $COMMAND"
+    ;;
+esac
