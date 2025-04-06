@@ -2,6 +2,8 @@
 
 Rinna uses a unified configuration system across all languages (Java, Go, Python) to maintain a single source of truth for all settings.
 
+> **Note**: The current project version is **1.3.0**. All version references in configuration files should match this version.
+
 ## Core Principles
 
 1. **Single Source of Truth**: All configuration starts from a central YAML file.
@@ -140,7 +142,7 @@ When adding new configuration parameters:
 | Key | Description | Default |
 |-----|-------------|---------|
 | `project.name` | Project name | "Rinna" |
-| `project.version` | Project version | "1.0.0" |
+| `project.version` | Project version | "1.3.0" |
 | `project.environment` | Current environment | "development" |
 | `java.backend.port` | Java backend port | 8090 |
 | `go.api.port` | Go API server port | 8080 |

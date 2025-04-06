@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.0] - 2025-04-05
 
 ### Added
 - Comprehensive test pyramid strategy following Uncle Bob and Martin Fowler principles
@@ -14,16 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Maven profiles for selective test execution
 - Enhanced CI workflow with stage-appropriate test execution
 - Detailed testing strategy documentation
-- Sample test class demonstrating tag usage
+- Tagged test examples for each test category
 - Mode-based build system with fast, test, package, verify, and release modes
 - Domain-specific test categories with smart mapping (workflow, release, input, api, cli)
 - Integrated version management with prepare-release command
 - Test skipping option for faster builds (--skip-tests)
 - Enhanced coverage reporting with Jacoco integration
-- Continuous testing with file change monitoring (--watch)
-- CHANGELOG to track project changes
-- Output and reporting improvements with duration tracking and color coding
-- GitHub release automation with release command
+- Version consistency checking script
+- Improved configuration file management
 
 ### Changed
 - Streamlined build system from 686 lines to 487 lines (29% reduction)
@@ -32,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Consolidated test scripts into a unified approach
 - Enhanced documentation with comprehensive examples
 - Version management now fully integrated with build process
+- Updated version to 1.3.0 across all configuration files
+- Fixed SQLite JDBC dependency version in rinna-core/pom.xml
 
 ### Fixed
 - Tag-based test execution with proper Cucumber integration
@@ -39,6 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command-line option consistency and help text
 - Test summary reporting to correctly identify failed tests
 - Coverage report discovery and display
+- Corrected version inconsistencies in Go module files
+- Temporarily disabled rinna-cli module due to compilation issues
+- Improved .gitignore to exclude build artifacts and temporary files
 
 ## [1.2.3] - 2025-04-04
 

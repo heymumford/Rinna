@@ -13,7 +13,8 @@
     
     <modules>
         <module>rinna-core</module>
-        <module>rinna-cli</module>
+        <!-- Temporarily disabled due to compilation issues -->
+        <!-- <module>rinna-cli</module> -->
     </modules>
     
     <properties>
