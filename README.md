@@ -11,7 +11,7 @@
 [![Version](https://img.shields.io/badge/version-1.2.7-blue.svg)](https://github.com/heymumford/Rinna/releases)
 [![GitHub Stars](https://img.shields.io/github/stars/heymumford/Rinna?style=social)](https://github.com/heymumford/Rinna/stargazers)
 
-[📥 Download](https://github.com/heymumford/Rinna/releases) • [📚 Documentation](docs/) • [🚀 Getting Started](docs/getting-started/README.md) • [🤝 Contribute](docs/development/contribution.md) • [📋 Changelog](CHANGELOG.md) • [📁 Folders](FOLDERS.md) • [🔄 CI Status](docs/development/ci-workflow.md)
+[📥 Download](https://github.com/heymumford/Rinna/releases) • [📚 Documentation](docs/) • [🚀 Getting Started](docs/getting-started/README.md) • [🧪 Testing](docs/testing/TESTING_STRATEGY.md) • [🤝 Contribute](docs/development/contribution.md) • [📋 Changelog](CHANGELOG.md) • [📁 Folders](FOLDERS.md) • [🔄 CI Status](docs/development/ci-workflow.md)
 
 </div>
 
@@ -95,8 +95,12 @@ bin/rin build test
 # Full verification with coverage
 bin/rin build verify
 
-# Domain-specific tests
-bin/rin build test domain:workflow
+# Test categories
+bin/rin build test unit        # Run unit tests
+bin/rin build test component   # Run component tests
+bin/rin build test integration # Run integration tests
+bin/rin build test acceptance  # Run acceptance tests
+bin/rin build test performance # Run performance tests
 
 # Prepare for release
 bin/rin build prepare-release
@@ -153,6 +157,18 @@ See [Version Management](docs/development/version-management.md) for details on 
 - Maven 3.8+
 - `jq` for CLI client
 
+## Testing Philosophy
+
+Rinna follows a comprehensive testing strategy inspired by Uncle Bob (Robert C. Martin) and Martin Fowler's best practices:
+
+1. **Unit Tests** - Fast, focused tests of individual components
+2. **Component Tests** - Tests of related components within a bounded context
+3. **Integration Tests** - Tests of module boundaries and external dependencies
+4. **Acceptance Tests** - BDD tests of end-to-end workflows and user requirements
+5. **Performance Tests** - Benchmarks for critical paths and system performance
+
+See our [Testing Strategy](docs/testing/TESTING_STRATEGY.md) for details on implementation and usage.
+
 ## Comparison
 
 | Feature | Rinna | Jira | GitHub Issues | Linear |
@@ -163,6 +179,7 @@ See [Version Management](docs/development/version-management.md) for details on 
 | Terminal-based | Yes | No | No | No |
 | CLI | Full-featured | No | Limited | No |
 | API | Go-powered | Yes | Yes | Yes |
+| Test pyramid | Comprehensive | Limited | Limited | Limited |
 | Learning curve | Low | High | Medium | Medium |
 
 ## FAQ
@@ -188,6 +205,7 @@ Rinna follows clean architecture principles with well-defined interfaces for ext
 - [Architecture Diagrams](docs/architecture/DIAGRAMS.md)
 - [Development Guide](docs/development/README.md)
 - [Build System](docs/development/build-system.md)
+- [Testing Strategy](docs/testing/TESTING_STRATEGY.md)
 - [Version Management](docs/development/version-management.md)
 - [CI Workflow](docs/development/ci-workflow.md)
 - [Changelog](CHANGELOG.md)

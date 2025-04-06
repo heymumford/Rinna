@@ -43,7 +43,17 @@ BUILD_MODES[package]="skip_tests=true package=true"
 BUILD_MODES[verify]="skip_tests=false coverage=true fail_fast=true"
 BUILD_MODES[release]="skip_tests=false package=true coverage=true"
 
-# Test domain mapping
+# Test category mapping
+declare -A TEST_CATEGORIES
+TEST_CATEGORIES[unit]="-P unit-tests"
+TEST_CATEGORIES[component]="-P component-tests"
+TEST_CATEGORIES[integration]="-P integration-tests"
+TEST_CATEGORIES[acceptance]="-P acceptance-tests"
+TEST_CATEGORIES[bdd]="-P acceptance-tests"
+TEST_CATEGORIES[performance]="-P performance-tests"
+TEST_CATEGORIES[all]=""
+
+# Test domain mapping (legacy, for BDD tests)
 declare -A TEST_DOMAINS
 TEST_DOMAINS[workflow]="cucumber.filter.tags=@workflow"
 TEST_DOMAINS[release]="test=org.rinna.bdd.ReleaseRunner"
@@ -81,8 +91,15 @@ Commands:
   prepare-release         Run tests, bump version, package
   
 Test Categories:
-  unit                    Run unit tests only
-  bdd                     Run all BDD tests
+  unit                    Run fast unit tests only
+  component               Run component tests
+  integration             Run integration tests
+  acceptance              Run acceptance tests (same as bdd)
+  bdd                     Run BDD/acceptance tests (legacy alias)
+  performance             Run performance benchmarks
+  all                     Run all tests (default)
+  
+BDD Domains (legacy):
   domain:workflow         Run workflow domain tests
   domain:release          Run release domain tests
   domain:input            Run input interface domain tests
@@ -184,10 +201,14 @@ configure_maven_cmd() {
   
   # Add test category if specified
   if [[ -n "$TEST_CATEGORY" && "$TEST_CATEGORY" != "all" && "$TEST_CATEGORY" != "custom" ]]; then
-    if [[ "$TEST_CATEGORY" == "unit" ]]; then
-      opts="$opts -Dtest='*Test,!*Runner'"
+    # First check if it's one of our new test categories
+    if [[ -n "${TEST_CATEGORIES[$TEST_CATEGORY]}" ]]; then
+      opts="$opts ${TEST_CATEGORIES[$TEST_CATEGORY]}"
+    # Otherwise check the legacy categories
+    elif [[ "$TEST_CATEGORY" == "unit" ]]; then
+      opts="$opts -P unit-tests"
     elif [[ "$TEST_CATEGORY" == "bdd" ]]; then
-      opts="$opts -Dtest='org.rinna.bdd.CucumberRunner'"
+      opts="$opts -P acceptance-tests -Dtest='org.rinna.bdd.CucumberRunner'"
     elif [[ "$TEST_CATEGORY" == "tag" && -n "$TAG_NAME" ]]; then
       opts="$opts -Dtest='org.rinna.bdd.TaggedTestsRunner' -Dcucumber.filter.tags='@$TAG_NAME'"
     fi
@@ -415,7 +436,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     # Test categories
-    unit|bdd)
+    unit|component|integration|acceptance|bdd|performance)
       TEST_CATEGORY="$1"
       shift
       ;;
