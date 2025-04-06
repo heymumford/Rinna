@@ -446,10 +446,53 @@ cmd_release() {
   
   print_header "Creating release for version: ${GREEN}${current_version}${NC}"
   
-  # Update release type
-  sed -i "s/^releaseType=.*/releaseType=RELEASE/" "$VERSION_FILE"
-  git add "$VERSION_FILE"
-  git commit -m "Update release type for version ${current_version}"
+  # Check if there are uncommitted changes
+  if ! git diff --quiet || ! git diff --cached --quiet; then
+    print_warning "Uncommitted changes detected in repository"
+    # Ask user what to do
+    echo -e "Select an action:"
+    echo -e "  1) Stash changes temporarily (recommended)"
+    echo -e "  2) Continue without committing release type change"
+    echo -e "  3) Abort release process"
+    read -p "Enter option (1-3): " choice
+    
+    case "$choice" in
+      1)
+        # Stash changes
+        print_header "Stashing changes temporarily"
+        git stash push -m "Stashed changes before release ${current_version}"
+        
+        # Update release type
+        sed -i "s/^releaseType=.*/releaseType=RELEASE/" "$VERSION_FILE"
+        git add "$VERSION_FILE"
+        if ! git commit -m "Update release type for version ${current_version}"; then
+          git stash pop
+          print_error "Failed to commit release type change"
+        fi
+        
+        # Flag to pop stash at the end
+        local pop_stash=true
+        ;;
+      2)
+        # Skip commit
+        print_warning "Skipping release type commit"
+        sed -i "s/^releaseType=.*/releaseType=RELEASE/" "$VERSION_FILE"
+        local skip_commit=true
+        ;;
+      3)
+        # Abort
+        print_error "Release process aborted by user"
+        ;;
+      *)
+        print_error "Invalid option"
+        ;;
+    esac
+  else
+    # Normal process when there are no uncommitted changes
+    sed -i "s/^releaseType=.*/releaseType=RELEASE/" "$VERSION_FILE"
+    git add "$VERSION_FILE"
+    git commit -m "Update release type for version ${current_version}"
+  fi
   
   # Create git tag if it doesn't exist
   if ! git tag -l "v${current_version}" | grep -q "v${current_version}"; then
@@ -507,6 +550,20 @@ cmd_release() {
   elif [[ "$create_gh_release" == "true" ]]; then
     print_warning "GitHub CLI not installed. Cannot create GitHub release."
   fi
+  
+  # Restore stashed changes if needed
+  if [[ "$pop_stash" == "true" ]]; then
+    print_header "Restoring stashed changes"
+    if ! git stash pop; then
+      print_warning "There might be conflicts from stash pop. Please resolve them manually."
+    fi
+  fi
+  
+  # If we skipped the commit, remind user
+  if [[ "$skip_commit" == "true" ]]; then
+    print_warning "Remember: Release type in $VERSION_FILE was changed but not committed"
+    print_warning "You may want to commit this change manually later"
+  fi
 }
 
 cmd_tag() {
@@ -554,6 +611,10 @@ Release Behavior:
     • Versions explicitly marked as RELEASE type
   - For other patch versions, you'll be prompted to create a GitHub release
   - Use --github to force GitHub release creation for any version
+  - If uncommitted changes exist when creating a release, you'll be prompted to:
+    • Stash changes temporarily (recommended)
+    • Continue without committing release type change
+    • Abort the release process
 
 Examples:
   rin-version current     # Show current version information
