@@ -154,9 +154,16 @@ if [[ $# -eq 0 ]]; then
   exit 0
 fi
 
-# First argument is the command category
-CATEGORY="$1"
-shift
+# Process short flags like -v for version
+if [[ $1 == "-v" ]]; then
+  # For backward compatibility, -v is treated as --version
+  CATEGORY="--version"
+  shift
+else
+  # First argument is the command category
+  CATEGORY="$1"
+  shift
+fi
 
 # Run first time setup if needed
 check_first_run
