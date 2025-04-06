@@ -20,6 +20,9 @@ mvn package           # Package the application
 
 # Cross-language testing
 mvn verify -P cross-language-tests   # Run Java tests and Go/Python/CLI tests and generate C4 diagrams
+
+# Architecture validation
+mvn validate -P validate-architecture  # Run architecture validation checks
 ```
 
 ## Code Quality
@@ -38,7 +41,32 @@ mvn -P skip-quality test
 mvn checkstyle:check  # Run checkstyle validation only
 mvn com.github.spotbugs:spotbugs-maven-plugin:check  # Run spotbugs analysis only
 mvn pmd:check         # Run PMD analysis only
-mvn dependency-check:check  # Run OWASP dependency check
+```
+
+### Security Scanning
+```bash
+# CI environment only - full blocking scan
+mvn verify -P ci      # Run OWASP dependency checks in CI mode
+
+# Local CI testing - asynchronous scan
+./bin/run-ci-local.sh  # Run tests + async OWASP scan in background
+
+# Manual scan
+mvn org.owasp:dependency-check-maven:check -Ddependency-check.skip=false  # Run OWASP scan directly
+```
+
+### Architecture Validation
+```bash
+# Run all architecture validation checks
+./bin/run-checks.sh
+
+# Run individual validation checks
+./bin/checks/dependency-validator.sh
+./bin/checks/test-structure-validator.sh
+./bin/checks/check-clean-architecture.sh
+
+# Run validation via Maven
+mvn validate -P validate-architecture
 ```
 
 ### Python
@@ -152,6 +180,7 @@ Use the `rin` CLI utility located in the bin directory:
 - Python modules are in `python/rinna/`
 - Python tests are in `python/tests/`
 - Python quality configurations are in `config/python/` and `pyproject.toml`
+- Architecture validation scripts are in `bin/checks/`
 
 ## Next Development Tasks
 1. Implement QueryService for developer-focused filtering
