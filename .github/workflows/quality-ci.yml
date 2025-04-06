@@ -1,0 +1,260 @@
+name: Rinna Quality CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  # Fast quality checks for immediate feedback
+  quality-gates:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for SonarQube
+      
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+          
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+          
+      - name: Install dependencies
+        run: |
+          # Install Python dependencies
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
+          
+          # Install dev tools
+          pip install ruff mypy bandit pytest pytest-cov
+          
+          # Install Go tools
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+          
+          # Install ShellCheck
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+      
+      # Static Analysis Checks
+      - name: Java Checkstyle
+        run: mvn checkstyle:check
+      
+      - name: Go Static Analysis
+        run: |
+          cd api
+          golangci-lint run --timeout 5m
+        continue-on-error: true  # Until we fix all existing issues
+      
+      - name: Python Static Analysis
+        run: |
+          ruff check .
+          mypy python/
+          bandit -r python/ -c config/python/bandit.yml || true
+      
+      - name: Shell Script Analysis
+        run: |
+          shellcheck bin/*.sh
+        continue-on-error: true  # Until we fix all existing issues
+      
+      # Fast Unit Tests
+      - name: Run Unit Tests (Fast)
+        run: |
+          # Make scripts executable
+          chmod +x bin/rin bin/rin-test bin/smart-test-runner.sh
+          
+          # Run fast unit tests
+          ./bin/rin test unit --no-parallel
+        
+      # OWASP Dependency Check
+      - name: OWASP Dependency Check
+        run: mvn org.owasp:dependency-check-maven:check -DskipProvidedScope=true -DskipSystemScope=true -DfailBuildOnCVSS=8
+        continue-on-error: true  # Report only for now
+  
+  # Comprehensive testing for all languages
+  comprehensive-tests:
+    name: Comprehensive Testing
+    runs-on: ubuntu-latest
+    needs: quality-gates
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+          
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+          
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y maven jq
+          
+          # Install Python dependencies
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
+          
+          # Install the Python package in development mode
+          if [ -f "python/setup.py" ]; then
+            pip install -e python/
+          fi
+      
+      - name: Make scripts executable
+        run: |
+          chmod +x bin/rin bin/rin-test bin/smart-test-runner.sh bin/test-discovery.sh
+      
+      # Run tests with the testing pyramid approach
+      - name: Essential Tests (Unit + Component + Integration)
+        run: ./bin/rin test essential --coverage
+      
+      # Run acceptance tests separately (they take longer)
+      - name: Acceptance Tests
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+        run: ./bin/rin test acceptance
+        continue-on-error: true  # Not blocking for now
+      
+      # Generate test reports
+      - name: Generate Test Reports
+        run: |
+          if [ -f "bin/test-discovery.sh" ]; then
+            ./bin/test-discovery.sh --detailed > test-discovery-report.txt
+          fi
+      
+      # Archive test results
+      - name: Archive Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            target/site/jacoco/
+            test-discovery-report.txt
+            **/target/surefire-reports/
+          retention-days: 7
+  
+  # Performance tests (run only on main branch or manually)
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    needs: comprehensive-tests
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+      
+      - name: Make scripts executable
+        run: |
+          chmod +x bin/rin bin/rin-test bin/smart-test-runner.sh
+      
+      # Run performance tests
+      - name: Run Performance Tests
+        run: ./bin/rin test performance
+        continue-on-error: true  # Not blocking the build
+      
+      # Compare with baseline
+      - name: Compare Performance Benchmarks
+        run: |
+          echo "Comparing performance benchmarks with baseline..."
+          # Future implementation will compare JMH results
+        continue-on-error: true
+  
+  # SonarQube analysis (if SonarQube token is available)
+  sonarqube-analysis:
+    name: SonarQube Analysis
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    needs: comprehensive-tests
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+      
+      - name: SonarQube Scan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -n "$SONAR_TOKEN" ]; then
+            mvn verify sonar:sonar -Dsonar.projectKey=rinna -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
+          else
+            echo "SonarQube analysis skipped - SONAR_TOKEN not configured"
+          fi
+        continue-on-error: true
+
+  # Final quality report
+  quality-report:
+    name: Quality Report
+    runs-on: ubuntu-latest
+    needs: [quality-gates, comprehensive-tests, performance-tests, sonarqube-analysis]
+    if: always()
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Generate Quality Report
+        run: |
+          echo "# Rinna Quality Report" > quality-report.md
+          echo "Generated on $(date)" >> quality-report.md
+          echo "" >> quality-report.md
+          echo "## Build Status" >> quality-report.md
+          echo "- Quality Gates: ${{ needs.quality-gates.result }}" >> quality-report.md
+          echo "- Comprehensive Tests: ${{ needs.comprehensive-tests.result }}" >> quality-report.md
+          echo "- Performance Tests: ${{ needs.performance-tests.result }}" >> quality-report.md
+          echo "- SonarQube Analysis: ${{ needs.sonarqube-analysis.result }}" >> quality-report.md
+        
+      - name: Upload Quality Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-report
+          path: quality-report.md
+          retention-days: 30

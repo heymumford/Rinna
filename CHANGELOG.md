@@ -5,7 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.0] - 2025-04-05
+## [1.4.0] - 2025-04-06
+
+### Added
+- Comprehensive testing framework as a first-class citizen in the project
+- Meta-test system to verify the build environment and development tools
+- Test unification across Java, Go, Python, and Bash languages
+- Smart test runner with testing pyramid implementation
+- Documentation for testing philosophy, quality standards, and unified test nomenclature
+- Cross-language logging strategy for consistent logging across all languages
+- Support for Python 3.13
+
+### Changed
+- Refactored test organization to follow a consistent structure across languages
+- Streamlined repository by removing unnecessary files and normalizing structures
+- Consolidated version tracking across all modules
+- Improved build efficiency through parallel test execution
+- Updated CI pipeline to support the new testing framework and Python 3.13
+
+### Fixed
+- Exit code propagation in test scripts to properly report test failures
+- Code organization to better follow Clean Architecture principles
+- Testing pyramid approach to ensure proper coverage across all test types
+
+## [1.3.14] - 2025-04-05
 
 ### Added
 - Comprehensive test pyramid strategy following Uncle Bob and Martin Fowler principles
