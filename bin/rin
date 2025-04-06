@@ -58,7 +58,15 @@ check_first_run() {
       echo -e "Checking your environment for dependencies..."
       echo
       
-      if [[ -x "$SCRIPT_DIR/rin-setup" ]]; then
+      # Try the unified setup first, fall back to old setup
+      if [[ -x "$SCRIPT_DIR/rin-setup-unified" ]]; then
+        if "$SCRIPT_DIR/rin-setup-unified" "install" "--minimal" "--yes"; then
+          echo "Dependencies ready!"
+        else
+          echo -e "${YELLOW}Warning: Some dependencies could not be installed automatically.${NC}"
+          echo -e "You may need to install them manually. Continue with 'rin setup' later."
+        fi
+      elif [[ -x "$SCRIPT_DIR/rin-setup" ]]; then
         if "$SCRIPT_DIR/rin-setup" "install"; then
           echo "Dependencies ready!"
         else
@@ -138,6 +146,7 @@ Commands:
     add           Add a new work item
     view          View details of a work item
     update        Update an existing work item
+    path          Show critical path of work items and blockers
     
   doc       Document generation:
     license <key> Set Docmosis license key
@@ -154,6 +163,12 @@ Commands:
     graphics      Run the interactive graphical installer
       -f, --fast    Use fast mode (no animations, text-only output)
       --quick       Use quicker animation speed
+    --minimal     Install only core components
+    --all         Install all components including optional ones
+    java          Set up Java environment only
+    go            Set up Go environment only
+    maven         Set up Maven build system only
+    venv          Set up Python virtual environment only
     
   config    Configuration management:
     view          View effective configuration
@@ -249,10 +264,14 @@ case "$CATEGORY" in
     fi
     ;;
   setup)
-    if [[ -x "$SCRIPT_DIR/rin-setup" ]]; then
+    # Try unified setup first, fall back to original
+    if [[ -x "$SCRIPT_DIR/rin-setup-unified" ]]; then
+      exec "$SCRIPT_DIR/rin-setup-unified" "$@"
+    elif [[ -x "$SCRIPT_DIR/rin-setup" ]]; then
+      echo -e "${YELLOW}Note: Using legacy setup script. Consider using 'rin-setup-unified' for more features.${NC}" >&2
       exec "$SCRIPT_DIR/rin-setup" "$@"
     else
-      error "bin/rin-setup not found or not executable"
+      error "Neither bin/rin-setup-unified nor bin/rin-setup found or not executable"
     fi
     ;;
   config)
@@ -307,6 +326,14 @@ case "$CATEGORY" in
       exec "$SCRIPT_DIR/rin-add" "$@"
     else
       error "bin/rin-add not found or not executable"
+    fi
+    ;;
+  path)
+    # Critical path command
+    if [[ -x "$SCRIPT_DIR/rin-path" ]]; then
+      exec "$SCRIPT_DIR/rin-path" "$@"
+    else
+      error "bin/rin-path not found or not executable"
     fi
     ;;
   view|update)
