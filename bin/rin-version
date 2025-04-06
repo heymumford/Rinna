@@ -283,7 +283,42 @@ verify_consistency() {
   local root_version=$(get_version)
   local inconsistencies=0
   
-  print_header "Verifying version consistency across files..."
+  print_header "Verifying version consistency across languages..."
+  
+  # Check if we have the newer version-service and it's usable
+  if [ -d "$RINNA_DIR/version-service" ] && command -v go &> /dev/null && [ -f "$RINNA_DIR/version-service/cli/version_cli.go" ]; then
+    # Use the Clean Architecture version service for verification
+    print_header "Using Clean Architecture version service for verification..."
+    
+    if [ -f "$RINNA_DIR/version-service/bin/version-cli" ]; then
+      # Use the built binary
+      if "$RINNA_DIR/version-service/bin/version-cli" --verify; then
+        return 0
+      else
+        return 1
+      fi
+    else
+      # Run with go directly
+      if (cd "$RINNA_DIR/version-service" && go run cli/version_cli.go --verify); then
+        return 0
+      else
+        return 1
+      fi
+    fi
+  fi
+  
+  # Check if we have the enhanced check-versions.sh and it's executable
+  if [ -x "$RINNA_DIR/bin/check-versions.sh" ]; then
+    print_header "Using enhanced cross-language version checker..."
+    if "$RINNA_DIR/bin/check-versions.sh"; then
+      return 0
+    else
+      return 1
+    fi
+  fi
+  
+  # Fallback to original verification if neither option is available
+  print_header "Fallback: using built-in verification across files..."
   echo -e "Root version (from version.properties): ${GREEN}${root_version}${NC}"
   
   # Check POM files - with improved accuracy to only check relevant versions
@@ -529,12 +564,39 @@ cmd_update() {
   local current_version=$(get_version)
   
   print_header "Updating all files to match version.properties (${current_version})"
-  update_pom_versions "$current_version"
-  update_readme_version "$current_version"
-  update_go_version "$current_version"
-  update_python_version "$current_version"
   
-  git add "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"
+  # Check if we have a version-service directory - if so, use it
+  if [ -d "$RINNA_DIR/version-service" ]; then
+    # Try running the version-service CLI to update files
+    if command -v go &> /dev/null && [ -f "$RINNA_DIR/version-service/cli/version_cli.go" ]; then
+      print_header "Using Clean Architecture version service..."
+      # Check if the CLI is already built
+      if [ -f "$RINNA_DIR/version-service/bin/version-cli" ]; then
+        "$RINNA_DIR/version-service/bin/version-cli" --update
+      else
+        # Fallback to running with go directly
+        (cd "$RINNA_DIR/version-service" && go run cli/version_cli.go --update)
+      fi
+      print_success "Version service updated all files"
+    else
+      # Fallback to enhanced update-versions.sh
+      print_header "Using enhanced update script..."
+      "$RINNA_DIR/bin/update-versions.sh"
+    fi
+  else
+    # Use legacy update methods
+    print_header "Using legacy update methods..."
+    update_pom_versions "$current_version"
+    update_readme_version "$current_version"
+    update_go_version "$current_version"
+    update_python_version "$current_version"
+  fi
+  
+  # Add all version-related files to git
+  git add "$RINNA_DIR/version.properties" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" 
+  
+  # Add Go files
+  find "$RINNA_DIR/api" -name "version.go" -type f | xargs git add 2>/dev/null || true
   
   # Add Python-related files if they exist
   if [ -f "$RINNA_DIR/pyproject.toml" ]; then
@@ -543,13 +605,30 @@ cmd_update() {
   if [ -f "$RINNA_DIR/.venv/version" ]; then
     git add "$RINNA_DIR/.venv/version"
   fi
-  # Touch to update timestamp to force reload
-  touch "$RINNA_DIR/bin/rinna_config.py"
-  git add "$RINNA_DIR/bin/rinna_config.py"
+  if [ -f "$RINNA_DIR/bin/rinna_config.py" ]; then
+    # Touch to update timestamp to force reload
+    touch "$RINNA_DIR/bin/rinna_config.py"
+    git add "$RINNA_DIR/bin/rinna_config.py"
+  fi
+  
+  # Commit the changes
   git commit -m "Sync version files with version.properties (${current_version})"
   print_success "Committed version changes"
   
-  verify_consistency
+  # Run verification
+  print_header "Verifying version consistency..."
+  if [ -d "$RINNA_DIR/version-service" ] && command -v go &> /dev/null && [ -f "$RINNA_DIR/version-service/cli/version_cli.go" ]; then
+    # Use the version-service verification
+    if [ -f "$RINNA_DIR/version-service/bin/version-cli" ]; then
+      "$RINNA_DIR/version-service/bin/version-cli" --verify
+    else
+      # Fallback to running with go directly
+      (cd "$RINNA_DIR/version-service" && go run cli/version_cli.go --verify)
+    fi
+  else
+    # Use the enhanced check-versions.sh
+    "$RINNA_DIR/bin/check-versions.sh"
+  fi
 }
 
 cmd_bump_version() {

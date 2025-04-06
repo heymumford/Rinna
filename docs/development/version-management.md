@@ -1,207 +1,173 @@
-# Rinna Version Management
+# Rinna Unified Version Management
 
-This document explains the streamlined version management approach used in the Rinna project.
+This document explains the unified version management approach used across Java, Go, and Python components in the Rinna project.
 
 ## Overview
 
-Rinna uses a central properties file as the source of truth for version information, with a single script to manage versions across all files in the repository. This approach follows Clean Code principles to minimize duplication and reduce maintenance overhead.
+Rinna implements a centralized version management system that maintains version consistency across all languages and components. This approach ensures that all parts of the system share the same version information, making release management and dependency tracking much simpler.
 
-## Source of Truth: version.properties
+## Key Features
 
-The project version is defined in `version.properties` in the root directory:
+1. **Single Source of Truth**: Central `version.properties` file defines the project version
+2. **Cross-Language Support**: Java, Go, and Python components share the same version
+3. **Clean Architecture Design**: Clear separation between core logic and language-specific adapters
+4. **Verification System**: Built-in consistency checks across all languages
+5. **Simplified Tooling**: One command to update versions across all components
+
+## Architecture
+
+The version management system follows Clean Architecture principles:
+
+```
+┌────────────────────────────────────────┐
+│             version.properties         │ ◄── Single source of truth
+└───────────────┬────────────────────────┘
+                │
+                ▼
+┌────────────────────────────────────────┐
+│        version-service/core            │ ◄── Core business logic
+└─────┬──────────────┬──────────────┬────┘
+      │              │              │
+      ▼              ▼              ▼
+┌──────────┐   ┌──────────┐   ┌──────────┐
+│  Java    │   │   Go     │   │  Python  │ ◄── Language adapters
+│ Adapter  │   │ Adapter  │   │ Adapter  │
+└──────────┘   └──────────┘   └──────────┘
+      │              │              │
+      ▼              ▼              ▼
+┌──────────┐   ┌──────────┐   ┌──────────┐
+│ POM Files│   │Go Version│   │Python    │ ◄── Implementation files
+│          │   │  Files   │   │ Files    │
+└──────────┘   └──────────┘   └──────────┘
+```
+
+## Version Information
+
+The centralized `version.properties` file contains:
 
 ```properties
 # Core version information
-version=1.3.0
+version=1.3.13
 version.major=1
 version.minor=3
-version.patch=0
+version.patch=13
 version.qualifier=
-version.full=1.3.0
+version.full=1.3.13
 
 # Release information
-lastUpdated=2025-04-05
+lastUpdated=2025-04-06
 releaseType=RELEASE
 buildNumber=1
 
 # Build information
-build.timestamp=2025-04-05T01:22:32Z
+build.timestamp=2025-04-06T03:47:28Z
 build.git.commit=runtime
 ```
 
-This file serves as the single source of truth for version information throughout the project, eliminating version inconsistencies across Java, Go, and other languages.
+## Integration Points
 
-## Version Management Tool
+### Java/Maven
 
-The `bin/rin-version` script provides commands for version management with minimal overhead:
+- All POM files with `org.rinna` groupId are updated automatically
+- Project and parent versions are maintained consistently
+- Maven builds access version information directly from properties
+
+### Go
+
+- Version constants in `api/pkg/health/version.go` and other Go files
+- BuildTime and CommitSHA are updated during version changes
+- Configuration files are automatically updated
+
+### Python
+
+- `pyproject.toml` version field is kept in sync
+- Python modules read directly from `version.properties` at runtime
+- Virtual environment version file is maintained
+
+## Command Line Interface
+
+The version management system is accessible through the `bin/rin-version` utility:
 
 ```bash
-# Display current version info
-bin/rin version current
+# Show current version
+bin/rin-version current
 
-# Verify version consistency
-bin/rin version verify 
+# Bump versions
+bin/rin-version major  # 1.0.0 -> 2.0.0
+bin/rin-version minor  # 1.3.0 -> 1.4.0
+bin/rin-version patch  # 1.3.1 -> 1.3.2
 
-# Bump major/minor/patch version
-bin/rin version [major|minor|patch]
+# Specific version
+bin/rin-version set 2.5.0
 
-# Set to specific version
-bin/rin version set 2.0.0
+# Verify consistency
+bin/rin-version verify
 
-# Set version with custom message
-bin/rin version patch -m "Fix critical bug"
+# Update all files from properties
+bin/rin-version update
 
 # Create release
-bin/rin version release
-
-# Create git tag
-bin/rin version tag
-
-# Sync all files with version.properties
-bin/rin version update
+bin/rin-version release -m "Release notes"
 ```
 
-## Managed Files
+## Verification Process
 
-The version management system automatically maintains consistency across:
+The system includes a comprehensive verification process that ensures all files have consistent versions:
 
-1. `version.properties` - Source of truth
-2. All POM files - Both project and parent versions  
-3. README.md - Version badge and Maven examples
-4. Go version files - Version constants in Go code
-5. API configuration files - Version in YAML files
-6. Documentation - Version references throughout the documentation
+1. POM files are checked for both project and parent versions
+2. Go version files are verified for the correct Version constant
+3. Python files and package configuration are validated
+4. Documentation and README files are checked for version references
 
-## Workflow for Version Changes
+## Implementation Details
 
-To update the project version:
+### Core Version Service
 
-1. Determine the type of change (major, minor, patch)
-2. Run the appropriate command:
-   ```bash
-   bin/rin version minor -m "Added feature X"
-   ```
-3. The script will:
-   - Update version.properties
-   - Update all POM files
-   - Update README references
-   - Create a git commit
-   - Optionally create a git tag
+The core version service is implemented in Go following Clean Architecture principles:
 
-## Release Process
+- `version-service/core/version.go`: Core domain model and rules
+- `version-service/core/registry.go`: Interface definitions
+- `version-service/core/properties_registry.go`: Properties file implementation
 
-The complete release process is:
+### Language Adapters
 
-1. Ensure all changes are committed
-2. Run comprehensive tests:
-   ```bash
-   bin/rin build verify
-   ```
-3. Prepare release with the integrated command:
-   ```bash
-   bin/rin build prepare-release
-   ```
-   
-   This will:
-   - Verify version consistency
-   - Run tests with coverage
-   - Package the application
-   - Update the version for release
-   - Create a git tag
+Each language has a dedicated adapter for reading and writing version information:
 
-4. Alternatively, use the version tool directly:
-   ```bash
-   bin/rin version release -m "Release version 1.2.4"
-   ```
+- `version-service/adapters/java/maven_handler.go`: Handles Maven POM files
+- `version-service/adapters/go/go_handler.go`: Manages Go version files
+- `version-service/adapters/python/python_handler.go`: Updates Python version references
 
-## Design Principles
+### Legacy Support
 
-Our version management follows these principles:
+For backward compatibility, shell scripts are also provided:
 
-1. **Single Source of Truth**: All version information comes from one file
-2. **DRY (Don't Repeat Yourself)**: Common operations are abstracted into functions
-3. **Fail Fast**: Early validation and clear error messages
-4. **Minimal Duplication**: Major/minor/patch changes use a single parameterized function
-5. **Clear UI**: Consistent color coding for success/warnings/errors
-6. **Git Integration**: Automatic commit and tag creation
-
-## Integration with Build System
-
-The version management system is fully integrated with the build system:
-
-```bash
-# Check version during build
-bin/rin build verify
-
-# Prepare for release (includes version management)
-bin/rin build prepare-release
-```
-
-The build system accesses version information directly from version.properties using the `get_version()` function.
-
-## Version Components
-
-### Semantic Versioning
-
-Rinna follows [Semantic Versioning](https://semver.org/) with these components:
-
-- **MAJOR**: Incremented for incompatible API changes
-- **MINOR**: Incremented for backward-compatible new features
-- **PATCH**: Incremented for backward-compatible bug fixes
-
-### Release Types
-
-The version.properties file tracks two release types:
-
-- **SNAPSHOT**: Development versions
-- **RELEASE**: Released versions
-
-### Build Numbers
-
-Build numbers are automatically incremented for each new build during CI/CD processes.
-
-## GitHub Integration
-
-When the GitHub CLI (`gh`) is available, the version management system can create GitHub releases:
-
-```bash
-bin/rin version release -m "Release notes here"
-```
-
-This will:
-1. Update release type to RELEASE
-2. Create a git tag
-3. Create a GitHub release
+- `bin/check-versions.sh`: Verifies consistency across all languages
+- `bin/update-versions.sh`: Updates all files from version.properties
 
 ## Best Practices
 
-1. Always use the `rin version` commands rather than manual edits
-2. Commit version changes separately from code changes
-3. Follow semantic versioning conventions:
-   - MAJOR: Breaking changes
-   - MINOR: New features (backward compatible)
-   - PATCH: Bug fixes (backward compatible)
-4. Run `verify` before releases to ensure consistency
-5. Use the integrated `prepare-release` command for a complete release process
-6. Include meaningful release messages with the `-m` option
+1. **Always use the tools**: Never manually edit version references
+2. **Verify after changes**: Run `bin/rin-version verify` after any changes
+3. **Follow semantic versioning**: Major for breaking changes, minor for features, patch for fixes
+4. **Single responsibility**: Each version bump should have a focused purpose
+5. **Include release notes**: Use the `-m` flag to document version changes
 
-## Implementation
+## Troubleshooting
 
-The version management system is implemented across several scripts:
+If version inconsistencies are found:
 
-1. `bin/rin-version`: Main version management tool with these key functions:
-   - `get_version()`: Retrieve version from version.properties
-   - `update_version_properties()`: Update the version.properties file
-   - `verify_consistency()`: Check version consistency across files
-   - `create_git_tag()`: Create git tag for the current version
+1. Run `bin/rin-version update` to synchronize all files
+2. Verify again with `bin/rin-version verify`
+3. For complex issues, check the implementation-specific handlers
 
-2. `bin/update-versions.sh`: Updates all version references:
-   - Updates POM files in Java code
-   - Updates Go version files
-   - Updates configuration files
-   - Updates documentation
+For more complex issues, detailed logs are available in `/tmp/rinna-version-update-*.log` files created during version operations.
 
-3. `bin/check-versions.sh`: Validates version consistency:
-   - Checks version in all relevant files
-   - Reports any inconsistencies
-   - Provides detailed output for debugging
+## Future Enhancements
+
+Planned improvements to the version management system:
+
+1. Add support for component-specific versioning for microservices
+2. Integrate with CI/CD to automate version bumping
+3. Enhance GitHub release creation with automated changelogs
+4. Add support for more advanced versioning strategies
+5. Implement pre-release and build metadata support

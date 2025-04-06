@@ -1,4 +1,5 @@
-# Java
+# Build outputs
+## Java
 *.class
 *.jar
 *.war
@@ -6,25 +7,23 @@
 *.log
 hs_err_pid*
 
-# Maven
+## Maven
 target/
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
 pom.xml.next
+pom.xml.backup
 release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
-.mvn/timing.properties
-.mvn/wrapper/maven-wrapper.jar
 
-# Python
+## Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -40,26 +39,30 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+## Go
+/api/bin/
+/api/rinnasrv
+/api/test_health
+/api/test_health.go
+/api/cmd/healthcheck/healthcheck
+
+# Test outputs
 .pytest_cache/
 .coverage
 htmlcov/
 .ruff_cache/
 .mypy_cache/
 
-# Go
-/api/bin/
-/api/rinnasrv
-/api/test_health
-/api/test_health.go
-
-# IntelliJ IDEA
+# IDE and editors
+## IntelliJ IDEA
 .idea/
 *.iml
 *.iws
 *.ipr
 out/
 
-# Eclipse
+## Eclipse
 .settings/
 .classpath
 .project
@@ -73,11 +76,11 @@ tmp/
 *~.nib
 local.properties
 
-# VSCode
+## VSCode
 .vscode/
-.code-workspace
+*.code-workspace
 
-# NetBeans
+## NetBeans
 /nbproject/private/
 /build/
 /nbbuild/
@@ -85,39 +88,58 @@ local.properties
 /nbdist/
 /.nb-gradle/
 
+# Environment and runtime
+## Environment files
+.env
+.env.*
+!.env.example
+env/
+.venv/
+venv/
+ENV/
+
+## Maven environment
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+## Runtime files
+*.sqlite
+*.sqlite3
+*.db
+
 # OS specific
 .DS_Store
 Thumbs.db
 
-# Environment files
-.env
-.env.*
-!.env.example
-
 # Project specific
+## Temp/test files
 SimpleTest*.class
 SimpleTest.java
 engineering_spec_v0.3.md
 **/Demo.java
 **/DemoApp.java
+**/DemoTest.java
 **/Test.java
 /tmp/
+
+## Scripts that should be in utils/
 activate-java.sh
+activate-python.sh
+
+## Binary files
 /bin/rin-cli
 
-# Allow CLAUDE.md which contains useful commands
-# CLAUDE.md
-
-# Build and test artifacts except fix-headers.sh
+## Build and test artifacts
 /bin/run-build.sh
 /bin/fix-java-files.sh
 /bin/restore-files.sh
 /bin/update-headers.sh
 
-# Runtime files
-*.sqlite
-*.sqlite3
-*.db
+## Backup directories
+backup/
 
 # Generated files
 /docs/architecture/diagrams/
+
+# Allow specific files that would otherwise be ignored
+!CLAUDE.md
