@@ -508,7 +508,7 @@
                                     <executable>bash</executable>
                                     <arguments>
                                         <argument>-c</argument>
-                                        <argument>mvn org.owasp:dependency-check-maven:check -Ddependency-check.skip=false -Ddependency-check.failBuildOnCVSS=8 -Ddependency-check.nvdApiDelay=1000 -Ddependency-check.format=HTML,JSON > dependency-check.log 2>&1 &amp;</argument>
+                                        <argument>mvn org.owasp:dependency-check-maven:check -Ddependency-check.skip=false -Ddependency-check.failBuildOnCVSS=8 -Ddependency-check.nvdApiDelay=1000 -Ddependency-check.format=HTML,JSON > dependency-check.log 2>&1 &amp;amp;</argument>
                                     </arguments>
                                     <async>true</async>
                                 </configuration>
