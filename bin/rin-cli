@@ -1,0 +1,585 @@
+#!/bin/bash
+#
+# rin-cli - Rinna CLI implementation
+#
+# This script simulates the functionality that would be provided by
+# the Java-based CLI implementation. It's used to demonstrate the CLI
+# features without requiring the Java CLI to be built.
+#
+
+set -e
+
+# Formatting helpers
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+BOLD='\033[1m'
+
+print_header() {
+  echo -e "${BOLD}$1${NC}"
+  echo -e "${BOLD}${1//?/-}${NC}"
+}
+
+# Handle work item commands
+handle_add() {
+  if [ $# -eq 0 ]; then
+    echo -e "${RED}Error: Missing title for work item${NC}"
+    echo "Usage: rin add <title> [options]"
+    echo "Options:"
+    echo "  --type, -t TYPE        Work item type (FEATURE, BUG, TASK)"
+    echo "  --priority, -p LEVEL   Priority (LOW, MEDIUM, HIGH, CRITICAL)"
+    echo "  --project, -P NAME     Project name"
+    echo "  --assignee, -a USER    Assignee username"
+    return 1
+  fi
+  
+  # Parse arguments
+  TITLE=""
+  TYPE="TASK"
+  PRIORITY="MEDIUM"
+  PROJECT=""
+  ASSIGNEE=""
+  
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --type=*|-t=*)
+        TYPE="${1#*=}"
+        shift
+        ;;
+      --priority=*|-p=*)
+        PRIORITY="${1#*=}"
+        shift
+        ;;
+      --project=*|-P=*)
+        PROJECT="${1#*=}"
+        shift
+        ;;
+      --assignee=*|-a=*)
+        ASSIGNEE="${1#*=}"
+        shift
+        ;;
+      --type|-t)
+        TYPE="$2"
+        shift 2
+        ;;
+      --priority|-p)
+        PRIORITY="$2"
+        shift 2
+        ;;
+      --project|-P)
+        PROJECT="$2"
+        shift 2
+        ;;
+      --assignee|-a)
+        ASSIGNEE="$2"
+        shift 2
+        ;;
+      *)
+        if [ -z "$TITLE" ]; then
+          TITLE="$1"
+        else
+          TITLE="$TITLE $1"
+        fi
+        shift
+        ;;
+    esac
+  done
+  
+  # Generate a fake work item ID
+  ID="WI-$((100 + $RANDOM % 900))"
+  
+  # Display output
+  echo -e "${GREEN}✓ Work item created successfully${NC}"
+  echo
+  echo -e "${BOLD}ID:${NC}        $ID"
+  echo -e "${BOLD}Title:${NC}     $TITLE"
+  echo -e "${BOLD}Type:${NC}      $TYPE"
+  echo -e "${BOLD}Priority:${NC}  $PRIORITY"
+  if [ -n "$PROJECT" ]; then
+    echo -e "${BOLD}Project:${NC}   $PROJECT"
+  fi
+  if [ -n "$ASSIGNEE" ]; then
+    echo -e "${BOLD}Assignee:${NC}  $ASSIGNEE"
+  fi
+  
+  # Save to local cache file (in real implementation, would call API)
+  CACHE_DIR="$HOME/.rinna/cache"
+  mkdir -p "$CACHE_DIR"
+  echo "$ID|$TITLE|$TYPE|$PRIORITY|$PROJECT|$ASSIGNEE|$(date +%Y-%m-%d)" >> "$CACHE_DIR/work_items.txt"
+  
+  return 0
+}
+
+handle_list() {
+  # Parse arguments
+  TYPE=""
+  PRIORITY=""
+  STATUS=""
+  PROJECT=""
+  ASSIGNEE=""
+  LIMIT=20
+  
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --type=*|-t=*)
+        TYPE="${1#*=}"
+        shift
+        ;;
+      --priority=*|-p=*)
+        PRIORITY="${1#*=}"
+        shift
+        ;;
+      --status=*|-s=*)
+        STATUS="${1#*=}"
+        shift
+        ;;
+      --project=*|-P=*)
+        PROJECT="${1#*=}"
+        shift
+        ;;
+      --assignee=*|-a=*)
+        ASSIGNEE="${1#*=}"
+        shift
+        ;;
+      --limit=*|-l=*)
+        LIMIT="${1#*=}"
+        shift
+        ;;
+      --type|-t)
+        TYPE="$2"
+        shift 2
+        ;;
+      --priority|-p)
+        PRIORITY="$2"
+        shift 2
+        ;;
+      --status|-s)
+        STATUS="$2"
+        shift 2
+        ;;
+      --project|-P)
+        PROJECT="$2"
+        shift 2
+        ;;
+      --assignee|-a)
+        ASSIGNEE="$2"
+        shift 2
+        ;;
+      --limit|-l)
+        LIMIT="$2"
+        shift 2
+        ;;
+      *)
+        shift
+        ;;
+    esac
+  done
+  
+  # Check for cache file
+  CACHE_DIR="$HOME/.rinna/cache"
+  CACHE_FILE="$CACHE_DIR/work_items.txt"
+  
+  if [ ! -f "$CACHE_FILE" ]; then
+    # Generate sample data if no cache file exists
+    mkdir -p "$CACHE_DIR"
+    echo "WI-101|Implement user authentication|FEATURE|HIGH|auth-system|alice|2025-03-01" > "$CACHE_FILE"
+    echo "WI-102|Fix login page layout on mobile|BUG|MEDIUM|auth-system||2025-03-02" >> "$CACHE_FILE"
+    echo "WI-103|Add password reset functionality|FEATURE|MEDIUM|auth-system|bob|2025-03-05" >> "$CACHE_FILE"
+    echo "WI-104|Security review for authentication flow|TASK|HIGH|auth-system|carol|2025-03-07" >> "$CACHE_FILE"
+    echo "WI-105|Database connection timeout|BUG|CRITICAL|data-layer|dave|2025-03-10" >> "$CACHE_FILE"
+    echo "WI-106|Implement caching for API responses|FEATURE|MEDIUM|api-gateway||2025-03-15" >> "$CACHE_FILE"
+    echo "WI-107|Update documentation for API v2|TASK|LOW|documentation|eve|2025-03-20" >> "$CACHE_FILE"
+    echo "WI-108|Performance optimization for search|TASK|HIGH|search-service|frank|2025-03-25" >> "$CACHE_FILE"
+    echo "WI-109|Memory leak in notification service|BUG|CRITICAL|notification|grace|2025-03-30" >> "$CACHE_FILE"
+    echo "WI-110|Add export to PDF feature|FEATURE|LOW|reporting||2025-04-01" >> "$CACHE_FILE"
+  fi
+  
+  # Filter and display items
+  echo -e "${BOLD}Work Items:${NC}"
+  echo "--------------------------------------------------------------------------------"
+  printf "%-8s %-40s %-10s %-10s %-15s %s\n" "ID" "TITLE" "TYPE" "PRIORITY" "PROJECT" "ASSIGNEE"
+  echo "--------------------------------------------------------------------------------"
+  
+  # Read and filter the data
+  DISPLAYED=0
+  while IFS='|' read -r id title type priority project assignee date || [ -n "$id" ]; do
+    # Apply filters
+    if [ -n "$TYPE" ] && [ "$TYPE" != "$type" ]; then continue; fi
+    if [ -n "$PRIORITY" ] && [ "$PRIORITY" != "$priority" ]; then continue; fi
+    if [ -n "$STATUS" ]; then continue; fi # Status not implemented in this simple version
+    if [ -n "$PROJECT" ] && [ "$PROJECT" != "$project" ]; then continue; fi
+    if [ -n "$ASSIGNEE" ] && [ "$ASSIGNEE" != "$assignee" ]; then continue; fi
+    
+    # Truncate title if needed
+    if [ ${#title} -gt 40 ]; then
+      display_title="${title:0:37}..."
+    else
+      display_title="$title"
+    fi
+    
+    # Display item
+    printf "%-8s %-40s %-10s %-10s %-15s %s\n" "$id" "$display_title" "$type" "$priority" "$project" "${assignee:-"-"}"
+    
+    # Count displayed items
+    DISPLAYED=$((DISPLAYED + 1))
+    
+    # Check limit
+    if [ $DISPLAYED -ge $LIMIT ]; then
+      break
+    fi
+  done < "$CACHE_FILE"
+  
+  echo "--------------------------------------------------------------------------------"
+  echo "Displaying $DISPLAYED item(s)"
+  
+  return 0
+}
+
+handle_view() {
+  if [ $# -eq 0 ]; then
+    echo -e "${RED}Error: Missing work item ID${NC}"
+    echo "Usage: rin view <id> [options]"
+    echo "Options:"
+    echo "  --format FORMAT    Output format (text, json)"
+    return 1
+  fi
+  
+  # Parse arguments
+  ID="$1"
+  shift
+  FORMAT="text"
+  
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --format=*)
+        FORMAT="${1#*=}"
+        shift
+        ;;
+      --format)
+        FORMAT="$2"
+        shift 2
+        ;;
+      *)
+        shift
+        ;;
+    esac
+  done
+  
+  # Check if ID has the expected format
+  if [[ ! "$ID" =~ ^WI-[0-9]+$ ]]; then
+    echo -e "${RED}Error: Invalid work item ID format${NC}"
+    echo "ID should be in the format WI-123"
+    return 1
+  fi
+  
+  # Look for the item in the cache
+  CACHE_DIR="$HOME/.rinna/cache"
+  CACHE_FILE="$CACHE_DIR/work_items.txt"
+  
+  if [ ! -f "$CACHE_FILE" ]; then
+    # Generate sample data if no cache file exists
+    mkdir -p "$CACHE_DIR"
+    echo "WI-101|Implement user authentication|FEATURE|HIGH|auth-system|alice|2025-03-01" > "$CACHE_FILE"
+    echo "WI-102|Fix login page layout on mobile|BUG|MEDIUM|auth-system||2025-03-02" >> "$CACHE_FILE"
+    echo "WI-103|Add password reset functionality|FEATURE|MEDIUM|auth-system|bob|2025-03-05" >> "$CACHE_FILE"
+    echo "WI-104|Security review for authentication flow|TASK|HIGH|auth-system|carol|2025-03-07" >> "$CACHE_FILE"
+    echo "WI-105|Database connection timeout|BUG|CRITICAL|data-layer|dave|2025-03-10" >> "$CACHE_FILE"
+    echo "WI-106|Implement caching for API responses|FEATURE|MEDIUM|api-gateway||2025-03-15" >> "$CACHE_FILE"
+    echo "WI-107|Update documentation for API v2|TASK|LOW|documentation|eve|2025-03-20" >> "$CACHE_FILE"
+    echo "WI-108|Performance optimization for search|TASK|HIGH|search-service|frank|2025-03-25" >> "$CACHE_FILE"
+    echo "WI-109|Memory leak in notification service|BUG|CRITICAL|notification|grace|2025-03-30" >> "$CACHE_FILE"
+    echo "WI-110|Add export to PDF feature|FEATURE|LOW|reporting||2025-04-01" >> "$CACHE_FILE"
+  fi
+  
+  # Find the item
+  FOUND=false
+  while IFS='|' read -r id title type priority project assignee date || [ -n "$id" ]; do
+    if [ "$id" == "$ID" ]; then
+      FOUND=true
+      
+      if [ "$FORMAT" == "json" ]; then
+        # Display as JSON
+        echo "{"
+        echo "  \"id\": \"$id\","
+        echo "  \"title\": \"$title\","
+        echo "  \"type\": \"$type\","
+        echo "  \"priority\": \"$priority\","
+        echo "  \"project\": \"$project\","
+        echo "  \"assignee\": ${assignee:+\"$assignee\"}"${assignee:-null}","
+        echo "  \"createdAt\": \"$date\","
+        echo "  \"description\": \"This is a sample description for $id.\","
+        echo "  \"metadata\": {"
+        echo "    \"reporter\": \"system\","
+        echo "    \"estimated_hours\": \"${id:3}\""
+        if [ "$type" == "BUG" ]; then
+          echo "    ,\"severity\": \"$priority\","
+          echo "    \"affects_version\": \"1.2.${id:4}\""
+        fi
+        echo "  }"
+        echo "}"
+      else
+        # Display as text
+        echo -e "${BOLD}=${id//?/=}===${NC}"
+        echo -e "${BOLD}= $id =${NC}"
+        echo -e "${BOLD}=${id//?/=}===${NC}"
+        echo
+        echo -e "${BOLD}Title:${NC}       $title"
+        echo -e "${BOLD}Type:${NC}        $type"
+        echo -e "${BOLD}Priority:${NC}    $priority"
+        echo -e "${BOLD}Project:${NC}     $project"
+        echo -e "${BOLD}Assignee:${NC}    ${assignee:-"-"}"
+        echo -e "${BOLD}Created:${NC}     $date"
+        echo
+        echo -e "${BOLD}Description:${NC}"
+        echo "--------------------------------------------------------------------------------"
+        if [ "$type" == "BUG" ]; then
+          echo "When using the $project under high load conditions, users experience unexpected behavior."
+          echo "This issue has been reproduced in our testing environment."
+          echo
+          echo "Steps to reproduce:"
+          echo "1. Configure the system with default settings"
+          echo "2. Run the performance test suite"
+          echo "3. Observe the error in logs"
+          echo
+          echo "Expected: System should handle the load gracefully"
+          echo "Actual: System throws exceptions and fails to process requests"
+        elif [ "$type" == "FEATURE" ]; then
+          echo "We need to implement a new feature in the $project to support upcoming business requirements."
+          echo
+          echo "Requirements:"
+          echo "- The feature should integrate with existing systems"
+          echo "- Should be configurable through the admin panel"
+          echo "- Must support high availability"
+          echo "- Should include comprehensive documentation"
+          echo
+          echo "This feature has been requested by the business team and is planned for the next release."
+        else
+          echo "This task involves improving the current state of the $project."
+          echo
+          echo "Tasks to complete:"
+          echo "- Review the current implementation"
+          echo "- Identify areas for improvement"
+          echo "- Implement changes according to best practices"
+          echo "- Update documentation"
+          echo "- Ensure test coverage"
+        fi
+        echo "--------------------------------------------------------------------------------"
+        echo
+        echo -e "${BOLD}Metadata:${NC}"
+        echo "  reporter: system"
+        echo "  estimated_hours: ${id:3}"
+        if [ "$type" == "BUG" ]; then
+          echo "  severity: $priority"
+          echo "  affects_version: 1.2.${id:4}"
+        fi
+      fi
+      
+      break
+    fi
+  done < "$CACHE_FILE"
+  
+  if [ "$FOUND" != "true" ]; then
+    echo -e "${RED}Error: Work item not found: $ID${NC}"
+    return 1
+  fi
+  
+  return 0
+}
+
+handle_update() {
+  if [ $# -eq 0 ]; then
+    echo -e "${RED}Error: Missing work item ID${NC}"
+    echo "Usage: rin update <id> [options]"
+    echo "Options:"
+    echo "  --title, -t TITLE       New title"
+    echo "  --type TYPE             New work item type"
+    echo "  --priority, -p LEVEL    New priority level"
+    echo "  --status, -s STATUS     New status"
+    echo "  --assignee, -a USER     New assignee"
+    return 1
+  fi
+  
+  # Parse arguments
+  ID="$1"
+  shift
+  TITLE=""
+  TYPE=""
+  PRIORITY=""
+  STATUS=""
+  ASSIGNEE=""
+  DESCRIPTION=""
+  
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --title=*|-t=*)
+        TITLE="${1#*=}"
+        shift
+        ;;
+      --type=*)
+        TYPE="${1#*=}"
+        shift
+        ;;
+      --priority=*|-p=*)
+        PRIORITY="${1#*=}"
+        shift
+        ;;
+      --status=*|-s=*)
+        STATUS="${1#*=}"
+        shift
+        ;;
+      --assignee=*|-a=*)
+        ASSIGNEE="${1#*=}"
+        shift
+        ;;
+      --description=*|-d=*)
+        DESCRIPTION="${1#*=}"
+        shift
+        ;;
+      --title|-t)
+        TITLE="$2"
+        shift 2
+        ;;
+      --type)
+        TYPE="$2"
+        shift 2
+        ;;
+      --priority|-p)
+        PRIORITY="$2"
+        shift 2
+        ;;
+      --status|-s)
+        STATUS="$2"
+        shift 2
+        ;;
+      --assignee|-a)
+        ASSIGNEE="$2"
+        shift 2
+        ;;
+      --description|-d)
+        DESCRIPTION="$2"
+        shift 2
+        ;;
+      *)
+        shift
+        ;;
+    esac
+  done
+  
+  # Check if ID has the expected format
+  if [[ ! "$ID" =~ ^WI-[0-9]+$ ]]; then
+    echo -e "${RED}Error: Invalid work item ID format${NC}"
+    echo "ID should be in the format WI-123"
+    return 1
+  fi
+  
+  # Look for the item in the cache
+  CACHE_DIR="$HOME/.rinna/cache"
+  CACHE_FILE="$CACHE_DIR/work_items.txt"
+  
+  if [ ! -f "$CACHE_FILE" ]; then
+    # Generate sample data if no cache file exists
+    mkdir -p "$CACHE_DIR"
+    echo "WI-101|Implement user authentication|FEATURE|HIGH|auth-system|alice|2025-03-01" > "$CACHE_FILE"
+    echo "WI-102|Fix login page layout on mobile|BUG|MEDIUM|auth-system||2025-03-02" >> "$CACHE_FILE"
+    echo "WI-103|Add password reset functionality|FEATURE|MEDIUM|auth-system|bob|2025-03-05" >> "$CACHE_FILE"
+    echo "WI-104|Security review for authentication flow|TASK|HIGH|auth-system|carol|2025-03-07" >> "$CACHE_FILE"
+    echo "WI-105|Database connection timeout|BUG|CRITICAL|data-layer|dave|2025-03-10" >> "$CACHE_FILE"
+    echo "WI-106|Implement caching for API responses|FEATURE|MEDIUM|api-gateway||2025-03-15" >> "$CACHE_FILE"
+    echo "WI-107|Update documentation for API v2|TASK|LOW|documentation|eve|2025-03-20" >> "$CACHE_FILE"
+    echo "WI-108|Performance optimization for search|TASK|HIGH|search-service|frank|2025-03-25" >> "$CACHE_FILE"
+    echo "WI-109|Memory leak in notification service|BUG|CRITICAL|notification|grace|2025-03-30" >> "$CACHE_FILE"
+    echo "WI-110|Add export to PDF feature|FEATURE|LOW|reporting||2025-04-01" >> "$CACHE_FILE"
+  fi
+  
+  # Find the item
+  FOUND=false
+  while IFS='|' read -r id title type priority project assignee date || [ -n "$id" ]; do
+    if [ "$id" == "$ID" ]; then
+      FOUND=true
+      
+      echo -e "${GREEN}✓ Work item updated successfully${NC}"
+      echo
+      echo -e "${BOLD}ID:${NC}        $id"
+      
+      if [ -n "$TITLE" ]; then
+        echo -e "${BOLD}Title:${NC}     $TITLE ${YELLOW}(was: $title)${NC}"
+      else
+        echo -e "${BOLD}Title:${NC}     $title"
+      fi
+      
+      if [ -n "$TYPE" ]; then
+        echo -e "${BOLD}Type:${NC}      $TYPE ${YELLOW}(was: $type)${NC}"
+      else
+        echo -e "${BOLD}Type:${NC}      $type"
+      fi
+      
+      if [ -n "$PRIORITY" ]; then
+        echo -e "${BOLD}Priority:${NC}  $PRIORITY ${YELLOW}(was: $priority)${NC}"
+      else
+        echo -e "${BOLD}Priority:${NC}  $priority"
+      fi
+      
+      if [ -n "$STATUS" ]; then
+        echo -e "${BOLD}Status:${NC}    $STATUS ${YELLOW}(was: ?)${NC}"
+      fi
+      
+      echo -e "${BOLD}Project:${NC}   $project"
+      
+      if [ -n "$ASSIGNEE" ]; then
+        echo -e "${BOLD}Assignee:${NC}  $ASSIGNEE ${YELLOW}(was: ${assignee:-"-"})${NC}"
+      else
+        echo -e "${BOLD}Assignee:${NC}  ${assignee:-"-"}"
+      fi
+      
+      echo -e "${BOLD}Created:${NC}   $date"
+      
+      if [ -n "$DESCRIPTION" ]; then
+        echo
+        echo -e "${BOLD}Description:${NC} updated"
+      fi
+      
+      break
+    fi
+  done < "$CACHE_FILE"
+  
+  if [ "$FOUND" != "true" ]; then
+    echo -e "${RED}Error: Work item not found: $ID${NC}"
+    return 1
+  fi
+  
+  return 0
+}
+
+# Main command handler
+case "$1" in
+  add)
+    shift
+    handle_add "$@"
+    ;;
+  list)
+    shift
+    handle_list "$@"
+    ;;
+  view)
+    shift
+    handle_view "$@"
+    ;;
+  update)
+    shift
+    handle_update "$@"
+    ;;
+  *)
+    echo "Usage: rin-cli <command> [options]"
+    echo
+    echo "Commands:"
+    echo "  add <title> [options]   Create a new work item"
+    echo "  list [options]          List work items"
+    echo "  view <id> [options]     View a work item's details"
+    echo "  update <id> [options]   Update a work item"
+    echo
+    echo "Run 'rin-cli <command> --help' for more information on a command."
+    exit 1
+    ;;
+esac
