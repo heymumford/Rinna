@@ -19,7 +19,8 @@ echo "🔄 OWASP dependency scan started with PID: $OWASP_PID"
 
 # Run the build and tests (without OWASP checks since they're running in background)
 echo "🔄 Running build and tests..."
-mvn clean verify -Dmaven.test.skip=false -Ddependency-check.skip=true
+# Skip diagram generation and OWASP checks
+mvn clean verify -Dmaven.test.skip=false -Ddependency-check.skip=true -DskipDiagrams=true -Dexec.skip=true
 
 BUILD_RESULT=$?
 
