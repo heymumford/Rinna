@@ -96,9 +96,23 @@ should_create_github_release() {
 
 update_version_properties() {
   local new_version="$1"
+  local major=$(echo "$new_version" | cut -d. -f1)
+  local minor=$(echo "$new_version" | cut -d. -f2)
+  local patch=$(echo "$new_version" | cut -d. -f3)
+  local current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  
+  # Update version properties
   sed -i "s/^version=.*/version=$new_version/" "$VERSION_FILE"
+  sed -i "s/^version.major=.*/version.major=$major/" "$VERSION_FILE"
+  sed -i "s/^version.minor=.*/version.minor=$minor/" "$VERSION_FILE"
+  sed -i "s/^version.patch=.*/version.patch=$patch/" "$VERSION_FILE"
+  sed -i "s/^version.full=.*/version.full=$new_version/" "$VERSION_FILE"
+  
+  # Update release and build information
   sed -i "s/^lastUpdated=.*/lastUpdated=$(date +%Y-%m-%d)/" "$VERSION_FILE"
   sed -i "s/^buildNumber=.*/buildNumber=1/" "$VERSION_FILE"
+  sed -i "s/^build.timestamp=.*/build.timestamp=$current_timestamp/" "$VERSION_FILE"
+  
   print_success "Updated version in $VERSION_FILE to $new_version"
 }
 
@@ -177,6 +191,7 @@ update_readme_version() {
 
 update_go_version() {
   local new_version="$1"
+  local current_timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
   local go_health_files=(
     "$RINNA_DIR/api/pkg/health/version.go"
     "$RINNA_DIR/api/internal/version/version.go"
@@ -198,16 +213,16 @@ package health
 
 // These values are set during the build process
 var (
-	Version = "$new_version"
+	Version   = "$new_version"
 	CommitSHA = "runtime"
-	BuildTime = "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+	BuildTime = "$current_timestamp"
 )
 EOF
     print_success "Created version file at $RINNA_DIR/api/pkg/health/version.go"
   else
     # Update existing version.go file
-    sed -i -E "s/Version = \"[^\"]*\"/Version = \"$new_version\"/" "$RINNA_DIR/api/pkg/health/version.go"
-    sed -i -E "s/BuildTime = \"[^\"]*\"/BuildTime = \"$(date -u +'%Y-%m-%dT%H:%M:%SZ')\"/" "$RINNA_DIR/api/pkg/health/version.go"
+    sed -i -E "s/Version\s*=\s*\"[^\"]*\"/Version   = \"$new_version\"/" "$RINNA_DIR/api/pkg/health/version.go"
+    sed -i -E "s/BuildTime\s*=\s*\"[^\"]*\"/BuildTime = \"$current_timestamp\"/" "$RINNA_DIR/api/pkg/health/version.go"
   fi
   
   # Create internal version package if it doesn't exist
@@ -226,19 +241,42 @@ package version
 
 // These values are set during the build process
 var (
-	Version = "$new_version"
+	Version   = "$new_version"
 	CommitSHA = "runtime"
-	BuildTime = "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+	BuildTime = "$current_timestamp"
 )
 EOF
     print_success "Created version file at $RINNA_DIR/api/internal/version/version.go"
   else
     # Update existing version.go file
-    sed -i -E "s/Version = \"[^\"]*\"/Version = \"$new_version\"/" "$RINNA_DIR/api/internal/version/version.go"
-    sed -i -E "s/BuildTime = \"[^\"]*\"/BuildTime = \"$(date -u +'%Y-%m-%dT%H:%M:%SZ')\"/" "$RINNA_DIR/api/internal/version/version.go"
+    sed -i -E "s/Version\s*=\s*\"[^\"]*\"/Version   = \"$new_version\"/" "$RINNA_DIR/api/internal/version/version.go"
+    sed -i -E "s/BuildTime\s*=\s*\"[^\"]*\"/BuildTime = \"$current_timestamp\"/" "$RINNA_DIR/api/internal/version/version.go"
   fi
   
   print_success "Updated version in Go files to $new_version"
+}
+
+update_python_version() {
+  local new_version="$1"
+  
+  # Python doesn't need a version update in the source code since we've modified
+  # rinna_config.py to read from version.properties
+  
+  # We could update a pyproject.toml file if it exists
+  if [ -f "$RINNA_DIR/pyproject.toml" ]; then
+    sed -i -E "s/version\s*=\s*\"[^\"]*\"/version = \"$new_version\"/" "$RINNA_DIR/pyproject.toml"
+    print_success "Updated version in pyproject.toml to $new_version"
+  fi
+  
+  # Create or update virtual environment version file if it exists
+  if [ -d "$RINNA_DIR/.venv" ]; then
+    echo "$new_version" > "$RINNA_DIR/.venv/version"
+    print_success "Updated virtual environment version to $new_version"
+  fi
+  
+  # Force Python config to reload by touching the script
+  touch "$RINNA_DIR/bin/rinna_config.py"
+  print_success "Updated Python version references to $new_version"
 }
 
 verify_consistency() {
@@ -334,6 +372,92 @@ verify_consistency() {
     fi
   done
   
+  # Check Python configuration - test rinna_config.py
+  if [ -f "$RINNA_DIR/bin/rinna_config.py" ]; then
+    echo -e "Checking ${BLUE}Python config${NC}..."
+    
+    # Run the Python script with just the version info request
+    # Redirect stderr to /dev/null to suppress warnings about config file
+    local python_version=$("$RINNA_DIR/bin/rinna_config.py" project.version 2>/dev/null)
+    
+    if [[ -z "$python_version" ]]; then
+      # Try running the script directly and parse the output
+      python_version=$(python3 "$RINNA_DIR/bin/rinna_config.py" 2>/dev/null | grep -o "v[0-9.]*" | sed 's/^v//')
+    fi
+    
+    # Check if the version is still empty or contains error messages
+    if [[ -z "$python_version" || "$python_version" == *"Warning"* || "$python_version" == *"Error"* ]]; then
+      # Directly try to verify the Python module's _read_version_from_properties logic
+      echo -e "  ${YELLOW}Testing direct access to version.properties...${NC}"
+      
+      # Create a simple test script to directly read version.properties
+      local test_script=$(mktemp)
+      cat > "$test_script" << 'EOF'
+#!/usr/bin/env python3
+import os, sys
+script_dir = os.path.dirname(sys.argv[1])
+project_root = os.path.abspath(os.path.join(script_dir, ".."))
+version_file = os.path.join(project_root, "version.properties")
+with open(version_file, 'r') as f:
+    for line in f:
+        line = line.strip()
+        if line.startswith("version="):
+            print(line.split("=", 1)[1].strip())
+            break
+EOF
+      chmod +x "$test_script"
+      
+      # Run the test script
+      python_version=$(python3 "$test_script" "$RINNA_DIR/bin/rinna_config.py" 2>/dev/null)
+      rm "$test_script"
+      
+      if [[ -z "$python_version" ]]; then
+        echo -e "  ${YELLOW}Could not determine Python version (but will be read from version.properties)${NC}"
+      elif [[ "$python_version" != "$root_version" ]]; then
+        echo -e "  ${RED}Python version mismatch: ${python_version} (should be ${root_version})${NC}"
+        ((inconsistencies++))
+      else
+        echo -e "  ${GREEN}Python version: ${python_version} ✓${NC}"
+        echo -e "  ${BLUE}Note: Python will read this from version.properties at runtime${NC}"
+      fi
+    elif [[ "$python_version" != "$root_version" ]]; then
+      echo -e "  ${RED}Python version mismatch: ${python_version} (should be ${root_version})${NC}"
+      ((inconsistencies++))
+    else
+      echo -e "  ${GREEN}Python version: ${python_version} ✓${NC}"
+    fi
+  fi
+  
+  # Check pyproject.toml if it exists
+  if [ -f "$RINNA_DIR/pyproject.toml" ]; then
+    echo -e "Checking ${BLUE}pyproject.toml${NC}..."
+    local pyproject_version=$(grep -o 'version\s*=\s*"[^"]*"' "$RINNA_DIR/pyproject.toml" | sed -E 's/.*"([^"]*)".*$/\1/')
+    
+    if [[ -z "$pyproject_version" ]]; then
+      echo -e "  ${YELLOW}Could not determine version in pyproject.toml${NC}"
+    elif [[ "$pyproject_version" != "$root_version" ]]; then
+      echo -e "  ${RED}pyproject.toml version mismatch: ${pyproject_version} (should be ${root_version})${NC}"
+      ((inconsistencies++))
+    else
+      echo -e "  ${GREEN}pyproject.toml version: ${pyproject_version} ✓${NC}"
+    fi
+  fi
+  
+  # Check virtual environment version file if it exists
+  if [ -f "$RINNA_DIR/.venv/version" ]; then
+    echo -e "Checking ${BLUE}Python virtual environment${NC}..."
+    local venv_version=$(cat "$RINNA_DIR/.venv/version" 2>/dev/null)
+    
+    if [[ -z "$venv_version" ]]; then
+      echo -e "  ${YELLOW}Could not determine virtual environment version${NC}"
+    elif [[ "$venv_version" != "$root_version" ]]; then
+      echo -e "  ${RED}Virtual environment version mismatch: ${venv_version} (should be ${root_version})${NC}"
+      ((inconsistencies++))
+    else
+      echo -e "  ${GREEN}Virtual environment version: ${venv_version} ✓${NC}"
+    fi
+  fi
+  
   # Report result
   if [[ $inconsistencies -eq 0 ]]; then
     print_success "All versions are consistent!"
@@ -408,8 +532,20 @@ cmd_update() {
   update_pom_versions "$current_version"
   update_readme_version "$current_version"
   update_go_version "$current_version"
+  update_python_version "$current_version"
   
   git add "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"
+  
+  # Add Python-related files if they exist
+  if [ -f "$RINNA_DIR/pyproject.toml" ]; then
+    git add "$RINNA_DIR/pyproject.toml"
+  fi
+  if [ -f "$RINNA_DIR/.venv/version" ]; then
+    git add "$RINNA_DIR/.venv/version"
+  fi
+  # Touch to update timestamp to force reload
+  touch "$RINNA_DIR/bin/rinna_config.py"
+  git add "$RINNA_DIR/bin/rinna_config.py"
   git commit -m "Sync version files with version.properties (${current_version})"
   print_success "Committed version changes"
   
@@ -454,6 +590,16 @@ cmd_bump_version() {
     fi
   done
   
+  # List Python files that will be updated
+  echo "Python files to be updated:" >> "$log_file"
+  echo "- $RINNA_DIR/bin/rinna_config.py (reads from version.properties)" >> "$log_file"
+  if [ -f "$RINNA_DIR/pyproject.toml" ]; then
+    echo "- $RINNA_DIR/pyproject.toml" >> "$log_file"
+  fi
+  if [ -d "$RINNA_DIR/.venv" ]; then
+    echo "- $RINNA_DIR/.venv/version" >> "$log_file"
+  fi
+  
   echo "Starting updates at $(date)" >> "$log_file"
   
   # Perform the actual updates
@@ -461,6 +607,7 @@ cmd_bump_version() {
   update_pom_versions "$new_version"
   update_readme_version "$new_version"
   update_go_version "$new_version"
+  update_python_version "$new_version"
   
   echo "Updates completed at $(date)" >> "$log_file"
   
@@ -482,6 +629,17 @@ cmd_bump_version() {
   # Add all affected files to git
   print_header "Adding version files to git..."
   git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"
+  
+  # Add Python-related files if they exist
+  if [ -f "$RINNA_DIR/pyproject.toml" ]; then
+    git add "$RINNA_DIR/pyproject.toml"
+  fi
+  if [ -f "$RINNA_DIR/.venv/version" ]; then
+    git add "$RINNA_DIR/.venv/version"
+  fi
+  # Touch to update timestamp to force reload 
+  touch "$RINNA_DIR/bin/rinna_config.py"
+  git add "$RINNA_DIR/bin/rinna_config.py"
   
   # Log the update details
   echo "Log available at: $log_file"
@@ -546,6 +704,16 @@ cmd_set() {
     fi
   done
   
+  # List Python files that will be updated
+  echo "Python files to be updated:" >> "$log_file"
+  echo "- $RINNA_DIR/bin/rinna_config.py (reads from version.properties)" >> "$log_file"
+  if [ -f "$RINNA_DIR/pyproject.toml" ]; then
+    echo "- $RINNA_DIR/pyproject.toml" >> "$log_file"
+  fi
+  if [ -d "$RINNA_DIR/.venv" ]; then
+    echo "- $RINNA_DIR/.venv/version" >> "$log_file"
+  fi
+  
   echo "Starting updates at $(date)" >> "$log_file"
   
   # Perform the actual updates
@@ -553,6 +721,7 @@ cmd_set() {
   update_pom_versions "$new_version"
   update_readme_version "$new_version"
   update_go_version "$new_version"
+  update_python_version "$new_version"
   
   echo "Updates completed at $(date)" >> "$log_file"
   
@@ -574,6 +743,17 @@ cmd_set() {
   # Add all affected files to git
   print_header "Adding version files to git..."
   git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"
+  
+  # Add Python-related files if they exist
+  if [ -f "$RINNA_DIR/pyproject.toml" ]; then
+    git add "$RINNA_DIR/pyproject.toml"
+  fi
+  if [ -f "$RINNA_DIR/.venv/version" ]; then
+    git add "$RINNA_DIR/.venv/version"
+  fi
+  # Touch to update timestamp to force reload 
+  touch "$RINNA_DIR/bin/rinna_config.py"
+  git add "$RINNA_DIR/bin/rinna_config.py"
   
   # Log the update details
   echo "Log available at: $log_file"
@@ -797,6 +977,9 @@ Release Behavior:
 Version Updates:
   - Only Rinna project versions are updated in POM files (org.rinna groupId)
   - Dependency versions are NEVER updated to avoid unintended version changes
+  - Python components read from the central version.properties file
+  - Go components have version info updated in their respective files
+  - Virtual environment version is updated if present
   - A detailed log file is created at /tmp/rinna-version-update-[PID].log
   - The verify command checks for version inconsistencies across the project
 

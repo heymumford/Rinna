@@ -138,7 +138,8 @@ class RinnaConfig:
             
             # If value is a dict, merge recursively
             if isinstance(value, dict):
-                if full_key not in self._get_value_at_path(self._config, full_key.split('.')):
+                current_value = self._get_value_at_path(self._config, full_key.split('.'))
+                if current_value is None or not isinstance(current_value, dict):
                     self._set_value_at_path(self._config, full_key.split('.'), {})
                 self._merge_defaults(value, full_key)
             else:
