@@ -107,36 +107,60 @@ update_pom_versions() {
   local pom_files=$(find "$RINNA_DIR" -name "pom.xml")
   
   for pom_file in $pom_files; do
-    # Update parent version if it exists
-    if grep -q "<parent>" "$pom_file"; then
-      awk -v new_version="$new_version" '
-      BEGIN { in_parent = 0 }
-      /<parent>/ { in_parent = 1; print; next }
-      /<\/parent>/ { in_parent = 0; print; next }
-      /<version>/ && in_parent { gsub(/>.*</, ">" new_version "<") }
-      { print }
-      ' "$pom_file" > "${pom_file}.tmp"
-      
-      mv "${pom_file}.tmp" "$pom_file"
+    print_header "Processing POM file: $(basename "$pom_file")"
+    
+    # Check if this is a Rinna project
+    if ! grep -q "<groupId>org.rinna</groupId>" "$pom_file"; then
+      print_warning "- Not a Rinna project, skipping"
+      continue
     fi
     
-    # Update project version outside of parent
-    if grep -q "<version>" "$pom_file"; then
-      awk -v version="$new_version" '
-      BEGIN { in_parent = 0; done = 0 }
-      /<parent>/ { in_parent = 1 }
-      /<\/parent>/ { in_parent = 0 }
-      /<version>/ && !in_parent && !done {
-        sub(/>.*</, ">" version "<"); done = 1
-      }
-      { print }
-      ' "$pom_file" > "${pom_file}.tmp"
+    # We'll use a simpler approach with sed to avoid AWK syntax issues
+    # This approach is more explicit and easier to debug
+    
+    # 1. Update parent version if it's an org.rinna parent
+    if grep -q "<parent>" "$pom_file" && grep -A 5 "<parent>" "$pom_file" | grep -q "<groupId>org.rinna</groupId>"; then
+      print_success "- Updating org.rinna parent reference"
       
-      mv "${pom_file}.tmp" "$pom_file"
+      # Create a temporary file for processing
+      local parent_section=$(grep -A 10 "<parent>" "$pom_file" | grep -B 10 "</parent>" | head -n 20)
+      if echo "$parent_section" | grep -q "<groupId>org.rinna</groupId>"; then
+        # Use sed to replace the version within the parent section
+        sed -i "/<parent>/,/<\/parent>/s|<version>[^<]*</version>|<version>$new_version</version>|g" "$pom_file"
+      fi
     fi
+    
+    # 2. Check for a project-level version outside of parent/dependencies sections
+    # This is trickier since we need to avoid dependency versions
+    
+    # Create a temp file
+    cp "$pom_file" "${pom_file}.tmp"
+    
+    # Extract the content before any <dependencies> or <dependencyManagement> tags
+    head_content=$(sed -n '1,/<dependencies>/p' "${pom_file}.tmp" | grep -v "<dependencies>" || echo "")
+    if [ -z "$head_content" ]; then
+      head_content=$(sed -n '1,/<dependencyManagement>/p' "${pom_file}.tmp" | grep -v "<dependencyManagement>" || echo "")
+    fi
+    
+    # Look for a groupId and version outside of parent
+    if echo "$head_content" | grep -v "<parent>" | grep -q "<groupId>org.rinna</groupId>"; then
+      # We found an org.rinna groupId outside of parent, look for a version tag nearby
+      if echo "$head_content" | grep -v "<parent>" | grep -q "<version>"; then
+        print_success "- Updating project version"
+        
+        # Use a more targeted sed approach to update only the main project version
+        # after the groupId and artifactId, but before any dependencies
+        sed -i '/<parent>/,/<\/parent>/b; /<dependencies>/,$b; /<groupId>org.rinna<\/groupId>/,/<version>[^<]*<\/version>/ s|<version>[^<]*</version>|<version>'"$new_version"'</version>|' "$pom_file"
+      fi
+    else
+      print_warning "- No Rinna project version found outside parent section"
+    fi
+    
+    # Cleanup
+    rm -f "${pom_file}.tmp"
   done
   
-  print_success "Updated version in all POM files to $new_version"
+  print_success "Updated version in all Rinna POM files to $new_version"
 }
 
 update_readme_version() {
@@ -224,32 +248,66 @@ verify_consistency() {
   print_header "Verifying version consistency across files..."
   echo -e "Root version (from version.properties): ${GREEN}${root_version}${NC}"
   
-  # Check POM files
+  # Check POM files - with improved accuracy to only check relevant versions
   for pom_file in $(find "$RINNA_DIR" -name "pom.xml"); do
-    # Check project version
-    if grep -q "<version>" "$pom_file" && ! grep -q "<parent>" "$pom_file"; then
-      local project_version=$(grep -m 1 "<version>" "$pom_file" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
-      if [[ "$project_version" != "$root_version" ]]; then
-        echo -e "${RED}Project version mismatch in ${pom_file}: ${project_version} (should be ${root_version})${NC}"
+    echo -e "Checking ${BLUE}$(basename "$pom_file")${NC}..."
+    
+    # Check parent version - but only if it's an org.rinna parent
+    if grep -q "<parent>" "$pom_file" && grep -q -A 3 "<parent>" "$pom_file" | grep -q "<groupId>org.rinna</groupId>"; then
+      local parent_version=$(grep -A 5 "<parent>" "$pom_file" | grep "<version>" | head -1 | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
+      if [[ "$parent_version" != "$root_version" ]]; then
+        echo -e "  ${RED}org.rinna parent version mismatch: ${parent_version} (should be ${root_version})${NC}"
         ((inconsistencies++))
+      else
+        echo -e "  ${GREEN}org.rinna parent version: ${parent_version} ✓${NC}"
       fi
     fi
     
-    # Check parent version
-    if grep -q "<parent>" "$pom_file"; then
-      local parent_version=$(grep -A 3 "<parent>" "$pom_file" | grep "<version>" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
-      if [[ "$parent_version" != "$root_version" ]]; then
-        echo -e "${RED}Parent version mismatch in ${pom_file}: ${parent_version} (should be ${root_version})${NC}"
-        ((inconsistencies++))
+    # Check project version, but only for Rinna projects (with org.rinna groupId)
+    # and not inside dependency, plugin or other sections
+    if grep -q "<groupId>org.rinna</groupId>" "$pom_file"; then
+      # Use a more sophisticated approach to extract the main project version
+      local project_content=$(cat "$pom_file")
+      local project_version=""
+      
+      # First, remove parent section, dependencies, and plugins sections which might have version tags
+      local filtered_content=$(echo "$project_content" | 
+        awk '
+          BEGIN { print_lines = 1; in_parent = 0; in_dependencies = 0; in_plugins = 0; in_dependencyManagement = 0 }
+          /<parent>/ { in_parent = 1; print_lines = 0 }
+          /<\/parent>/ { in_parent = 0; print_lines = 0 }
+          /<dependencies>/ { in_dependencies = 1; print_lines = 0 }
+          /<\/dependencies>/ { in_dependencies = 0; print_lines = 0 }
+          /<dependencyManagement>/ { in_dependencyManagement = 1; print_lines = 0 }
+          /<\/dependencyManagement>/ { in_dependencyManagement = 0; print_lines = 0 }
+          /<plugins>/ { in_plugins = 1; print_lines = 0 }
+          /<\/plugins>/ { in_plugins = 0; print_lines = 0 }
+          { if (print_lines && !in_parent && !in_dependencies && !in_plugins && !in_dependencyManagement) print }
+        ')
+      
+      # Now look for the project version in this filtered content
+      # First make sure we have the org.rinna groupId outside of any special sections
+      if echo "$filtered_content" | grep -q "<groupId>org.rinna</groupId>"; then
+        project_version=$(echo "$filtered_content" | grep -m 1 "<version>" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
+        
+        if [[ -n "$project_version" && "$project_version" != "$root_version" ]]; then
+          echo -e "  ${RED}Project version mismatch: ${project_version} (should be ${root_version})${NC}"
+          ((inconsistencies++))
+        elif [[ -n "$project_version" ]]; then
+          echo -e "  ${GREEN}Project version: ${project_version} ✓${NC}"
+        fi
       fi
     fi
   done
   
   # Check README.md
+  echo -e "Checking ${BLUE}README.md${NC}..."
   local readme_version=$(grep -o "version-.*-blue" "$README_FILE" | cut -d '-' -f 2)
   if [[ "$readme_version" != "$root_version" ]]; then
-    echo -e "${RED}README version mismatch: ${readme_version} (should be ${root_version})${NC}"
+    echo -e "  ${RED}README version mismatch: ${readme_version} (should be ${root_version})${NC}"
     ((inconsistencies++))
+  else
+    echo -e "  ${GREEN}README version: ${readme_version} ✓${NC}"
   fi
   
   # Check Go version files
@@ -260,14 +318,18 @@ verify_consistency() {
   
   for version_file in "${go_version_files[@]}"; do
     if [ -f "$version_file" ]; then
+      echo -e "Checking ${BLUE}$(basename "$version_file")${NC}..."
       local go_version=$(grep -o 'Version\s*=\s*"[^"]*"' "$version_file" | sed -E 's/.*"([^"]*)".*$/\1/')
       if [[ -z "$go_version" ]]; then
         # Try again with different formatting
         go_version=$(grep -o 'Version.*"[^"]*"' "$version_file" | sed -E 's/.*"([^"]*)".*$/\1/')
       fi
+      
       if [[ "$go_version" != "$root_version" ]]; then
-        echo -e "${RED}Go version mismatch in ${version_file}: ${go_version} (should be ${root_version})${NC}"
+        echo -e "  ${RED}Go version mismatch: ${go_version} (should be ${root_version})${NC}"
         ((inconsistencies++))
+      else
+        echo -e "  ${GREEN}Go version: ${go_version} ✓${NC}"
       fi
     fi
   done
@@ -360,11 +422,47 @@ cmd_bump_version() {
   local new_version=$(increment_version "$current_version" "$index")
   
   print_header "Bumping version: ${current_version} → ${GREEN}${new_version}${NC}"
+  print_header "This will only update Rinna project versions, not dependency versions"
   
+  # Create a detailed log of what we're about to update
+  local log_file="/tmp/rinna-version-update-$$.log"
+  echo "Rinna Version Update Log - $(date)" > "$log_file"
+  echo "Current version: $current_version" >> "$log_file"
+  echo "New version: $new_version" >> "$log_file"
+  echo "Affected files:" >> "$log_file"
+  echo "- $VERSION_FILE (properties file)" >> "$log_file"
+  echo "- $README_FILE (README badge)" >> "$log_file"
+  
+  # List POM files that will be checked
+  echo "POM files to be checked:" >> "$log_file"
+  for pom_file in $(find "$RINNA_DIR" -name "pom.xml"); do
+    # Check if this POM has org.rinna groupId
+    if grep -q "<groupId>org.rinna</groupId>" "$pom_file"; then
+      echo "- $pom_file (Rinna project, will update version)" >> "$log_file"
+    else
+      echo "- $pom_file (Not a Rinna project, will NOT update version)" >> "$log_file"
+    fi
+  done
+  
+  # List Go files that will be updated
+  echo "Go version files to be updated:" >> "$log_file"
+  for go_file in "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"; do
+    if [ -f "$go_file" ]; then
+      echo "- $go_file" >> "$log_file"
+    else
+      echo "- $go_file (will be created)" >> "$log_file"
+    fi
+  done
+  
+  echo "Starting updates at $(date)" >> "$log_file"
+  
+  # Perform the actual updates
   update_version_properties "$new_version"
   update_pom_versions "$new_version"
   update_readme_version "$new_version"
   update_go_version "$new_version"
+  
+  echo "Updates completed at $(date)" >> "$log_file"
   
   # Generate architecture diagrams for major or minor version bumps
   if [[ "$index" -eq 0 || "$index" -eq 1 ]]; then
@@ -381,7 +479,15 @@ cmd_bump_version() {
     fi
   fi
   
+  # Add all affected files to git
+  print_header "Adding version files to git..."
   git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"
+  
+  # Log the update details
+  echo "Log available at: $log_file"
+  print_success "Created detailed version update log at $log_file"
+  
+  # Commit changes
   git commit -m "Bump version to ${new_version}"
   print_success "Committed version change"
   
@@ -389,7 +495,12 @@ cmd_bump_version() {
     create_git_tag "$new_version" "$message"
   fi
   
-  verify_consistency
+  # Verify consistency and append results to log
+  echo "Verification results:" >> "$log_file"
+  verify_consistency | tee -a "$log_file"
+  
+  print_success "Version bump complete: ${current_version} → ${new_version}"
+  print_success "Note: Only Rinna project versions were updated, not dependency versions"
   
   return 0
 }
@@ -403,11 +514,47 @@ cmd_set() {
   
   local current_version=$(get_version)
   print_header "Setting version: ${current_version} → ${GREEN}${new_version}${NC}"
+  print_header "This will only update Rinna project versions, not dependency versions"
   
+  # Create a detailed log of what we're about to update
+  local log_file="/tmp/rinna-version-update-$$.log"
+  echo "Rinna Version Update Log - $(date)" > "$log_file"
+  echo "Current version: $current_version" >> "$log_file"
+  echo "New version: $new_version" >> "$log_file"
+  echo "Affected files:" >> "$log_file"
+  echo "- $VERSION_FILE (properties file)" >> "$log_file"
+  echo "- $README_FILE (README badge)" >> "$log_file"
+  
+  # List POM files that will be checked
+  echo "POM files to be checked:" >> "$log_file"
+  for pom_file in $(find "$RINNA_DIR" -name "pom.xml"); do
+    # Check if this POM has org.rinna groupId
+    if grep -q "<groupId>org.rinna</groupId>" "$pom_file"; then
+      echo "- $pom_file (Rinna project, will update version)" >> "$log_file"
+    else
+      echo "- $pom_file (Not a Rinna project, will NOT update version)" >> "$log_file"
+    fi
+  done
+  
+  # List Go files that will be updated
+  echo "Go version files to be updated:" >> "$log_file"
+  for go_file in "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"; do
+    if [ -f "$go_file" ]; then
+      echo "- $go_file" >> "$log_file"
+    else
+      echo "- $go_file (will be created)" >> "$log_file"
+    fi
+  done
+  
+  echo "Starting updates at $(date)" >> "$log_file"
+  
+  # Perform the actual updates
   update_version_properties "$new_version"
   update_pom_versions "$new_version"
   update_readme_version "$new_version"
   update_go_version "$new_version"
+  
+  echo "Updates completed at $(date)" >> "$log_file"
   
   # Generate architecture diagrams for major version changes or when changing to x.0.0 versions
   if [[ "${new_version%.*}" != "${current_version%.*}" ]] || [[ "${new_version}" =~ ^[0-9]+\.0\.0$ ]]; then
@@ -424,7 +571,15 @@ cmd_set() {
     fi
   fi
   
+  # Add all affected files to git
+  print_header "Adding version files to git..."
   git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"
+  
+  # Log the update details
+  echo "Log available at: $log_file"
+  print_success "Created detailed version update log at $log_file"
+  
+  # Commit changes
   git commit -m "Set version to ${new_version}"
   print_success "Committed version change"
   
@@ -432,7 +587,12 @@ cmd_set() {
     create_git_tag "$new_version" "$message"
   fi
   
-  verify_consistency
+  # Verify consistency and append results to log
+  echo "Verification results:" >> "$log_file"
+  verify_consistency | tee -a "$log_file"
+  
+  print_success "Version update complete: ${current_version} → ${new_version}"
+  print_success "Note: Only Rinna project versions were updated, not dependency versions"
 }
 
 cmd_release() {
@@ -633,6 +793,12 @@ Release Behavior:
     • Stash changes temporarily (recommended)
     • Continue without committing release type change
     • Abort the release process
+
+Version Updates:
+  - Only Rinna project versions are updated in POM files (org.rinna groupId)
+  - Dependency versions are NEVER updated to avoid unintended version changes
+  - A detailed log file is created at /tmp/rinna-version-update-[PID].log
+  - The verify command checks for version inconsistencies across the project
 
 Examples:
   rin-version current     # Show current version information
