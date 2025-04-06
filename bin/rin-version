@@ -319,6 +319,21 @@ cmd_bump_version() {
   update_readme_version "$new_version"
   update_go_version "$new_version"
   
+  # Generate architecture diagrams for major or minor version bumps
+  if [[ "$index" -eq 0 || "$index" -eq 1 ]]; then
+    if [[ -x "$RINNA_DIR/bin/rin-diagrams" ]]; then
+      print_header "Generating updated architecture diagrams for ${new_version}..."
+      "$RINNA_DIR/bin/rin-diagrams" --force || print_warning "Failed to generate architecture diagrams"
+      
+      # Add new diagrams to git if they were created
+      if [[ -d "$RINNA_DIR/docs/architecture/diagrams" ]]; then
+        git add "$RINNA_DIR/docs/architecture"
+      fi
+    else
+      print_warning "rin-diagrams not found or not executable, skipping architecture diagram generation"
+    fi
+  fi
+  
   git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"
   git commit -m "Bump version to ${new_version}"
   print_success "Committed version change"
@@ -346,6 +361,21 @@ cmd_set() {
   update_pom_versions "$new_version"
   update_readme_version "$new_version"
   update_go_version "$new_version"
+  
+  # Generate architecture diagrams for major version changes or when changing to x.0.0 versions
+  if [[ "${new_version%.*}" != "${current_version%.*}" ]] || [[ "${new_version}" =~ ^[0-9]+\.0\.0$ ]]; then
+    if [[ -x "$RINNA_DIR/bin/rin-diagrams" ]]; then
+      print_header "Generating updated architecture diagrams for ${new_version}..."
+      "$RINNA_DIR/bin/rin-diagrams" --force || print_warning "Failed to generate architecture diagrams"
+      
+      # Add new diagrams to git if they were created
+      if [[ -d "$RINNA_DIR/docs/architecture/diagrams" ]]; then
+        git add "$RINNA_DIR/docs/architecture"
+      fi
+    else
+      print_warning "rin-diagrams not found or not executable, skipping architecture diagram generation"
+    fi
+  fi
   
   git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"
   git commit -m "Set version to ${new_version}"
