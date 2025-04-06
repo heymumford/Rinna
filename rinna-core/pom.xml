@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.rinna</groupId>
         <artifactId>Rinna</artifactId>
-        <version>1.6.3</version>
+        <version>1.7.0</version>
     </parent>
 
     <artifactId>rinna-core</artifactId>
@@ -15,6 +15,20 @@
     <description>Core domain model and services for Rinna workflow management</description>
 
     <dependencies>
+        <!-- JUnit platform suite for tests -->
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite-api</artifactId>
+            <version>1.10.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite-engine</artifactId>
+            <version>1.10.2</version>
+            <scope>test</scope>
+        </dependency>
+        
         <!-- SQLite for local storage -->
         <dependency>
             <groupId>org.xerial</groupId>
@@ -273,6 +287,17 @@
                     <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
                 </configuration>
                 <dependencies>
+                    <!-- JUnit platform dependencies for surefire -->
+                    <dependency>
+                        <groupId>org.junit.platform</groupId>
+                        <artifactId>junit-platform-suite-api</artifactId>
+                        <version>1.10.2</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.junit.platform</groupId>
+                        <artifactId>junit-platform-suite-engine</artifactId>
+                        <version>1.10.2</version>
+                    </dependency>
                     <dependency>
                         <groupId>org.junit.jupiter</groupId>
                         <artifactId>junit-jupiter-engine</artifactId>
