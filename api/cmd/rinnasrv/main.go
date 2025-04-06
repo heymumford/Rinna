@@ -130,7 +130,7 @@ func main() {
 	handlers.RegisterWorkItemRoutes(api, javaClient)
 	handlers.RegisterReleaseRoutes(api, javaClient)
 	handlers.RegisterProjectRoutes(api, javaClient)
-	handlers.RegisterWebhookRoutes(api, javaClient)
+	handlers.RegisterWebhookRoutes(api, javaClient, authService)
 	
 	// Create health handler with Java client checker
 	javaChecker := &JavaHealthChecker{client: javaClient}

@@ -9,40 +9,41 @@
 package handlers
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/heymumford/rinna/api/internal/client"
+	"github.com/heymumford/rinna/api/internal/middleware"
 	"github.com/heymumford/rinna/api/internal/models"
 )
 
 // WebhookHandler handles webhook-related requests
 type WebhookHandler struct {
-	javaClient *client.JavaClient
+	javaClient  *client.JavaClient
+	authService *middleware.AuthService
 }
 
 // NewWebhookHandler creates a new webhook handler
-func NewWebhookHandler(javaClient *client.JavaClient) *WebhookHandler {
+func NewWebhookHandler(javaClient *client.JavaClient, authService *middleware.AuthService) *WebhookHandler {
 	return &WebhookHandler{
-		javaClient: javaClient,
+		javaClient:  javaClient,
+		authService: authService,
 	}
 }
 
 // RegisterWebhookRoutes registers webhook-related routes
-func RegisterWebhookRoutes(router *mux.Router, javaClient *client.JavaClient) {
+func RegisterWebhookRoutes(router *mux.Router, javaClient *client.JavaClient, authService *middleware.AuthService) {
 	// Create handler with dependencies
-	handler := NewWebhookHandler(javaClient)
+	handler := NewWebhookHandler(javaClient, authService)
 
 	// Register routes
-	router.HandleFunc("/webhooks/github", handler.HandleGitHubWebhook).Methods(http.MethodPost)
+	router.HandleFunc("/webhooks/github", handler.HandleGitHubWebhook).Methods(http.MethodPost) // For backward compatibility
+	router.HandleFunc("/api/v1/webhooks/github", handler.HandleGitHubWebhook).Methods(http.MethodPost) // New API path
 }
 
 // HandleGitHubWebhook handles GitHub webhook requests
@@ -76,10 +77,9 @@ func (h *WebhookHandler) HandleGitHubWebhook(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// TODO: Real implementation will validate the signature and project with the Java backend
-	// For now, check a basic hash for demonstration
-	if !validateSignature(projectKey, body, signature) {
-		http.Error(w, "Invalid webhook signature", http.StatusUnauthorized)
+	// Validate the signature with the auth service
+	if err := h.authService.ValidateWebhookSignature(r.Context(), projectKey, "github", signature, body); err != nil {
+		http.Error(w, "Invalid webhook signature: "+err.Error(), http.StatusUnauthorized)
 		return
 	}
 
@@ -146,17 +146,10 @@ func (h *WebhookHandler) handlePullRequestEvent(projectKey string, payload []byt
 		},
 	}
 
-	// Call the Java service (simulated here)
-	// TODO: Replace with real implementation using javaClient
-	workItem := &models.WorkItem{
-		ID: uuid.MustParse("00000000-0000-0000-0000-000000000001"), // This would normally come from the Java backend
-		Title: workItemReq.Title,
-		Description: workItemReq.Description,
-		Type: workItemReq.Type,
-		Priority: workItemReq.Priority,
-		Status: models.WorkflowStateFound,
-		ProjectID: projectKey,
-		Metadata: workItemReq.Metadata,
+	// Create the work item via the Java client
+	workItem, err := h.javaClient.CreateWorkItem(context.Background(), workItemReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create work item: %w", err)
 	}
 
 	return map[string]interface{}{
@@ -198,17 +191,10 @@ func (h *WebhookHandler) handleWorkflowRunEvent(projectKey string, payload []byt
 		},
 	}
 
-	// Call the Java service (simulated here)
-	// TODO: Replace with real implementation using javaClient
-	workItem := &models.WorkItem{
-		ID: uuid.MustParse("00000000-0000-0000-0000-000000000002"), // This would normally come from the Java backend
-		Title: workItemReq.Title,
-		Description: workItemReq.Description,
-		Type: workItemReq.Type,
-		Priority: workItemReq.Priority,
-		Status: models.WorkflowStateFound,
-		ProjectID: projectKey,
-		Metadata: workItemReq.Metadata,
+	// Create the work item via the Java client
+	workItem, err := h.javaClient.CreateWorkItem(context.Background(), workItemReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create work item: %w", err)
 	}
 
 	return map[string]interface{}{
@@ -260,17 +246,10 @@ func (h *WebhookHandler) handlePushEvent(projectKey string, payload []byte) (int
 		},
 	}
 
-	// Call the Java service (simulated here)
-	// TODO: Replace with real implementation using javaClient
-	workItem := &models.WorkItem{
-		ID: uuid.MustParse("00000000-0000-0000-0000-000000000003"), // This would normally come from the Java backend
-		Title: workItemReq.Title,
-		Description: workItemReq.Description,
-		Type: workItemReq.Type,
-		Priority: workItemReq.Priority,
-		Status: models.WorkflowStateFound,
-		ProjectID: projectKey,
-		Metadata: workItemReq.Metadata,
+	// Create the work item via the Java client
+	workItem, err := h.javaClient.CreateWorkItem(context.Background(), workItemReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create work item: %w", err)
 	}
 
 	return map[string]interface{}{
@@ -310,17 +289,10 @@ func (h *WebhookHandler) handleIssuesEvent(projectKey string, payload []byte) (i
 		},
 	}
 
-	// Call the Java service (simulated here)
-	// TODO: Replace with real implementation using javaClient
-	workItem := &models.WorkItem{
-		ID: uuid.MustParse("00000000-0000-0000-0000-000000000004"), // This would normally come from the Java backend
-		Title: workItemReq.Title,
-		Description: workItemReq.Description,
-		Type: workItemReq.Type,
-		Priority: workItemReq.Priority,
-		Status: models.WorkflowStateFound,
-		ProjectID: projectKey,
-		Metadata: workItemReq.Metadata,
+	// Create the work item via the Java client
+	workItem, err := h.javaClient.CreateWorkItem(context.Background(), workItemReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create work item: %w", err)
 	}
 
 	return map[string]interface{}{
@@ -329,21 +301,3 @@ func (h *WebhookHandler) handleIssuesEvent(projectKey string, payload []byte) (i
 	}, nil
 }
 
-// validateSignature validates the GitHub webhook signature
-// This is a simplified implementation for demonstration
-func validateSignature(projectKey string, payload []byte, signature string) bool {
-	// In a real implementation, we would:
-	// 1. Look up the webhook secret for the projectKey
-	// 2. Compute the HMAC using the secret
-	// 3. Compare with the provided signature
-	
-	// For demonstration purposes, we'll use a fixed secret
-	secret := "gh-webhook-secret-1234"
-	
-	// Compute the HMAC
-	mac := hmac.New(sha256.New, []byte(secret))
-	mac.Write(payload)
-	expectedSignature := hex.EncodeToString(mac.Sum(nil))
-	
-	return hmac.Equal([]byte(signature), []byte(expectedSignature))
-}
