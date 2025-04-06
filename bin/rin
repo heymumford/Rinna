@@ -218,6 +218,14 @@ case "$CATEGORY" in
       error "bin/rin-diagrams not found or not executable"
     fi
     ;;
+  add|list|view|update)
+    # Work item commands - handled by rin-cli
+    if [[ -x "$SCRIPT_DIR/rin-cli" ]]; then
+      exec "$SCRIPT_DIR/rin-cli" "$CATEGORY" "$@"
+    else
+      error "bin/rin-cli not found or not executable"
+    fi
+    ;;
   --version)
     # Handle version flag by using the version command
     if [[ -x "$SCRIPT_DIR/rin-version" ]]; then
