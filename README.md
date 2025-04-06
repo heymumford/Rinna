@@ -133,7 +133,7 @@ See [Build System](docs/development/build-system.md) for detailed documentation.
 
 ### Version Management
 
-The project uses a centralized version management approach with `version.properties` as the single source of truth:
+The project uses a centralized version management approach with `version.properties` as the single source of truth for all components (Java, Go, Python):
 
 ```bash
 bin/rin version current   # View version information
@@ -143,6 +143,12 @@ bin/rin version verify    # Check consistency
 bin/rin version update    # Sync all files with version.properties
 bin/rin version release   # Create a release with git tag
 ```
+
+Key features of our versioning system:
+- **Single Source of Truth**: All components read from `version.properties`
+- **Cross-Language Support**: Java, Go, and Python use the same version
+- **Consistency Verification**: Checks all components have the same version
+- **Automated Updates**: Updates all components when version changes
 
 Integration with the build system enables streamlined release workflows:
 ```bash
