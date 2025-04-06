@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to validate version consistency across the project
+# Enhanced version consistency checker for Rinna cross-language architecture
 
 set -e
 
@@ -28,8 +28,8 @@ if [[ -z "$EXPECTED_VERSION" ]]; then
 fi
 
 echo -e "${BLUE}=== Rinna Version Check Tool ===${NC}"
-echo "Checking version consistency across the project..."
-echo "Expected version: ${EXPECTED_VERSION}"
+echo "Checking version consistency across Java, Go, and Python..."
+echo "Expected version from version.properties: ${GREEN}${EXPECTED_VERSION}${NC}"
 echo ""
 
 # Initialize counters
@@ -74,31 +74,100 @@ function check_version() {
     fi
 }
 
-# Check POM files
-check_version "pom.xml" "<version>[0-9]+\.[0-9]+\.[0-9]+</version>" "groupId>org.rinna</groupId>"
-check_version "rinna-core/pom.xml" "<version>[0-9]+\.[0-9]+\.[0-9]+</version>" "<parent>"
+# Function to check all POM files in the project
+function check_all_pom_files() {
+    echo -e "${BLUE}Checking Java/Maven...${NC}"
+    
+    # Find all pom.xml files in the project
+    local pom_files=$(find "$PROJECT_ROOT" -name "pom.xml" -type f)
+    
+    for pom in $pom_files; do
+        # Check if it's a Rinna project (contains org.rinna groupId)
+        if grep -q "<groupId>org.rinna</groupId>" "$pom"; then
+            # Check project version
+            check_version "$pom" "<version>[0-9]+\.[0-9]+\.[0-9]+</version>" "groupId>org.rinna</groupId>"
+            
+            # Check parent version if it references org.rinna
+            if grep -q "<parent>" "$pom" && grep -q "<groupId>org.rinna</groupId>" "$pom"; then
+                check_version "$pom" "<version>[0-9]+\.[0-9]+\.[0-9]+</version>" "<parent>"
+            fi
+        fi
+    done
+}
 
-# Check Go version files
-check_version "api/internal/version/version.go" "Version[[:space:]]*=[[:space:]]*\"[0-9]+\.[0-9]+\.[0-9]+\"" 
-check_version "api/pkg/health/version.go" "Version[[:space:]]*=[[:space:]]*\"[0-9]+\.[0-9]+\.[0-9]+\"" 
+# Check all Go version files in the project
+function check_go_files() {
+    echo -e "${BLUE}Checking Go...${NC}"
 
-# Check YAML config files
-check_version "api/configs/config.yaml" "version:.*\"[0-9]+\.[0-9]+\.[0-9]+\"" "project:"
+    # Check specific Go version files we know about
+    check_version "api/internal/version/version.go" "Version[[:space:]]*=[[:space:]]*\"[0-9]+\.[0-9]+\.[0-9]+\"" 
+    check_version "api/pkg/health/version.go" "Version[[:space:]]*=[[:space:]]*\"[0-9]+\.[0-9]+\.[0-9]+\"" 
+    
+    # Find any additional version.go files
+    local additional_files=$(find "$PROJECT_ROOT/api" -name "version.go" -type f | grep -v -E "/(internal/version|pkg/health)/")
+    
+    for file in $additional_files; do
+        check_version "$file" "Version[[:space:]]*=[[:space:]]*\"[0-9]+\.[0-9]+\.[0-9]+\"" 
+    done
+    
+    # Check YAML config files
+    check_version "api/configs/config.yaml" "version:.*\"[0-9]+\.[0-9]+\.[0-9]+\"" "project:"
+}
+
+# Check Python files
+function check_python_files() {
+    echo -e "${BLUE}Checking Python...${NC}"
+    
+    # Check pyproject.toml
+    check_version "pyproject.toml" "version[[:space:]]*=[[:space:]]*\"[0-9]+\.[0-9]+\.[0-9]+\""
+    
+    # Check Python version files
+    check_version "python/rinna/__init__.py" "__version__[[:space:]]*=[[:space:]]*[\"'][0-9]+\.[0-9]+\.[0-9]+[\"']"
+    check_version "bin/rinna_config.py" "VERSION[[:space:]]*=[[:space:]]*[\"'][0-9]+\.[0-9]+\.[0-9]+[\"']"
+    
+    # Check virtual env version file
+    if [ -f ".venv/version" ]; then
+        local venv_version=$(cat ".venv/version" | tr -d '[:space:]')
+        CHECKS=$((CHECKS+1))
+        
+        if [ "$venv_version" != "$EXPECTED_VERSION" ]; then
+            echo -e "${RED}ERROR: Version mismatch in .venv/version${NC}"
+            echo -e "  Expected: $EXPECTED_VERSION"
+            echo -e "  Found:    $venv_version"
+            INCONSISTENCIES=$((INCONSISTENCIES+1))
+        else
+            echo -e "${GREEN}✓ .venv/version: $venv_version${NC}"
+        fi
+    fi
+}
 
 # Check documentation files
-check_version "docs/development/configuration.md" "current project version is \*\*[0-9]+\.[0-9]+\.[0-9]+\*\*" 
+function check_documentation() {
+    echo -e "${BLUE}Checking Documentation...${NC}"
+    
+    # Common documentation files that might contain version numbers
+    check_version "README.md" "badge/version-[0-9]+\.[0-9]+\.[0-9]+"
+    check_version "docs/development/configuration.md" "current project version is \*\*[0-9]+\.[0-9]+\.[0-9]+\*\*"
+    check_version "docs/user-guide/README.md" "[Vv]ersion[[:space:]]*[0-9]+\.[0-9]+\.[0-9]+"
+}
+
+# Run all checks
+check_all_pom_files
+check_go_files
+check_python_files
+check_documentation
 
 # Print summary
 echo ""
-echo "Version check summary:"
+echo -e "${BLUE}Version check summary:${NC}"
 echo "---------------------"
 echo "Checks performed: $CHECKS"
 echo "Inconsistencies found: $INCONSISTENCIES"
 
 if [ $INCONSISTENCIES -eq 0 ]; then
-    echo -e "${GREEN}All version references are consistent!${NC}"
+    echo -e "${GREEN}✓ All version references are consistent across Java, Go, and Python: $EXPECTED_VERSION${NC}"
     exit 0
 else
-    echo -e "${RED}Found version inconsistencies that need to be fixed.${NC}"
+    echo -e "${RED}✗ Found version inconsistencies. Run 'bin/rin-version update' to fix them.${NC}"
     exit 1
 fi
