@@ -11,11 +11,23 @@ cd "$PROJECT_ROOT"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Get the expected version from version.properties
+if [ ! -f "version.properties" ]; then
+    echo -e "${RED}ERROR: version.properties file not found!${NC}"
+    exit 1
+fi
+
 EXPECTED_VERSION=$(grep "^version=" version.properties | cut -d'=' -f2)
 
+if [[ -z "$EXPECTED_VERSION" ]]; then
+    echo -e "${RED}ERROR: Could not extract version from version.properties!${NC}"
+    exit 1
+fi
+
+echo -e "${BLUE}=== Rinna Version Check Tool ===${NC}"
 echo "Checking version consistency across the project..."
 echo "Expected version: ${EXPECTED_VERSION}"
 echo ""
@@ -67,8 +79,8 @@ check_version "pom.xml" "<version>[0-9]+\.[0-9]+\.[0-9]+</version>" "groupId>org
 check_version "rinna-core/pom.xml" "<version>[0-9]+\.[0-9]+\.[0-9]+</version>" "<parent>"
 
 # Check Go version files
-check_version "api/internal/version/version.go" "Version.*=.*\"[0-9]+\.[0-9]+\.[0-9]+\"" 
-check_version "api/pkg/health/version.go" "Version.*=.*\"[0-9]+\.[0-9]+\.[0-9]+\"" 
+check_version "api/internal/version/version.go" "Version[[:space:]]*=[[:space:]]*\"[0-9]+\.[0-9]+\.[0-9]+\"" 
+check_version "api/pkg/health/version.go" "Version[[:space:]]*=[[:space:]]*\"[0-9]+\.[0-9]+\.[0-9]+\"" 
 
 # Check YAML config files
 check_version "api/configs/config.yaml" "version:.*\"[0-9]+\.[0-9]+\.[0-9]+\"" "project:"

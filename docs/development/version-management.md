@@ -11,13 +11,25 @@ Rinna uses a central properties file as the source of truth for version informat
 The project version is defined in `version.properties` in the root directory:
 
 ```properties
-version=1.2.4         # Project version in semver format
-lastUpdated=2025-04-04 # Date when version was last updated
-releaseType=SNAPSHOT  # SNAPSHOT or RELEASE
-buildNumber=1         # Build number
+# Core version information
+version=1.3.0
+version.major=1
+version.minor=3
+version.patch=0
+version.qualifier=
+version.full=1.3.0
+
+# Release information
+lastUpdated=2025-04-05
+releaseType=RELEASE
+buildNumber=1
+
+# Build information
+build.timestamp=2025-04-05T01:22:32Z
+build.git.commit=runtime
 ```
 
-This file serves as the single source of truth for version information throughout the project, eliminating version inconsistencies.
+This file serves as the single source of truth for version information throughout the project, eliminating version inconsistencies across Java, Go, and other languages.
 
 ## Version Management Tool
 
@@ -56,6 +68,9 @@ The version management system automatically maintains consistency across:
 1. `version.properties` - Source of truth
 2. All POM files - Both project and parent versions  
 3. README.md - Version badge and Maven examples
+4. Go version files - Version constants in Go code
+5. API configuration files - Version in YAML files
+6. Documentation - Version references throughout the documentation
 
 ## Workflow for Version Changes
 
@@ -172,11 +187,21 @@ This will:
 
 ## Implementation
 
-The version management system is implemented in `bin/rin-version`, with these key functions:
+The version management system is implemented across several scripts:
 
-- `get_version()`: Retrieve version from version.properties
-- `update_version_properties()`: Update the version.properties file
-- `update_pom_versions()`: Update all POM files
-- `update_readme_version()`: Update README references
-- `verify_consistency()`: Check version consistency across files
-- `create_git_tag()`: Create git tag for the current version
+1. `bin/rin-version`: Main version management tool with these key functions:
+   - `get_version()`: Retrieve version from version.properties
+   - `update_version_properties()`: Update the version.properties file
+   - `verify_consistency()`: Check version consistency across files
+   - `create_git_tag()`: Create git tag for the current version
+
+2. `bin/update-versions.sh`: Updates all version references:
+   - Updates POM files in Java code
+   - Updates Go version files
+   - Updates configuration files
+   - Updates documentation
+
+3. `bin/check-versions.sh`: Validates version consistency:
+   - Checks version in all relevant files
+   - Reports any inconsistencies
+   - Provides detailed output for debugging
