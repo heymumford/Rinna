@@ -18,6 +18,40 @@ buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+
+# Go
+/api/bin/
+/api/rinnasrv
+/api/test_health
+/api/test_health.go
+
 # IntelliJ IDEA
 .idea/
 *.iml
@@ -55,6 +89,11 @@ local.properties
 .DS_Store
 Thumbs.db
 
+# Environment files
+.env
+.env.*
+!.env.example
+
 # Project specific
 SimpleTest*.class
 SimpleTest.java
@@ -70,3 +109,11 @@ CLAUDE.md
 /bin/fix-java-files.sh
 /bin/restore-files.sh
 /bin/update-headers.sh
+
+# Runtime files
+*.sqlite
+*.sqlite3
+*.db
+
+# Generated files
+/docs/architecture/diagrams/
