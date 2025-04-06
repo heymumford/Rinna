@@ -487,36 +487,14 @@
             </build>
         </profile>
         
-        <!-- Local CI testing profile - runs dependency check asynchronously -->
+        <!-- Local CI testing profile - note: use bin/run-ci-local.sh instead
+             This profile is kept simple as a reminder of how to run local CI testing -->
         <profile>
             <id>ci-local</id>
-            <build>
-                <plugins>
-                    <!-- Run OWASP dependency check asynchronously for local testing -->
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.2.0</version>
-                        <executions>
-                            <execution>
-                                <id>run-owasp-async</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <configuration>
-                                    <executable>bash</executable>
-                                    <arguments>
-                                        <argument>-c</argument>
-                                        <argument>mvn org.owasp:dependency-check-maven:check -Ddependency-check.skip=false -Ddependency-check.failBuildOnCVSS=8 -Ddependency-check.nvdApiDelay=1000 -Ddependency-check.format=HTML,JSON > dependency-check.log 2>&1 &amp;amp;</argument>
-                                    </arguments>
-                                    <async>true</async>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
+            <properties>
+                <dependency-check.skip>true</dependency-check.skip>
+                <skipTests>false</skipTests>
+            </properties>
         </profile>
         
         <!-- Profile to run architecture validation checks -->
