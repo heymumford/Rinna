@@ -12,5 +12,5 @@ package version
 var (
 	Version   = "1.2.7"
 	CommitSHA = "runtime"
-	BuildTime = "2025-04-06T00:34:12Z"
+	BuildTime = "2025-04-06T01:22:32Z"
 )
