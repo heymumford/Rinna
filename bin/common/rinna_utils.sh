@@ -467,11 +467,12 @@ command_exists() {
 }
 
 # Ensure the script is being sourced, not executed
+# Only apply this check when the script is being run directly, not when sourced by another script
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   print_error "This script should be sourced, not executed directly."
   print_error "Usage: source $(basename "${BASH_SOURCE[0]}")"
   exit 1
+else
+  # Display a message when the script is sourced
+  print_debug "Rinna utilities loaded from $(basename "${BASH_SOURCE[0]}")"
 fi
-
-# Display a message when the script is sourced
-print_debug "Rinna utilities loaded from $(basename "${BASH_SOURCE[0]}")"
