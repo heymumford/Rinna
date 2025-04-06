@@ -1,4 +1,4 @@
-#\!/usr/bin/env bash
+#!/usr/bin/env bash
 #
 # rinna_utils.sh - Common utility functions for Rinna shell scripts
 #
