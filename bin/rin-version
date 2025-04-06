@@ -462,12 +462,18 @@ cmd_release() {
         print_header "Stashing changes temporarily"
         git stash push -m "Stashed changes before release ${current_version}"
         
-        # Update release type
-        sed -i "s/^releaseType=.*/releaseType=RELEASE/" "$VERSION_FILE"
-        git add "$VERSION_FILE"
-        if ! git commit -m "Update release type for version ${current_version}"; then
-          git stash pop
-          print_error "Failed to commit release type change"
+        # Update release type if needed
+        local current_release_type=$(get_property "releaseType")
+        if [[ "$current_release_type" != "RELEASE" ]]; then
+          sed -i "s/^releaseType=.*/releaseType=RELEASE/" "$VERSION_FILE"
+          git add "$VERSION_FILE"
+          if ! git commit -m "Update release type for version ${current_version}"; then
+            git stash pop
+            print_error "Failed to commit release type change"
+          fi
+          print_success "Updated release type to RELEASE"
+        else
+          print_warning "Release type is already set to RELEASE, skipping update"
         fi
         
         # Flag to pop stash at the end
@@ -476,7 +482,13 @@ cmd_release() {
       2)
         # Skip commit
         print_warning "Skipping release type commit"
-        sed -i "s/^releaseType=.*/releaseType=RELEASE/" "$VERSION_FILE"
+        local current_release_type=$(get_property "releaseType")
+        if [[ "$current_release_type" != "RELEASE" ]]; then
+          sed -i "s/^releaseType=.*/releaseType=RELEASE/" "$VERSION_FILE"
+          print_success "Updated release type to RELEASE (not committed)"
+        else
+          print_warning "Release type is already set to RELEASE, no change needed"
+        fi
         local skip_commit=true
         ;;
       3)
@@ -489,9 +501,15 @@ cmd_release() {
     esac
   else
     # Normal process when there are no uncommitted changes
-    sed -i "s/^releaseType=.*/releaseType=RELEASE/" "$VERSION_FILE"
-    git add "$VERSION_FILE"
-    git commit -m "Update release type for version ${current_version}"
+    local current_release_type=$(get_property "releaseType")
+    if [[ "$current_release_type" != "RELEASE" ]]; then
+      sed -i "s/^releaseType=.*/releaseType=RELEASE/" "$VERSION_FILE"
+      git add "$VERSION_FILE"
+      git commit -m "Update release type for version ${current_version}"
+      print_success "Updated release type to RELEASE"
+    else
+      print_warning "Release type is already set to RELEASE, skipping update"
+    fi
   fi
   
   # Create git tag if it doesn't exist
