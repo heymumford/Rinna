@@ -17,7 +17,7 @@ markers = [
 ]
 
 [tool.mypy]
-python_version = "1.5.0"
+python_version = "1.6.3"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -34,7 +34,7 @@ multi_line_output = 3
 
 [tool.ruff]
 line-length = 88
-target-version = "1.5.0"
+target-version = "1.6.3"
 select = ["E", "F", "B", "S", "I"]
 ignore = []
 

@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.rinna</groupId>
         <artifactId>Rinna</artifactId>
-        <version>1.6.2</version>
+        <version>1.6.3</version>
     </parent>
 
     <artifactId>rinna-cli</artifactId>
