@@ -8,9 +8,9 @@
 
 package org.rinna.adapter.persistence;
 
-import org.rinna.domain.entity.DefaultWorkItem;
 import org.rinna.domain.entity.WorkItem;
 import org.rinna.domain.entity.WorkItemCreateRequest;
+import org.rinna.domain.entity.WorkItemRecord;
 import org.rinna.domain.entity.WorkItemType;
 import org.rinna.domain.entity.WorkflowState;
 import org.rinna.domain.repository.ItemRepository;
@@ -39,7 +39,7 @@ public class InMemoryItemRepository implements ItemRepository {
     
     @Override
     public WorkItem create(WorkItemCreateRequest request) {
-        DefaultWorkItem item = new DefaultWorkItem(UUID.randomUUID(), request);
+        WorkItem item = WorkItemRecord.fromRequest(UUID.randomUUID(), request);
         return save(item);
     }
     
