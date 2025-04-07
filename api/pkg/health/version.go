@@ -10,7 +10,7 @@ package health
 
 // These values are set during the build process
 var (
-	Version   = "1.8.1"
+	Version   = "1.10.3"
 	CommitSHA = "runtime"
-	BuildTime = "2025-04-07T11:17:32Z"
+	BuildTime = "2025-04-07T20:31:05Z"
 )

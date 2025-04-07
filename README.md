@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Java Version](https://img.shields.io/badge/java-21-orange.svg)](https://openjdk.java.net/projects/jdk/21/)
 [![Go Version](https://img.shields.io/badge/go-1.21-blue.svg)](https://golang.org/doc/go1.21)
-[![Version](https://img.shields.io/badge/version-1.8.1-blue.svg)](https://github.com/heymumford/Rinna/releases)
+[![Version](https://img.shields.io/badge/version-1.10.3-blue.svg)](https://github.com/heymumford/Rinna/releases)
 [![GitHub Stars](https://img.shields.io/github/stars/heymumford/Rinna?style=social)](https://github.com/heymumford/Rinna/stargazers)
 
 [📥 Download](https://github.com/heymumford/Rinna/releases) • [📚 Documentation](docs/) • [🚀 Getting Started](docs/getting-started/README.md) • [🧪 Testing](docs/testing/TESTING_STRATEGY.md) • [🤝 Contribute](docs/development/contribution.md) • [📋 Changelog](CHANGELOG.md) • [📁 Folders](FOLDERS.md) • [🔄 CI Status](docs/development/ci-workflow.md)
@@ -70,6 +70,34 @@ curl -X POST "http://localhost:8080/api/v1/workitems" \
     "type": "FEATURE",
     "priority": "HIGH"
   }'
+```
+
+### Administrative Operations
+
+```bash
+# Audit log management
+bin/rin admin audit list                                  # List recent audit events
+bin/rin admin audit configure --retention=90              # Configure audit log retention (days)
+bin/rin admin audit export --format=csv                   # Export audit logs to file
+
+# Compliance management
+bin/rin admin compliance report financial                 # Generate financial compliance report
+bin/rin admin compliance validate --project=demo          # Validate project compliance
+bin/rin admin compliance configure --framework=iso27001   # Set compliance framework
+
+# System monitoring
+bin/rin admin monitor dashboard                           # Display system dashboard
+bin/rin admin monitor metrics --type=system               # Show system metrics
+bin/rin admin monitor alerts                              # Display active alerts
+
+# System diagnostics
+bin/rin admin diagnostics run                             # Run comprehensive diagnostics
+bin/rin admin diagnostics schedule --interval=daily       # Schedule daily diagnostics
+
+# Backup and recovery
+bin/rin admin backup configure --location=/backup         # Configure backup location
+bin/rin admin backup start --type=full                    # Start full system backup
+bin/rin admin recovery plan --from=latest                 # Create recovery plan
 ```
 
 ## Installation
@@ -352,4 +380,3 @@ All intellectual property rights remain with Eric C. Mumford (@heymumford).
 
 *Built for developers who want to get things done, not fiddle with process.*
 
-</div>
