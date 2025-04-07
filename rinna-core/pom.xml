@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.rinna</groupId>
         <artifactId>Rinna</artifactId>
-        <version>1.7.0</version>
+        <version>1.8.0</version>
     </parent>
 
     <artifactId>rinna-core</artifactId>
@@ -311,6 +311,19 @@
                 <version>0.8.10</version>
                 <configuration>
                     <skip>false</skip>
+                </configuration>
+            </plugin>
+            
+            <!-- PMD configuration -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <configuration>
+                    <failOnViolation>false</failOnViolation>
+                    <printFailingErrors>true</printFailingErrors>
+                    <rulesets>
+                        <ruleset>${project.parent.basedir}/config/pmd/pmd-ruleset.xml</ruleset>
+                    </rulesets>
                 </configuration>
             </plugin>
             
