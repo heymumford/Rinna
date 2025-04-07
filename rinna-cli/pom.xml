@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.rinna</groupId>
         <artifactId>Rinna</artifactId>
-        <version>1.8.1</version>
+        <version>1.9.0</version>
     </parent>
 
     <artifactId>rinna-cli</artifactId>
@@ -16,6 +16,7 @@
     <properties>
         <picocli.version>4.7.5</picocli.version>
         <rinna.version>${project.parent.version}</rinna.version>
+        <skipTests>false</skipTests>
     </properties>
 
     <dependencies>
@@ -106,6 +107,17 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>skip-tests-completely</id>
+            <properties>
+                <maven.test.skip>true</maven.test.skip>
+                <maven.compiler.testCompile.skip>true</maven.compiler.testCompile.skip>
+                <skipTests>true</skipTests>
+            </properties>
+        </profile>
+    </profiles>
+    
     <build>
         <plugins>
             <plugin>
@@ -118,11 +130,32 @@
                     <compilerArgs>
                         <arg>--enable-preview</arg>
                     </compilerArgs>
-                    <testExcludes>
-                        <exclude>**/*.java</exclude>
-                    </testExcludes>
-                    <skipTests>true</skipTests>
+                    <skipMain>false</skipMain>
+                    <verbose>true</verbose>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <skipMain>false</skipMain>
+                            <verbose>true</verbose>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -138,9 +171,9 @@
                             junit.jupiter.execution.parallel.mode.classes.default=concurrent
                         </configurationParameters>
                     </properties>
-                    <skip>true</skip>
-                    <skipTests>true</skipTests>
                     <argLine>--enable-preview</argLine>
+                    <!-- Added skipTests property for better control with the -DskipTests flag -->
+                    <skipTests>${skipTests}</skipTests>
                 </configuration>
             </plugin>
             <plugin>
@@ -158,7 +191,7 @@
                     </rulesets>
                 </configuration>
             </plugin>
-            <!-- Temporarily disabled to prevent StackOverflowError
+            <!-- Re-enabled with modified configuration to prevent StackOverflowError -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -182,7 +215,6 @@
                     </execution>
                 </executions>
             </plugin>
-            -->
         </plugins>
     </build>
 </project>

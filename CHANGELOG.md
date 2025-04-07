@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2025-04-07
+
+### Added
+- Multi-language logging system supporting Java, Python, Bash, and Go
+- Unified logging interface with consistent formatting across languages
+- Context field support for structured logging in all language components
+- Go logging bridge for integration with Java components
+- Python logging bridge with TRACE level support
+- Bash logging bridge with colored console output
+- Cross-language logging tests
+- Comprehensive logging documentation
+
+### Fixed
+- Go module import paths in rinna-logger component
+- Build script for Go logger bridge
+- Module path resolution for cross-language communication
+- Log file management across all supported languages
+
 ## [1.4.0] - 2025-04-06
 
 ### Added
@@ -27,6 +45,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exit code propagation in test scripts to properly report test failures
 - Code organization to better follow Clean Architecture principles
 - Testing pyramid approach to ensure proper coverage across all test types
+
+## [1.7.0] - 2025-04-06
+
+### Added
+- Consolidated documentation for migration tracking
+- Comprehensive test migration status report
+- New clean architecture version service
+- Standardized cross-language approach for all components
+
+### Changed
+- Updated package structure migration status to reflect completion
+- Officially marked CLI module as disabled in build process
+- Streamlined dependency management
+- Improved documentation clarity and organization
+
+### Fixed
+- Finalized package migration for core, main, and API modules
+- Consolidated redundant documentation files
+- Added specific CLI disable flag to Maven build
+- Created migration roadmap for CLI module re-enablement
 
 ## [1.3.14] - 2025-04-05
 
