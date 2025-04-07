@@ -14,8 +14,10 @@ fi
 
 # List of strings to remove
 CLAUDE_PATTERNS=(
-  "🤖 Generated with \\[Claude Code\\]\\(https://claude.ai/code\\)"
-  "Co-Authored-By: Claude <noreply@anthropic.com>"
+  "🤖 Generated with"
+  "Claude Code"
+  "Co-Authored-By: Claude"
+  "noreply@anthropic.com"
   "Anthropic"
   "anthropic"
   "Claude"
@@ -25,7 +27,9 @@ CLAUDE_PATTERNS=(
 # Build filter-branch command to remove all patterns
 FILTER_CMD=""
 for pattern in "${CLAUDE_PATTERNS[@]}"; do
-  FILTER_CMD+="s/$pattern//g; "
+  # Escape special characters in the pattern
+  escaped_pattern=$(echo "$pattern" | sed 's/[\/&]/\\&/g')
+  FILTER_CMD+="s/${escaped_pattern}//g; "
 done
 
 # Use git filter-branch to rewrite history
