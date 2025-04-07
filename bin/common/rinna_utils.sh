@@ -47,7 +47,8 @@ print_success() { echo -e "${GREEN}✓ $1${NC}"; }
 print_warning() { echo -e "${YELLOW}\! $1${NC}"; }
 print_error() { echo -e "${RED}✗ $1${NC}" >&2; }
 print_fatal() { echo -e "${RED}${BOLD}FATAL ERROR: $1${NC}" >&2; exit 1; }
-print_debug() { [[ "$VERBOSE" == "true" ]] && echo -e "${GRAY}DEBUG: $1${NC}"; }
+print_debug() { [[ "${VERBOSE:-$DEBUG}" == "true" ]] && echo -e "${GRAY}DEBUG: $1${NC}"; }
+print_step() { echo -e "  ${MAGENTA}→ $1${NC}"; }
 
 # Logging levels
 LOG_LEVEL_DEBUG=0
@@ -383,7 +384,9 @@ execute_with_timeout() {
     print_debug "Executing: $cmd"
   fi
   
-  local temp_output=$(mktemp)
+  # Create target directory if it doesn't exist
+  mkdir -p "$RINNA_DIR/target/temp"
+  local temp_output="$RINNA_DIR/target/temp/cmd_output_$(date +%s%N).tmp"
   local exit_code=0
   
   if command -v timeout >/dev/null 2>&1; then
@@ -466,13 +469,102 @@ command_exists() {
   command -v "$1" &> /dev/null
 }
 
+# Convert string to uppercase
+to_uppercase() {
+  echo "$1" | tr '[:lower:]' '[:upper:]'
+}
+
+# Get valid work item types
+get_work_item_types() {
+  echo "BUG FEATURE TASK"
+}
+
+# Get valid work item statuses
+get_work_item_statuses() {
+  echo "TODO IN_PROGRESS REVIEW DONE"
+}
+
+# Get valid work item priorities
+get_work_item_priorities() {
+  echo "LOW MEDIUM HIGH CRITICAL"
+}
+
+# Generate a UUID
+create_uuid() {
+  cat /proc/sys/kernel/random/uuid 2>/dev/null || 
+  python -c 'import uuid; print(uuid.uuid4())' 2>/dev/null ||
+  echo "$(date +%s)-$(od -N 8 -t x /dev/urandom | head -1 | cut -d' ' -f2-)"
+}
+
+# Initialize Rinna directory structure
+init_rinna_dir() {
+  local project_root="$1"
+  local rinna_dir="$project_root/.rinna"
+  
+  # Create directory structure if it doesn't exist
+  if [ ! -d "$rinna_dir" ]; then
+    mkdir -p "$rinna_dir/items"
+    mkdir -p "$rinna_dir/workflow"
+    print_success "Initialized Rinna workspace at $rinna_dir"
+  fi
+  
+  echo "$rinna_dir"
+  return 0
+}
+
+# Store work item to JSON file
+store_work_item() {
+  local rinna_dir="$1"
+  local item_id="$2"
+  local title="$3"
+  local description="$4"
+  local type="$5"
+  local priority="$6"
+  local status="$7"
+  local assignee="$8"
+  
+  local items_dir="$rinna_dir/items"
+  local item_file="$items_dir/${item_id}.json"
+  
+  # Make sure directory exists
+  mkdir -p "$items_dir"
+  
+  # Create timestamp
+  local created=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  
+  # Create JSON file
+  cat > "$item_file" << EOF
+{
+  "id": "$item_id",
+  "title": "$title",
+  "description": "$description",
+  "type": "$type",
+  "priority": "$priority",
+  "status": "$status",
+  "assignee": "$assignee",
+  "created": "$created",
+  "updated": "$created"
+}
+EOF
+  
+  # Return the file path if successful
+  if [ -f "$item_file" ]; then
+    echo "$item_file"
+    return 0
+  else
+    return 1
+  fi
+}
+
 # Ensure the script is being sourced, not executed
 # Only apply this check when the script is being run directly, not when sourced by another script
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  print_error "This script should be sourced, not executed directly."
-  print_error "Usage: source $(basename "${BASH_SOURCE[0]}")"
+  echo -e "${RED}✗ This script should be sourced, not executed directly.${NC}" >&2
+  echo -e "${RED}✗ Usage: source $(basename "${BASH_SOURCE[0]}")${NC}" >&2
   exit 1
 else
   # Display a message when the script is sourced
-  print_debug "Rinna utilities loaded from $(basename "${BASH_SOURCE[0]}")"
+  if [[ "${DEBUG:-}" == "true" || "${VERBOSE:-}" == "true" ]]; then
+    echo -e "${GRAY}DEBUG: Rinna utilities loaded from $(basename "${BASH_SOURCE[0]}")${NC}"
+  fi
 fi
