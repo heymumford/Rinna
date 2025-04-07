@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 #
-# rin-test - Advanced Rinna test runner
+# rin-test - Unified test framework for Rinna
 #
-# PURPOSE: Provides a unified interface for running tests with advanced features
-# Integrates with smart-test-runner.sh to use the testing pyramid approach
+# PURPOSE: Execute and manage tests across all languages and frameworks with a consistent interface
 #
 # Copyright (c) 2025 Eric C. Mumford (@heymumford)
 # This file is subject to the terms and conditions defined in
@@ -11,320 +10,747 @@
 # (MIT License)
 #
 
-set -e
+set -eo pipefail
 
-# Constants
-RINNA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CONFIG_FILE="${RINNA_DIR}/version.properties"
+# Determine project directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+LIB_DIR="$SCRIPT_DIR/common"
+# Create target directory if it doesn't exist
+mkdir -p "$PROJECT_ROOT/target/logs" 2>/dev/null || true
+LOG_FILE="$PROJECT_ROOT/target/logs/rinna-test-$(date +%Y%m%d-%H%M%S).log"
 
-# Colors
+# Source common utilities
+if [[ -f "$LIB_DIR/rinna_utils.sh" ]]; then
+  source "$LIB_DIR/rinna_utils.sh"
+else
+  echo "Error: Common utilities not found at $LIB_DIR/rinna_utils.sh"
+  exit 1
+fi
+
+# Colors and formatting
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
 NC='\033[0m' # No Color
-BOLD="\033[1m"
 
-# Defaults
-VERBOSITY="terse"
-TEST_CATEGORY="all"
-PARALLEL=true
-FAIL_FAST=false
-COVERAGE=false
-WATCH=false
-DEBUG=false
-MAX_WORKERS=4
+# Configuration variables
+VERBOSE=false
+PARALLEL=false
+QUIET=false
+CATEGORY="all"
+TEST_MODE="normal"  # normal, minimal, ci, detailed
+OUTPUT_FORMAT="text" # text, json, junit
+LANGUAGES=()
+TARGETS=()
+TAGS=()
+CI_MODE=${CI:-false}
+SHOW_COVERAGE=true  # Always show coverage by default
 
-# UI Functions
-print_header() { echo -e "${BLUE}${BOLD}$1${NC}"; }
-print_success() { echo -e "${GREEN}$1${NC}"; }
-print_warning() { echo -e "${YELLOW}$1${NC}"; }
-print_error() { echo -e "${RED}$1${NC}"; }
-print_error_exit() { echo -e "${RED}$1${NC}"; exit 1; }
-
-# Show help text
+# Display help text
 show_help() {
-  cat << EOF
-${BLUE}${BOLD}rin-test${NC} - Advanced Rinna test runner
+    cat <<EOF
+${BLUE}rin-test${NC} - Unified test framework for Rinna
 
-Usage: rin test [test_type] [options]
+Usage: rin-test [options] [category]
 
-Test Types:
-  all                  Run all tests (default)
-  unit                 Run only unit tests
-  component            Run only component tests
-  integration          Run only integration tests
-  acceptance           Run only acceptance tests
-  bdd                  Run only BDD tests (same as acceptance)
-  performance          Run only performance tests
-  fast                 Run unit and component tests only (quick feedback)
-  essential            Run unit, component, and integration tests
+Test Categories:
+  all               Run all tests (default)
+  unit              Run only unit tests
+  component         Run component tests
+  integration       Run integration tests
+  acceptance        Run acceptance (BDD) tests
+  bdd               Alias for acceptance tests
+  performance       Run performance tests
+  smoke              Run smoke tests (critical tests that run on every git push)
 
-  # Legacy Domain-Specific Categories:
-  workflow             Run workflow domain BDD tests
-  release              Run release domain BDD tests
-  input                Run input interface domain BDD tests
-  api                  Run API integration tests
-  cli                  Run CLI integration tests
-  tag:<name>           Run tests with specific tag
+Language-Specific Tests:
+  java              Run only Java tests
+  go                Run only Go tests
+  python            Run only Python tests
+  cli               Run CLI integration tests
 
-Options:
-  --no-parallel        Disable parallel test execution
-  --fail-fast          Stop on first test failure
-  --coverage           Generate code coverage report
-  --watch              Monitor file changes and run tests automatically
-  --debug              Enable debug output
-  --workers <n>        Set maximum number of parallel workers (default: 4)
-  --verbose            Show detailed output
-  --terse              Show minimal output (default)
-  --errors             Show only errors
-  --help               Show this help message
+Legacy Domain Categories:
+  workflow          Run workflow BDD tests
+  release           Run release BDD tests
+  input             Run input interface BDD tests
+  api               Run API tests
+  admin             Run admin functionality tests
+
+Modifiers:
+  tag:<name>        Run tests with specific tag (e.g., tag:critical)
+  file:<pattern>    Run tests matching file pattern
+  path:<dirname>    Run tests in specific directory
+
+Test Mode Options:
+  --minimal         Run minimal suite of tests (for quick feedback)
+  --ci              Run in CI mode (optimized for continuous integration)
+  --detailed        Run most comprehensive test suite
+
+Output Options:
+  -v, --verbose     Show detailed output
+  -q, --quiet       Minimal output (errors only)
+  --junit           Output results in JUnit XML format
+  --json            Output results in JSON format
+  --log=<file>      Write log to file (default: $LOG_FILE)
+  --no-coverage     Don't show code coverage information
+
+Execution Options:
+  -p, --parallel    Run tests in parallel when supported
+  --jobs=<n>        Number of parallel jobs (default: auto)
+  --timeout=<sec>   Set global timeout in seconds
+  --fast            Skip resource-intensive tests
+  --only=<lang>     Run only tests for specific language(s)
+                    (comma-separated: java,go,python)
+
+Filtering Options:
+  --include=<tag>   Include tests with specific tag (comma-separated)
+  --exclude=<tag>   Exclude tests with specific tag (comma-separated)
+  --target=<name>   Run tests for specific target (comma-separated)
 
 Examples:
-  rin test                    # Run all tests
-  rin test unit               # Run unit tests only
-  rin test workflow           # Run workflow BDD tests
-  rin test fast --fail-fast   # Run fast tests and stop on first failure
-  rin test --coverage         # Run tests with coverage report
-  rin test --watch            # Watch for changes and run tests automatically
+  rin-test                          # Run all tests
+  rin-test unit                     # Run only unit tests
+  rin-test --only=java unit         # Run only Java unit tests
+  rin-test integration --parallel   # Run integration tests in parallel
+  rin-test tag:critical             # Run tests tagged as critical
+  rin-test --include=api,json       # Run tests with api or json tags
+  rin-test --ci workflow            # Run workflow tests in CI mode
 EOF
 }
 
-# Detect if we should use smart test runner
-use_smart_runner() {
-  if [[ -x "$RINNA_DIR/bin/smart-test-runner.sh" ]]; then
-    return 0
-  else
-    return 1
-  fi
-}
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            # Help
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            
+            # Output options
+            -v|--verbose)
+                VERBOSE=true
+                shift
+                ;;
+            -q|--quiet)
+                QUIET=true
+                shift
+                ;;
+            --junit)
+                OUTPUT_FORMAT="junit"
+                shift
+                ;;
+            --json)
+                OUTPUT_FORMAT="json"
+                shift
+                ;;
+            --log=*)
+                LOG_FILE="${1#*=}"
+                shift
+                ;;
+            --no-coverage)
+                SHOW_COVERAGE=false
+                shift
+                ;;
 
-# Map legacy domains to smart test runner options
-map_domain_to_options() {
-  local domain=$1
-  
-  case $domain in
-    workflow)
-      echo "bdd --skip-unit --skip-component --skip-integration --skip-performance" 
-      ;;
-    release)
-      echo "bdd --skip-unit --skip-component --skip-integration --skip-performance"
-      export CUCUMBER_FILTER_TAGS="@release"
-      ;;
-    input)
-      echo "bdd --skip-unit --skip-component --skip-integration --skip-performance"
-      export CUCUMBER_FILTER_TAGS="@input"
-      ;;
-    api)
-      echo "integration --skip-unit --skip-component --skip-acceptance --skip-performance"
-      export TEST_INCLUDE_PATTERN="*APIIntegration*"
-      ;;
-    cli)
-      echo "integration --skip-unit --skip-component --skip-acceptance --skip-performance"
-      export TEST_INCLUDE_PATTERN="*CLIIntegration*"
-      ;;
-    *)
-      echo ""
-      ;;
-  esac
-}
+            # Test modes
+            --minimal)
+                TEST_MODE="minimal"
+                shift
+                ;;
+            --ci)
+                TEST_MODE="ci"
+                CI_MODE=true
+                shift
+                ;;
+            --detailed)
+                TEST_MODE="detailed"
+                shift
+                ;;
 
-# Function to run the Maven legacy tests (for backward compatibility)
-run_maven_tests() {
-  local category=$1
-  shift
-  
-  # Build Maven command
-  local mvn_cmd="mvn test"
-  
-  # Add profile based on category
-  case $category in
-    unit)
-      mvn_cmd="$mvn_cmd -P unit-tests"
-      ;;
-    component)
-      mvn_cmd="$mvn_cmd -P component-tests"
-      ;;
-    integration)
-      mvn_cmd="$mvn_cmd -P integration-tests"
-      ;;
-    acceptance|bdd)
-      mvn_cmd="$mvn_cmd -P acceptance-tests"
-      ;;
-    performance)
-      mvn_cmd="$mvn_cmd -P performance-tests"
-      ;;
-    workflow)
-      mvn_cmd="$mvn_cmd -Dtest=org.rinna.bdd.CucumberRunner -Dcucumber.filter.tags='@workflow'"
-      ;;
-    release)
-      mvn_cmd="$mvn_cmd -Dtest=org.rinna.bdd.ReleaseRunner"
-      ;;
-    input)
-      mvn_cmd="$mvn_cmd -Dtest=org.rinna.bdd.InputInterfaceRunner"
-      ;;
-    api)
-      mvn_cmd="$mvn_cmd -Dtest=org.rinna.bdd.APIIntegrationRunner"
-      ;;
-    cli)
-      mvn_cmd="$mvn_cmd -Dtest=org.rinna.bdd.CLIIntegrationRunner"
-      ;;
-  esac
-  
-  # Add options
-  if [[ "$VERBOSITY" == "verbose" ]]; then
-    mvn_cmd="$mvn_cmd -X"
-  elif [[ "$VERBOSITY" == "terse" ]]; then
-    mvn_cmd="$mvn_cmd -q"
-  elif [[ "$VERBOSITY" == "errors" ]]; then
-    mvn_cmd="$mvn_cmd -q"
-  fi
-  
-  if [[ "$PARALLEL" == "true" ]]; then
-    mvn_cmd="$mvn_cmd -Djunit.jupiter.execution.parallel.enabled=true"
-  else
-    mvn_cmd="$mvn_cmd -Djunit.jupiter.execution.parallel.enabled=false"
-  fi
-  
-  if [[ "$FAIL_FAST" == "true" ]]; then
-    mvn_cmd="$mvn_cmd -Dsurefire.skipAfterFailureCount=1"
-  fi
-  
-  if [[ "$COVERAGE" == "true" ]]; then
-    mvn_cmd="$mvn_cmd -Pjacoco"
-  fi
-  
-  # Run the tests
-  print_header "Running $category tests..."
-  
-  if [[ "$WATCH" == "true" ]]; then
-    print_header "Starting watch mode (press Ctrl+C to stop)..."
-    
-    # First run
-    eval "$mvn_cmd"
-    
-    # Then watch for changes
-    while true; do
-      print_header "Watching for changes..."
-      inotifywait -r -e modify,create,delete "$RINNA_DIR/src" || true
-      
-      print_header "Changes detected, running tests again..."
-      eval "$mvn_cmd"
+            # Execution options
+            -p|--parallel)
+                PARALLEL=true
+                shift
+                ;;
+            --jobs=*)
+                JOBS="${1#*=}"
+                shift
+                ;;
+            --timeout=*)
+                TIMEOUT="${1#*=}"
+                shift
+                ;;
+            --fast)
+                TEST_MODE="minimal"
+                shift
+                ;;
+            --only=*)
+                IFS=',' read -r -a LANGUAGES <<< "${1#*=}"
+                shift
+                ;;
+
+            # Filtering options
+            --include=*)
+                IFS=',' read -r -a TAGS <<< "${1#*=}"
+                shift
+                ;;
+            --exclude=*)
+                IFS=',' read -r -a EXCLUDE_TAGS <<< "${1#*=}"
+                shift
+                ;;
+            --target=*)
+                IFS=',' read -r -a TARGETS <<< "${1#*=}"
+                shift
+                ;;
+
+            # Categories with tag: prefix
+            tag:*)
+                CATEGORY="tag"
+                TAG="${1#tag:}"
+                TAGS+=("$TAG")
+                shift
+                ;;
+                
+            # File pattern
+            file:*)
+                CATEGORY="file"
+                FILE_PATTERN="${1#file:}"
+                shift
+                ;;
+                
+            # Path
+            path:*)
+                CATEGORY="path"
+                TEST_PATH="${1#path:}"
+                shift
+                ;;
+                
+            # Test categories
+            all|unit|component|integration|acceptance|bdd|performance|smoke|workflow|release|input|api|cli|admin|java|go|python)
+                CATEGORY="$1"
+                shift
+                ;;
+                
+            # Unknown option
+            *)
+                echo -e "${RED}Error: Unknown option: $1${NC}"
+                show_help
+                exit 1
+                ;;
+        esac
     done
-  else
-    eval "$mvn_cmd"
-  fi
+
+    # Set CI mode for Jenkins, GitHub Actions, etc.
+    if [[ "$CI" == "true" || "$GITHUB_ACTIONS" == "true" || "$JENKINS_URL" != "" ]]; then
+        CI_MODE=true
+        if [[ "$TEST_MODE" == "normal" ]]; then
+            TEST_MODE="ci"
+        fi
+    fi
+
+    # Convert languages to lowercase
+    for i in "${!LANGUAGES[@]}"; do
+        LANGUAGES[$i]=$(echo "${LANGUAGES[$i]}" | tr '[:upper:]' '[:lower:]')
+    done
+
+    # Set default language to all if empty
+    if [[ ${#LANGUAGES[@]} -eq 0 ]]; then
+        LANGUAGES=("java" "go" "python" "cli")
+    fi
 }
 
-# Parse command line arguments
-SMART_RUNNER_ARGS=""
-LANGUAGE_FILTER=""
-
-# First check for test type (the first non-option argument)
-if [[ $# -gt 0 && ! "$1" =~ ^-- ]]; then
-  TEST_CATEGORY="$1"
-  
-  # Check if this is a language-specific test (e.g., java:unit)
-  if [[ "$TEST_CATEGORY" =~ ^(java|go|python|bash): ]]; then
-    # Extract language and test type
-    LANGUAGE_FILTER="${TEST_CATEGORY%%:*}"
-    TEST_CATEGORY="${TEST_CATEGORY#*:}"
-    export TEST_LANGUAGE_FILTER="$LANGUAGE_FILTER"
-  fi
-  
-  shift
-fi
-
-# Then process the remaining options
-while [[ $# -gt 0 ]]; do
-  case $1 in
-    --no-parallel)
-      PARALLEL=false
-      SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --no-parallel"
-      shift
-      ;;
-    --fail-fast)
-      FAIL_FAST=true
-      SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --fail-fast"
-      shift
-      ;;
-    --coverage)
-      COVERAGE=true
-      SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --coverage"
-      shift
-      ;;
-    --watch)
-      WATCH=true
-      shift
-      ;;
-    --workers)
-      MAX_WORKERS="$2"
-      SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --workers $2"
-      shift 2
-      ;;
-    --debug)
-      DEBUG=true
-      SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --debug"
-      shift
-      ;;
-    --verbose)
-      VERBOSITY="verbose"
-      SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --verbose"
-      shift
-      ;;
-    --terse)
-      VERBOSITY="terse"
-      shift
-      ;;
-    --errors)
-      VERBOSITY="errors"
-      SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --errors"
-      shift
-      ;;
-    --help)
-      show_help
-      exit 0
-      ;;
-    *)
-      print_error_exit "Unknown option: $1"
-      ;;
-  esac
-done
-
-# Check if tag: prefix is used
-if [[ "$TEST_CATEGORY" =~ ^tag: ]]; then
-  TAG_NAME="${TEST_CATEGORY#tag:}"
-  SMART_RUNNER_ARGS="$SMART_RUNNER_ARGS --tag $TAG_NAME"
-  TEST_CATEGORY="tag"
-fi
-
-# Main execution
-cd "$RINNA_DIR"
-
-# Check if we should use the smart test runner
-if use_smart_runner; then
-  print_header "Using advanced testing pyramid approach"
-  
-  # Check if we need to map a legacy domain to smart runner options
-  if [[ "$TEST_CATEGORY" =~ ^(workflow|release|input|api|cli)$ ]]; then
-    DOMAIN_OPTS=$(map_domain_to_options "$TEST_CATEGORY")
-    if [[ -n "$DOMAIN_OPTS" ]]; then
-      SMART_RUNNER_ARGS="$DOMAIN_OPTS $SMART_RUNNER_ARGS"
-    else
-      print_warning "Unknown domain: $TEST_CATEGORY. Falling back to all tests."
-      TEST_CATEGORY="all"
+# Print environment information
+print_environment() {
+    if [[ "$QUIET" == "true" ]]; then
+        return
     fi
-  elif [[ "$TEST_CATEGORY" == "all" ]]; then
-    # No mapping needed
-    SMART_RUNNER_ARGS="all $SMART_RUNNER_ARGS"
-  else
-    # For standard categories, just pass through
-    SMART_RUNNER_ARGS="$TEST_CATEGORY $SMART_RUNNER_ARGS"
-  fi
-  
-  # Run the smart test runner
-  exec "$RINNA_DIR/bin/smart-test-runner.sh" $SMART_RUNNER_ARGS
-else
-  print_warning "Advanced testing tools not available, using legacy test approach."
-  run_maven_tests "$TEST_CATEGORY"
-fi
+
+    echo -e "${BLUE}Rinna Test Environment${NC}"
+    echo "=========================="
+    
+    if [[ " ${LANGUAGES[*]} " =~ " java " ]]; then
+        echo -n "Java: "
+        if command -v java >/dev/null 2>&1; then
+            java -version 2>&1 | head -n 1
+        else
+            echo -e "${YELLOW}Not installed${NC}"
+        fi
+    fi
+    
+    if [[ " ${LANGUAGES[*]} " =~ " go " ]]; then
+        echo -n "Go: "
+        if command -v go >/dev/null 2>&1; then
+            go version
+        else
+            echo -e "${YELLOW}Not installed${NC}"
+        fi
+    fi
+    
+    if [[ " ${LANGUAGES[*]} " =~ " python " ]]; then
+        echo -n "Python: "
+        if command -v python >/dev/null 2>&1; then
+            python --version
+        else
+            echo -e "${YELLOW}Not installed${NC}"
+        fi
+    fi
+    
+    echo "Test mode: $TEST_MODE"
+    echo "Test category: $CATEGORY"
+    echo "Parallel execution: $PARALLEL"
+    echo "CI mode: $CI_MODE"
+    echo "Working directory: $(pwd)"
+    echo "=========================="
+}
+
+# Run Java tests
+run_java_tests() {
+    local category="$1"
+    local mode="$2"
+    local mvn_args=""
+    
+    echo -e "${BLUE}Running Java tests: $category ($mode mode)${NC}"
+    
+    # Set Maven options
+    if [[ "$VERBOSE" == "true" ]]; then
+        mvn_args="$mvn_args -X"
+    elif [[ "$QUIET" == "true" ]]; then
+        mvn_args="$mvn_args --quiet"
+    fi
+
+    if [[ "$PARALLEL" == "true" ]]; then
+        mvn_args="$mvn_args -Dcucumber.execution.parallel.enabled=true"
+    else
+        mvn_args="$mvn_args -Dcucumber.execution.parallel.enabled=false"
+    fi
+
+    # Set output format
+    case "$OUTPUT_FORMAT" in
+        junit)
+            mvn_args="$mvn_args -Dsurefire.reportFormat=xml"
+            ;;
+        json)
+            # Custom JSON reporter configuration
+            mvn_args="$mvn_args -Dcucumber.plugin=json:target/cucumber-report.json"
+            ;;
+    esac
+
+    # Execute tests based on category
+    case $category in
+        all)
+            echo "Running all Java tests..."
+            cd "$PROJECT_ROOT" && mvn clean test $mvn_args
+            ;;
+        unit)
+            echo "Running Java unit tests..."
+            cd "$PROJECT_ROOT" && mvn clean test -Dtest='*Test,!*Runner' $mvn_args
+            ;;
+        component)
+            echo "Running Java component tests..."
+            cd "$PROJECT_ROOT" && mvn clean test -Dtest='org.rinna.domain.usecase.*Test,org.rinna.CleanArchitectureTest' $mvn_args
+            ;;
+        integration)
+            echo "Running Java integration tests..."
+            cd "$PROJECT_ROOT" && mvn clean test -Dtest='org.rinna.service.impl.*Test' $mvn_args
+            ;;
+        acceptance|bdd)
+            echo "Running Java acceptance tests..."
+            cd "$PROJECT_ROOT" && mvn clean test -Dtest='org.rinna.bdd.*Runner' $mvn_args
+            ;;
+        performance)
+            if [[ "$mode" == "minimal" || "$mode" == "ci" ]]; then
+                echo -e "${YELLOW}Skipping Java performance tests in $mode mode${NC}"
+                return 0
+            fi
+            echo "Running Java performance tests..."
+            cd "$PROJECT_ROOT" && mvn clean test -Dtest='org.rinna.performance.*Test' $mvn_args
+            ;;
+        smoke)
+            echo "Running Java smoke tests..."
+            cd "$PROJECT_ROOT" && mvn test -P smoke-tests $mvn_args
+            ;;
+        workflow)
+            echo "Running Java workflow tests..."
+            cd "$PROJECT_ROOT" && mvn clean test -Dtest='org.rinna.bdd.CucumberRunner' -Dcucumber.filter.tags='@workflow or not @workflow-disabled' $mvn_args
+            ;;
+        release)
+            echo "Running Java release tests..."
+            cd "$PROJECT_ROOT" && mvn clean test -Dtest='org.rinna.bdd.ReleaseRunner' $mvn_args
+            ;;
+        input)
+            echo "Running Java input interface tests..."
+            cd "$PROJECT_ROOT" && mvn clean test -Dtest='org.rinna.bdd.InputInterfaceRunner' $mvn_args
+            ;;
+        api)
+            echo "Running Java API tests..."
+            cd "$PROJECT_ROOT" && mvn clean test -Dtest='org.rinna.model.DefaultWorkItemTest' $mvn_args
+            ;;
+        admin)
+            echo "Running Admin functionality tests..."
+            cd "$PROJECT_ROOT" && mvn clean test -Dtest='org.rinna.bdd.Admin*Runner' $mvn_args
+            ;;
+        tag)
+            if [[ ${#TAGS[@]} -eq 0 ]]; then
+                echo -e "${RED}Error: No tags specified for tag filter${NC}"
+                return 1
+            fi
+            
+            tag_expr=""
+            for tag in "${TAGS[@]}"; do
+                if [[ -n "$tag_expr" ]]; then
+                    tag_expr="$tag_expr or "
+                fi
+                tag_expr="$tag_expr@$tag"
+            done
+            
+            echo "Running Java tests with tags: $tag_expr..."
+            cd "$PROJECT_ROOT" && mvn clean test -Dtest='org.rinna.bdd.TaggedTestsRunner' -Dcucumber.filter.tags="$tag_expr" $mvn_args
+            ;;
+        file)
+            echo "Running Java tests matching pattern: $FILE_PATTERN..."
+            cd "$PROJECT_ROOT" && mvn clean test -Dtest="$FILE_PATTERN" $mvn_args
+            ;;
+        path)
+            echo "Running Java tests in path: $TEST_PATH..."
+            if [[ -d "$PROJECT_ROOT/$TEST_PATH" ]]; then
+                cd "$PROJECT_ROOT/$TEST_PATH" && mvn clean test $mvn_args
+            else
+                echo -e "${RED}Error: Path not found: $TEST_PATH${NC}"
+                return 1
+            fi
+            ;;
+        *)
+            echo -e "${RED}Error: Unknown Java test category: $category${NC}"
+            return 1
+            ;;
+    esac
+}
+
+# Run Go tests
+run_go_tests() {
+    local category="$1"
+    local mode="$2"
+    local go_args=""
+    local test_path="./..."
+    
+    echo -e "${BLUE}Running Go tests: $category ($mode mode)${NC}"
+    
+    # Set Go test options
+    if [[ "$VERBOSE" == "true" ]]; then
+        go_args="$go_args -v"
+    fi
+    
+    if [[ "$PARALLEL" == "true" ]]; then
+        go_args="$go_args -parallel 4"
+    fi
+    
+    # Set output format
+    case "$OUTPUT_FORMAT" in
+        junit)
+            echo "Installing go-junit-report..."
+            if ! command -v go-junit-report &> /dev/null; then
+                go install github.com/jstemmer/go-junit-report/v2@latest
+            fi
+            ;;
+        json)
+            go_args="$go_args -json"
+            ;;
+    esac
+    
+    # Navigate to API directory
+    cd "$PROJECT_ROOT/api"
+    
+    # Determine test selection
+    case $category in
+        all)
+            test_path="./..."
+            ;;
+        unit)
+            test_path="./pkg/..."
+            ;;
+        integration)
+            test_path="./test/..."
+            ;;
+        api)
+            test_path="./internal/handlers/..."
+            ;;
+        health)
+            test_path="./pkg/health/..."
+            ;;
+        tag)
+            # Go doesn't have built-in tag filtering, so we use build tags
+            if [[ ${#TAGS[@]} -eq 0 ]]; then
+                echo -e "${RED}Error: No tags specified for tag filter${NC}"
+                return 1
+            fi
+            
+            tag_args=""
+            for tag in "${TAGS[@]}"; do
+                tag_args="$tag_args -tags=$tag"
+            done
+            go_args="$go_args $tag_args"
+            ;;
+        *)
+            if [[ "$category" != "component" && "$category" != "performance" ]]; then
+                echo -e "${YELLOW}Warning: Unsupported Go test category: $category - defaulting to all tests${NC}"
+            fi
+            ;;
+    esac
+    
+    # Minimal mode selects health endpoint tests only
+    if [[ "$mode" == "minimal" || "$mode" == "ci" ]]; then
+        if [[ "$category" == "all" ]]; then
+            test_path="./pkg/health/..."
+            echo "Running minimal Go tests: $test_path"
+        fi
+    fi
+    
+    # Run tests with appropriate output format
+    if [[ "$OUTPUT_FORMAT" == "junit" ]]; then
+        go test $go_args $test_path 2>&1 | go-junit-report -set-exit-code > "$PROJECT_ROOT/test-output/go-test-report.xml"
+    else
+        go test $go_args $test_path
+    fi
+}
+
+# Run Python tests
+run_python_tests() {
+    local category="$1"
+    local mode="$2"
+    local pytest_args=""
+    local test_path="python/tests"
+    
+    echo -e "${BLUE}Running Python tests: $category ($mode mode)${NC}"
+    
+    # Set pytest options
+    if [[ "$VERBOSE" == "true" ]]; then
+        pytest_args="$pytest_args -v"
+    fi
+    
+    # Set output format
+    case "$OUTPUT_FORMAT" in
+        junit)
+            pytest_args="$pytest_args --junitxml=test-output/python-test-report.xml"
+            ;;
+        json)
+            # Install pytest-json-report if needed
+            if ! python -c "import pytest_json_report" &> /dev/null; then
+                pip install pytest-json-report
+            fi
+            pytest_args="$pytest_args --json-report --json-report-file=test-output/python-test-report.json"
+            ;;
+    esac
+    
+    # Navigate to project root
+    cd "$PROJECT_ROOT"
+    
+    # First run quality checks if appropriate
+    if [[ "$category" == "all" && "$mode" != "minimal" ]]; then
+        if [[ -f "./bin/python-quality" ]]; then
+            echo "Running Python quality checks..."
+            ./bin/python-quality all
+        fi
+    fi
+    
+    # Determine test selection
+    case $category in
+        all)
+            if [[ "$mode" == "minimal" ]]; then
+                test_path="python/tests/test_config_manager.py"
+                echo "Running minimal Python tests: $test_path"
+            else
+                test_path="python/tests"
+            fi
+            ;;
+        unit)
+            test_path="python/tests/unit"
+            ;;
+        integration)
+            test_path="python/tests/integration"
+            ;;
+        component)
+            test_path="python/tests/component"
+            ;;
+        diagrams)
+            if [[ -f "./bin/test_c4_diagrams.py" ]]; then
+                echo "Running Python diagram tests..."
+                python -m unittest bin/test_c4_diagrams.py
+                return $?
+            else
+                echo -e "${YELLOW}Warning: Python diagram tests not found${NC}"
+                return 0
+            fi
+            ;;
+        tag)
+            # Use pytest marker expression for tags
+            if [[ ${#TAGS[@]} -eq 0 ]]; then
+                echo -e "${RED}Error: No tags specified for tag filter${NC}"
+                return 1
+            fi
+            
+            marker_expr=""
+            for tag in "${TAGS[@]}"; do
+                if [[ -n "$marker_expr" ]]; then
+                    marker_expr="$marker_expr or "
+                fi
+                marker_expr="$marker_expr$tag"
+            done
+            
+            pytest_args="$pytest_args -m \"$marker_expr\""
+            ;;
+        *)
+            if [[ "$category" != "performance" && "$category" != "acceptance" && "$category" != "bdd" ]]; then
+                echo -e "${YELLOW}Warning: Unsupported Python test category: $category - defaulting to all tests${NC}"
+            fi
+            ;;
+    esac
+    
+    # Run tests
+    if [[ -d "$test_path" || -f "$test_path" ]]; then
+        python -m pytest $test_path $pytest_args
+    else
+        echo -e "${YELLOW}Warning: Python test path not found: $test_path${NC}"
+        return 0
+    fi
+}
+
+# Run CLI integration tests
+run_cli_tests() {
+    local category="$1"
+    local mode="$2"
+    
+    echo -e "${BLUE}Running CLI integration tests${NC}"
+    
+    # Navigate to project root
+    cd "$PROJECT_ROOT"
+    
+    if [[ -f "./bin/run-cli-tests.sh" ]]; then
+        if [[ "$mode" == "minimal" ]]; then
+            echo "Running minimal CLI tests..."
+            ./bin/run-cli-tests.sh minimal
+        else
+            echo "Running all CLI tests..."
+            ./bin/run-cli-tests.sh
+        fi
+    else
+        echo -e "${RED}Error: CLI test script not found at ./bin/run-cli-tests.sh${NC}"
+        return 1
+    fi
+}
+
+# Create test output directory
+create_output_dir() {
+    mkdir -p "$PROJECT_ROOT/test-output"
+}
+
+# Run all tests based on parameters
+run_all_tests() {
+    local category="$1"
+    local mode="$2"
+    local failures=0
+    
+    create_output_dir
+    
+    # Run tests for each selected language
+    for lang in "${LANGUAGES[@]}"; do
+        case "$lang" in
+            java)
+                if ! run_java_tests "$category" "$mode"; then
+                    echo -e "${RED}Java tests failed!${NC}"
+                    failures=$((failures + 1))
+                    
+                    # Don't exit immediately, collect all failures
+                    if [[ "$CI_MODE" != "true" ]]; then
+                        continue
+                    fi
+                fi
+                ;;
+            go)
+                if ! run_go_tests "$category" "$mode"; then
+                    echo -e "${RED}Go tests failed!${NC}"
+                    failures=$((failures + 1))
+                    
+                    if [[ "$CI_MODE" != "true" ]]; then
+                        continue
+                    fi
+                fi
+                ;;
+            python)
+                if ! run_python_tests "$category" "$mode"; then
+                    echo -e "${RED}Python tests failed!${NC}"
+                    failures=$((failures + 1))
+                    
+                    if [[ "$CI_MODE" != "true" ]]; then
+                        continue
+                    fi
+                fi
+                ;;
+            cli)
+                if ! run_cli_tests "$category" "$mode"; then
+                    echo -e "${RED}CLI tests failed!${NC}"
+                    failures=$((failures + 1))
+                    
+                    if [[ "$CI_MODE" != "true" ]]; then
+                        continue
+                    fi
+                fi
+                ;;
+            *)
+                echo -e "${RED}Error: Unknown language: $lang${NC}"
+                failures=$((failures + 1))
+                ;;
+        esac
+    done
+    
+    return $failures
+}
+
+# Main function
+main() {
+    parse_args "$@"
+    print_environment
+    
+    # Record start time
+    local start_time=$(date +%s)
+    
+    if ! run_all_tests "$CATEGORY" "$TEST_MODE"; then
+        local failures=$?
+        local end_time=$(date +%s)
+        local runtime=$((end_time - start_time))
+        
+        echo -e "${RED}Test execution completed with $failures failure(s)${NC}"
+        echo "Total runtime: $runtime seconds"
+        
+        # Show coverage even on failure
+        if [[ "$SHOW_COVERAGE" == "true" ]]; then
+            echo
+            echo -e "${BLUE}Generating code coverage report...${NC}"
+            "$PROJECT_ROOT/bin/polyglot-coverage.sh"
+        fi
+        
+        exit 1
+    fi
+    
+    local end_time=$(date +%s)
+    local runtime=$((end_time - start_time))
+    
+    echo -e "${GREEN}All tests completed successfully!${NC}"
+    echo "Total runtime: $runtime seconds"
+    
+    # Generate code coverage report
+    if [[ "$SHOW_COVERAGE" == "true" ]]; then
+        echo
+        echo -e "${BLUE}Generating code coverage report...${NC}"
+        "$PROJECT_ROOT/bin/polyglot-coverage.sh"
+    fi
+    
+    exit 0
+}
+
+# Run main function with all arguments
+main "$@"

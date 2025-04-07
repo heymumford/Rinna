@@ -165,7 +165,7 @@ validate_config() {
       print_warning "Sensitive value detected in config file: $field"
       print_warning "This should be set via environment variable: ${ENV_VAR_PREFIX}$(echo "$field" | tr '.' '_' | tr '[:lower:]' '[:upper:]')"
     fi
-  end
+  done
 
   # Check for environment-specific settings
   local env=$(yq eval '.project.environment' "$config_file")
@@ -372,7 +372,9 @@ EOF
 # View current effective configuration
 view_config() {
   local format="${1:-yaml}"
-  local temp_config="/tmp/rinna_effective_config.yaml"
+  # Create target directory if it doesn't exist
+  mkdir -p "$RINNA_DIR/target/temp"
+  local temp_config="$RINNA_DIR/target/temp/rinna_effective_config.yaml"
   
   load_config "$temp_config"
   
@@ -410,7 +412,9 @@ view_config() {
 get_value() {
   local key="$1"
   local format="${2:-raw}"
-  local temp_config="/tmp/rinna_effective_config.yaml"
+  # Create target directory if it doesn't exist
+  mkdir -p "$RINNA_DIR/target/temp"
+  local temp_config="$RINNA_DIR/target/temp/rinna_effective_config.yaml"
   
   load_config "$temp_config"
   
@@ -631,13 +635,15 @@ case "$COMMAND" in
     set_value "$KEY" "$VALUE"
     ;;
   validate)
-    temp_config="/tmp/rinna_effective_config.yaml"
+    mkdir -p "$RINNA_DIR/target/temp"
+    temp_config="$RINNA_DIR/target/temp/rinna_effective_config.yaml"
     load_config "$temp_config"
     validate_config "$temp_config"
     rm -f "$temp_config"
     ;;
   generate)
-    temp_config="/tmp/rinna_effective_config.yaml"
+    mkdir -p "$RINNA_DIR/target/temp"
+    temp_config="$RINNA_DIR/target/temp/rinna_effective_config.yaml"
     load_config "$temp_config"
     generate_configs "$temp_config"
     rm -f "$temp_config"

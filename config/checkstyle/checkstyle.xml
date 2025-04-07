@@ -31,10 +31,10 @@
             <property name="allowMissingReturnTag" value="false"/>
         </module>
         <module name="JavadocType">
-            <property name="accessModifiers" value="public"/>
+            <property name="scope" value="public"/>
         </module>
         <module name="JavadocVariable">
-            <property name="accessModifiers" value="public"/>
+            <property name="scope" value="public"/>
         </module>
         <module name="JavadocStyle"/>
 

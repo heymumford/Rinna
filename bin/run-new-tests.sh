@@ -58,13 +58,16 @@ function run_test_with_verification() {
     subheader "Testing $TEST_NAME"
     echo -e "Running: ${YELLOW}$COMMAND${NC}"
     
+    # Create target directory if it doesn't exist
+    mkdir -p "$PROJECT_ROOT/target/temp"
+    
     # Run the command
-    eval "$COMMAND" > /tmp/cmd_output.txt 2>&1
+    eval "$COMMAND" > "$PROJECT_ROOT/target/temp/cmd_output.txt" 2>&1
     EXIT_CODE=$?
     
     # Show truncated output
-    head -n 10 /tmp/cmd_output.txt
-    if [ "$(wc -l < /tmp/cmd_output.txt)" -gt 10 ]; then
+    head -n 10 "$PROJECT_ROOT/target/temp/cmd_output.txt"
+    if [ "$(wc -l < "$PROJECT_ROOT/target/temp/cmd_output.txt")" -gt 10 ]; then
         echo "... (output truncated)"
     fi
     
@@ -93,7 +96,8 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RINNA_CORE_DIR="$PROJECT_ROOT/rinna-core"
 TEST_CLASSES_DIR="$RINNA_CORE_DIR/target/test-classes"
 MAIN_CLASSES_DIR="$RINNA_CORE_DIR/target/classes"
-TEST_TMP_DIR="$PROJECT_ROOT/.test-tmp"
+# Use target directory for temporary files to ensure they're cleaned up on build
+TEST_TMP_DIR="$PROJECT_ROOT/target/test-tmp"
 
 # Create test temp directory
 mkdir -p "$TEST_TMP_DIR"
