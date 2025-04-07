@@ -12,6 +12,14 @@ Rinna focuses on providing a streamlined, developer-centric approach to workflow
 - [Quick Reference](rin-quick-reference.md) - Concise reference for common developer CLI (Command-Line Interface) commands
 - [Document Generation](documents.md) - Generate beautiful reports and documents from your workflow data
 - [Service Management](service-management.md) - Understanding the service architecture and management
+- [Version Guide](version-guide.md) - Understanding Rinna's versioning system
+- [Test-Driven Development (TDD) Workflow](#test-driven-development-workflow) - Using Rinna for effective TDD
+
+## Administration Guides
+
+- [Admin Guide](admin-guide.md) - Comprehensive guide for administrators to set up and configure Rinna
+- [Admin CLI Quick Start](admin-cli-quickstart.md) - Essential commands for rapid project setup
+- [Admin POM Sample](admin-pom-sample.xml) - Sample Maven POM file for adding Rinna to your project
 
 ## Metrics and Business Value
 
@@ -37,58 +45,122 @@ Found → Triaged → To Do → In Progress → In Test → Done
 
 ```bash
 # Show all work items assigned to you
-rin my-work
+bin/rin-cli my-work
 
 # Show what you should work on next (highest priority items)
-rin next-task
+bin/rin-cli next-task
 
 # Start working on an item (assigns to you and moves to In Progress)
-rin start ITEM-1
+bin/rin-cli start ITEM-1
 
 # Mark an item as ready for testing
-rin ready-for-test ITEM-1
+bin/rin-cli ready-for-test ITEM-1
 
 # Complete an item
-rin done ITEM-1
+bin/rin-cli done ITEM-1
 
 # View your work history and productivity metrics
-rin my-history
+bin/rin-cli my-history
 ```
 
 ### Standard Work Item Commands
 
 ```bash
 # Create items
-rin create goal "Improve system reliability"
-rin create feature "Add user authentication"
-rin create bug "Login fails on Safari"
-rin create chore "Update dependencies"
+bin/rin-cli create goal "Improve system reliability"
+bin/rin-cli create feature "Add user authentication"
+bin/rin-cli create bug "Login fails on Safari"
+bin/rin-cli create chore "Update dependencies"
 
 # List items (with filtering)
-rin list
-rin list --type bug --status "In Progress"
-rin list --assignee jdoe
+bin/rin-cli list
+bin/rin-cli list --type bug --status "In Progress"
+bin/rin-cli list --assignee jdoe
 
 # Update items
-rin update ITEM-1 --status "In Progress"
-rin update ITEM-1 --assignee jdoe
-rin update ITEM-1 --priority high
+bin/rin-cli update ITEM-1 --status "In Progress"
+bin/rin-cli update ITEM-1 --assignee jdoe
+bin/rin-cli update ITEM-1 --priority high
 
 # Show item details
-rin show ITEM-1
+bin/rin-cli show ITEM-1
+```
+
+## Test-Driven Development Workflow
+
+Rinna provides comprehensive support for Test-Driven Development across your entire software development lifecycle.
+
+### Red-Green-Refactor Cycle
+
+The TDD workflow in Rinna follows the classic Red-Green-Refactor pattern:
+
+1. **Red**: Write a failing test that describes the expected behavior
+2. **Green**: Implement the minimum code to make the test pass
+3. **Refactor**: Clean up the code while ensuring tests still pass
+
+### Running TDD Tests
+
+```bash
+# Run all TDD-related tests
+bin/rin test --tag=tdd
+
+# Run only positive TDD scenarios
+bin/rin test --tag=tdd --tag=positive
+
+# Run only negative TDD scenarios
+bin/rin test --tag=tdd --tag=negative
+
+# Run specific engineering scenarios
+bin/rin test --tag=tdd --include="*API*"
+```
+
+### TDD for Engineering Tasks
+
+Rinna includes specific TDD workflows for common engineering challenges:
+
+- REST API testing with different response codes
+- Database migration with rollback capability
+- Concurrent access to shared resources
+- Caching with proper invalidation
+- Timeout and retry handling
+- Complex algorithms with parameterized tests
+- Memory leak detection
+- Event-driven architecture testing
+- Configuration changes in running systems
+- Backward compatibility in API changes
+
+### TDD Command Integration
+
+Use Rinna's workflow management to track TDD progress:
+
+```bash
+# Create a work item with TDD approach
+bin/rin-cli create feature "Implement caching system" --approach=tdd
+
+# Mark a test as implemented (Red phase)
+bin/rin-cli tdd red ITEM-1 
+
+# Mark implementation as complete (Green phase)
+bin/rin-cli tdd green ITEM-1
+
+# Mark refactoring as complete
+bin/rin-cli tdd refactor ITEM-1
+
+# Show TDD status for a work item
+bin/rin-cli tdd status ITEM-1
 ```
 
 ## Lota (Development Cycle) Management
 
 ```bash
 # Create a Lota
-rin lota create "Sprint 1" --start 2023-06-01 --end 2023-06-14
+bin/rin-cli lota create "Sprint 1" --start 2023-06-01 --end 2023-06-14
 
 # Add items to Lota
-rin lota add "Sprint 1" ITEM-1 ITEM-2
+bin/rin-cli lota add "Sprint 1" ITEM-1 ITEM-2
 
 # Show Lota status with developer progress
-rin lota show "Sprint 1"
+bin/rin-cli lota show "Sprint 1"
 ```
 
 ## Building and Testing
@@ -97,13 +169,13 @@ Use the Rinna CLI (Command-Line Interface) tool for simplified build and test op
 
 ```bash
 # Clean and build the project
-rin clean build
+bin/rin clean build
 
 # Run tests with verbose output
-rin -v test
+bin/rin -v test
 
 # Full workflow with errors-only output
-rin -e all
+bin/rin -e all
 ```
 
 ## Document Generation
@@ -112,21 +184,21 @@ Rinna includes a powerful document generation system that supports Docmosis for 
 
 ```bash
 # Configure Docmosis license key
-rin doc license YOUR_LICENSE_KEY
+bin/rin-cli doc license YOUR_LICENSE_KEY
 
 # Generate a work item report
-rin doc generate workitem --id ITEM-1 --format pdf
+bin/rin-cli doc generate workitem --id ITEM-1 --format pdf
 
 # Show document configuration
-rin doc config
+bin/rin-cli doc config
 
 # List available templates
-rin doc templates
+bin/rin-cli doc templates
 ```
 
 For complete documentation on document generation, see [documents.md](documents.md).
 
-For complete CLI documentation, see [rin-cli.md](rin-cli.md) or run `rin --help`.
+For complete CLI documentation, see [rin-cli.md](rin-cli.md) or run `bin/rin-cli --help`.
 
 ## Configuration
 

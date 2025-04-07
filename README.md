@@ -11,7 +11,7 @@
 [![Version](https://img.shields.io/badge/version-1.10.3-blue.svg)](https://github.com/heymumford/Rinna/releases)
 [![GitHub Stars](https://img.shields.io/github/stars/heymumford/Rinna?style=social)](https://github.com/heymumford/Rinna/stargazers)
 
-[📥 Download](https://github.com/heymumford/Rinna/releases) • [📚 Documentation](docs/) • [🚀 Getting Started](docs/getting-started/README.md) • [🧪 Testing](docs/testing/TESTING_STRATEGY.md) • [🤝 Contribute](docs/development/contribution.md) • [📋 Changelog](CHANGELOG.md) • [📁 Folders](FOLDERS.md) • [🔄 CI Status](docs/development/ci-workflow.md)
+[📥 Download](https://github.com/heymumford/Rinna/releases) • [📚 User Guide](docs/user-guide/README.md) • [👩‍💻 Developer Guide](DEVELOPER.md) • [🚀 Getting Started](docs/getting-started/README.md) • [🤝 Contribute](CONTRIBUTING.md) • [📋 Changelog](CHANGELOG.md)
 
 </div>
 
@@ -327,39 +327,23 @@ Rinna follows clean architecture principles with well-defined interfaces for ext
 
 ## Documentation
 
-- [Getting Started](docs/getting-started/README.md)
-- [User Guide](docs/user-guide/README.md)
-- [Document Generation](docs/user-guide/documents.md)
-- [Architecture](docs/development/architecture.md)
-- [Architecture Diagrams](docs/architecture/DIAGRAMS.md)
-- [Development Guide](docs/development/README.md)
-- [Build System](docs/development/build-system.md)
-- [Testing Strategy](docs/testing/TESTING_STRATEGY.md)
-- [Test Pyramid Strategy](docs/testing/TEST_PYRAMID.md)
-\n### Test-Driven Development
-\nRinna provides comprehensive support for Test-Driven Development (TDD) workflows with specific features for both general TDD practices and engineering-specific scenarios:
-\n
-\n```bash
-\n# Run TDD tests
-\nbin/rin test --tag=tdd
-\n
-\n# Run positive TDD scenarios
-\nbin/rin test --tag=tdd --tag=positive
-\n
-\n# Run negative TDD scenarios
-\nbin/rin test --tag=tdd --tag=negative
-\n
-\n# Run specific engineering TDD scenarios
-\nbin/rin test --tag=tdd --include="*API*"
-\n```
-\n
-\nSee our [TDD Features](docs/testing/TDD_FEATURES.md) documentation for details on how to use Rinna for effective Test-Driven Development across your entire engineering workflow.
-- [Dependency Management](docs/development/dependency-management.md)
-- [Version Management](docs/development/version-management.md)
-- [CI Workflow](docs/development/ci-workflow.md)
-- [Logging Strategy](docs/development/logging-strategy.md)
-- [Changelog](CHANGELOG.md)
-- [Folder Structure](FOLDERS.md)
+### For Users
+
+- [📚 User Guide](docs/user-guide/README.md) - Complete guide for using Rinna
+- [🚀 Getting Started](docs/getting-started/README.md) - Quick start guide
+- [📄 Documentation Generation](docs/user-guide/documents.md) - Generate documentation
+- [📋 Changelog](CHANGELOG.md) - Release history
+
+### For Developers
+
+- [👩‍💻 Developer Guide](DEVELOPER.md) - Complete guide for developing Rinna
+- [🤝 Contribution Guidelines](CONTRIBUTING.md) - How to contribute
+- [🧪 Testing Strategy](docs/testing/TESTING_STRATEGY.md) - Comprehensive testing approach
+- [🏗️ Architecture](docs/development/architecture.md) - System architecture
+- [🔧 Build System](docs/development/build-system.md) - Build and development workflow
+- [📊 Version Management](docs/development/version-management.md) - Version control approach
+
+For complete developer documentation, see the [Developer Guide](DEVELOPER.md).
 
 ## License and Acknowledgments
 
