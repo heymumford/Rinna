@@ -572,7 +572,7 @@ cmd_update() {
     # Run in update mode (synchronize files to version.properties)
     # First, show a preview of what changes will be made
     print_header "Previewing changes with robust version updater..."
-    "$RINNA_DIR/bin/robust-version-updater.sh" --to "$current_version" --dry-run --verbose
+    "$RINNA_DIR/bin/robust-version-updater.sh" --to "$current_version" --dry-run --verbose --ignore-backups
     
     # Ask for confirmation before proceeding with actual changes
     echo
@@ -585,7 +585,7 @@ cmd_update() {
     
     # Now apply the changes
     print_header "Applying changes with robust version updater..."
-    "$RINNA_DIR/bin/robust-version-updater.sh" --to "$current_version" --verbose
+    "$RINNA_DIR/bin/robust-version-updater.sh" --to "$current_version" --verbose --ignore-backups
     print_success "Version update completed successfully using robust pattern matching"
     
   # Check if we have a version-service directory - if so, use it  
@@ -645,7 +645,7 @@ cmd_update() {
   if [ -x "$RINNA_DIR/bin/robust-version-updater.sh" ]; then
     # Use the robust updater's verification
     print_header "Verifying version consistency using robust updater..."
-    if "$RINNA_DIR/bin/robust-version-updater.sh" --to "$current_version" --dry-run; then
+    if "$RINNA_DIR/bin/robust-version-updater.sh" --to "$current_version" --dry-run --ignore-backups; then
       print_success "Version consistency verified: all files match version $current_version"
     else
       print_warning "Some files may have inconsistent versions. Consider running 'rin-version update' again."
@@ -687,7 +687,7 @@ cmd_bump_version() {
     
     # Run the robust updater in dry-run mode first to preview changes
     print_header "Previewing changes with robust version updater..."
-    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --dry-run --verbose
+    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --dry-run --verbose --ignore-backups
     
     # Ask for confirmation before proceeding with actual changes
     echo
@@ -700,7 +700,7 @@ cmd_bump_version() {
     
     # Execute the actual update with the robust updater
     print_header "Applying changes with robust version updater..."
-    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --verbose
+    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --verbose --ignore-backups
     
     # Write version update log
     echo "Used robust-version-updater.sh to update files" >> "$log_file"
@@ -839,7 +839,7 @@ cmd_set() {
     
     # Run the robust updater in dry-run mode first to preview changes
     print_header "Previewing changes with robust version updater..."
-    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --dry-run --verbose
+    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --dry-run --verbose --ignore-backups
     
     # Ask for confirmation before proceeding with actual changes
     echo
@@ -852,7 +852,7 @@ cmd_set() {
     
     # Execute the actual update with the robust updater
     print_header "Applying changes with robust version updater..."
-    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --verbose
+    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --verbose --ignore-backups
     
     # Write version update log
     echo "Used robust-version-updater.sh to update files" >> "$log_file"

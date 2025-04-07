@@ -40,6 +40,7 @@ NC='\033[0m' # No Color
 DRY_RUN=false
 VERBOSE=false
 SAFE_MODE=true  # Default to safe mode
+IGNORE_BACKUPS=false
 
 # List of known external version patterns to avoid replacing
 # Format: Array of regex patterns that should NOT be replaced
@@ -202,6 +203,12 @@ update_file() {
   # Skip excluded paths
   if is_excluded "$rel_path"; then
     log "Skipping excluded path: $rel_path"
+    return 0
+  fi
+  
+  # Skip backup directories when ignore-backups is enabled
+  if [ "$IGNORE_BACKUPS" = true ] && [[ "$rel_path" == *"backup"* ]]; then
+    log "Skipping backup path: $rel_path"
     return 0
   fi
   
@@ -462,6 +469,13 @@ $file"
       continue
     fi
     
+    # Skip backup directories when ignore-backups is enabled
+    local rel_path="${pom_file#$RINNA_DIR/}"
+    if [ "$IGNORE_BACKUPS" = true ] && [[ "$rel_path" == *"backup"* ]]; then
+      log "Skipping backup path: $rel_path"
+      continue
+    fi
+    
     # Check if this POM has org.rinna groupId
     if grep -q "<groupId>org.rinna</groupId>" "$pom_file"; then
       files_processed=$((files_processed + 1))
@@ -539,6 +553,13 @@ verify_version_consistency() {
   
   # Check Module POMs for org.rinna groupId (but exclude dependency versions)
   for pom_file in $(find "$RINNA_DIR" -name "pom.xml" -type f); do
+    # Skip backup directories when ignore-backups is enabled
+    local rel_path="${pom_file#$RINNA_DIR/}"
+    if [ "$IGNORE_BACKUPS" = true ] && [[ "$rel_path" == *"backup"* ]]; then
+      log "Skipping backup path: $rel_path"
+      continue
+    fi
+    
     if [ "$pom_file" != "$RINNA_DIR/pom.xml" ] && grep -q "<groupId>org.rinna</groupId>" "$pom_file"; then
       checked_files=$((checked_files + 1))
       
@@ -700,6 +721,10 @@ main() {
         show_help
         exit 0
         ;;
+      --ignore-backups)
+        IGNORE_BACKUPS=true
+        shift 1
+        ;;
       *)
         print_error "Unknown option: $1. Use --help for usage information."
         ;;
@@ -790,6 +815,7 @@ Options:
   --dry-run          Show what would be changed without making changes
   --verbose          Show more detailed output during processing
   --help             Show this help message
+  --ignore-backups   Ignore backup directories during version checks
 
 Examples:
   # Preview changes without modifying files
