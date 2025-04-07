@@ -15,9 +15,10 @@ This document provides a consolidated view of todos and next steps for the Rinna
 
 ### Documentation
 
-- [ ] Remove redundant documentation files:
-  - [ ] Archive or delete TEST_MIGRATION_PLAN.md (replaced by UNIFIED_TEST_APPROACH.md)
-  - [ ] Update cross-references in documentation
+- [x] Remove redundant documentation files:
+  - [x] Archive TEST_MIGRATION_PLAN.md (replaced by UNIFIED_TEST_APPROACH.md)
+  - [x] Archive UNIFIED_TEST_NOMENCLATURE.md (incorporated into UNIFIED_TEST_APPROACH.md)
+  - [x] Update cross-references in documentation
 
 ## Medium Priority
 

@@ -33,10 +33,10 @@ We have implemented a standardized test approach with the following components:
 
 ## Key Documents
 
-1. [Unified Test Approach](UNIFIED_TEST_APPROACH.md) - The high-level standardized approach to testing
-2. [Test Migration Plan](TEST_MIGRATION_PLAN.md) - Steps for migrating existing tests to the new structure
-3. [Testing Strategy](TESTING_STRATEGY.md) - Overall testing strategy for Rinna
-4. [Admin Testing Guide](ADMIN_TESTING.md) - Guide for running and maintaining admin functionality tests
+1. [Unified Test Approach](UNIFIED_TEST_APPROACH.md) - The standardized approach to testing across all languages
+2. [Testing Strategy](TESTING_STRATEGY.md) - Overall testing strategy for Rinna
+3. [Admin Testing Guide](ADMIN_TESTING.md) - Guide for running and maintaining admin functionality tests
+4. [Test Migration Summary](../../TEST_MIGRATION_SUMMARY.md) - Summary of the completed test migration
 
 ## Running Tests
 

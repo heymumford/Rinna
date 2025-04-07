@@ -1,5 +1,42 @@
 # Rinna Project Commands for Claude
 
+## Environment Setup
+```bash
+# Unified setup system 
+bin/rin-setup-unified                  # Full setup with all components
+bin/rin-setup-unified --minimal        # Minimal setup for core components
+bin/rin-setup-unified --fast           # Fast setup mode (non-interactive)
+bin/rin-setup-unified --graphical      # Graphical installer
+bin/rin-setup-unified --verbose        # Show verbose debug output
+bin/rin-setup-unified --skip-tests     # Skip environment testing
+bin/rin-setup-unified --force          # Force reinstallation of components
+
+# Install specific components
+bin/rin-setup-unified java go python   # Install only specific components
+bin/rin-setup-unified config           # Setup configuration files
+bin/rin-setup-unified api              # Setup API service
+bin/rin-setup-unified samples          # Create sample Java projects
+bin/rin-setup-unified venv             # Setup Python virtual environment
+
+# Non-interactive installation
+bin/rin-setup-unified install java go  # Auto-install components without prompting
+bin/rin-setup-unified check java go    # Check components without installing
+
+# Additional component options
+bin/rin-setup-unified api --verbose    # API setup with detailed output
+bin/rin-setup-unified --all python     # Install all Python dependencies including optional ones
+bin/rin-setup-unified --force venv     # Force recreate Python virtual environment
+
+# Activate all environments at once
+source activate-rinna.sh               # Created by rin-setup-unified
+
+# Component-specific activation (created by rin-setup-unified)
+source activate-java.sh                # Java environment only
+source activate-go.sh                  # Go environment only
+source activate-python.sh              # Python virtual environment
+source activate-api.sh                 # API service environment
+```
+
 ## Java Environment
 ```bash
 # Use Java 21 for Maven builds
@@ -29,13 +66,22 @@ mvn validate -P validate-architecture  # Run architecture validation checks
 
 ### Java
 ```bash
-# Quality checks now run automatically with standard Maven commands
+# Quality gates for different environments
+./bin/run-quality-checks.sh        # Run quality checks with local thresholds
+./bin/run-quality-checks.sh --ci   # Run quality checks with CI thresholds
+./bin/run-quality-checks.sh --owasp-async # Run with async OWASP scan
+
+# Quality checks are run automatically with standard Maven commands
 mvn compile           # Runs checkstyle during validate phase
 mvn test              # Runs checkstyle during validate phase
 mvn verify            # Runs all checks (checkstyle, spotbugs, PMD)
 
-# For faster builds, skip quality checks with the 'skip-quality' profile
-mvn -P skip-quality test
+# Maven profiles for quality gates
+mvn -P local-quality verify  # Use local quality thresholds (default)
+mvn -P ci verify            # Use CI quality thresholds (stricter)
+mvn -P skip-quality test    # Skip all quality checks for faster builds
+mvn -P jacoco test          # Generate JaCoCo coverage report only
+mvn -P polyglot-coverage test  # Generate coverage for all languages
 
 # To run individual quality checks manually
 mvn checkstyle:check  # Run checkstyle validation only
@@ -51,7 +97,10 @@ mvn verify -P ci      # Run OWASP dependency checks in CI mode
 # Local CI testing - asynchronous scan
 ./bin/run-ci-local.sh  # Run tests + async OWASP scan in background
 
-# Manual scan
+# Check dependency convergence
+mvn org.apache.maven.plugins:maven-enforcer-plugin:3.4.1:enforce -Drules=dependencyConvergence  # Check dependency convergence 
+
+# Manual security scan
 mvn org.owasp:dependency-check-maven:check -Ddependency-check.skip=false  # Run OWASP scan directly
 ```
 
@@ -118,10 +167,76 @@ mvn package                               # Normal build includes async diagram 
 Use the `rin` CLI utility located in the bin directory:
 
 ```bash
+# Security and Authentication
+./bin/rin login                    # Interactive login prompt
+./bin/rin login username           # Login as specific user (prompts for password)
+./bin/rin login --user=username    # Alternative syntax
+./bin/rin logout                   # End current session
+
+# User Access Management (admin only)
+./bin/rin access help              # Show user access management help
+./bin/rin access grant-permission --user=username --permission=perm    # Grant permission
+./bin/rin access revoke-permission --user=username --permission=perm   # Revoke permission
+./bin/rin access grant-admin --user=username --area=area               # Grant area-specific admin access
+./bin/rin access revoke-admin --user=username --area=area              # Revoke area-specific admin access
+./bin/rin access promote --user=username                               # Promote to full admin
+
+# Server management
+./bin/rin-server start             # Start the Rinna API server
+./bin/rin-server start --port 8080 # Start server on custom port
+./bin/rin-server start --no-auto-start # Start without auto-starting Java server
+./bin/rin-server stop              # Stop the Rinna API server
+./bin/rin-server restart           # Restart the server
+./bin/rin-server status            # Check server status
+./bin/rin-server log               # View server logs
+./bin/rin-server configure         # Configure server settings
+
+# Notification management
+./bin/rin notify               # List all notifications
+./bin/rin notify list          # List all notifications
+./bin/rin notify unread        # Show only unread notifications
+./bin/rin notify read <id>     # Mark a notification as read
+./bin/rin notify markread <id> # Mark a notification as read
+./bin/rin notify markall       # Mark all notifications as read
+./bin/rin notify clear         # Clear old notifications
+./bin/rin notify help          # Show notification help
+
+# Statistics and metrics
+./bin/rin stats                # Show summary statistics
+./bin/rin stats dashboard      # Show statistics dashboard with visualizations
+./bin/rin stats all            # Show all available statistics
+./bin/rin stats distribution   # Show item distributions with charts
+./bin/rin stats detail completion  # Show detailed completion metrics
+./bin/rin stats detail workflow    # Show detailed workflow metrics
+./bin/rin stats detail priority    # Show detailed priority metrics
+./bin/rin stats detail assignments # Show detailed assignment metrics
+./bin/rin stats --format=table     # Specify output format
+./bin/rin stats --limit=5          # Limit output to top 5 items
+
 # Build commands
 ./bin/rin build       # Build the project
 ./bin/rin clean       # Clean the project
 ./bin/rin all         # Clean, build, and test
+
+# Administrative commands
+./bin/rin admin audit list                                  # List audit logs
+./bin/rin admin audit configure --retention=90              # Configure audit retention
+./bin/rin admin audit export --format=csv                   # Export audit logs
+
+./bin/rin admin compliance report financial                 # Generate compliance report
+./bin/rin admin compliance validate --project=demo          # Validate project compliance
+./bin/rin admin compliance configure --framework=iso27001   # Set compliance framework
+
+./bin/rin admin monitor dashboard                           # Display system dashboard
+./bin/rin admin monitor metrics --type=system               # Show system metrics
+./bin/rin admin monitor alerts                              # Display active alerts
+
+./bin/rin admin diagnostics run                             # Run system diagnostics
+./bin/rin admin diagnostics schedule --interval=daily       # Schedule diagnostics
+
+./bin/rin admin backup configure --location=/backup         # Configure backup location
+./bin/rin admin backup start --type=full                    # Start system backup
+./bin/rin admin recovery plan --from=latest                 # Create recovery plan
 
 # Advanced test commands (testing pyramid)
 ./bin/rin test unit          # Run unit tests only
@@ -132,6 +247,17 @@ Use the `rin` CLI utility located in the bin directory:
 ./bin/rin test bdd           # Run all BDD tests (alias for acceptance)
 ./bin/rin test fast          # Run unit and component tests only (quick feedback)
 ./bin/rin test essential     # Run unit, component, and integration tests (no UI)
+
+# Standardized test runner
+./bin/rin-test unit         # Run unit tests with standard directory structure
+./bin/rin-test component    # Run component tests with standard directory structure
+./bin/rin-test integration  # Run integration tests with standard directory structure
+./bin/rin-test acceptance   # Run acceptance tests with standard directory structure
+./bin/rin-test performance  # Run performance tests with standard directory structure
+./bin/rin-test fast         # Run unit and component tests with standard directory structure
+./bin/rin-test all          # Run all tests with standard directory structure
+./bin/rin-test --parallel   # Run tests in parallel mode
+./bin/rin-test --tag=unit   # Run tests with specific tag
 
 # Test configuration options
 ./bin/rin test --coverage    # Generate code coverage report
@@ -145,8 +271,21 @@ Use the `rin` CLI utility located in the bin directory:
 ./bin/rin test workflow      # Run workflow BDD tests only 
 ./bin/rin test release       # Run release BDD tests only
 ./bin/rin test input         # Run input interface BDD tests only
+./bin/rin test admin         # Run admin functionality tests only
 ./bin/rin test api           # Run API integration tests only
-./bin/rin test tag:<name>       # Run tests with a specific tag (e.g., tag:client)
+./bin/rin test tag:<name>    # Run tests with a specific tag (e.g., tag:client)
+
+# Admin testing commands
+./bin/run-admin-tests.sh                # Run all admin tests
+./bin/run-admin-tests.sh --config       # Run admin configuration tests only
+./bin/run-admin-tests.sh --integration  # Run admin integration tests only
+./bin/run-admin-tests.sh --project      # Run admin project management tests only
+./bin/run-admin-tests.sh --specific=AdminUserManagementRunner  # Run a specific admin runner
+
+# Critical path analysis
+./bin/rin path               # Show critical path for the current project
+./bin/rin path --blockers    # Show only blocking items in the project
+./bin/rin path --item WI-123 # Show dependencies for a specific work item
 
 # Advanced test scripts
 ./bin/smart-test-runner.sh all       # Run all tests with testing pyramid approach
@@ -158,6 +297,13 @@ Use the `rin` CLI utility located in the bin directory:
 ./bin/run-new-tests.sh               # Test only the CLI commands
 ./bin/rinna-tests.sh                 # Run Java, Go, and Python tests
 ./bin/rinna-tests.sh minimal         # Run minimal tests for CI
+
+# Code coverage commands
+./bin/polyglot-coverage.sh           # Generate unified coverage report (text)
+./bin/polyglot-coverage.sh -o html   # Generate HTML coverage report
+./bin/polyglot-coverage.sh -o json   # Generate JSON coverage report
+./bin/polyglot-coverage.sh --verbose # Show detailed coverage information
+./bin/polyglot-coverage.sh -t 80     # Set minimum threshold to 80%
 
 # Version management
 ./bin/rin-version current       # Show current version information
@@ -182,6 +328,20 @@ Use the `rin` CLI utility located in the bin directory:
 - Python quality configurations are in `config/python/` and `pyproject.toml`
 - Architecture validation scripts are in `bin/checks/`
 
+## Test Structure
+Tests are organized according to the test pyramid in standardized directories:
+- Unit tests in `src/test/java/org/rinna/unit/`
+- Component tests in `src/test/java/org/rinna/component/`
+- Integration tests in `src/test/java/org/rinna/integration/`
+- Acceptance tests in `src/test/java/org/rinna/acceptance/`
+- Performance tests in `src/test/java/org/rinna/performance/`
+
+Test documentation:
+- [Unified Test Approach](docs/testing/UNIFIED_TEST_APPROACH.md)
+- [Testing Strategy](docs/testing/TESTING_STRATEGY.md)
+- [Admin Testing Guide](docs/testing/ADMIN_TESTING.md)
+- [Test Migration Summary](TEST_MIGRATION_SUMMARY.md)
+
 ## Next Development Tasks
 1. Implement QueryService for developer-focused filtering
 2. Create SQLite persistence module (rinna-data-sqlite)
@@ -189,6 +349,34 @@ Use the `rin` CLI utility located in the bin directory:
 4. Complete the Main application entry point
 
 ## Environment Management
-- Run `java-switch 21` to switch to Java 21
-- Run `java-switch 17` to switch to Java 17 
-- Inside project: `source activate-java.sh` to use project-specific Java
+- Run `bin/rin-setup-unified` to install and configure all environments
+- Inside project: `source activate-rinna.sh` to activate all environments
+- Component-specific activations:
+  - `source activate-java.sh` for Java environment
+  - `source activate-go.sh` for Go environment
+  - `source activate-python.sh` for Python virtual environment
+  - `source activate-api.sh` for API service environment
+
+## Utility Scripts
+The Rinna project uses a collection of well-organized utility scripts:
+- Common utilities in `bin/common/`
+  - Shared functions in `bin/common/rinna_utils.sh`
+  - Cross-language logging in `bin/common/rinna_logger.sh`
+- Setup and environment configuration in `bin/rin-setup-unified`
+- Configuration management in `bin/rin-config`
+- Build system in `bin/rin-build`
+- Test framework in `bin/rin-test`
+- Version management in `bin/rin-version`
+- Server management in `bin/rin-server`
+
+## Components
+The unified setup system can configure the following components:
+- `java`: Java development environment (JDK 21)
+- `go`: Go development environment (Go 1.21+)
+- `python`: Python 3.8+ system installation
+- `maven`: Apache Maven build system
+- `venv`: Python virtual environment
+- `config`: Configuration files and environment
+- `ui`: User interface components and CLI tools
+- `api`: Go API server for Rinna
+- `samples`: Java sample projects demonstrating Clean Architecture
