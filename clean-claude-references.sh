@@ -4,9 +4,13 @@
 
 set -e
 
-# Create a backup branch
-echo "Creating backup branch 'before-claude-cleanup'"
-git branch before-claude-cleanup
+# Create a backup branch if it doesn't exist
+if ! git show-ref --verify --quiet refs/heads/before-claude-cleanup; then
+  echo "Creating backup branch 'before-claude-cleanup'"
+  git branch before-claude-cleanup
+else
+  echo "Backup branch 'before-claude-cleanup' already exists"
+fi
 
 # List of strings to remove
 CLAUDE_PATTERNS=(
