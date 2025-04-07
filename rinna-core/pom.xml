@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.rinna</groupId>
         <artifactId>Rinna</artifactId>
-        <version>1.8.0</version>
+        <version>1.8.1</version>
     </parent>
 
     <artifactId>rinna-core</artifactId>
@@ -342,6 +342,11 @@
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                     <finalName>rinna-cli</finalName>
+                    <!-- 
+                         Setting appendAssemblyId to false intentionally generates a warning during build
+                         but this configuration is necessary to create a standalone jar with a fixed name
+                         for easier CLI usage. This is acceptable since we only have one descriptor.
+                    -->
                     <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
                 <executions>

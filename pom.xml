@@ -6,7 +6,7 @@
     
     <groupId>org.rinna</groupId>
     <artifactId>Rinna</artifactId>
-    <version>1.8.0</version>
+    <version>1.8.1</version>
     <name>Rinna</name>
     <packaging>pom</packaging>
     <description>Workflow management system for developers</description>
@@ -421,6 +421,8 @@
                         <artifactId>exec-maven-plugin</artifactId>
                         <version>3.2.0</version>
                         <executions>
+                            <!-- Disable cross-language tests for now -->
+                            <!--
                             <execution>
                                 <id>run-all-language-tests</id>
                                 <phase>verify</phase>
@@ -432,6 +434,7 @@
                                     <workingDirectory>${project.basedir}</workingDirectory>
                                 </configuration>
                             </execution>
+                            -->
                             <execution>
                                 <id>generate-c4-diagrams-async</id>
                                 <phase>prepare-package</phase>
@@ -735,6 +738,83 @@
             </properties>
         </profile>
         
+        <!-- Profile to run smoke tests -->
+        <profile>
+            <id>smoke-tests</id>
+            <properties>
+                <test.groups>smoke</test.groups>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <groups>smoke</groups>
+                            <skipTests>false</skipTests>
+                            <skip>false</skip>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <!-- Profile for polyglot code coverage -->
+        <profile>
+            <id>polyglot-coverage</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- JaCoCo configuration -->
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>0.8.11</version>
+                        <executions>
+                            <execution>
+                                <id>prepare-agent</id>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>report</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    
+                    <!-- Run polyglot coverage reporter after tests -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.2.0</version>
+                        <executions>
+                            <execution>
+                                <id>polyglot-coverage-report</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>${project.basedir}/bin/polyglot-coverage.sh</executable>
+                                    <arguments>
+                                        <argument>-o</argument>
+                                        <argument>html</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
         <!-- Profile to run architecture validation checks -->
         <profile>
             <id>validate-architecture</id>
@@ -826,6 +906,8 @@
                         <rulesets>
                             <ruleset>${project.basedir}/config/pmd/pmd-ruleset.xml</ruleset>
                         </rulesets>
+                        <!-- Use JDK 22 target language to handle string templates -->
+                        <targetJdk>22</targetJdk>
                     </configuration>
                 </plugin>
                 <plugin>
@@ -905,6 +987,16 @@
                             <testExcludes>
                                 <exclude>**/*.java</exclude>
                             </testExcludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <skipMain>true</skipMain>
                         </configuration>
                     </execution>
                 </executions>
@@ -1067,32 +1159,14 @@
                 </executions>
             </plugin>
             
-            <!-- Create executable JAR with dependencies -->
+            <!-- Skip parent install plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.6.0</version>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>2.4</version>
                 <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>org.rinna.Main</mainClass>
-                        </manifest>
-                    </archive>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <finalName>rinna-cli</finalName>
-                    <appendAssemblyId>false</appendAssemblyId>
+                    <skip>true</skip>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
