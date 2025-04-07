@@ -1,30 +1,279 @@
+/**
+ * Copyright (c) 2025 Eric C. Mumford (@heymumford)
+ * 
+ * Developed with analytical assistance from AI tools.
+ * All rights reserved.
+ * 
+ * This source code is licensed under the MIT License
+ * found in the LICENSE file in the root directory of this source tree.
+ */
 package org.rinna.cli.service;
 
+import org.rinna.cli.messaging.MessageClient;
+import org.rinna.cli.messaging.MessageService;
+import org.rinna.domain.service.CommentService;
+import org.rinna.domain.service.HistoryService;
+import org.rinna.domain.service.ItemService;
+import org.rinna.domain.service.SearchService;
+import org.rinna.domain.service.WorkflowService;
+
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
- * Manager for controlling Rinna services (API and backend).
+ * Manages services for the CLI application.
  */
-public class ServiceManager {
+public final class ServiceManager {
+    private static ServiceManager instance;
+    
+    private WorkflowService workflowService;
+    private CommentService commentService;
+    private HistoryService historyService;
+    private ItemService itemService;
+    private SearchService searchService;
+    private MessageService messageService;
+    private MessageClient messageClient;
+    private ProjectContext projectContext;
+    private ConfigurationService configurationService;
+    
+    // Private constructor for singleton
+    private ServiceManager() {
+        // Initialize service manager
+        initializeServices();
+    }
     
     /**
-     * A wrapper class that provides additional service status information.
+     * Initialize service components.
      */
-    public static class ServiceStatusInfo {
-        private final ServiceStatus status;
-        private final boolean available;
-        private final String state;
-        
-        public ServiceStatusInfo(ServiceStatus status) {
-            this.status = status;
-            this.available = status == ServiceStatus.RUNNING;
-            this.state = status.name();
+    private void initializeServices() {
+        // In a real implementation, these would be properly initialized
+        // For now, we're using mock implementations
+        this.workflowService = new MockWorkflowService();
+        this.commentService = new MockCommentService();
+        this.historyService = new MockHistoryService();
+        this.itemService = new MockItemService();
+        this.searchService = new MockSearchService();
+        this.messageService = new MockMessageService();
+        this.messageClient = new MockMessageClient();
+        this.projectContext = ProjectContext.getInstance();
+        this.configurationService = ConfigurationService.getInstance();
+    }
+    
+    /**
+     * Get singleton instance of ServiceManager.
+     *
+     * @return the singleton instance
+     */
+    public static synchronized ServiceManager getInstance() {
+        if (instance == null) {
+            instance = new ServiceManager();
+        }
+        return instance;
+    }
+    
+    /**
+     * Get status information for a service.
+     *
+     * @param serviceName the name of the service
+     * @return status information for the service
+     */
+    public ServiceStatusInfo getServiceStatus(String serviceName) {
+        // For mock/test services, return a fake status
+        if ("mock-service".equals(serviceName)) {
+            return new ServiceStatusInfo(true, "RUNNING", "Mock service for testing");
         }
         
-        public ServiceStatus getStatus() {
-            return status;
+        // Check messaging service
+        if ("messaging".equals(serviceName)) {
+            boolean connected = messageClient.isConnected();
+            String state = connected ? "RUNNING" : "DISCONNECTED";
+            String message = connected ? "Messaging service is running" : "Messaging service is not connected";
+            return new ServiceStatusInfo(connected, state, message);
+        }
+        
+        // For real services, this would query the actual service status
+        // In this implementation, any unknown service is considered unavailable
+        return new ServiceStatusInfo(false, "UNKNOWN", "Service not found: " + serviceName);
+    }
+    
+    /**
+     * Create a configuration file for a service.
+     *
+     * @param serviceName the name of the service to configure
+     * @param configPath the path where the config file should be created
+     * @return true if successful, false otherwise
+     */
+    public boolean createServiceConfig(String serviceName, String configPath) {
+        try {
+            // Create simple JSON config file
+            String content = "{\n" +
+                            "  \"serviceName\": \"" + serviceName + "\",\n" +
+                            "  \"enabled\": true,\n" +
+                            "  \"port\": 8080,\n" +
+                            "  \"logLevel\": \"INFO\"\n" +
+                            "}\n";
+            
+            // Using Files.writeString for simplified file writing with proper encoding
+            Files.writeString(Paths.get(configPath), content, StandardCharsets.UTF_8);
+            return true;
+        } catch (IOException e) {
+            System.err.println("Error creating service config: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Check if a local service endpoint is available.
+     *
+     * @return true if local endpoint is available
+     */
+    public boolean hasLocalEndpoint() {
+        // In a real implementation, this would check if local endpoint is available
+        // For this sample, we'll always return true
+        return true;
+    }
+    
+    /**
+     * Connect to the local service endpoint.
+     *
+     * @return true if connection successful
+     */
+    public boolean connectLocalEndpoint() {
+        // In a real implementation, this would actually connect to a service
+        // For this sample, we'll always return true
+        return messageClient.connect();
+    }
+    
+    /**
+     * Gets the workflow service.
+     *
+     * @return the workflow service
+     */
+    public WorkflowService getWorkflowService() {
+        return workflowService;
+    }
+    
+    /**
+     * Gets the comment service.
+     *
+     * @return the comment service
+     */
+    public CommentService getCommentService() {
+        return commentService;
+    }
+    
+    /**
+     * Gets the history service.
+     *
+     * @return the history service
+     */
+    public HistoryService getHistoryService() {
+        return historyService;
+    }
+    
+    /**
+     * Gets the item service.
+     *
+     * @return the item service
+     */
+    public ItemService getItemService() {
+        return itemService;
+    }
+    
+    /**
+     * Gets the CLI-specific item service for direct CLI model access.
+     *
+     * @return the CLI-specific item service
+     */
+    public MockItemService getMockItemService() {
+        return (MockItemService) itemService;
+    }
+    
+    /**
+     * Gets the CLI-specific workflow service for direct CLI model access.
+     *
+     * @return the CLI-specific workflow service
+     */
+    public MockWorkflowService getMockWorkflowService() {
+        return (MockWorkflowService) workflowService;
+    }
+    
+    /**
+     * Sets the item service.
+     *
+     * @param itemService the item service to set
+     */
+    public void setItemService(ItemService itemService) {
+        this.itemService = itemService;
+    }
+    
+    /**
+     * Gets the search service.
+     *
+     * @return the search service
+     */
+    public SearchService getSearchService() {
+        return searchService;
+    }
+    
+    /**
+     * Gets the message service.
+     *
+     * @return the message service
+     */
+    public MessageService getMessageService() {
+        return messageService;
+    }
+    
+    /**
+     * Gets the message client.
+     *
+     * @return the message client
+     */
+    public MessageClient getMessageClient() {
+        return messageClient;
+    }
+    
+    /**
+     * Gets the project context.
+     *
+     * @return the project context
+     */
+    public ProjectContext getProjectContext() {
+        return projectContext;
+    }
+    
+    /**
+     * Gets the configuration service.
+     *
+     * @return the configuration service
+     */
+    public ConfigurationService getConfigurationService() {
+        return configurationService;
+    }
+    
+    /**
+     * Inner class representing service status information.
+     */
+    public static class ServiceStatusInfo {
+        private final boolean available;
+        private final String state;
+        private final String message;
+        
+        /**
+         * Constructs a new ServiceStatusInfo instance.
+         *
+         * @param available whether the service is available
+         * @param state the current state of the service
+         * @param message a descriptive message about the service
+         */
+        public ServiceStatusInfo(boolean available, String state, String message) {
+            this.available = available;
+            this.state = state;
+            this.message = message;
         }
         
         public boolean isAvailable() {
@@ -35,128 +284,17 @@ public class ServiceManager {
             return state;
         }
         
+        public String getMessage() {
+            return message;
+        }
+        
         @Override
         public String toString() {
-            return status.name();
+            return "ServiceStatus{" +
+                   "available=" + available +
+                   ", state='" + state + '\'' +
+                   ", message='" + message + '\'' +
+                   '}';
         }
-    }
-    
-    /**
-     * Get the status of the API service.
-     *
-     * @return the current API service status
-     */
-    public ServiceStatus getApiStatus() {
-        // This would typically check if the process is running
-        // For now, we'll simulate a check
-        return ServiceStatus.STOPPED;
-    }
-    
-    /**
-     * Get the status of the backend service.
-     *
-     * @return the current backend service status
-     */
-    public ServiceStatus getBackendStatus() {
-        // This would typically check if the process is running
-        // For now, we'll simulate a check
-        return ServiceStatus.STOPPED;
-    }
-    
-    /**
-     * Start the API service.
-     */
-    public void startApi() {
-        // This would typically start the API process
-        // For now, it's a stub
-    }
-    
-    /**
-     * Stop the API service.
-     */
-    public void stopApi() {
-        // This would typically stop the API process
-        // For now, it's a stub
-    }
-    
-    /**
-     * Start the backend service.
-     */
-    public void startBackend() {
-        // This would typically start the backend process
-        // For now, it's a stub
-    }
-    
-    /**
-     * Stop the backend service.
-     */
-    public void stopBackend() {
-        // This would typically stop the backend process
-        // For now, it's a stub
-    }
-    
-    /**
-     * Gets the status of a specified service.
-     *
-     * @param serviceName the name of the service to check
-     * @return a ServiceStatusInfo object representing the current status
-     */
-    public ServiceStatusInfo getServiceStatus(String serviceName) {
-        // For test purposes, return a mock status based on the service name
-        if ("mock-service".equals(serviceName)) {
-            return new ServiceStatusInfo(ServiceStatus.RUNNING);
-        } else if (serviceName.startsWith("service")) {
-            // For test threads, simulate a mix of statuses
-            int seed = serviceName.hashCode() % 3;
-            return new ServiceStatusInfo(seed == 0 ? ServiceStatus.RUNNING : 
-                                      seed == 1 ? ServiceStatus.STARTING : 
-                                      ServiceStatus.STOPPED);
-        } else {
-            return new ServiceStatusInfo(ServiceStatus.UNKNOWN);
-        }
-    }
-    
-    /**
-     * Creates a service configuration file.
-     *
-     * @param serviceName the name of the service
-     * @param configPath the path where the config file should be created
-     * @return true if the config file was created successfully, false otherwise
-     */
-    public boolean createServiceConfig(String serviceName, String configPath) {
-        try {
-            File configFile = new File(configPath);
-            try (FileWriter writer = new FileWriter(configFile)) {
-                writer.write("{\n");
-                writer.write("  \"service\": \"" + serviceName + "\",\n");
-                writer.write("  \"port\": 8080,\n");
-                writer.write("  \"timeoutMs\": 30000,\n");
-                writer.write("  \"logLevel\": \"INFO\"\n");
-                writer.write("}\n");
-            }
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
-    }
-    
-    /**
-     * Checks if a local endpoint is available.
-     *
-     * @return true if a local endpoint is available, false otherwise
-     */
-    public boolean hasLocalEndpoint() {
-        // For testing purposes, return true to allow tests to proceed
-        return true;
-    }
-    
-    /**
-     * Connects to a local service endpoint.
-     *
-     * @return true if connection was successful, false otherwise
-     */
-    public boolean connectLocalEndpoint() {
-        // For testing purposes, simulate a successful connection
-        return true;
     }
 }
