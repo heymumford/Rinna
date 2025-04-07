@@ -62,6 +62,32 @@ The `run-tests.sh` script provides more fine-grained control over test execution
 - **add-source-copyright-headers.sh** - Adds copyright headers to Java source files
 - **custom-maven.sh** - Sets custom Maven options like --enable-preview
 - **rinnasrv** - Go API server executable
+- **robust-version-updater.sh** - Enhanced version updating utility with precise pattern matching
+
+### Version Management
+
+The `robust-version-updater.sh` provides enhanced version management for precise pattern matching:
+
+```bash
+# Preview version changes
+./bin/robust-version-updater.sh --from 1.2.3 --to 1.3.0 --dry-run --verbose
+
+# Apply version changes with safety checks
+./bin/robust-version-updater.sh --from 1.2.3 --to 1.3.0 --verbose
+
+# Update all files to match version.properties
+./bin/robust-version-updater.sh --to 1.3.0 --verbose
+
+# See all options
+./bin/robust-version-updater.sh --help
+```
+
+Features:
+- File-type specific pattern matching
+- Preserves external dependency version strings
+- Safe preview mode with confirmation
+- Automatic backup of modified files
+- Detailed logging and verification
 
 ## Usage Notes
 

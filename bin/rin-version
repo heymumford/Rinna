@@ -565,8 +565,31 @@ cmd_update() {
   
   print_header "Updating all files to match version.properties (${current_version})"
   
-  # Check if we have a version-service directory - if so, use it
-  if [ -d "$RINNA_DIR/version-service" ]; then
+  # Check if we have the robust updater available
+  if [ -x "$RINNA_DIR/bin/robust-version-updater.sh" ]; then
+    print_header "Using enhanced robust version updater..."
+    
+    # Run in update mode (synchronize files to version.properties)
+    # First, show a preview of what changes will be made
+    print_header "Previewing changes with robust version updater..."
+    "$RINNA_DIR/bin/robust-version-updater.sh" --to "$current_version" --dry-run --verbose
+    
+    # Ask for confirmation before proceeding with actual changes
+    echo
+    echo -e "${YELLOW}The above changes will be applied. Continue? [y/N]${NC}"
+    read -r response
+    if [[ ! "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+      print_warning "Version update cancelled by user"
+      return 1
+    fi
+    
+    # Now apply the changes
+    print_header "Applying changes with robust version updater..."
+    "$RINNA_DIR/bin/robust-version-updater.sh" --to "$current_version" --verbose
+    print_success "Version update completed successfully using robust pattern matching"
+    
+  # Check if we have a version-service directory - if so, use it  
+  elif [ -d "$RINNA_DIR/version-service" ]; then
     # Try running the version-service CLI to update files
     if command -v go &> /dev/null && [ -f "$RINNA_DIR/version-service/cli/version_cli.go" ]; then
       print_header "Using Clean Architecture version service..."
@@ -617,7 +640,17 @@ cmd_update() {
   
   # Run verification
   print_header "Verifying version consistency..."
-  if [ -d "$RINNA_DIR/version-service" ] && command -v go &> /dev/null && [ -f "$RINNA_DIR/version-service/cli/version_cli.go" ]; then
+  
+  # Check if we have the robust updater
+  if [ -x "$RINNA_DIR/bin/robust-version-updater.sh" ]; then
+    # Use the robust updater's verification
+    print_header "Verifying version consistency using robust updater..."
+    if "$RINNA_DIR/bin/robust-version-updater.sh" --to "$current_version" --dry-run; then
+      print_success "Version consistency verified: all files match version $current_version"
+    else
+      print_warning "Some files may have inconsistent versions. Consider running 'rin-version update' again."
+    fi
+  elif [ -d "$RINNA_DIR/version-service" ] && command -v go &> /dev/null && [ -f "$RINNA_DIR/version-service/cli/version_cli.go" ]; then
     # Use the version-service verification
     if [ -f "$RINNA_DIR/version-service/bin/version-cli" ]; then
       "$RINNA_DIR/version-service/bin/version-cli" --verify
@@ -644,51 +677,86 @@ cmd_bump_version() {
   echo "Rinna Version Update Log - $(date)" > "$log_file"
   echo "Current version: $current_version" >> "$log_file"
   echo "New version: $new_version" >> "$log_file"
-  echo "Affected files:" >> "$log_file"
-  echo "- $VERSION_FILE (properties file)" >> "$log_file"
-  echo "- $README_FILE (README badge)" >> "$log_file"
   
-  # List POM files that will be checked
-  echo "POM files to be checked:" >> "$log_file"
-  for pom_file in $(find "$RINNA_DIR" -name "pom.xml"); do
-    # Check if this POM has org.rinna groupId
-    if grep -q "<groupId>org.rinna</groupId>" "$pom_file"; then
-      echo "- $pom_file (Rinna project, will update version)" >> "$log_file"
-    else
-      echo "- $pom_file (Not a Rinna project, will NOT update version)" >> "$log_file"
+  # Check if we have the robust updater available
+  if [ -x "$RINNA_DIR/bin/robust-version-updater.sh" ]; then
+    print_header "Using enhanced robust version updater..."
+    
+    # First update version.properties manually to ensure it's right
+    update_version_properties "$new_version"
+    
+    # Run the robust updater in dry-run mode first to preview changes
+    print_header "Previewing changes with robust version updater..."
+    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --dry-run --verbose
+    
+    # Ask for confirmation before proceeding with actual changes
+    echo
+    echo -e "${YELLOW}The above changes will be applied. Continue? [y/N]${NC}"
+    read -r response
+    if [[ ! "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+      print_warning "Version update cancelled by user"
+      return 1
     fi
-  done
-  
-  # List Go files that will be updated
-  echo "Go version files to be updated:" >> "$log_file"
-  for go_file in "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"; do
-    if [ -f "$go_file" ]; then
-      echo "- $go_file" >> "$log_file"
-    else
-      echo "- $go_file (will be created)" >> "$log_file"
+    
+    # Execute the actual update with the robust updater
+    print_header "Applying changes with robust version updater..."
+    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --verbose
+    
+    # Write version update log
+    echo "Used robust-version-updater.sh to update files" >> "$log_file"
+    print_success "Version update completed successfully using robust pattern matching"
+    
+  else
+    # Fall back to the original update methods if the robust updater is not available
+    print_warning "Enhanced robust version updater not found. Using legacy update methods..."
+    
+    # List files that will be checked
+    echo "Affected files:" >> "$log_file"
+    echo "- $VERSION_FILE (properties file)" >> "$log_file"
+    echo "- $README_FILE (README badge)" >> "$log_file"
+    
+    # List POM files that will be checked
+    echo "POM files to be checked:" >> "$log_file"
+    for pom_file in $(find "$RINNA_DIR" -name "pom.xml"); do
+      # Check if this POM has org.rinna groupId
+      if grep -q "<groupId>org.rinna</groupId>" "$pom_file"; then
+        echo "- $pom_file (Rinna project, will update version)" >> "$log_file"
+      else
+        echo "- $pom_file (Not a Rinna project, will NOT update version)" >> "$log_file"
+      fi
+    done
+    
+    # List Go files that will be updated
+    echo "Go version files to be updated:" >> "$log_file"
+    for go_file in "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"; do
+      if [ -f "$go_file" ]; then
+        echo "- $go_file" >> "$log_file"
+      else
+        echo "- $go_file (will be created)" >> "$log_file"
+      fi
+    done
+    
+    # List Python files that will be updated
+    echo "Python files to be updated:" >> "$log_file"
+    echo "- $RINNA_DIR/bin/rinna_config.py (reads from version.properties)" >> "$log_file"
+    if [ -f "$RINNA_DIR/pyproject.toml" ]; then
+      echo "- $RINNA_DIR/pyproject.toml" >> "$log_file"
     fi
-  done
-  
-  # List Python files that will be updated
-  echo "Python files to be updated:" >> "$log_file"
-  echo "- $RINNA_DIR/bin/rinna_config.py (reads from version.properties)" >> "$log_file"
-  if [ -f "$RINNA_DIR/pyproject.toml" ]; then
-    echo "- $RINNA_DIR/pyproject.toml" >> "$log_file"
+    if [ -d "$RINNA_DIR/.venv" ]; then
+      echo "- $RINNA_DIR/.venv/version" >> "$log_file"
+    fi
+    
+    echo "Starting updates at $(date)" >> "$log_file"
+    
+    # Perform the actual updates using legacy methods
+    update_version_properties "$new_version"
+    update_pom_versions "$new_version"
+    update_readme_version "$new_version"
+    update_go_version "$new_version"
+    update_python_version "$new_version"
+    
+    echo "Updates completed at $(date)" >> "$log_file"
   fi
-  if [ -d "$RINNA_DIR/.venv" ]; then
-    echo "- $RINNA_DIR/.venv/version" >> "$log_file"
-  fi
-  
-  echo "Starting updates at $(date)" >> "$log_file"
-  
-  # Perform the actual updates
-  update_version_properties "$new_version"
-  update_pom_versions "$new_version"
-  update_readme_version "$new_version"
-  update_go_version "$new_version"
-  update_python_version "$new_version"
-  
-  echo "Updates completed at $(date)" >> "$log_file"
   
   # Generate architecture diagrams for major or minor version bumps
   if [[ "$index" -eq 0 || "$index" -eq 1 ]]; then
@@ -707,7 +775,10 @@ cmd_bump_version() {
   
   # Add all affected files to git
   print_header "Adding version files to git..."
-  git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"
+  git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" 
+  
+  # Add Go files
+  find "$RINNA_DIR/api" -name "version.go" -type f | xargs git add 2>/dev/null || true
   
   # Add Python-related files if they exist
   if [ -f "$RINNA_DIR/pyproject.toml" ]; then
@@ -758,51 +829,86 @@ cmd_set() {
   echo "Rinna Version Update Log - $(date)" > "$log_file"
   echo "Current version: $current_version" >> "$log_file"
   echo "New version: $new_version" >> "$log_file"
-  echo "Affected files:" >> "$log_file"
-  echo "- $VERSION_FILE (properties file)" >> "$log_file"
-  echo "- $README_FILE (README badge)" >> "$log_file"
   
-  # List POM files that will be checked
-  echo "POM files to be checked:" >> "$log_file"
-  for pom_file in $(find "$RINNA_DIR" -name "pom.xml"); do
-    # Check if this POM has org.rinna groupId
-    if grep -q "<groupId>org.rinna</groupId>" "$pom_file"; then
-      echo "- $pom_file (Rinna project, will update version)" >> "$log_file"
-    else
-      echo "- $pom_file (Not a Rinna project, will NOT update version)" >> "$log_file"
+  # Check if we have the robust updater available
+  if [ -x "$RINNA_DIR/bin/robust-version-updater.sh" ]; then
+    print_header "Using enhanced robust version updater..."
+    
+    # First update version.properties manually to ensure it's right
+    update_version_properties "$new_version"
+    
+    # Run the robust updater in dry-run mode first to preview changes
+    print_header "Previewing changes with robust version updater..."
+    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --dry-run --verbose
+    
+    # Ask for confirmation before proceeding with actual changes
+    echo
+    echo -e "${YELLOW}The above changes will be applied. Continue? [y/N]${NC}"
+    read -r response
+    if [[ ! "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+      print_warning "Version update cancelled by user"
+      return 1
     fi
-  done
-  
-  # List Go files that will be updated
-  echo "Go version files to be updated:" >> "$log_file"
-  for go_file in "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"; do
-    if [ -f "$go_file" ]; then
-      echo "- $go_file" >> "$log_file"
-    else
-      echo "- $go_file (will be created)" >> "$log_file"
+    
+    # Execute the actual update with the robust updater
+    print_header "Applying changes with robust version updater..."
+    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --verbose
+    
+    # Write version update log
+    echo "Used robust-version-updater.sh to update files" >> "$log_file"
+    print_success "Version update completed successfully using robust pattern matching"
+    
+  else
+    # Fall back to the original update methods if the robust updater is not available
+    print_warning "Enhanced robust version updater not found. Using legacy update methods..."
+    
+    # List files that will be checked
+    echo "Affected files:" >> "$log_file"
+    echo "- $VERSION_FILE (properties file)" >> "$log_file"
+    echo "- $README_FILE (README badge)" >> "$log_file"
+    
+    # List POM files that will be checked
+    echo "POM files to be checked:" >> "$log_file"
+    for pom_file in $(find "$RINNA_DIR" -name "pom.xml"); do
+      # Check if this POM has org.rinna groupId
+      if grep -q "<groupId>org.rinna</groupId>" "$pom_file"; then
+        echo "- $pom_file (Rinna project, will update version)" >> "$log_file"
+      else
+        echo "- $pom_file (Not a Rinna project, will NOT update version)" >> "$log_file"
+      fi
+    done
+    
+    # List Go files that will be updated
+    echo "Go version files to be updated:" >> "$log_file"
+    for go_file in "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"; do
+      if [ -f "$go_file" ]; then
+        echo "- $go_file" >> "$log_file"
+      else
+        echo "- $go_file (will be created)" >> "$log_file"
+      fi
+    done
+    
+    # List Python files that will be updated
+    echo "Python files to be updated:" >> "$log_file"
+    echo "- $RINNA_DIR/bin/rinna_config.py (reads from version.properties)" >> "$log_file"
+    if [ -f "$RINNA_DIR/pyproject.toml" ]; then
+      echo "- $RINNA_DIR/pyproject.toml" >> "$log_file"
     fi
-  done
-  
-  # List Python files that will be updated
-  echo "Python files to be updated:" >> "$log_file"
-  echo "- $RINNA_DIR/bin/rinna_config.py (reads from version.properties)" >> "$log_file"
-  if [ -f "$RINNA_DIR/pyproject.toml" ]; then
-    echo "- $RINNA_DIR/pyproject.toml" >> "$log_file"
+    if [ -d "$RINNA_DIR/.venv" ]; then
+      echo "- $RINNA_DIR/.venv/version" >> "$log_file"
+    fi
+    
+    echo "Starting updates at $(date)" >> "$log_file"
+    
+    # Perform the actual updates using legacy methods
+    update_version_properties "$new_version"
+    update_pom_versions "$new_version"
+    update_readme_version "$new_version"
+    update_go_version "$new_version"
+    update_python_version "$new_version"
+    
+    echo "Updates completed at $(date)" >> "$log_file"
   fi
-  if [ -d "$RINNA_DIR/.venv" ]; then
-    echo "- $RINNA_DIR/.venv/version" >> "$log_file"
-  fi
-  
-  echo "Starting updates at $(date)" >> "$log_file"
-  
-  # Perform the actual updates
-  update_version_properties "$new_version"
-  update_pom_versions "$new_version"
-  update_readme_version "$new_version"
-  update_go_version "$new_version"
-  update_python_version "$new_version"
-  
-  echo "Updates completed at $(date)" >> "$log_file"
   
   # Generate architecture diagrams for major version changes or when changing to x.0.0 versions
   if [[ "${new_version%.*}" != "${current_version%.*}" ]] || [[ "${new_version}" =~ ^[0-9]+\.0\.0$ ]]; then
@@ -821,7 +927,10 @@ cmd_set() {
   
   # Add all affected files to git
   print_header "Adding version files to git..."
-  git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"
+  git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE"
+  
+  # Add Go files
+  find "$RINNA_DIR/api" -name "version.go" -type f | xargs git add 2>/dev/null || true
   
   # Add Python-related files if they exist
   if [ -f "$RINNA_DIR/pyproject.toml" ]; then
