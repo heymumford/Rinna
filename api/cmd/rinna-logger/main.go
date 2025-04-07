@@ -14,9 +14,55 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode"
 
 	"github.com/heymumford/rinna/api/pkg/logger"
 )
+
+// isValidFieldKey checks if a field key is valid (alphanumeric with underscores)
+func isValidFieldKey(key string) bool {
+	for _, r := range key {
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_' {
+			return false
+		}
+	}
+	return true
+}
+
+// sanitizeFieldKey converts an invalid field key to a valid one
+func sanitizeFieldKey(key string) string {
+	var result strings.Builder
+	for _, r := range key {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' {
+			result.WriteRune(r)
+		} else {
+			result.WriteRune('_')
+		}
+	}
+	return result.String()
+}
+
+// ensureLogDirectory ensures the log directory exists
+func ensureLogDirectory(dir string) error {
+	// Check if directory exists
+	info, err := os.Stat(dir)
+	if err == nil {
+		if info.IsDir() {
+			return nil // Directory exists
+		}
+		return fmt.Errorf("path exists but is not a directory: %s", dir)
+	}
+	
+	// Create directory with parents
+	if os.IsNotExist(err) {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("failed to create log directory: %s", err)
+		}
+		return nil
+	}
+	
+	return err
+}
 
 func main() {
 	// Define command-line flags
@@ -43,6 +89,12 @@ func main() {
 			os.Exit(1)
 		}
 		logDir = filepath.Join(home, ".rinna", "logs")
+	}
+	
+	// Ensure the log directory exists
+	if err := ensureLogDirectory(logDir); err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating log directory: %v\n", err)
+		// Continue anyway, using stderr only
 	}
 
 	logFile := filepath.Join(logDir, "rinna-go.log")
@@ -74,12 +126,28 @@ func main() {
 	// Create the logger with prefix (name)
 	log := logger.NewWithConfig(config).WithPrefix(*name)
 
-	// Parse fields
+	// Parse fields with validation
 	fieldMap := make(map[string]interface{})
 	for _, field := range fields {
 		parts := strings.SplitN(field, "=", 2)
 		if len(parts) == 2 {
-			fieldMap[parts[0]] = parts[1]
+			key := strings.TrimSpace(parts[0])
+			value := strings.TrimSpace(parts[1])
+			
+			// Validate key (non-empty and alphanumeric with underscores)
+			if key == "" {
+				fmt.Fprintf(os.Stderr, "Warning: Empty field key found, skipping\n")
+				continue
+			}
+			
+			if !isValidFieldKey(key) {
+				fmt.Fprintf(os.Stderr, "Warning: Invalid field key '%s', using sanitized version\n", key)
+				key = sanitizeFieldKey(key)
+			}
+			
+			fieldMap[key] = value
+		} else {
+			fmt.Fprintf(os.Stderr, "Warning: Invalid field format '%s', expected key=value\n", field)
 		}
 	}
 

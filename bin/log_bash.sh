@@ -24,11 +24,49 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common/rinna_logger.sh"
 
+# Ensure log directory exists
+LOG_DIR="${RINNA_LOG_DIR:-$HOME/.rinna/logs}"
+mkdir -p "$LOG_DIR" 2>/dev/null || echo "Warning: Could not create log directory $LOG_DIR" >&2
+
 # Default variables
 log_level="INFO"
 module_name="java_bridge"
 message=""
 fields=()
+
+# Validate field key (alphanumeric with underscores)
+validate_field_key() {
+    local key="$1"
+    [[ "$key" =~ ^[a-zA-Z0-9_]+$ ]]
+}
+
+# Sanitize field key (convert invalid characters to underscores)
+sanitize_field_key() {
+    local key="$1"
+    echo "${key//[^a-zA-Z0-9_]/_}"
+}
+
+# Ensure log directory exists
+ensure_log_directory() {
+    local dir="$1"
+    
+    # Check if directory exists
+    if [[ -d "$dir" ]]; then
+        return 0  # Directory exists
+    elif [[ -e "$dir" ]]; then
+        echo "Warning: Path exists but is not a directory: $dir" >&2
+        return 1
+    fi
+    
+    # Create directory with parents
+    mkdir -p "$dir" 2>/dev/null
+    if [[ $? -ne 0 ]]; then
+        echo "Error creating log directory: $dir" >&2
+        return 1
+    fi
+    
+    return 0
+}
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -46,11 +84,37 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --field)
-            fields+=("$2")
+            field_arg="$2"
+            
+            # Parse key=value format
+            if [[ "$field_arg" =~ = ]]; then
+                key="${field_arg%%=*}"
+                value="${field_arg#*=}"
+                
+                # Trim whitespace
+                key="${key#"${key%%[![:space:]]*}"}"
+                key="${key%"${key##*[![:space:]]}"}"
+                value="${value#"${value%%[![:space:]]*}"}"
+                value="${value%"${value##*[![:space:]]}"}"
+                
+                # Validate key
+                if [[ -z "$key" ]]; then
+                    echo "Warning: Empty field key found, skipping" >&2
+                elif ! validate_field_key "$key"; then
+                    echo "Warning: Invalid field key '$key', using sanitized version" >&2
+                    key="$(sanitize_field_key "$key")"
+                    fields+=("$key=$value")
+                else
+                    fields+=("$key=$value")
+                fi
+            else
+                echo "Warning: Invalid field format '$field_arg', expected key=value" >&2
+            fi
+            
             shift 2
             ;;
         *)
-            echo "Unknown argument: $1"
+            echo "Unknown argument: $1" >&2
             exit 1
             ;;
     esac

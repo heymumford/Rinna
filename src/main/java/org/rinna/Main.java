@@ -57,7 +57,7 @@ import java.util.UUID;
  */
 public class Main {
     private static final MultiLanguageLogger logger = MultiLanguageLogger.getLogger(Main.class);
-    private static final String VERSION = "1.9.0";
+    private static final String VERSION = "1.10.0";
     private static final int DEFAULT_PORT = 8081;
     
     private static RinnaInstanceBuilder rinnaBuilder;

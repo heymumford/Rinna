@@ -18,6 +18,7 @@ Arguments:
 import argparse
 import os
 import sys
+from pathlib import Path
 
 # Add the project's bin directory to the path
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -39,14 +40,58 @@ def parse_args():
 def parse_field(field_str):
     """Parse a field string in the format key=value."""
     if "=" not in field_str:
+        print(f"Warning: Invalid field format '{field_str}', expected key=value", file=sys.stderr)
         return None, None
     
     parts = field_str.split("=", 1)
-    return parts[0], parts[1]
+    key = parts[0].strip()
+    value = parts[1].strip()
+    
+    # Validate key (non-empty and alphanumeric with underscores)
+    if not key:
+        print("Warning: Empty field key found, skipping", file=sys.stderr)
+        return None, None
+    
+    if not is_valid_field_key(key):
+        print(f"Warning: Invalid field key '{key}', using sanitized version", file=sys.stderr)
+        key = sanitize_field_key(key)
+        
+    return key, value
+
+def is_valid_field_key(key):
+    """Check if a field key is valid (alphanumeric with underscores)."""
+    return all(c.isalnum() or c == '_' for c in key)
+
+def sanitize_field_key(key):
+    """Convert an invalid field key to a valid one."""
+    return ''.join(c if c.isalnum() or c == '_' else '_' for c in key)
+
+def ensure_log_directory(log_dir):
+    """Ensure the log directory exists."""
+    try:
+        # Check if directory exists
+        if os.path.exists(log_dir):
+            if not os.path.isdir(log_dir):
+                print(f"Warning: Path exists but is not a directory: {log_dir}", file=sys.stderr)
+                return False
+            return True
+            
+        # Create directory with parents
+        os.makedirs(log_dir, mode=0o755, exist_ok=True)
+        return True
+    except Exception as e:
+        print(f"Error creating log directory: {e}", file=sys.stderr)
+        return False
 
 def main():
     """Main function."""
     args = parse_args()
+    
+    # Get log directory
+    log_dir = os.environ.get("RINNA_LOG_DIR", str(Path.home() / ".rinna" / "logs"))
+    
+    # Ensure log directory exists
+    ensure_log_directory(log_dir)
     
     # Configure logging
     configure_logging()
@@ -54,7 +99,7 @@ def main():
     # Get logger
     logger = get_logger(args.name)
     
-    # Parse fields
+    # Parse fields with validation
     fields = {}
     if args.field:
         for field_str in args.field:
