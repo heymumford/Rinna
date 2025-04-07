@@ -49,8 +49,9 @@ public class AdminServerAutolaunchSteps {
         
         // Simulate a project directory with Rinna installation
         try {
-            // Create temp directory in target path
-            Path targetDir = Paths.get("target/test/temp");
+            // Create temp directory in target path - use absolute path
+            String projectRoot = System.getProperty("user.dir");
+            Path targetDir = Paths.get(projectRoot, "target/test/temp");
             Files.createDirectories(targetDir);
             Path tempProjectDir = Files.createDirectory(targetDir.resolve("rinna-test-project-" + System.currentTimeMillis()));
             context.setConfigurationValue("projectDir", tempProjectDir);

@@ -45,8 +45,9 @@ public class AdminMavenIntegrationSteps {
     
     @Given("I have an empty Java project with a standard POM file")
     public void iHaveAnEmptyJavaProjectWithAStandardPOMFile() throws IOException {
-        // Create a temporary directory in target path for the test project
-        Path targetDir = Paths.get("target/test/temp");
+        // Create a temporary directory in target path for the test project - use absolute path
+        String projectRoot = System.getProperty("user.dir");
+        Path targetDir = Paths.get(projectRoot, "target/test/temp");
         Files.createDirectories(targetDir);
         tempProjectDir = Files.createDirectory(targetDir.resolve("rinna-test-project-" + System.currentTimeMillis()));
         context.setConfigurationValue("projectDir", tempProjectDir);
