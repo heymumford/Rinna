@@ -1,0 +1,31 @@
+# Rinna pre-commit configuration
+# This file configures pre-commit hooks for the Rinna project
+
+# Default hook execution order
+default_stages: [commit]
+
+# Hooks configuration
+hooks:
+  - id: pmd-check
+    name: PMD Code Quality Check
+    entry: bin/run-pmd-check.sh
+    language: script
+    pass_filenames: false
+    
+  - id: clean-architecture
+    name: Clean Architecture Validation
+    entry: bin/checks/check-clean-architecture.sh
+    language: script
+    pass_filenames: false
+    
+  - id: dependency-validation
+    name: Dependency Validation
+    entry: bin/checks/dependency-validator.sh
+    language: script
+    pass_filenames: false
+    
+  - id: test-structure
+    name: Test Structure Validation
+    entry: bin/checks/test-structure-validator.sh
+    language: script
+    pass_filenames: false
