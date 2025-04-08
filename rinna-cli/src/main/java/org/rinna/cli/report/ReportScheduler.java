@@ -11,9 +11,10 @@ import org.rinna.cli.service.ConfigurationService;
 import org.rinna.cli.service.ServiceManager;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,7 +33,7 @@ import java.util.logging.Logger;
 /**
  * Service for scheduling automatic report generation.
  */
-public class ReportScheduler {
+public final class ReportScheduler {
     private static final Logger LOGGER = Logger.getLogger(ReportScheduler.class.getName());
     // Use project-relative path for schedules in the target directory
     private static final String CONFIG_DIR = System.getProperty("report.scheduler.config.dir", 
@@ -215,7 +216,8 @@ public class ReportScheduler {
             for (File scheduleFile : scheduleFiles) {
                 try {
                     Properties props = new Properties();
-                    try (FileReader reader = new FileReader(scheduleFile)) {
+                    try (InputStreamReader reader = new InputStreamReader(
+                            Files.newInputStream(scheduleFile.toPath()), StandardCharsets.UTF_8)) {
                         props.load(reader);
                     }
                     
@@ -320,7 +322,8 @@ public class ReportScheduler {
             
             // Write to file
             Path scheduleFile = Paths.get(CONFIG_DIR, report.getId() + ".properties");
-            try (FileWriter writer = new FileWriter(scheduleFile.toFile())) {
+            try (OutputStreamWriter writer = new OutputStreamWriter(
+                    Files.newOutputStream(scheduleFile), StandardCharsets.UTF_8)) {
                 props.store(writer, "Scheduled report configuration");
             }
             

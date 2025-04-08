@@ -13,10 +13,12 @@ import org.rinna.cli.model.WorkflowState;
 import org.rinna.cli.model.Priority;
 import org.rinna.cli.adapter.ReportItemAdapter;
 
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,7 +34,7 @@ import java.util.stream.Collectors;
 /**
  * Generates reports based on ReportConfig and work items.
  */
-public class ReportGenerator {
+public final class ReportGenerator {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     
@@ -1427,7 +1429,8 @@ public class ReportGenerator {
             Files.createDirectories(outputPathObj.getParent());
             
             // Write to file
-            try (PrintWriter writer = new PrintWriter(new FileWriter(outputPath))) {
+            try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(
+                    Files.newOutputStream(outputPathObj), StandardCharsets.UTF_8))) {
                 writer.print(content);
             }
             
