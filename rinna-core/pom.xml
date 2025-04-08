@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.rinna</groupId>
     <artifactId>Rinna</artifactId>
-    <version>1.11.0</version>
+    <version>1.5.2</version>
   </parent>
   <artifactId>rinna-core</artifactId>
   <name>Rinna Core</name>
@@ -331,7 +331,8 @@
                This way both the regular JAR and the assembly JAR will be created.
           -->
           <appendAssemblyId>true</appendAssemblyId>
-          <attach>false</attach> <!-- Don't replace the main artifact -->
+          <attach>false</attach>
+          <!-- Don't replace the main artifact -->
         </configuration>
         <executions>
           <execution>

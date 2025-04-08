@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.rinna</groupId>
     <artifactId>Rinna</artifactId>
-    <version>1.11.0</version>
+    <version>1.5.2</version>
   </parent>
   <artifactId>rinna-cli</artifactId>
   <name>Rinna CLI</name>
@@ -106,7 +106,6 @@
       <version>5.10.0</version>
       <scope>test</scope>
     </dependency>
-    
     <!-- Cucumber BDD Testing -->
     <dependency>
       <groupId>io.cucumber</groupId>
