@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 #
 # rin-version - Streamlined Rinna version management utility
 #
@@ -15,19 +14,6 @@ set -e
 RINNA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VERSION_FILE="$RINNA_DIR/version.properties"
 README_FILE="$RINNA_DIR/README.md"
-
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# UI Functions
-print_header() { echo -e "${BLUE}$1${NC}"; }
-print_success() { echo -e "${GREEN}$1${NC}"; }
-print_warning() { echo -e "${YELLOW}$1${NC}"; }
-print_error() { echo -e "${RED}$1${NC}"; exit 1; }
 
 # Helper Functions
 get_version() {
@@ -55,8 +41,6 @@ increment_version() {
 }
 
 # Determine if a version should have a GitHub release
-# Based on: major/minor versions always get releases,
-# patch versions only get releases for significant changes or if marked as RELEASE
 should_create_github_release() {
   local version="$1" release_type="$2"
   IFS='.' read -r major minor patch <<< "$version"
@@ -82,9 +66,6 @@ should_create_github_release() {
     fi
   fi
   
-  # Check last minor version without a patch
-  local base_version="${major}.${minor}.0"
-  
   # If this patch has significant changes or is explicitly marked
   if $significant_changes; then
     return 0 # true
@@ -94,428 +75,38 @@ should_create_github_release() {
   return 1 # false
 }
 
-update_version_properties() {
-  local new_version="$1"
-  local major=$(echo "$new_version" | cut -d. -f1)
-  local minor=$(echo "$new_version" | cut -d. -f2)
-  local patch=$(echo "$new_version" | cut -d. -f3)
-  local current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+# Function that executes the consolidated version updater
+execute_version_update() {
+  local current_version="$1"
+  local new_version="$2"
+  local dry_run="$3"
+  local extra_args="$4"
   
-  # Update version properties
-  sed -i "s/^version=.*/version=$new_version/" "$VERSION_FILE"
-  sed -i "s/^version.major=.*/version.major=$major/" "$VERSION_FILE"
-  sed -i "s/^version.minor=.*/version.minor=$minor/" "$VERSION_FILE"
-  sed -i "s/^version.patch=.*/version.patch=$patch/" "$VERSION_FILE"
-  sed -i "s/^version.full=.*/version.full=$new_version/" "$VERSION_FILE"
-  
-  # Update release and build information
-  sed -i "s/^lastUpdated=.*/lastUpdated=$(date +%Y-%m-%d)/" "$VERSION_FILE"
-  sed -i "s/^buildNumber=.*/buildNumber=1/" "$VERSION_FILE"
-  sed -i "s/^build.timestamp=.*/build.timestamp=$current_timestamp/" "$VERSION_FILE"
-  
-  print_success "Updated version in $VERSION_FILE to $new_version"
-}
-
-update_pom_versions() {
-  local new_version="$1"
-  local pom_files=$(find "$RINNA_DIR" -name "pom.xml")
-  
-  for pom_file in $pom_files; do
-    print_header "Processing POM file: $(basename "$pom_file")"
+  # Check if we have the robust updater
+  if [ -x "$RINNA_DIR/bin/robust-version-updater.sh" ]; then
+    # Construct the command
+    local cmd="$RINNA_DIR/bin/robust-version-updater.sh --from $current_version --to $new_version"
     
-    # Check if this is a Rinna project
-    if ! grep -q "<groupId>org.rinna</groupId>" "$pom_file"; then
-      print_warning "- Not a Rinna project, skipping"
-      continue
+    # Add optional arguments
+    if [ "$dry_run" = true ]; then
+      cmd="$cmd --dry-run"
     fi
     
-    # We'll use a simpler approach with sed to avoid AWK syntax issues
-    # This approach is more explicit and easier to debug
-    
-    # 1. Update parent version if it's an org.rinna parent
-    if grep -q "<parent>" "$pom_file" && grep -A 5 "<parent>" "$pom_file" | grep -q "<groupId>org.rinna</groupId>"; then
-      print_success "- Updating org.rinna parent reference"
-      
-      # Create a temporary file for processing
-      local parent_section=$(grep -A 10 "<parent>" "$pom_file" | grep -B 10 "</parent>" | head -n 20)
-      if echo "$parent_section" | grep -q "<groupId>org.rinna</groupId>"; then
-        # Use sed to replace the version within the parent section
-        sed -i "/<parent>/,/<\/parent>/s|<version>[^<]*</version>|<version>$new_version</version>|g" "$pom_file"
-      fi
+    # Add any extra arguments
+    if [ -n "$extra_args" ]; then
+      cmd="$cmd $extra_args"
     fi
     
-    # 2. Check for a project-level version outside of parent/dependencies sections
-    # This is trickier since we need to avoid dependency versions
-    
-    # Create a temp file
-    cp "$pom_file" "${pom_file}.tmp"
-    
-    # Extract the content before any <dependencies> or <dependencyManagement> tags
-    head_content=$(sed -n '1,/<dependencies>/p' "${pom_file}.tmp" | grep -v "<dependencies>" || echo "")
-    if [ -z "$head_content" ]; then
-      head_content=$(sed -n '1,/<dependencyManagement>/p' "${pom_file}.tmp" | grep -v "<dependencyManagement>" || echo "")
-    fi
-    
-    # Look for a groupId and version outside of parent
-    if echo "$head_content" | grep -v "<parent>" | grep -q "<groupId>org.rinna</groupId>"; then
-      # We found an org.rinna groupId outside of parent, look for a version tag nearby
-      if echo "$head_content" | grep -v "<parent>" | grep -q "<version>"; then
-        print_success "- Updating project version"
-        
-        # Use a more targeted sed approach to update only the main project version
-        # after the groupId and artifactId, but before any dependencies
-        sed -i '/<parent>/,/<\/parent>/b; /<dependencies>/,$b; /<groupId>org.rinna<\/groupId>/,/<version>[^<]*<\/version>/ s|<version>[^<]*</version>|<version>'"$new_version"'</version>|' "$pom_file"
-      fi
-    else
-      print_warning "- No Rinna project version found outside parent section"
-    fi
-    
-    # Cleanup
-    rm -f "${pom_file}.tmp"
-  done
-  
-  print_success "Updated version in all Rinna POM files to $new_version"
-}
-
-update_readme_version() {
-  local new_version="$1"
-  sed -i -E "s|(\\[\\!\\[Version\\]\\(https://img.shields.io/badge/version-).*(-blue.svg\\)\\])|\\1${new_version}\\2|" "$README_FILE"
-  
-  # Also update Maven example if it exists
-  if grep -q "<artifactId>rinna-core</artifactId>" "$README_FILE"; then
-    sed -i -E "s|(<version>)([0-9]+\.[0-9]+\.[0-9]+)(</version>)|\1${new_version}\3|" "$README_FILE"
-  fi
-  
-  print_success "Updated version in $README_FILE to $new_version"
-}
-
-update_go_version() {
-  local new_version="$1"
-  local current_timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-  local go_health_files=(
-    "$RINNA_DIR/api/pkg/health/version.go"
-    "$RINNA_DIR/api/internal/version/version.go"
-  )
-  
-  # Create version.go files if they don't exist
-  mkdir -p "$RINNA_DIR/api/pkg/health"
-  if [ ! -f "$RINNA_DIR/api/pkg/health/version.go" ]; then
-    cat > "$RINNA_DIR/api/pkg/health/version.go" << EOF
-/*
- * Version information for the Rinna API
- *
- * Copyright (c) $(date +%Y) Eric C. Mumford (@heymumford)
- * This file is subject to the terms and conditions defined in
- * the LICENSE file, which is part of this source code package.
- */
-
-package health
-
-// These values are set during the build process
-var (
-	Version   = "$new_version"
-	CommitSHA = "runtime"
-	BuildTime = "$current_timestamp"
-)
-EOF
-    print_success "Created version file at $RINNA_DIR/api/pkg/health/version.go"
+    # Run the command and return its exit code
+    $cmd
+    return $?
   else
-    # Update existing version.go file
-    sed -i -E "s/Version\s*=\s*\"[^\"]*\"/Version   = \"$new_version\"/" "$RINNA_DIR/api/pkg/health/version.go"
-    sed -i -E "s/BuildTime\s*=\s*\"[^\"]*\"/BuildTime = \"$current_timestamp\"/" "$RINNA_DIR/api/pkg/health/version.go"
-  fi
-  
-  # Create internal version package if it doesn't exist
-  mkdir -p "$RINNA_DIR/api/internal/version"
-  if [ ! -f "$RINNA_DIR/api/internal/version/version.go" ]; then
-    cat > "$RINNA_DIR/api/internal/version/version.go" << EOF
-/*
- * Version information for the Rinna API
- *
- * Copyright (c) $(date +%Y) Eric C. Mumford (@heymumford)
- * This file is subject to the terms and conditions defined in
- * the LICENSE file, which is part of this source code package.
- */
-
-package version
-
-// These values are set during the build process
-var (
-	Version   = "$new_version"
-	CommitSHA = "runtime"
-	BuildTime = "$current_timestamp"
-)
-EOF
-    print_success "Created version file at $RINNA_DIR/api/internal/version/version.go"
-  else
-    # Update existing version.go file
-    sed -i -E "s/Version\s*=\s*\"[^\"]*\"/Version   = \"$new_version\"/" "$RINNA_DIR/api/internal/version/version.go"
-    sed -i -E "s/BuildTime\s*=\s*\"[^\"]*\"/BuildTime = \"$current_timestamp\"/" "$RINNA_DIR/api/internal/version/version.go"
-  fi
-  
-  print_success "Updated version in Go files to $new_version"
-}
-
-update_python_version() {
-  local new_version="$1"
-  
-  # Python doesn't need a version update in the source code since we've modified
-  # rinna_config.py to read from version.properties
-  
-  # We could update a pyproject.toml file if it exists
-  if [ -f "$RINNA_DIR/pyproject.toml" ]; then
-    sed -i -E "s/version\s*=\s*\"[^\"]*\"/version = \"$new_version\"/" "$RINNA_DIR/pyproject.toml"
-    print_success "Updated version in pyproject.toml to $new_version"
-  fi
-  
-  # Create or update virtual environment version file if it exists
-  if [ -d "$RINNA_DIR/.venv" ]; then
-    echo "$new_version" > "$RINNA_DIR/.venv/version"
-    print_success "Updated virtual environment version to $new_version"
-  fi
-  
-  # Force Python config to reload by touching the script
-  touch "$RINNA_DIR/bin/rinna_config.py"
-  print_success "Updated Python version references to $new_version"
-}
-
-verify_consistency() {
-  local root_version=$(get_version)
-  local inconsistencies=0
-  
-  print_header "Verifying version consistency across languages..."
-  
-  # Check if we have the newer version-service and it's usable
-  if [ -d "$RINNA_DIR/version-service" ] && command -v go &> /dev/null && [ -f "$RINNA_DIR/version-service/cli/version_cli.go" ]; then
-    # Use the Clean Architecture version service for verification
-    print_header "Using Clean Architecture version service for verification..."
-    
-    if [ -f "$RINNA_DIR/version-service/bin/version-cli" ]; then
-      # Use the built binary
-      if "$RINNA_DIR/version-service/bin/version-cli" --verify; then
-        return 0
-      else
-        return 1
-      fi
-    else
-      # Run with go directly
-      if (cd "$RINNA_DIR/version-service" && go run cli/version_cli.go --verify); then
-        return 0
-      else
-        return 1
-      fi
-    fi
-  fi
-  
-  # Check if we have the enhanced check-versions.sh and it's executable
-  if [ -x "$RINNA_DIR/bin/check-versions.sh" ]; then
-    print_header "Using enhanced cross-language version checker..."
-    if "$RINNA_DIR/bin/check-versions.sh"; then
-      return 0
-    else
-      return 1
-    fi
-  fi
-  
-  # Fallback to original verification if neither option is available
-  print_header "Fallback: using built-in verification across files..."
-  echo -e "Root version (from version.properties): ${GREEN}${root_version}${NC}"
-  
-  # Check POM files - with improved accuracy to only check relevant versions
-  for pom_file in $(find "$RINNA_DIR" -name "pom.xml"); do
-    echo -e "Checking ${BLUE}$(basename "$pom_file")${NC}..."
-    
-    # Check parent version - but only if it's an org.rinna parent
-    if grep -q "<parent>" "$pom_file" && grep -q -A 3 "<parent>" "$pom_file" | grep -q "<groupId>org.rinna</groupId>"; then
-      local parent_version=$(grep -A 5 "<parent>" "$pom_file" | grep "<version>" | head -1 | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
-      if [[ "$parent_version" != "$root_version" ]]; then
-        echo -e "  ${RED}org.rinna parent version mismatch: ${parent_version} (should be ${root_version})${NC}"
-        ((inconsistencies++))
-      else
-        echo -e "  ${GREEN}org.rinna parent version: ${parent_version} ✓${NC}"
-      fi
-    fi
-    
-    # Check project version, but only for Rinna projects (with org.rinna groupId)
-    # and not inside dependency, plugin or other sections
-    if grep -q "<groupId>org.rinna</groupId>" "$pom_file"; then
-      # Use a more sophisticated approach to extract the main project version
-      local project_content=$(cat "$pom_file")
-      local project_version=""
-      
-      # First, remove parent section, dependencies, and plugins sections which might have version tags
-      local filtered_content=$(echo "$project_content" | 
-        awk '
-          BEGIN { print_lines = 1; in_parent = 0; in_dependencies = 0; in_plugins = 0; in_dependencyManagement = 0 }
-          /<parent>/ { in_parent = 1; print_lines = 0 }
-          /<\/parent>/ { in_parent = 0; print_lines = 0 }
-          /<dependencies>/ { in_dependencies = 1; print_lines = 0 }
-          /<\/dependencies>/ { in_dependencies = 0; print_lines = 0 }
-          /<dependencyManagement>/ { in_dependencyManagement = 1; print_lines = 0 }
-          /<\/dependencyManagement>/ { in_dependencyManagement = 0; print_lines = 0 }
-          /<plugins>/ { in_plugins = 1; print_lines = 0 }
-          /<\/plugins>/ { in_plugins = 0; print_lines = 0 }
-          { if (print_lines && !in_parent && !in_dependencies && !in_plugins && !in_dependencyManagement) print }
-        ')
-      
-      # Now look for the project version in this filtered content
-      # First make sure we have the org.rinna groupId outside of any special sections
-      if echo "$filtered_content" | grep -q "<groupId>org.rinna</groupId>"; then
-        project_version=$(echo "$filtered_content" | grep -m 1 "<version>" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
-        
-        if [[ -n "$project_version" && "$project_version" != "$root_version" ]]; then
-          echo -e "  ${RED}Project version mismatch: ${project_version} (should be ${root_version})${NC}"
-          ((inconsistencies++))
-        elif [[ -n "$project_version" ]]; then
-          echo -e "  ${GREEN}Project version: ${project_version} ✓${NC}"
-        fi
-      fi
-    fi
-  done
-  
-  # Check README.md
-  echo -e "Checking ${BLUE}README.md${NC}..."
-  local readme_version=$(grep -o "version-.*-blue" "$README_FILE" | cut -d '-' -f 2)
-  if [[ "$readme_version" != "$root_version" ]]; then
-    echo -e "  ${RED}README version mismatch: ${readme_version} (should be ${root_version})${NC}"
-    ((inconsistencies++))
-  else
-    echo -e "  ${GREEN}README version: ${readme_version} ✓${NC}"
-  fi
-  
-  # Check Go version files
-  local go_version_files=(
-    "$RINNA_DIR/api/pkg/health/version.go"
-    "$RINNA_DIR/api/internal/version/version.go"
-  )
-  
-  for version_file in "${go_version_files[@]}"; do
-    if [ -f "$version_file" ]; then
-      echo -e "Checking ${BLUE}$(basename "$version_file")${NC}..."
-      local go_version=$(grep -o 'Version\s*=\s*"[^"]*"' "$version_file" | sed -E 's/.*"([^"]*)".*$/\1/')
-      if [[ -z "$go_version" ]]; then
-        # Try again with different formatting
-        go_version=$(grep -o 'Version.*"[^"]*"' "$version_file" | sed -E 's/.*"([^"]*)".*$/\1/')
-      fi
-      
-      if [[ "$go_version" != "$root_version" ]]; then
-        echo -e "  ${RED}Go version mismatch: ${go_version} (should be ${root_version})${NC}"
-        ((inconsistencies++))
-      else
-        echo -e "  ${GREEN}Go version: ${go_version} ✓${NC}"
-      fi
-    fi
-  done
-  
-  # Check Python configuration - test rinna_config.py
-  if [ -f "$RINNA_DIR/bin/rinna_config.py" ]; then
-    echo -e "Checking ${BLUE}Python config${NC}..."
-    
-    # Run the Python script with just the version info request
-    # Redirect stderr to /dev/null to suppress warnings about config file
-    local python_version=$("$RINNA_DIR/bin/rinna_config.py" project.version 2>/dev/null)
-    
-    if [[ -z "$python_version" ]]; then
-      # Try running the script directly and parse the output
-      python_version=$(python3 "$RINNA_DIR/bin/rinna_config.py" 2>/dev/null | grep -o "v[0-9.]*" | sed 's/^v//')
-    fi
-    
-    # Check if the version is still empty or contains error messages
-    if [[ -z "$python_version" || "$python_version" == *"Warning"* || "$python_version" == *"Error"* ]]; then
-      # Directly try to verify the Python module's _read_version_from_properties logic
-      echo -e "  ${YELLOW}Testing direct access to version.properties...${NC}"
-      
-      # Create a simple test script to directly read version.properties
-      local test_script=$(mktemp)
-      cat > "$test_script" << 'EOF'
-#!/usr/bin/env python3
-import os, sys
-script_dir = os.path.dirname(sys.argv[1])
-project_root = os.path.abspath(os.path.join(script_dir, ".."))
-version_file = os.path.join(project_root, "version.properties")
-with open(version_file, 'r') as f:
-    for line in f:
-        line = line.strip()
-        if line.startswith("version="):
-            print(line.split("=", 1)[1].strip())
-            break
-EOF
-      chmod +x "$test_script"
-      
-      # Run the test script
-      python_version=$(python3 "$test_script" "$RINNA_DIR/bin/rinna_config.py" 2>/dev/null)
-      rm "$test_script"
-      
-      if [[ -z "$python_version" ]]; then
-        echo -e "  ${YELLOW}Could not determine Python version (but will be read from version.properties)${NC}"
-      elif [[ "$python_version" != "$root_version" ]]; then
-        echo -e "  ${RED}Python version mismatch: ${python_version} (should be ${root_version})${NC}"
-        ((inconsistencies++))
-      else
-        echo -e "  ${GREEN}Python version: ${python_version} ✓${NC}"
-        echo -e "  ${BLUE}Note: Python will read this from version.properties at runtime${NC}"
-      fi
-    elif [[ "$python_version" != "$root_version" ]]; then
-      echo -e "  ${RED}Python version mismatch: ${python_version} (should be ${root_version})${NC}"
-      ((inconsistencies++))
-    else
-      echo -e "  ${GREEN}Python version: ${python_version} ✓${NC}"
-    fi
-  fi
-  
-  # Check pyproject.toml if it exists
-  if [ -f "$RINNA_DIR/pyproject.toml" ]; then
-    echo -e "Checking ${BLUE}pyproject.toml${NC}..."
-    local pyproject_version=$(grep -o 'version\s*=\s*"[^"]*"' "$RINNA_DIR/pyproject.toml" | sed -E 's/.*"([^"]*)".*$/\1/')
-    
-    if [[ -z "$pyproject_version" ]]; then
-      echo -e "  ${YELLOW}Could not determine version in pyproject.toml${NC}"
-    elif [[ "$pyproject_version" != "$root_version" ]]; then
-      echo -e "  ${RED}pyproject.toml version mismatch: ${pyproject_version} (should be ${root_version})${NC}"
-      ((inconsistencies++))
-    else
-      echo -e "  ${GREEN}pyproject.toml version: ${pyproject_version} ✓${NC}"
-    fi
-  fi
-  
-  # Check virtual environment version file if it exists
-  if [ -f "$RINNA_DIR/.venv/version" ]; then
-    echo -e "Checking ${BLUE}Python virtual environment${NC}..."
-    local venv_version=$(cat "$RINNA_DIR/.venv/version" 2>/dev/null)
-    
-    if [[ -z "$venv_version" ]]; then
-      echo -e "  ${YELLOW}Could not determine virtual environment version${NC}"
-    elif [[ "$venv_version" != "$root_version" ]]; then
-      echo -e "  ${RED}Virtual environment version mismatch: ${venv_version} (should be ${root_version})${NC}"
-      ((inconsistencies++))
-    else
-      echo -e "  ${GREEN}Virtual environment version: ${venv_version} ✓${NC}"
-    fi
-  fi
-  
-  # Report result
-  if [[ $inconsistencies -eq 0 ]]; then
-    print_success "All versions are consistent!"
-    return 0
-  else
-    echo -e "${RED}Found ${inconsistencies} version inconsistencies!${NC}"
+    echo "Error: robust-version-updater.sh not found"
     return 1
   fi
 }
 
-create_git_tag() {
-  local version="$1" message="$2"
-  local tag_name="v${version}"
-  
-  if [[ -z "$message" ]]; then
-    message="Release version ${version}"
-  fi
-  
-  git tag -a "$tag_name" -m "$message"
-  print_success "Created git tag: ${tag_name}"
-}
-
-# Command Functions
+# Command: Show current version
 cmd_current() {
   local current_version=$(get_version)
   IFS='.' read -r major minor patch <<< "$current_version"
@@ -525,526 +116,417 @@ cmd_current() {
   local release_type=$(get_property "releaseType")
   local build_number=$(get_property "buildNumber")
   
-  print_header "Current version information:"
-  echo -e "  Version: ${GREEN}${current_version}${NC}"
-  echo -e "  Major: ${major}, Minor: ${minor}, Patch: ${patch}"
-  echo -e "  Last Updated: ${last_updated}"
-  echo -e "  Release Type: ${release_type}"
-  echo -e "  Build Number: ${build_number}"
+  echo "Current version information:"
+  echo "  Version: $current_version"
+  echo "  Major: $major, Minor: $minor, Patch: $patch"
+  echo "  Last Updated: $last_updated"
+  echo "  Release Type: $release_type"
+  echo "  Build Number: $build_number"
   
   # Check git tag
   if git tag -l "v${current_version}" | grep -q "v${current_version}"; then
-    echo -e "  Git tag: ${GREEN}v${current_version}${NC} exists"
+    echo "  Git tag: v${current_version} exists"
   else
-    echo -e "  Git tag: ${YELLOW}v${current_version}${NC} does not exist"
+    echo "  Git tag: v${current_version} does not exist"
   fi
   
   # Check GitHub release
   if command -v gh &> /dev/null && gh release view "v${current_version}" &> /dev/null; then
-    echo -e "  GitHub release: ${GREEN}v${current_version}${NC} exists"
+    echo "  GitHub release: v${current_version} exists"
   else
-    echo -e "  GitHub release: ${YELLOW}v${current_version}${NC} does not exist"
+    echo "  GitHub release: v${current_version} does not exist"
   fi
   
   # Show release eligibility
   if should_create_github_release "$current_version" "$release_type"; then
-    echo -e "  GitHub release: ${BLUE}Eligible for GitHub release${NC}"
+    echo "  GitHub release: Eligible for GitHub release"
   else
-    echo -e "  GitHub release: ${YELLOW}Not eligible for GitHub release${NC} (minor patch or SNAPSHOT)"
+    echo "  GitHub release: Not eligible for GitHub release (minor patch or SNAPSHOT)"
   fi
   
-  verify_consistency
+  # Verify version consistency - use the robust updater in dry run mode
+  execute_version_update "$current_version" "$current_version" true "--verbose"
 }
 
+# Command: Verify version consistency
 cmd_verify() {
-  verify_consistency
+  local current_version=$(get_version)
+  local exit_code=0
+  
+  echo "Verifying version consistency across files:"
+  echo "=========================================="
+  
+  # Display current version from version.properties
+  echo "Current version from version.properties: $current_version"
+  echo
+  
+  # Check version in main POM
+  echo "Checking POM files:"
+  pom_version=$(grep -m 1 "<version>" "$RINNA_DIR/pom.xml" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
+  if [[ "$pom_version" == "$current_version" ]]; then
+    echo "✅ Main pom.xml: $pom_version"
+  else
+    echo "❌ Main pom.xml: $pom_version (should be $current_version)"
+    exit_code=1
+  fi
+  
+  # Check module POM files
+  for module_pom in "$RINNA_DIR/rinna-core/pom.xml" "$RINNA_DIR/rinna-cli/pom.xml" "$RINNA_DIR/rinna-data-sqlite/pom.xml"; do
+    if [ -f "$module_pom" ]; then
+      parent_version=$(grep -A 3 "<parent>" "$module_pom" | grep -m 1 "<version>" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
+      if [[ "$parent_version" == "$current_version" ]]; then
+        echo "✅ $(basename $(dirname "$module_pom"))/pom.xml: $parent_version"
+      else
+        echo "❌ $(basename $(dirname "$module_pom"))/pom.xml: $parent_version (should be $current_version)"
+        exit_code=1
+      fi
+    fi
+  done
+  
+  echo
+  echo "Checking README badge:"
+  # Check README badge
+  readme_version=$(grep -m 1 "badge/version-" "$README_FILE" | grep -o -E "version-[0-9.]*-" | sed -E 's/version-(.*)-.*/\1/')
+  if [[ "$readme_version" == "$current_version" ]]; then
+    echo "✅ README badge: $readme_version"
+  else
+    echo "❌ README badge: $readme_version (should be $current_version)"
+    exit_code=1
+  fi
+  
+  echo
+  echo "Checking Go version files:"
+  # Check Go version files
+  for go_file in $(find "$RINNA_DIR/api" "$RINNA_DIR/version-service" -name "version.go" -type f 2>/dev/null); do
+    if [ -f "$go_file" ]; then
+      go_version=$(grep "Version.*=" "$go_file" | grep -o '"[0-9.]*"' | tr -d '"')
+      rel_path=${go_file#$RINNA_DIR/}
+      if [[ "$go_version" == "$current_version" ]]; then
+        echo "✅ $rel_path: $go_version"
+      else
+        echo "❌ $rel_path: $go_version (should be $current_version)"
+        exit_code=1
+      fi
+    fi
+  done
+  
+  echo
+  echo "Checking Python files:"
+  # Check Python version
+  if [ -f "$RINNA_DIR/pyproject.toml" ]; then
+    python_version=$(grep "python_version" "$RINNA_DIR/pyproject.toml" | head -1 | grep -o '"[0-9.]*"' | tr -d '"')
+    if [[ "$python_version" == "$current_version" ]]; then
+      echo "✅ pyproject.toml: $python_version"
+    else
+      echo "❌ pyproject.toml: $python_version (should be $current_version)"
+      exit_code=1
+    fi
+  fi
+  
+  echo
+  echo "Checking build information:"
+  # Check build number
+  build_number=$(grep -m 1 "^buildNumber=" "$VERSION_FILE" | cut -d'=' -f2)
+  echo "• Build number: $build_number"
+  
+  # Check Git tag
+  if git tag -l "v${current_version}" | grep -q "v${current_version}"; then
+    echo "✅ Git tag v${current_version} exists"
+  else
+    echo "⚠️ Git tag v${current_version} does not exist"
+  fi
+  
+  # Execute the full verification with the robust updater
+  echo
+  echo "Running detailed verification:"
+  execute_version_update "$current_version" "$current_version" true "--verbose"
+  updater_result=$?
+  
+  if [[ $exit_code -eq 0 && $updater_result -eq 0 ]]; then
+    echo
+    echo "✅ All version references are consistent"
+    return 0
+  else
+    echo
+    echo "❌ Version inconsistencies detected"
+    return 1
+  fi
 }
 
+# Command: Update all version references
 cmd_update() {
   local current_version=$(get_version)
   
-  print_header "Updating all files to match version.properties (${current_version})"
+  echo "Updating all files to match version.properties ($current_version)"
+  execute_version_update "$current_version" "$current_version" false "--verbose"
   
-  # Check if we have the robust updater available
-  if [ -x "$RINNA_DIR/bin/robust-version-updater.sh" ]; then
-    print_header "Using enhanced robust version updater..."
-    
-    # Run in update mode (synchronize files to version.properties)
-    # First, show a preview of what changes will be made
-    print_header "Previewing changes with robust version updater..."
-    "$RINNA_DIR/bin/robust-version-updater.sh" --to "$current_version" --dry-run --verbose --ignore-backups
-    
-    # Ask for confirmation before proceeding with actual changes
-    echo
-    echo -e "${YELLOW}The above changes will be applied. Continue? [y/N]${NC}"
-    read -r response
-    if [[ ! "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-      print_warning "Version update cancelled by user"
-      return 1
-    fi
-    
-    # Now apply the changes
-    print_header "Applying changes with robust version updater..."
-    "$RINNA_DIR/bin/robust-version-updater.sh" --to "$current_version" --verbose --ignore-backups
-    print_success "Version update completed successfully using robust pattern matching"
-    
-  # Check if we have a version-service directory - if so, use it  
-  elif [ -d "$RINNA_DIR/version-service" ]; then
-    # Try running the version-service CLI to update files
-    if command -v go &> /dev/null && [ -f "$RINNA_DIR/version-service/cli/version_cli.go" ]; then
-      print_header "Using Clean Architecture version service..."
-      # Check if the CLI is already built
-      if [ -f "$RINNA_DIR/version-service/bin/version-cli" ]; then
-        "$RINNA_DIR/version-service/bin/version-cli" --update
-      else
-        # Fallback to running with go directly
-        (cd "$RINNA_DIR/version-service" && go run cli/version_cli.go --update)
-      fi
-      print_success "Version service updated all files"
-    else
-      # Fallback to enhanced update-versions.sh
-      print_header "Using enhanced update script..."
-      "$RINNA_DIR/bin/update-versions.sh"
-    fi
-  else
-    # Use legacy update methods
-    print_header "Using legacy update methods..."
-    update_pom_versions "$current_version"
-    update_readme_version "$current_version"
-    update_go_version "$current_version"
-    update_python_version "$current_version"
-  fi
-  
-  # Add all version-related files to git
-  git add "$RINNA_DIR/version.properties" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" 
-  
-  # Add Go files
-  find "$RINNA_DIR/api" -name "version.go" -type f | xargs git add 2>/dev/null || true
-  
-  # Add Python-related files if they exist
-  if [ -f "$RINNA_DIR/pyproject.toml" ]; then
-    git add "$RINNA_DIR/pyproject.toml"
-  fi
-  if [ -f "$RINNA_DIR/.venv/version" ]; then
-    git add "$RINNA_DIR/.venv/version"
-  fi
-  if [ -f "$RINNA_DIR/bin/rinna_config.py" ]; then
-    # Touch to update timestamp to force reload
-    touch "$RINNA_DIR/bin/rinna_config.py"
-    git add "$RINNA_DIR/bin/rinna_config.py"
-  fi
+  # Add all affected files to git
+  echo "Adding updated files to git..."
+  git add "$VERSION_FILE" $(find "$RINNA_DIR" -name "pom.xml") "$README_FILE" 
+  git add $(find "$RINNA_DIR/api" -name "version.go" -type f) 2>/dev/null || true
+  git add "$RINNA_DIR/pyproject.toml" 2>/dev/null || true
   
   # Commit the changes
   git commit -m "Sync version files with version.properties (${current_version})"
-  print_success "Committed version changes"
-  
-  # Run verification
-  print_header "Verifying version consistency..."
-  
-  # Check if we have the robust updater
-  if [ -x "$RINNA_DIR/bin/robust-version-updater.sh" ]; then
-    # Use the robust updater's verification
-    print_header "Verifying version consistency using robust updater..."
-    if "$RINNA_DIR/bin/robust-version-updater.sh" --to "$current_version" --dry-run --ignore-backups; then
-      print_success "Version consistency verified: all files match version $current_version"
-    else
-      print_warning "Some files may have inconsistent versions. Consider running 'rin-version update' again."
-    fi
-  elif [ -d "$RINNA_DIR/version-service" ] && command -v go &> /dev/null && [ -f "$RINNA_DIR/version-service/cli/version_cli.go" ]; then
-    # Use the version-service verification
-    if [ -f "$RINNA_DIR/version-service/bin/version-cli" ]; then
-      "$RINNA_DIR/version-service/bin/version-cli" --verify
-    else
-      # Fallback to running with go directly
-      (cd "$RINNA_DIR/version-service" && go run cli/version_cli.go --verify)
-    fi
-  else
-    # Use the enhanced check-versions.sh
-    "$RINNA_DIR/bin/check-versions.sh"
-  fi
+  echo "Committed version changes"
 }
 
+# Command: Bump version (major, minor, patch)
 cmd_bump_version() {
-  local index="$1" message="$2"
+  local index="$1" message="$2" dry_run="$3"
   local current_version=$(get_version)
   local new_version=$(increment_version "$current_version" "$index")
   
-  print_header "Bumping version: ${current_version} → ${GREEN}${new_version}${NC}"
-  print_header "This will only update Rinna project versions, not dependency versions"
+  echo "Bumping version: ${current_version} → ${new_version}"
   
-  # Create a detailed log of what we're about to update
-  local log_file="/tmp/rinna-version-update-$$.log"
-  echo "Rinna Version Update Log - $(date)" > "$log_file"
-  echo "Current version: $current_version" >> "$log_file"
-  echo "New version: $new_version" >> "$log_file"
-  
-  # Check if we have the robust updater available
-  if [ -x "$RINNA_DIR/bin/robust-version-updater.sh" ]; then
-    print_header "Using enhanced robust version updater..."
-    
-    # First update version.properties manually to ensure it's right
-    update_version_properties "$new_version"
-    
-    # Run the robust updater in dry-run mode first to preview changes
-    print_header "Previewing changes with robust version updater..."
-    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --dry-run --verbose --ignore-backups
-    
-    # Ask for confirmation before proceeding with actual changes
-    echo
-    echo -e "${YELLOW}The above changes will be applied. Continue? [y/N]${NC}"
-    read -r response
-    if [[ ! "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-      print_warning "Version update cancelled by user"
-      return 1
-    fi
-    
-    # Execute the actual update with the robust updater
-    print_header "Applying changes with robust version updater..."
-    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --verbose --ignore-backups
-    
-    # Write version update log
-    echo "Used robust-version-updater.sh to update files" >> "$log_file"
-    print_success "Version update completed successfully using robust pattern matching"
-    
-  else
-    # Fall back to the original update methods if the robust updater is not available
-    print_warning "Enhanced robust version updater not found. Using legacy update methods..."
-    
-    # List files that will be checked
-    echo "Affected files:" >> "$log_file"
-    echo "- $VERSION_FILE (properties file)" >> "$log_file"
-    echo "- $README_FILE (README badge)" >> "$log_file"
-    
-    # List POM files that will be checked
-    echo "POM files to be checked:" >> "$log_file"
-    for pom_file in $(find "$RINNA_DIR" -name "pom.xml"); do
-      # Check if this POM has org.rinna groupId
-      if grep -q "<groupId>org.rinna</groupId>" "$pom_file"; then
-        echo "- $pom_file (Rinna project, will update version)" >> "$log_file"
-      else
-        echo "- $pom_file (Not a Rinna project, will NOT update version)" >> "$log_file"
-      fi
-    done
-    
-    # List Go files that will be updated
-    echo "Go version files to be updated:" >> "$log_file"
-    for go_file in "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"; do
-      if [ -f "$go_file" ]; then
-        echo "- $go_file" >> "$log_file"
-      else
-        echo "- $go_file (will be created)" >> "$log_file"
-      fi
-    done
-    
-    # List Python files that will be updated
-    echo "Python files to be updated:" >> "$log_file"
-    echo "- $RINNA_DIR/bin/rinna_config.py (reads from version.properties)" >> "$log_file"
-    if [ -f "$RINNA_DIR/pyproject.toml" ]; then
-      echo "- $RINNA_DIR/pyproject.toml" >> "$log_file"
-    fi
-    if [ -d "$RINNA_DIR/.venv" ]; then
-      echo "- $RINNA_DIR/.venv/version" >> "$log_file"
-    fi
-    
-    echo "Starting updates at $(date)" >> "$log_file"
-    
-    # Perform the actual updates using legacy methods
-    update_version_properties "$new_version"
-    update_pom_versions "$new_version"
-    update_readme_version "$new_version"
-    update_go_version "$new_version"
-    update_python_version "$new_version"
-    
-    echo "Updates completed at $(date)" >> "$log_file"
+  if [ "$dry_run" = "true" ]; then
+    # For dry run, just execute the version updater in dry-run mode
+    execute_version_update "$current_version" "$new_version" true "--verbose"
+    echo "Dry run complete: ${current_version} → ${new_version} (no changes were made)"
+    return 0
   fi
+  
+  # First update version.properties manually to ensure the property file is updated
+  local major=$(echo "$new_version" | cut -d. -f1)
+  local minor=$(echo "$new_version" | cut -d. -f2)
+  local patch=$(echo "$new_version" | cut -d. -f3)
+  local current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  
+  # Get the current build number so we can preserve it
+  current_build=$(grep -m 1 "^buildNumber=" "$VERSION_FILE" | cut -d'=' -f2)
+  # Default to 1 if build number can't be found
+  if [ -z "$current_build" ]; then
+    current_build=1
+  fi
+
+  # Update version properties directly
+  sed -i "s/^version=.*/version=$new_version/" "$VERSION_FILE"
+  sed -i "s/^version.major=.*/version.major=$major/" "$VERSION_FILE"
+  sed -i "s/^version.minor=.*/version.minor=$minor/" "$VERSION_FILE"
+  sed -i "s/^version.patch=.*/version.patch=$patch/" "$VERSION_FILE"
+  sed -i "s/^version.full=.*/version.full=$new_version/" "$VERSION_FILE"
+  sed -i "s/^lastUpdated=.*/lastUpdated=$(date +%Y-%m-%d)/" "$VERSION_FILE"
+  sed -i "s/^buildNumber=.*/buildNumber=$current_build/" "$VERSION_FILE"
+  sed -i "s/^build.timestamp=.*/build.timestamp=$current_timestamp/" "$VERSION_FILE"
+  
+  # Execute the version update
+  execute_version_update "$current_version" "$new_version" false "--verbose"
   
   # Generate architecture diagrams for major or minor version bumps
   if [[ "$index" -eq 0 || "$index" -eq 1 ]]; then
     if [[ -x "$RINNA_DIR/bin/rin-diagrams" ]]; then
-      print_header "Generating updated architecture diagrams for ${new_version}..."
-      "$RINNA_DIR/bin/rin-diagrams" --force || print_warning "Failed to generate architecture diagrams"
+      echo "Generating updated architecture diagrams for ${new_version}..."
+      "$RINNA_DIR/bin/rin-diagrams" --force || echo "Failed to generate architecture diagrams"
       
       # Add new diagrams to git if they were created
       if [[ -d "$RINNA_DIR/docs/architecture/diagrams" ]]; then
         git add "$RINNA_DIR/docs/architecture"
       fi
-    else
-      print_warning "rin-diagrams not found or not executable, skipping architecture diagram generation"
     fi
   fi
   
   # Add all affected files to git
-  print_header "Adding version files to git..."
-  git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE" 
-  
-  # Add Go files
-  find "$RINNA_DIR/api" -name "version.go" -type f | xargs git add 2>/dev/null || true
-  
-  # Add Python-related files if they exist
-  if [ -f "$RINNA_DIR/pyproject.toml" ]; then
-    git add "$RINNA_DIR/pyproject.toml"
-  fi
-  if [ -f "$RINNA_DIR/.venv/version" ]; then
-    git add "$RINNA_DIR/.venv/version"
-  fi
-  # Touch to update timestamp to force reload 
-  touch "$RINNA_DIR/bin/rinna_config.py"
-  git add "$RINNA_DIR/bin/rinna_config.py"
-  
-  # Log the update details
-  echo "Log available at: $log_file"
-  print_success "Created detailed version update log at $log_file"
+  echo "Adding version files to git..."
+  git add "$VERSION_FILE" $(find "$RINNA_DIR" -name "pom.xml") "$README_FILE" 
+  git add $(find "$RINNA_DIR/api" -name "version.go" -type f) 2>/dev/null || true
+  git add "$RINNA_DIR/pyproject.toml" 2>/dev/null || true
   
   # Commit changes
   git commit -m "Bump version to ${new_version}"
-  print_success "Committed version change"
+  echo "Committed version change"
   
+  # Create git tag if message provided
   if [[ -n "$message" ]]; then
-    create_git_tag "$new_version" "$message"
+    git tag -a "v${new_version}" -m "$message"
+    echo "Created git tag: v${new_version}"
   fi
   
-  # Verify consistency and append results to log
-  echo "Verification results:" >> "$log_file"
-  verify_consistency | tee -a "$log_file"
+  echo "Version bump complete: ${current_version} → ${new_version}"
   
-  print_success "Version bump complete: ${current_version} → ${new_version}"
-  print_success "Note: Only Rinna project versions were updated, not dependency versions"
+  # Display version consistency information
+  echo
+  echo "Version Consistency Verification:"
+  echo "================================="
   
-  return 0
+  # Check version in version.properties
+  properties_version=$(grep -m 1 "^version=" "$VERSION_FILE" | cut -d'=' -f2)
+  echo "• version.properties: $properties_version"
+  
+  # Check version in main POM
+  pom_version=$(grep -m 1 "<version>" "$RINNA_DIR/pom.xml" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
+  echo "• pom.xml: $pom_version"
+  
+  # Check build number in version.properties
+  build_number=$(grep -m 1 "^buildNumber=" "$VERSION_FILE" | cut -d'=' -f2)
+  echo "• Build number: $build_number"
+  
+  # Check version in README badge
+  readme_version=$(grep -m 1 "badge/version-" "$README_FILE" | grep -o -E "version-[0-9.]*-" | sed -E 's/version-(.*)-.*/\1/')
+  echo "• README badge: $readme_version"
+  
+  # Check all git tags
+  echo "• Git tag: $(git tag -l "v${new_version}" | grep -q "v${new_version}" && echo "exists" || echo "does not exist")"
+  
+  # Check for inconsistencies
+  if [[ "$properties_version" != "$new_version" || "$pom_version" != "$new_version" || "$readme_version" != "$new_version" ]]; then
+    echo
+    echo "⚠️  WARNING: Version inconsistencies detected!"
+    echo "  Run 'bin/rin-version verify' for detailed information"
+  else
+    echo
+    echo "✅ All checked versions are consistent"
+  fi
 }
 
+# Command: Set specific version
 cmd_set() {
-  local new_version="$1" message="$2"
+  local new_version="$1" message="$2" dry_run="$3"
   
   if [[ ! "$new_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    print_error "Invalid version format. Must be in format: X.Y.Z"
+    echo "Error: Invalid version format. Must be in format: X.Y.Z"
+    exit 1
   fi
   
   local current_version=$(get_version)
-  print_header "Setting version: ${current_version} → ${GREEN}${new_version}${NC}"
-  print_header "This will only update Rinna project versions, not dependency versions"
+  echo "Setting version: ${current_version} → ${new_version}"
   
-  # Create a detailed log of what we're about to update
-  local log_file="/tmp/rinna-version-update-$$.log"
-  echo "Rinna Version Update Log - $(date)" > "$log_file"
-  echo "Current version: $current_version" >> "$log_file"
-  echo "New version: $new_version" >> "$log_file"
-  
-  # Check if we have the robust updater available
-  if [ -x "$RINNA_DIR/bin/robust-version-updater.sh" ]; then
-    print_header "Using enhanced robust version updater..."
-    
-    # First update version.properties manually to ensure it's right
-    update_version_properties "$new_version"
-    
-    # Run the robust updater in dry-run mode first to preview changes
-    print_header "Previewing changes with robust version updater..."
-    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --dry-run --verbose --ignore-backups
-    
-    # Ask for confirmation before proceeding with actual changes
-    echo
-    echo -e "${YELLOW}The above changes will be applied. Continue? [y/N]${NC}"
-    read -r response
-    if [[ ! "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
-      print_warning "Version update cancelled by user"
-      return 1
-    fi
-    
-    # Execute the actual update with the robust updater
-    print_header "Applying changes with robust version updater..."
-    "$RINNA_DIR/bin/robust-version-updater.sh" --from "$current_version" --to "$new_version" --verbose --ignore-backups
-    
-    # Write version update log
-    echo "Used robust-version-updater.sh to update files" >> "$log_file"
-    print_success "Version update completed successfully using robust pattern matching"
-    
-  else
-    # Fall back to the original update methods if the robust updater is not available
-    print_warning "Enhanced robust version updater not found. Using legacy update methods..."
-    
-    # List files that will be checked
-    echo "Affected files:" >> "$log_file"
-    echo "- $VERSION_FILE (properties file)" >> "$log_file"
-    echo "- $README_FILE (README badge)" >> "$log_file"
-    
-    # List POM files that will be checked
-    echo "POM files to be checked:" >> "$log_file"
-    for pom_file in $(find "$RINNA_DIR" -name "pom.xml"); do
-      # Check if this POM has org.rinna groupId
-      if grep -q "<groupId>org.rinna</groupId>" "$pom_file"; then
-        echo "- $pom_file (Rinna project, will update version)" >> "$log_file"
-      else
-        echo "- $pom_file (Not a Rinna project, will NOT update version)" >> "$log_file"
-      fi
-    done
-    
-    # List Go files that will be updated
-    echo "Go version files to be updated:" >> "$log_file"
-    for go_file in "$RINNA_DIR/api/pkg/health/version.go" "$RINNA_DIR/api/internal/version/version.go"; do
-      if [ -f "$go_file" ]; then
-        echo "- $go_file" >> "$log_file"
-      else
-        echo "- $go_file (will be created)" >> "$log_file"
-      fi
-    done
-    
-    # List Python files that will be updated
-    echo "Python files to be updated:" >> "$log_file"
-    echo "- $RINNA_DIR/bin/rinna_config.py (reads from version.properties)" >> "$log_file"
-    if [ -f "$RINNA_DIR/pyproject.toml" ]; then
-      echo "- $RINNA_DIR/pyproject.toml" >> "$log_file"
-    fi
-    if [ -d "$RINNA_DIR/.venv" ]; then
-      echo "- $RINNA_DIR/.venv/version" >> "$log_file"
-    fi
-    
-    echo "Starting updates at $(date)" >> "$log_file"
-    
-    # Perform the actual updates using legacy methods
-    update_version_properties "$new_version"
-    update_pom_versions "$new_version"
-    update_readme_version "$new_version"
-    update_go_version "$new_version"
-    update_python_version "$new_version"
-    
-    echo "Updates completed at $(date)" >> "$log_file"
+  if [ "$dry_run" = "true" ]; then
+    # For dry run, just execute the version updater in dry-run mode
+    execute_version_update "$current_version" "$new_version" true "--verbose"
+    echo "Dry run complete: ${current_version} → ${new_version} (no changes were made)"
+    return 0
   fi
+  
+  # First update version.properties manually to ensure the property file is updated
+  local major=$(echo "$new_version" | cut -d. -f1)
+  local minor=$(echo "$new_version" | cut -d. -f2)
+  local patch=$(echo "$new_version" | cut -d. -f3)
+  local current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  
+  # Get the current build number so we can preserve it
+  current_build=$(grep -m 1 "^buildNumber=" "$VERSION_FILE" | cut -d'=' -f2)
+  # Default to 1 if build number can't be found
+  if [ -z "$current_build" ]; then
+    current_build=1
+  fi
+
+  # Update version properties directly
+  sed -i "s/^version=.*/version=$new_version/" "$VERSION_FILE"
+  sed -i "s/^version.major=.*/version.major=$major/" "$VERSION_FILE"
+  sed -i "s/^version.minor=.*/version.minor=$minor/" "$VERSION_FILE"
+  sed -i "s/^version.patch=.*/version.patch=$patch/" "$VERSION_FILE"
+  sed -i "s/^version.full=.*/version.full=$new_version/" "$VERSION_FILE"
+  sed -i "s/^lastUpdated=.*/lastUpdated=$(date +%Y-%m-%d)/" "$VERSION_FILE"
+  sed -i "s/^buildNumber=.*/buildNumber=$current_build/" "$VERSION_FILE"
+  sed -i "s/^build.timestamp=.*/build.timestamp=$current_timestamp/" "$VERSION_FILE"
+  
+  # Execute the version update
+  execute_version_update "$current_version" "$new_version" false "--verbose"
   
   # Generate architecture diagrams for major version changes or when changing to x.0.0 versions
   if [[ "${new_version%.*}" != "${current_version%.*}" ]] || [[ "${new_version}" =~ ^[0-9]+\.0\.0$ ]]; then
     if [[ -x "$RINNA_DIR/bin/rin-diagrams" ]]; then
-      print_header "Generating updated architecture diagrams for ${new_version}..."
-      "$RINNA_DIR/bin/rin-diagrams" --force || print_warning "Failed to generate architecture diagrams"
+      echo "Generating updated architecture diagrams for ${new_version}..."
+      "$RINNA_DIR/bin/rin-diagrams" --force || echo "Failed to generate architecture diagrams"
       
       # Add new diagrams to git if they were created
       if [[ -d "$RINNA_DIR/docs/architecture/diagrams" ]]; then
         git add "$RINNA_DIR/docs/architecture"
       fi
-    else
-      print_warning "rin-diagrams not found or not executable, skipping architecture diagram generation"
     fi
   fi
   
   # Add all affected files to git
-  print_header "Adding version files to git..."
-  git add "$VERSION_FILE" "$RINNA_DIR/pom.xml" $(find "$RINNA_DIR" -name "pom.xml" | grep -v "$RINNA_DIR/pom.xml") "$README_FILE"
-  
-  # Add Go files
-  find "$RINNA_DIR/api" -name "version.go" -type f | xargs git add 2>/dev/null || true
-  
-  # Add Python-related files if they exist
-  if [ -f "$RINNA_DIR/pyproject.toml" ]; then
-    git add "$RINNA_DIR/pyproject.toml"
-  fi
-  if [ -f "$RINNA_DIR/.venv/version" ]; then
-    git add "$RINNA_DIR/.venv/version"
-  fi
-  # Touch to update timestamp to force reload 
-  touch "$RINNA_DIR/bin/rinna_config.py"
-  git add "$RINNA_DIR/bin/rinna_config.py"
-  
-  # Log the update details
-  echo "Log available at: $log_file"
-  print_success "Created detailed version update log at $log_file"
+  echo "Adding version files to git..."
+  git add "$VERSION_FILE" $(find "$RINNA_DIR" -name "pom.xml") "$README_FILE"
+  git add $(find "$RINNA_DIR/api" -name "version.go" -type f) 2>/dev/null || true
+  git add "$RINNA_DIR/pyproject.toml" 2>/dev/null || true
   
   # Commit changes
   git commit -m "Set version to ${new_version}"
-  print_success "Committed version change"
+  echo "Committed version change"
   
+  # Create git tag if message provided
   if [[ -n "$message" ]]; then
-    create_git_tag "$new_version" "$message"
+    git tag -a "v${new_version}" -m "$message"
+    echo "Created git tag: v${new_version}"
   fi
   
-  # Verify consistency and append results to log
-  echo "Verification results:" >> "$log_file"
-  verify_consistency | tee -a "$log_file"
+  echo "Version update complete: ${current_version} → ${new_version}"
   
-  print_success "Version update complete: ${current_version} → ${new_version}"
-  print_success "Note: Only Rinna project versions were updated, not dependency versions"
+  # Display version consistency information
+  echo
+  echo "Version Consistency Verification:"
+  echo "================================="
+  
+  # Check version in version.properties
+  properties_version=$(grep -m 1 "^version=" "$VERSION_FILE" | cut -d'=' -f2)
+  echo "• version.properties: $properties_version"
+  
+  # Check version in main POM
+  pom_version=$(grep -m 1 "<version>" "$RINNA_DIR/pom.xml" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
+  echo "• pom.xml: $pom_version"
+  
+  # Check build number in version.properties
+  build_number=$(grep -m 1 "^buildNumber=" "$VERSION_FILE" | cut -d'=' -f2)
+  echo "• Build number: $build_number"
+  
+  # Check version in README badge
+  readme_version=$(grep -m 1 "badge/version-" "$README_FILE" | grep -o -E "version-[0-9.]*-" | sed -E 's/version-(.*)-.*/\1/')
+  echo "• README badge: $readme_version"
+  
+  # Check all git tags
+  echo "• Git tag: $(git tag -l "v${new_version}" | grep -q "v${new_version}" && echo "exists" || echo "does not exist")"
+  
+  # Check for inconsistencies
+  if [[ "$properties_version" != "$new_version" || "$pom_version" != "$new_version" || "$readme_version" != "$new_version" ]]; then
+    echo
+    echo "⚠️  WARNING: Version inconsistencies detected!"
+    echo "  Run 'bin/rin-version verify' for detailed information"
+  else
+    echo
+    echo "✅ All checked versions are consistent"
+  fi
 }
 
+# Command: Create release
 cmd_release() {
   local current_version=$(get_version) message="$1" force_github="$2"
   
-  verify_consistency || print_error "Cannot create release due to version inconsistencies"
+  # Verify consistency
+  cmd_verify || {
+    echo "Error: Cannot create release due to version inconsistencies"
+    exit 1
+  }
   
   if [[ -z "$message" ]]; then
     message="Release version ${current_version}"
   fi
   
-  print_header "Creating release for version: ${GREEN}${current_version}${NC}"
+  echo "Creating release for version: ${current_version}"
   
   # Check if there are uncommitted changes
   if ! git diff --quiet || ! git diff --cached --quiet; then
-    print_warning "Uncommitted changes detected in repository"
-    # Ask user what to do
-    echo -e "Select an action:"
-    echo -e "  1) Stash changes temporarily (recommended)"
-    echo -e "  2) Continue without committing release type change"
-    echo -e "  3) Abort release process"
-    read -p "Enter option (1-3): " choice
-    
-    case "$choice" in
-      1)
-        # Stash changes
-        print_header "Stashing changes temporarily"
-        git stash push -m "Stashed changes before release ${current_version}"
-        
-        # Update release type if needed
-        local current_release_type=$(get_property "releaseType")
-        if [[ "$current_release_type" != "RELEASE" ]]; then
-          sed -i "s/^releaseType=.*/releaseType=RELEASE/" "$VERSION_FILE"
-          git add "$VERSION_FILE"
-          if ! git commit -m "Update release type for version ${current_version}"; then
-            git stash pop
-            print_error "Failed to commit release type change"
-          fi
-          print_success "Updated release type to RELEASE"
-        else
-          print_warning "Release type is already set to RELEASE, skipping update"
-        fi
-        
-        # Flag to pop stash at the end
-        local pop_stash=true
-        ;;
-      2)
-        # Skip commit
-        print_warning "Skipping release type commit"
-        local current_release_type=$(get_property "releaseType")
-        if [[ "$current_release_type" != "RELEASE" ]]; then
-          sed -i "s/^releaseType=.*/releaseType=RELEASE/" "$VERSION_FILE"
-          print_success "Updated release type to RELEASE (not committed)"
-        else
-          print_warning "Release type is already set to RELEASE, no change needed"
-        fi
-        local skip_commit=true
-        ;;
-      3)
-        # Abort
-        print_error "Release process aborted by user"
-        ;;
-      *)
-        print_error "Invalid option"
-        ;;
-    esac
-  else
-    # Normal process when there are no uncommitted changes
-    local current_release_type=$(get_property "releaseType")
-    if [[ "$current_release_type" != "RELEASE" ]]; then
-      sed -i "s/^releaseType=.*/releaseType=RELEASE/" "$VERSION_FILE"
-      git add "$VERSION_FILE"
-      git commit -m "Update release type for version ${current_version}"
-      print_success "Updated release type to RELEASE"
-    else
-      print_warning "Release type is already set to RELEASE, skipping update"
-    fi
+    echo "Uncommitted changes detected in repository"
+    echo "Please commit or stash your changes before creating a release"
+    exit 1
+  fi
+  
+  # Update release type if needed
+  local current_release_type=$(get_property "releaseType")
+  if [[ "$current_release_type" != "RELEASE" ]]; then
+    sed -i "s/^releaseType=.*/releaseType=RELEASE/" "$VERSION_FILE"
+    git add "$VERSION_FILE"
+    git commit -m "Update release type for version ${current_version}"
+    echo "Updated release type to RELEASE"
   fi
   
   # Create git tag if it doesn't exist
   if ! git tag -l "v${current_version}" | grep -q "v${current_version}"; then
-    create_git_tag "$current_version" "$message"
+    git tag -a "v${current_version}" -m "$message"
+    echo "Created git tag: v${current_version}"
   else
-    echo -e "${YELLOW}Git tag v${current_version} already exists${NC}"
+    echo "Git tag v${current_version} already exists"
   fi
   
   # Determine if this version should have a GitHub release
@@ -1052,9 +534,9 @@ cmd_release() {
   if [[ "$create_gh_release" != "true" ]]; then
     if should_create_github_release "$current_version" "RELEASE"; then
       create_gh_release="true"
-      print_header "Version ${current_version} qualifies for a GitHub release"
+      echo "Version ${current_version} qualifies for a GitHub release"
     else
-      print_warning "Version ${current_version} does not qualify for automatic GitHub release"
+      echo "Version ${current_version} does not qualify for automatic GitHub release"
       
       # Ask if user wants to create one anyway
       read -p "Create GitHub release anyway? [y/N] " -r
@@ -1089,46 +571,39 @@ cmd_release() {
     
     # Create the GitHub release
     if echo -e "$notes" | gh release create "v${current_version}" -t "Rinna ${current_version}" -F -; then
-      print_success "Created GitHub release: v${current_version}"
+      echo "Created GitHub release: v${current_version}"
     else
-      print_error "Failed to create GitHub release"
+      echo "Error: Failed to create GitHub release"
+      exit 1
     fi
   elif [[ "$create_gh_release" == "true" ]]; then
-    print_warning "GitHub CLI not installed. Cannot create GitHub release."
-  fi
-  
-  # Restore stashed changes if needed
-  if [[ "$pop_stash" == "true" ]]; then
-    print_header "Restoring stashed changes"
-    if ! git stash pop; then
-      print_warning "There might be conflicts from stash pop. Please resolve them manually."
-    fi
-  fi
-  
-  # If we skipped the commit, remind user
-  if [[ "$skip_commit" == "true" ]]; then
-    print_warning "Remember: Release type in $VERSION_FILE was changed but not committed"
-    print_warning "You may want to commit this change manually later"
+    echo "GitHub CLI not installed. Cannot create GitHub release."
   fi
 }
 
+# Command: Create git tag
 cmd_tag() {
   local current_version=$(get_version) message="$1"
   
-  verify_consistency || print_error "Cannot create tag due to version inconsistencies"
+  # Verify consistency
+  cmd_verify || {
+    echo "Error: Cannot create tag due to version inconsistencies"
+    exit 1
+  }
   
   if [[ -z "$message" ]]; then
     message="Version ${current_version}"
   fi
   
-  print_header "Creating git tag for version: ${GREEN}${current_version}${NC}"
-  create_git_tag "$current_version" "$message"
+  echo "Creating git tag for version: ${current_version}"
+  git tag -a "v${current_version}" -m "$message"
+  echo "Created git tag: v${current_version}"
 }
 
 # Display help
 show_help() {
   cat << EOF
-${BLUE}rin-version${NC} - Rinna version management utility
+rin-version - Rinna version management utility
 
 Usage: rin-version [command] [options]
 
@@ -1142,10 +617,12 @@ Commands:
   tag                     Create a git tag for current version
   verify                  Verify version consistency across files
   update                  Update all files to match version.properties
+  push                    Push changes to remote and verify consistency
 
 Options:
   -m, --message <msg>     Custom release/commit message
   -g, --github            Force GitHub release creation (regardless of version type)
+  -d, --dry-run           Preview changes without making modifications
   -h, --help              Show this help message
 
 Release Behavior:
@@ -1157,26 +634,87 @@ Release Behavior:
     • Versions explicitly marked as RELEASE type
   - For other patch versions, you'll be prompted to create a GitHub release
   - Use --github to force GitHub release creation for any version
-  - If uncommitted changes exist when creating a release, you'll be prompted to:
-    • Stash changes temporarily (recommended)
-    • Continue without committing release type change
-    • Abort the release process
 
 Version Updates:
   - Only Rinna project versions are updated in POM files (org.rinna groupId)
   - Dependency versions are NEVER updated to avoid unintended version changes
   - Python components read from the central version.properties file
   - Go components have version info updated in their respective files
-  - Virtual environment version is updated if present
-  - A detailed log file is created at /tmp/rinna-version-update-[PID].log
-  - The verify command checks for version inconsistencies across the project
 
 Examples:
-  rin-version current     # Show current version information
-  rin-version patch       # Bump patch version
-  rin-version set 2.0.0   # Set version to 2.0.0
-  rin-version release -g  # Force GitHub release creation
+  rin-version current       # Show current version information
+  rin-version patch         # Bump patch version
+  rin-version minor --dry-run  # Preview minor version bump without making changes
+  rin-version set 2.0.0     # Set version to 2.0.0
+  rin-version release -g    # Force GitHub release creation
 EOF
+}
+
+# Command: Push version changes
+cmd_push() {
+  local current_version=$(get_version)
+  
+  # Check if there are any changes to push
+  if git status --porcelain | grep -q .; then
+    echo "Error: There are uncommitted changes in the repository."
+    echo "Please commit your changes before pushing."
+    return 1
+  fi
+  
+  # Get the current branch name
+  local branch=$(git rev-parse --abbrev-ref HEAD)
+  
+  echo "Pushing version $current_version to remote (branch: $branch)..."
+  if git push; then
+    echo "Successfully pushed to remote"
+    
+    # Verify version consistency after push
+    echo
+    echo "Post-Push Version Verification:"
+    echo "============================="
+    
+    # Check version in version.properties
+    properties_version=$(grep -m 1 "^version=" "$VERSION_FILE" | cut -d'=' -f2)
+    echo "• version.properties: $properties_version"
+    
+    # Check version in main POM
+    pom_version=$(grep -m 1 "<version>" "$RINNA_DIR/pom.xml" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
+    echo "• pom.xml: $pom_version"
+    
+    # Check build number in version.properties
+    build_number=$(grep -m 1 "^buildNumber=" "$VERSION_FILE" | cut -d'=' -f2)
+    echo "• Build number: $build_number"
+    
+    # Check version in README badge
+    readme_version=$(grep -m 1 "badge/version-" "$README_FILE" | grep -o -E "version-[0-9.]*-" | sed -E 's/version-(.*)-.*/\1/')
+    echo "• README badge: $readme_version"
+    
+    # Check Git info
+    remote_url=$(git remote get-url origin)
+    echo "• Git remote: $remote_url"
+    echo "• Latest commit: $(git rev-parse --short HEAD) - $(git log -1 --pretty=%B | head -1)"
+    
+    # Push tags if they exist
+    if git tag -l "v${current_version}" | grep -q "v${current_version}"; then
+      echo "• Git tag v${current_version} exists locally"
+      
+      # Check if tag exists on remote
+      if git ls-remote --tags origin "refs/tags/v${current_version}" | grep -q "refs/tags/v${current_version}"; then
+        echo "• Git tag v${current_version} exists on remote"
+      else
+        echo "• Pushing tag v${current_version} to remote..."
+        git push origin "v${current_version}"
+        echo "• Successfully pushed tag to remote"
+      fi
+    else
+      echo "• Git tag v${current_version} does not exist locally"
+    fi
+    
+    return 0
+  else
+    echo "Error: Failed to push to remote"
+    return 1
+  fi
 }
 
 # Parse arguments
@@ -1184,10 +722,11 @@ COMMAND=""
 VERSION=""
 MESSAGE=""
 FORCE_GITHUB="false"
+DRY_RUN="false"
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    current|major|minor|patch|release|tag|verify|update)
+    current|major|minor|patch|release|tag|verify|update|push)
       COMMAND="$1"
       shift
       ;;
@@ -1197,7 +736,8 @@ while [[ $# -gt 0 ]]; do
         VERSION="$2"
         shift
       else
-        print_error "Version must be provided after 'set' command"
+        echo "Error: Version must be provided after 'set' command"
+        exit 1
       fi
       shift
       ;;
@@ -1206,7 +746,8 @@ while [[ $# -gt 0 ]]; do
         MESSAGE="$2"
         shift
       else
-        print_error "Message must be provided after -m/--message"
+        echo "Error: Message must be provided after -m/--message"
+        exit 1
       fi
       shift
       ;;
@@ -1214,12 +755,17 @@ while [[ $# -gt 0 ]]; do
       FORCE_GITHUB="true"
       shift
       ;;
+    -d|--dry-run)
+      DRY_RUN="true"
+      shift
+      ;;
     -h|--help)
       show_help
       exit 0
       ;;
     *)
-      print_error "Unknown option or command: $1"
+      echo "Error: Unknown option or command: $1"
+      exit 1
       ;;
   esac
 done
@@ -1227,7 +773,7 @@ done
 # Ensure version.properties exists
 if [[ ! -f "$VERSION_FILE" ]]; then
   current_version=$(grep -m 1 "<version>" "$RINNA_DIR/pom.xml" | sed -E 's/.*<version>(.*)<\/version>.*/\1/')
-  print_warning "version.properties not found, creating with version $current_version"
+  echo "Warning: version.properties not found, creating with version $current_version"
   cat > "$VERSION_FILE" << EOF
 version=$current_version
 lastUpdated=$(date +%Y-%m-%d)
@@ -1248,16 +794,16 @@ case "$COMMAND" in
     cmd_update
     ;;
   major)
-    cmd_bump_version 0 "$MESSAGE"
+    cmd_bump_version 0 "$MESSAGE" "$DRY_RUN"
     ;;
   minor)
-    cmd_bump_version 1 "$MESSAGE"
+    cmd_bump_version 1 "$MESSAGE" "$DRY_RUN"
     ;;
   patch)
-    cmd_bump_version 2 "$MESSAGE"
+    cmd_bump_version 2 "$MESSAGE" "$DRY_RUN"
     ;;
   set)
-    cmd_set "$VERSION" "$MESSAGE"
+    cmd_set "$VERSION" "$MESSAGE" "$DRY_RUN"
     ;;
   release)
     cmd_release "$MESSAGE" "$FORCE_GITHUB"
@@ -1265,7 +811,12 @@ case "$COMMAND" in
   tag)
     cmd_tag "$MESSAGE"
     ;;
+  push)
+    cmd_push
+    ;;
   *)
-    print_error "No command specified"
+    echo "Error: No command specified"
+    show_help
+    exit 1
     ;;
 esac
