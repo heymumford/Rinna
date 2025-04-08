@@ -204,13 +204,15 @@
           <release>${java.version}</release>
           <compilerArgs>
             <arg>--enable-preview</arg>
+            <arg>-Xlint:preview</arg>
           </compilerArgs>
           <skipMain>false</skipMain>
           <verbose>true</verbose>
-          <excludes>
+          <!-- These temporary directories have been removed, no need to exclude -->
+          <!-- <excludes>
             <exclude>**/org/rinna/cli/adapter/_temp/**</exclude>
             <exclude>**/org/rinna/usecase/_temp/**</exclude>
-          </excludes>
+          </excludes> -->
         </configuration>
         <executions>
           <execution>
@@ -254,9 +256,10 @@
                 cucumber.plugin=pretty, html:target/cucumber-reports/cucumber.html, json:target/cucumber-reports/cucumber.json
             </configurationParameters>
           </properties>
-          <argLine>--enable-preview</argLine>
+          <argLine>-XX:+EnableDynamicAgentLoading --enable-preview</argLine>
           <!-- Added skipTests property for better control with the -DskipTests flag -->
           <skipTests>${skipTests}</skipTests>
+          <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
         </configuration>
       </plugin>
       <plugin>
@@ -284,10 +287,11 @@
           <failOnError>true</failOnError>
         </configuration>
       </plugin>
-      <!-- Re-enabled with modified configuration to prevent StackOverflowError -->
+      <!-- Properly configured maven-assembly-plugin -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.6.0</version>
         <configuration>
           <archive>
             <manifest>
@@ -297,6 +301,9 @@
           <descriptorRefs>
             <descriptorRef>jar-with-dependencies</descriptorRef>
           </descriptorRefs>
+          <finalName>rinna-cli</finalName>
+          <appendAssemblyId>true</appendAssemblyId>
+          <attach>true</attach>
         </configuration>
         <executions>
           <execution>

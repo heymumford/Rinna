@@ -834,6 +834,20 @@
             </nonFilteredFileExtensions>
           </configuration>
         </plugin>
+        <!-- Common assembly plugin configuration -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>3.6.0</version>
+          <configuration>
+            <!-- Default configuration for assemblies -->
+            <appendAssemblyId>true</appendAssemblyId>
+            <attach>true</attach>
+            <descriptorSourceDirectory>${project.basedir}/src/assembly</descriptorSourceDirectory>
+            <!-- Skip parent project assembly as it's a POM-only project -->
+            <skipAssembly>${project.packaging == 'pom'}</skipAssembly>
+          </configuration>
+        </plugin>
         <!-- Quality checks plugins in pluginManagement section -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
