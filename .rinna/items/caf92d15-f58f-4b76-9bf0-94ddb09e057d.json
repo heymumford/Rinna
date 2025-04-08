@@ -1,0 +1,11 @@
+{
+  "id": "caf92d15-f58f-4b76-9bf0-94ddb09e057d",
+  "title": "Fix remaining PMD warnings",
+  "description": "",
+  "type": "TASK",
+  "priority": "MEDIUM",
+  "status": "TODO",
+  "assignee": "",
+  "created": "2025-04-07T01:18:42Z",
+  "updated": "2025-04-07T01:18:42Z"
+}

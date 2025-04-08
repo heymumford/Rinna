@@ -1,0 +1,41 @@
+# Rinna Workspace Configuration
+# Auto-generated on Sun Apr  6 11:00:56 EDT 2025
+
+name: "Rinna"
+path: "/home/emumford/NativeLinuxProjects/Rinna"
+created: "2025-04-06T15:00:56Z"
+owner: "emumford@tranquility"
+
+workflow_stages:
+  - name: "TODO"
+    description: "Work that needs to be done"
+    order: 1
+  - name: "IN_PROGRESS"
+    description: "Work currently being done"
+    order: 2
+  - name: "REVIEW"
+    description: "Work ready for review"
+    order: 3
+  - name: "DONE"
+    description: "Completed work"
+    order: 4
+
+work_item_types:
+  - name: "FEATURE"
+    description: "New functionality or enhancement"
+    color: "blue"
+  - name: "BUG"
+    description: "Something that needs to be fixed"
+    color: "red"
+  - name: "TASK"
+    description: "General work item"
+    color: "green"
+
+members:
+  - username: "emumford"
+    role: "OWNER"
+    permissions:
+      create: true
+      read: true
+      update: true
+      delete: true

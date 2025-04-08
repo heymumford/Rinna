@@ -18,6 +18,7 @@ For our overall implementation approach and design decisions, see:
 - [Design Approach](design-approach.md) - Our phased implementation strategy
 - [Architecture](architecture.md) - Detailed system architecture
 - [Package Refactoring](package-refactoring.md) - Guide for the com.rinna to org.rinna package migration
+- [Dependency Management](dependency-management.md) - How we prevent circular dependencies
 
 ## Java 21 Adoption
 

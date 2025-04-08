@@ -11,6 +11,12 @@ The admin tests validate administrative functionality including:
 - Project management
 - Maven integration
 - Server auto-launch capabilities
+- Audit logging and compliance reporting
+- Security investigation and regulatory compliance
+- System monitoring and diagnostics
+- Performance reporting and alerts
+- Backup configuration and automation
+- Disaster recovery planning and testing
 
 ## Test Structure
 
@@ -28,6 +34,9 @@ Admin tests follow the BDD (Behavior-Driven Development) approach using Cucumber
    - `admin-user-management.feature`
    - `admin-workflow-configuration.feature`
    - `admin-workitem-configuration.feature`
+   - `admin-audit-compliance.feature`
+   - `admin-system-monitoring.feature`
+   - `admin-backup-recovery.feature`
 
 2. **Step Definition Classes** (in `src/test/java/org/rinna/bdd/`):
    - `AdminMavenIntegrationSteps.java`
@@ -36,11 +45,17 @@ Admin tests follow the BDD (Behavior-Driven Development) approach using Cucumber
    - `AdminUserManagementSteps.java`
    - `AdminWorkflowConfigurationSteps.java`
    - `AdminWorkItemConfigurationSteps.java`
+   - `AdminAuditComplianceSteps.java`
+   - `AdminSystemMonitoringSteps.java`
+   - `AdminBackupRecoverySteps.java`
 
 3. **Test Runners** (in `src/test/java/org/rinna/bdd/`):
    - `AdminConfigurationRunner.java` - For workflow, user, and work item configuration
    - `AdminIntegrationRunner.java` - For Maven integration and server auto-launch
    - `AdminProjectRunner.java` - For project management
+   - `AdminAuditComplianceRunner.java` - For audit logging and compliance functionality
+   - `AdminSystemMonitoringRunner.java` - For system monitoring and diagnostics
+   - `AdminBackupRecoveryRunner.java` - For backup and disaster recovery
    - `AdminFeaturesRunner.java` - For all admin tests
 
 ## Running Admin Tests
@@ -57,6 +72,11 @@ The most convenient way to run admin tests is using the dedicated script:
 ./bin/run-admin-tests.sh --integration  # Maven integration & server auto-launch
 ./bin/run-admin-tests.sh --config       # Workflow, work item & user configuration
 ./bin/run-admin-tests.sh --project      # Project management
+./bin/run-admin-tests.sh --audit        # Audit logging and reporting
+./bin/run-admin-tests.sh --compliance   # Regulatory compliance features
+./bin/run-admin-tests.sh --security     # Both audit and compliance tests
+./bin/run-admin-tests.sh --monitoring   # System monitoring and diagnostics
+./bin/run-admin-tests.sh --backup       # Backup and disaster recovery
 
 # Run with additional options
 ./bin/run-admin-tests.sh --verbose      # Show detailed output

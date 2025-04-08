@@ -36,7 +36,11 @@ We have implemented a standardized test approach with the following components:
 1. [Unified Test Approach](UNIFIED_TEST_APPROACH.md) - The standardized approach to testing across all languages
 2. [Testing Strategy](TESTING_STRATEGY.md) - Overall testing strategy for Rinna
 3. [Admin Testing Guide](ADMIN_TESTING.md) - Guide for running and maintaining admin functionality tests
-4. [Test Migration Summary](../../TEST_MIGRATION_SUMMARY.md) - Summary of the completed test migration
+4. [Test Migration Summary](./TEST_MIGRATION_SUMMARY.md) - Summary of the completed test migration
+5. [Test Coverage Summary](./TEST_COVERAGE_SUMMARY.md) - Summary of test coverage metrics
+6. [Test Coverage Improvement Plan](./TEST_COVERAGE_IMPROVEMENT_PLAN.md) - Plan for improving test coverage
+7. [Test Cleanup Summary](./TEST_CLEANUP_SUMMARY.md) - Summary of test cleanup efforts
+8. [Model Mapper Testing](./MODEL_MAPPER_TESTING.md) - Detailed testing of the ModelMapper component
 
 ## Running Tests
 

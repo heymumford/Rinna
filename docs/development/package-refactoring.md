@@ -30,9 +30,9 @@ org.rinna
 | Module | Status | Notes |
 |--------|--------|-------|
 | rinna-core | ✅ Complete | All tests passing with new structure |
-| src (main) | 🔄 In Progress | Work in progress |
-| API | 🔄 In Progress | Planned for next phase |
-| CLI | 🔄 In Progress | Planned for next phase |
+| src (main) | ✅ Complete | Migration finished |
+| API | ✅ Complete | Package structure aligned with core |
+| CLI | ⚠️ Broken | Contains type incompatibilities, marked inactive in CLI build |
 
 ## Working with the New Structure
 

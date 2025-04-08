@@ -35,12 +35,46 @@ import java.util.stream.Collectors;
  * It supports bidirectional conversion between CLI model classes and domain model
  * classes, including both the local domain model interfaces in the CLI module and
  * the actual domain interfaces in the core module.
+ * 
+ * This mapper handles both traditional Java classes and Java Record classes (introduced
+ * in Java 14). Record detection is done through reflection and appropriate accessor
+ * methods are used based on the class type.
  */
 public final class ModelMapper {
 
     // Private constructor to prevent instantiation
     private ModelMapper() {
         throw new UnsupportedOperationException("Utility class cannot be instantiated");
+    }
+    
+    /**
+     * Checks if a class is a Java Record.
+     * Java Records were introduced in Java 14 as a compact syntax for
+     * immutable data-carrying classes.
+     *
+     * @param clazz the class to check
+     * @return true if the class is a Record, false otherwise
+     */
+    private static boolean isRecord(Class<?> clazz) {
+        if (clazz == null) {
+            return false;
+        }
+        
+        try {
+            // Use reflection to call isRecord() method directly
+            // This was added to Class in Java 16
+            java.lang.reflect.Method isRecordMethod = Class.class.getMethod("isRecord");
+            return (Boolean) isRecordMethod.invoke(clazz);
+        } catch (Exception e) {
+            // For earlier Java versions, check for Record class characteristics
+            try {
+                // Check if the class's superclass is java.lang.Record
+                return clazz.getSuperclass() != null && 
+                       clazz.getSuperclass().getName().equals("java.lang.Record");
+            } catch (Exception ex) {
+                return false;
+            }
+        }
     }
 
     /**
@@ -209,6 +243,7 @@ public final class ModelMapper {
     /**
      * Converts a core module WorkItem to a CLI WorkItem.
      * This method supports the core domain model interfaces from the rinna-core module.
+     * It handles both traditional classes and immutable record classes.
      *
      * @param coreItem the core module WorkItem to convert
      * @return the CLI WorkItem
@@ -223,73 +258,233 @@ public final class ModelMapper {
             Class<?> coreClass = coreItem.getClass();
             WorkItem cliItem = new WorkItem();
             
+            // Check if the item is a record - this affects how we access properties
+            boolean isRecord = isRecord(coreClass);
+            
             // Get ID
+            Object id = null;
             try {
-                Object id = invokeGetter(coreItem, "getId");
-                if (id != null) {
-                    cliItem.setId(id.toString());
-                }
+                id = invokeGetter(coreItem, "getId");
             } catch (Exception e) {
-                // If getId fails, try alternate getter
-                Object id = invokeGetter(coreItem, "id");
-                if (id != null) {
-                    cliItem.setId(id.toString());
+                if (isRecord) {
+                    // For records, try the field accessor method directly
+                    try {
+                        id = coreClass.getMethod("id").invoke(coreItem);
+                    } catch (Exception ex) {
+                        // Continue with next field
+                    }
+                } else {
+                    // For regular classes, try alternate getter
+                    try {
+                        id = invokeGetter(coreItem, "id");
+                    } catch (Exception ex) {
+                        // Continue with next field
+                    }
                 }
             }
             
+            if (id != null) {
+                cliItem.setId(id.toString());
+            }
+            
             // Get title
-            String title = (String) invokeGetter(coreItem, "getTitle");
+            String title = null;
+            try {
+                title = (String) invokeGetter(coreItem, "getTitle");
+            } catch (Exception e) {
+                if (isRecord) {
+                    // Try record accessor
+                    try {
+                        title = (String) coreClass.getMethod("title").invoke(coreItem);
+                    } catch (Exception ex) {
+                        // Continue
+                    }
+                }
+            }
             cliItem.setTitle(title);
             
             // Get description
-            String description = (String) invokeGetter(coreItem, "getDescription");
+            String description = null;
+            try {
+                description = (String) invokeGetter(coreItem, "getDescription");
+            } catch (Exception e) {
+                if (isRecord) {
+                    // Try record accessor
+                    try {
+                        description = (String) coreClass.getMethod("description").invoke(coreItem);
+                    } catch (Exception ex) {
+                        // Continue
+                    }
+                }
+            }
             cliItem.setDescription(description);
             
             // Get assignee
-            String assignee = (String) invokeGetter(coreItem, "getAssignee");
+            String assignee = null;
+            try {
+                assignee = (String) invokeGetter(coreItem, "getAssignee");
+            } catch (Exception e) {
+                if (isRecord) {
+                    // Try record accessor
+                    try {
+                        assignee = (String) coreClass.getMethod("assignee").invoke(coreItem);
+                    } catch (Exception ex) {
+                        // Continue
+                    }
+                }
+            }
             cliItem.setAssignee(assignee);
             
             // Get reporter
-            String reporter = (String) invokeGetter(coreItem, "getReporter");
+            String reporter = null;
+            try {
+                reporter = (String) invokeGetter(coreItem, "getReporter");
+            } catch (Exception e) {
+                if (isRecord) {
+                    // Try record accessor
+                    try {
+                        reporter = (String) coreClass.getMethod("reporter").invoke(coreItem);
+                    } catch (Exception ex) {
+                        // Continue
+                    }
+                }
+            }
             cliItem.setReporter(reporter);
             
-            // Get type
-            Object typeObj = invokeGetter(coreItem, "getType");
+            // Get type - this could be an enum in both record and regular class
+            Object typeObj = null;
+            try {
+                typeObj = invokeGetter(coreItem, "getType");
+            } catch (Exception e) {
+                if (isRecord) {
+                    // Try record accessor
+                    try {
+                        typeObj = coreClass.getMethod("type").invoke(coreItem);
+                    } catch (Exception ex) {
+                        // Continue
+                    }
+                }
+            }
+            
             if (typeObj != null) {
                 String typeStr = typeObj.toString();
                 cliItem.setType(StateMapper.fromCoreType(typeStr));
             }
             
-            // Get priority
-            Object priorityObj = invokeGetter(coreItem, "getPriority");
+            // Get priority - this could be an enum in both record and regular class
+            Object priorityObj = null;
+            try {
+                priorityObj = invokeGetter(coreItem, "getPriority");
+            } catch (Exception e) {
+                if (isRecord) {
+                    // Try record accessor
+                    try {
+                        priorityObj = coreClass.getMethod("priority").invoke(coreItem);
+                    } catch (Exception ex) {
+                        // Continue
+                    }
+                }
+            }
+            
             if (priorityObj != null) {
                 String priorityStr = priorityObj.toString();
                 cliItem.setPriority(StateMapper.fromCorePriority(priorityStr));
             }
             
-            // Get state
-            Object stateObj = invokeGetter(coreItem, "getState");
-            if (stateObj == null) {
-                // Try alternate getter
-                stateObj = invokeGetter(coreItem, "getStatus");
+            // Get state/status - this could be an enum in both record and regular class
+            Object stateObj = null;
+            try {
+                stateObj = invokeGetter(coreItem, "getState");
+            } catch (Exception e) {
+                // Try alternate state accessor
+                try {
+                    stateObj = invokeGetter(coreItem, "getStatus");
+                } catch (Exception ex) {
+                    if (isRecord) {
+                        // Try record accessors
+                        try {
+                            stateObj = coreClass.getMethod("state").invoke(coreItem);
+                        } catch (Exception exc) {
+                            try {
+                                stateObj = coreClass.getMethod("status").invoke(coreItem);
+                            } catch (Exception excp) {
+                                // Continue
+                            }
+                        }
+                    }
+                }
             }
+            
             if (stateObj != null) {
                 String stateStr = stateObj.toString();
                 cliItem.setStatus(StateMapper.fromCoreState(stateStr));
             }
             
             // Get creation timestamp
-            Object createdObj = invokeGetter(coreItem, "getCreatedAt");
+            Object createdObj = null;
+            try {
+                createdObj = invokeGetter(coreItem, "getCreatedAt");
+            } catch (Exception e) {
+                if (isRecord) {
+                    // Try record accessor
+                    try {
+                        createdObj = coreClass.getMethod("createdAt").invoke(coreItem);
+                    } catch (Exception ex) {
+                        // Continue
+                    }
+                }
+            }
+            
             if (createdObj instanceof Instant) {
                 Instant createdInstant = (Instant) createdObj;
                 cliItem.setCreated(LocalDateTime.ofInstant(createdInstant, ZoneId.systemDefault()));
             }
             
             // Get update timestamp
-            Object updatedObj = invokeGetter(coreItem, "getUpdatedAt");
+            Object updatedObj = null;
+            try {
+                updatedObj = invokeGetter(coreItem, "getUpdatedAt");
+            } catch (Exception e) {
+                if (isRecord) {
+                    // Try record accessor
+                    try {
+                        updatedObj = coreClass.getMethod("updatedAt").invoke(coreItem);
+                    } catch (Exception ex) {
+                        // Continue
+                    }
+                }
+            }
+            
             if (updatedObj instanceof Instant) {
                 Instant updatedInstant = (Instant) updatedObj;
                 cliItem.setUpdated(LocalDateTime.ofInstant(updatedInstant, ZoneId.systemDefault()));
+            }
+            
+            // Handle project and version fields from record if available
+            if (isRecord) {
+                try {
+                    Object projectIdObj = coreClass.getMethod("projectId").invoke(coreItem);
+                    if (projectIdObj != null) {
+                        // If it's an Optional, try to get its value
+                        if (projectIdObj.getClass().getSimpleName().equals("Optional")) {
+                            try {
+                                Object isPresent = projectIdObj.getClass().getMethod("isPresent").invoke(projectIdObj);
+                                if ((Boolean) isPresent) {
+                                    Object projId = projectIdObj.getClass().getMethod("get").invoke(projectIdObj);
+                                    if (projId != null) {
+                                        cliItem.setProjectId(projId.toString());
+                                    }
+                                }
+                            } catch (Exception ex) {
+                                // Continue
+                            }
+                        } else {
+                            cliItem.setProjectId(projectIdObj.toString());
+                        }
+                    }
+                } catch (Exception e) {
+                    // Continue - project ID is optional
+                }
             }
             
             return cliItem;
@@ -306,6 +501,7 @@ public final class ModelMapper {
     /**
      * Converts a CLI WorkItem to a core module WorkItem.
      * This method supports the core domain model interfaces from the rinna-core module.
+     * It handles both mutable implementations (DefaultWorkItem) and immutable ones (WorkItemRecord).
      *
      * @param cliItem the CLI WorkItem to convert
      * @param coreClass the core module WorkItem class to instantiate
@@ -320,7 +516,12 @@ public final class ModelMapper {
             // Convert to domain model first
             DomainWorkItem domainItem = toDomainWorkItem(cliItem);
             
-            // Create core model instance
+            // Check if the core class is WorkItemRecord, which requires special handling
+            if (coreClass.getSimpleName().equals("WorkItemRecord")) {
+                return createWorkItemRecord(domainItem, coreClass);
+            }
+            
+            // Create core model instance for mutable classes
             Object coreItem = coreClass.getDeclaredConstructor().newInstance();
             
             // Set ID
@@ -425,6 +626,57 @@ public final class ModelMapper {
             // If conversion fails, return null or throw exception
             return null;
         }
+    }
+    
+    /**
+     * Creates an immutable WorkItemRecord instance using the record constructor.
+     * This special handler is needed because records use a different instantiation pattern.
+     *
+     * @param domainItem the domain item to convert from
+     * @param recordClass the WorkItemRecord class
+     * @return a new WorkItemRecord instance
+     * @throws Exception if the record cannot be created
+     */
+    private static Object createWorkItemRecord(DomainWorkItem domainItem, Class<?> recordClass) throws Exception {
+        // Get WorkItemType enum for proper conversion
+        Class<?> typeEnumClass = getCoreEnumClass(recordClass, "WorkItemType");
+        Object typeEnum = (typeEnumClass != null && domainItem.getType() != null)
+                ? Enum.valueOf((Class<Enum>)typeEnumClass, domainItem.getType().name())
+                : null;
+        
+        // Get Priority enum for proper conversion
+        Class<?> priorityEnumClass = getCoreEnumClass(recordClass, "Priority");
+        Object priorityEnum = (priorityEnumClass != null && domainItem.getPriority() != null)
+                ? Enum.valueOf((Class<Enum>)priorityEnumClass, domainItem.getPriority().name())
+                : null;
+        
+        // Get WorkflowState enum for proper conversion
+        Class<?> stateEnumClass = getCoreEnumClass(recordClass, "WorkflowState");
+        Object stateEnum = (stateEnumClass != null && domainItem.getState() != null)
+                ? Enum.valueOf((Class<Enum>)stateEnumClass, domainItem.getState().name())
+                : null;
+        
+        // Find the constructor with all parameters
+        // The order is known from WorkItemRecord: id, title, description, type, status, priority, assignee,
+        // createdAt, updatedAt, parentId, projectId, visibility, localOnly
+        return recordClass.getDeclaredConstructor(
+                UUID.class, String.class, String.class, typeEnumClass, stateEnumClass, priorityEnumClass,
+                String.class, Instant.class, Instant.class, UUID.class, UUID.class, String.class, boolean.class)
+                .newInstance(
+                    domainItem.getId(),
+                    domainItem.getTitle(),
+                    domainItem.getDescription(),
+                    typeEnum,
+                    stateEnum,
+                    priorityEnum,
+                    domainItem.getAssignee(),
+                    domainItem.getCreatedAt(),
+                    domainItem.getUpdatedAt(),
+                    null, // parentId - not in CLI model
+                    null, // projectId - not in CLI model
+                    "PUBLIC", // visibility
+                    false // localOnly
+                );
     }
     
     /**

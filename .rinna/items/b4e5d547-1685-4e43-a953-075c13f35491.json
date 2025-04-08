@@ -1,0 +1,11 @@
+{
+  "id": "b4e5d547-1685-4e43-a953-075c13f35491",
+  "title": "Test work item from CLI integration test",
+  "description": "",
+  "type": "TASK",
+  "priority": "HIGH",
+  "status": "TODO",
+  "assignee": "test-user",
+  "created": "2025-04-07T01:03:34Z",
+  "updated": "2025-04-07T01:03:34Z"
+}

@@ -37,22 +37,91 @@ The test infrastructure is built on:
 - **Mockito** for mocking dependencies in isolation tests (version 5.10.0+)
 - **AssertJ** for fluent assertions
 - **JaCoCo** for code coverage reporting
+- **Go testing framework** for API server components
+- **pytest** for Python utilities
 
-Key test infrastructure components:
+### Testing Pyramid Architecture
 
-- `TestHelper.java` - Utility for setting up test scenarios
-- `TddTest.java` - Base class for TDD-style development
-- `CucumberRunner.java` - Universal runner for BDD tests
-- `Specialized Runners` - Feature-specific runners (Release, Workflow, API, etc.)
-- `TestContext.java` - Context management for BDD tests
-- Custom test scripts for running different test suites
+Rinna follows the testing pyramid approach with multiple layers of testing:
+
+```
+        ▲ Fewer
+        │
+        │    ┌───────────────┐
+        │    │  Performance  │ Slowest, most complex
+        │    └───────────────┘
+        │    ┌───────────────┐
+        │    │  Acceptance   │ End-to-end workflows
+        │    └───────────────┘
+        │    ┌───────────────┐
+        │    │  Integration  │ Tests between modules
+        │    └───────────────┘
+        │    ┌───────────────┐
+        │    │   Component   │ Tests within modules
+        │    └───────────────┘
+        │    ┌───────────────┐
+        │    │     Unit      │ Fastest, most granular
+        │    └───────────────┘
+        │
+        ▼ More
+```
+
+Each layer has different purposes and tradeoffs:
+
+1. **Unit Tests** - Smallest, fastest tests for individual functions and classes
+2. **Component Tests** - Tests of internal modules or components
+3. **Integration Tests** - Tests of interactions between multiple components
+4. **Acceptance Tests** - Full end-to-end tests of user workflows
+5. **Performance Tests** - Tests of system behavior under load or stress
+
+### Key Testing Components
+
+- **Base Classes**
+  - `BaseTest.java` - Common functionality for all test types
+  - `UnitTest.java` - Base class for unit tests with @Tag("unit")
+  - `ComponentTest.java` - Base for component tests with @Tag("component")
+  - `IntegrationTest.java` - Base for integration tests with @Tag("integration")
+  - `AcceptanceTest.java` - Base for acceptance tests with @Tag("acceptance")
+  - `PerformanceTest.java` - Base for performance tests with @Tag("performance")
+
+- **Legacy Base Classes**
+  - `TestHelper.java` - Utility for setting up test scenarios
+  - `TddTest.java` - Base class for TDD-style development
+
+- **BDD Infrastructure**
+  - `CucumberRunner.java` - Universal runner for BDD tests
+  - `Specialized Runners` - Feature-specific runners (Release, Workflow, API, etc.)
+  - `TestContext.java` - Context management for BDD tests
+
+- **Test Automation Tools**
+  - `test-discovery.sh` - Auto-discovers and categorizes tests
+  - `smart-test-runner.sh` - Advanced test runner based on the testing pyramid
+  - `rin-test` - Command-line integration for the advanced test runner
+  - `maven-cross-tests.sh` - Script for running cross-language tests from Maven
 
 ## Running Tests
 
-Rinna provides a streamlined, mode-based approach for running tests with two complementary tools:
+Rinna provides a streamlined, mode-based approach for running tests with complementary tools:
 
 1. The `rin build` utility with an intuitive command structure
-2. The `run-tests.sh` script for advanced test scenarios
+2. The `run-tests.sh` script for Java-specific test scenarios
+3. The `rinna-tests.sh` script for cross-language testing
+4. Maven profiles for comprehensive testing
+
+### Cross-Language Testing
+
+The project supports cross-language testing integration through Maven profiles:
+
+```bash
+# Run all tests including Go API, Python, and CLI integration tests
+mvn verify -P cross-language-tests
+
+# Run with the default all-tests profile (includes cross-language tests)
+mvn verify
+
+# Direct script execution
+./bin/maven-cross-tests.sh
+```
 
 ### Using Build Modes
 
@@ -77,24 +146,30 @@ The mode-based architecture simplifies common testing workflows:
 Test categories provide a convenient way to run specific test types:
 
 ```bash
-# Run unit tests only
-./bin/rin build test unit
+# Run tests by layer in the pyramid
+./bin/rin test unit          # Run unit tests only
+./bin/rin test component     # Run component tests only
+./bin/rin test integration   # Run integration tests only
+./bin/rin test acceptance    # Run acceptance tests only
+./bin/rin test performance   # Run performance tests only
+./bin/rin test bdd           # Run BDD tests (same as acceptance)
 
-# Run all BDD tests
-./bin/rin build test bdd
+# Run test combinations
+./bin/rin test fast          # Run unit and component tests only (quick feedback)
+./bin/rin test essential     # Run unit, component, and integration tests (no UI)
 
-# Run domain-specific tests
-./bin/rin build test domain:workflow
-./bin/rin build test domain:release
-./bin/rin build test domain:input
-./bin/rin build test domain:api
-./bin/rin build test domain:cli
+# Run domain-specific tests (legacy mode)
+./bin/rin test workflow      # Run workflow domain BDD tests
+./bin/rin test release       # Run release domain BDD tests
+./bin/rin test input         # Run input interface domain BDD tests
+./bin/rin test api           # Run API integration tests
+./bin/rin test cli           # Run CLI integration tests
 
 # Run tests with a specific tag
-./bin/rin build test tag:feature-x
+./bin/rin test tag:feature-x # Run tests tagged with "feature-x"
 ```
 
-Each domain maps to appropriate test classes or Cucumber tags in the build system, making it easier to run specific tests.
+Each test category and domain maps to appropriate test classes or Cucumber tags in the build system, making it easier to run specific tests. The advanced testing pyramid approach automatically prioritizes tests in the correct order for maximum efficiency.
 
 ### Using Test Options
 
@@ -115,9 +190,40 @@ Fine-tune test execution with various options:
 
 The `--watch` option is particularly useful during development as it continuously monitors source files and automatically reruns tests when changes are detected.
 
-### Using the Advanced Test Runner
+### Using the Advanced Test Runners
 
-For more specialized scenarios, the `run-tests.sh` script offers additional options:
+#### Smart Test Runner
+
+The `smart-test-runner.sh` script provides advanced testing capabilities following the testing pyramid approach:
+
+```bash
+# Run all tests in pyramid order
+./bin/smart-test-runner.sh all
+
+# Run specific test types
+./bin/smart-test-runner.sh unit
+./bin/smart-test-runner.sh component
+./bin/smart-test-runner.sh integration
+./bin/smart-test-runner.sh acceptance
+./bin/smart-test-runner.sh performance
+
+# Run test combinations
+./bin/smart-test-runner.sh fast        # Unit + Component tests 
+./bin/smart-test-runner.sh essential   # Unit + Component + Integration tests
+
+# Configure execution
+./bin/smart-test-runner.sh --no-parallel            # Disable parallel execution
+./bin/smart-test-runner.sh --fail-fast              # Stop on first failure
+./bin/smart-test-runner.sh --workers 8              # Set max parallel workers
+./bin/smart-test-runner.sh --debug                  # Enable debug output
+./bin/smart-test-runner.sh --skip-performance       # Skip performance tests
+```
+
+The smart test runner automatically discovers tests by their JUnit 5 tags, prioritizes execution based on the testing pyramid, and provides comprehensive reporting.
+
+#### Legacy Test Runner
+
+For backward compatibility, the `run-tests.sh` script offers a simpler interface:
 
 ```bash
 # Run all tests
@@ -142,7 +248,7 @@ For more specialized scenarios, the `run-tests.sh` script offers additional opti
 ./bin/run-tests.sh -p -v tag:workflow
 ```
 
-> Note: The `run-tests.sh` script provides complementary options that might be useful for specific CI/CD scenarios or advanced testing needs.
+> Note: The legacy `run-tests.sh` script remains available for backward compatibility and CI/CD scenarios that depend on it.
 
 ### Combining Commands and Options
 
@@ -263,6 +369,51 @@ Feature: API Integration
     And the work item should be associated with project "billing-system"
     And the work item should include all the provided metadata
 ```
+
+## C4 Diagram Generation and Testing
+
+The project includes a C4 model diagram generator that creates architectural diagrams for documentation and can optionally upload them to LucidChart. The diagram generator creates:
+
+- Context diagrams - showing how Rinna fits into the broader ecosystem
+- Container diagrams - showing the high-level components of Rinna
+- Component diagrams - showing the internal structure of the components
+- Code diagrams - showing key classes and their relationships
+
+The diagram generator is located at `bin/c4_diagrams.py` and has corresponding unit tests in `bin/test_c4_diagrams.py`.
+
+### Running C4 Diagram Tests
+
+```bash
+# Run the diagram tests
+python -m unittest bin/test_c4_diagrams.py
+
+# These tests are also included in the cross-language test suite
+mvn verify -P cross-language-tests
+```
+
+### Generating C4 Diagrams
+
+```bash
+# Generate all diagrams
+./bin/c4_diagrams.py --type all
+
+# Generate a specific diagram type
+./bin/c4_diagrams.py --type context
+./bin/c4_diagrams.py --type container
+./bin/c4_diagrams.py --type component
+./bin/c4_diagrams.py --type code
+
+# Change output format (png, svg, pdf)
+./bin/c4_diagrams.py --type all --output svg
+
+# Specify output directory
+./bin/c4_diagrams.py --type all --dir ./docs/diagrams
+
+# Upload to LucidChart (requires API key configuration)
+./bin/c4_diagrams.py --type all --upload
+```
+
+The diagrams are automatically generated during the Maven build process with the cross-language-tests profile.
 
 ## API Integration Testing
 
@@ -415,15 +566,107 @@ The build system automatically configures Jacoco with appropriate settings:
 
 ### Adding a New Unit Test
 
-1. Create a new test class that extends `TddTest` or use JUnit 5 directly with `@ExtendWith(MockitoExtension.class)`
-2. Write test methods using JUnit 5 annotations (@Test, @DisplayName, etc.)
-3. Run the tests with `./bin/run-tests.sh unit`
+1. Create a new test class that extends `UnitTest` (for the testing pyramid approach) or `TddTest` (for legacy tests)
+2. Use the appropriate annotations:
+   ```java
+   import org.junit.jupiter.api.DisplayName;
+   import org.junit.jupiter.api.Test;
+   import org.rinna.base.UnitTest;
+
+   @DisplayName("My feature tests")
+   class MyFeatureTest extends UnitTest {
+       @Test
+       @DisplayName("should work correctly")
+       void shouldWorkCorrectly() {
+           // Test implementation
+       }
+   }
+   ```
+3. Run the tests with `./bin/rin test unit` or `./bin/smart-test-runner.sh unit`
+
+### Adding Tests for Each Layer
+
+#### Component Tests
+
+1. Create a new test class that extends `ComponentTest`:
+   ```java
+   import org.junit.jupiter.api.DisplayName;
+   import org.junit.jupiter.api.Test;
+   import org.rinna.base.ComponentTest;
+
+   @DisplayName("Document service component tests")
+   class DocumentServiceComponentTest extends ComponentTest {
+       @Test
+       @DisplayName("should generate document from template")
+       void shouldGenerateDocumentFromTemplate() {
+           // Test implementation using real components with mocked boundaries
+       }
+   }
+   ```
+2. Run the tests with `./bin/rin test component`
+
+#### Integration Tests
+
+1. Create a new test class that extends `IntegrationTest`:
+   ```java
+   import org.junit.jupiter.api.DisplayName;
+   import org.junit.jupiter.api.Test;
+   import org.rinna.base.IntegrationTest;
+
+   @DisplayName("Item and workflow integration")
+   class ItemWorkflowIntegrationTest extends IntegrationTest {
+       @Test
+       @DisplayName("should transition items between services")
+       void shouldTransitionItemsBetweenServices() {
+           // Test implementation using multiple real components
+       }
+   }
+   ```
+2. Run the tests with `./bin/rin test integration`
+
+#### Acceptance Tests
+
+1. Create a new test class that extends `AcceptanceTest`:
+   ```java
+   import org.junit.jupiter.api.DisplayName;
+   import org.junit.jupiter.api.Test;
+   import org.rinna.base.AcceptanceTest;
+
+   @DisplayName("Release management acceptance")
+   class ReleaseManagementAcceptanceTest extends AcceptanceTest {
+       @Test
+       @DisplayName("should create a release with all items")
+       void shouldCreateReleaseWithAllItems() {
+           // Test implementation using complete system
+       }
+   }
+   ```
+2. Run the tests with `./bin/rin test acceptance`
+
+#### Performance Tests
+
+1. Create a new test class that extends `PerformanceTest`:
+   ```java
+   import org.junit.jupiter.api.DisplayName;
+   import org.junit.jupiter.api.Test;
+   import org.rinna.base.PerformanceTest;
+
+   @DisplayName("Item service performance")
+   class ItemServicePerformanceTest extends PerformanceTest {
+       @Test
+       @DisplayName("should handle 1000 items within time limit")
+       void shouldHandleHighVolumeWithinTimeLimit() {
+           // Performance test implementation
+       }
+   }
+   ```
+2. Run the tests with `./bin/rin test performance`
 
 ### Adding a New BDD Test
 
 1. Add a new scenario to an existing feature file or create a new .feature file
 2. Implement step definitions in an existing step class or create a new one
-3. Run the tests with `./bin/run-tests.sh bdd` (no need to modify runners in most cases)
+3. Run the tests with `./bin/rin test bdd` or `./bin/run-tests.sh bdd` (no need to modify runners in most cases)
 
 ### Adding a New API Integration Test
 
@@ -446,6 +689,26 @@ Rinna is designed to work with JDK 21. To ensure compatibility:
 - Use Mockito 5.10.0+ with ByteBuddy 1.14.11+
 - Use the `@ExtendWith(MockitoExtension.class)` annotation for JUnit 5 integration
 - Use the `@MockitoSettings(strictness = Strictness.LENIENT)` annotation for advanced mocking scenarios
+
+### Testing Pyramid Issues
+
+If you're experiencing issues with the new testing pyramid approach:
+
+1. **Test Discovery Issues**:
+   - Ensure your test classes extend the correct base class (UnitTest, ComponentTest, etc.)
+   - Verify the JUnit 5 @Tag annotation is present and matches the expected test category
+   - Run `./bin/test-discovery.sh --detailed` to verify test categorization
+
+2. **Smart Test Runner Issues**:
+   - Check the output of `./bin/smart-test-runner.sh --debug` for detailed diagnostics
+   - Verify test timeouts are appropriate for your test types (can be configured in the script)
+   - For parallel execution issues, set `--no-parallel` and `--workers 1` to simplify debugging
+
+3. **Fallback to Legacy Mode**:
+   - If you encounter unsolvable issues with the smart test runner, you can use the legacy mode:
+     ```bash
+     ./bin/rin-build test [category]  # Legacy direct Maven execution
+     ```
 
 ### Cucumber Feature File Discovery
 

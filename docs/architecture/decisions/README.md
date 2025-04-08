@@ -38,6 +38,10 @@ Here's a chronological list of all ADRs:
 | [ADR-0001](0001-record-architecture-decisions.md) | Record Architecture Decisions | Accepted |
 | [ADR-0002](0002-automated-c4-architecture-diagrams.md) | Automated C4 Architecture Diagrams | Accepted |
 | [ADR-0003](0003-adopt-clean-architecture-for-system-design.md) | Adopt Clean Architecture for System Design | Accepted |
+| [ADR-0004](0004-refactor-package-structure-to-align-with-clean-architecture.md) | Refactor Package Structure to Align with Clean Architecture | Accepted |
+| [ADR-0005](0005-adopt-multi-language-approach-for-system-components.md) | Adopt Multi-Language Approach for System Components | Accepted |
+| [ADR-0006](0006-implement-comprehensive-testing-pyramid-strategy.md) | Implement Comprehensive Testing Pyramid Strategy | Accepted |
+| [ADR-0007](0007-establish-security-compliance-framework.md) | Establish Security Compliance Framework | Accepted |
 
 ## Statuses
 

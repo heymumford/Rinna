@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Replace with your project coordinates -->
+    <groupId>com.example</groupId>
+    <artifactId>my-project</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>My Project</name>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <rinna.version>1.8.0</rinna.version>
+    </properties>
+
+    <dependencies>
+        <!-- Rinna Core - Workflow Management System -->
+        <dependency>
+            <groupId>org.rinna</groupId>
+            <artifactId>rinna-core</artifactId>
+            <version>${rinna.version}</version>
+        </dependency>
+
+        <!-- Optional: Rinna CLI integration for Java code -->
+        <dependency>
+            <groupId>org.rinna</groupId>
+            <artifactId>rinna-cli</artifactId>
+            <version>${rinna.version}</version>
+        </dependency>
+
+        <!-- Add your other project dependencies here -->
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Rinna Maven plugin for initialization and configuration -->
+            <plugin>
+                <groupId>org.rinna</groupId>
+                <artifactId>rinna-maven-plugin</artifactId>
+                <version>${rinna.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>initialize</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- Enable automatic admin user creation -->
+                    <adminInit>true</adminInit>
+                    
+                    <!-- Use project name for Rinna project -->
+                    <projectName>${project.name}</projectName>
+                    
+                    <!-- Auto-start server when needed -->
+                    <autoStartServer>true</autoStartServer>
+                    
+                    <!-- Default credentials (can be customized) -->
+                    <adminUsername>admin</adminUsername>
+                    <adminPassword>nimda</adminPassword>
+                    
+                    <!-- Optional: Customize initial workflow and item types -->
+                    <initWorkflow>default</initWorkflow> <!-- Options: default, agile, kanban -->
+                    
+                    <!-- Optional: Configure server port -->
+                    <serverPort>9090</serverPort>
+                </configuration>
+            </plugin>
+
+            <!-- Add your other build plugins here -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.12.1</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

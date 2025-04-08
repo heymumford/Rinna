@@ -2,6 +2,40 @@
 
 This document outlines the testing strategy for the Rinna project, inspired by the combined wisdom of Uncle Bob (Robert C. Martin) and Martin Fowler. The strategy is designed to balance quick feedback, comprehensive test coverage, and appropriate test scoping.
 
+> 📊 For a detailed explanation of our test pyramid implementation across Java, Go, and Python, see our [Test Pyramid Strategy](TEST_PYRAMID.md) document, which explains our approach to polyglot testing.
+
+> 📖 For the philosophical foundations of our approach to testing, application delivery, and digital transformation in the age of AI, see our [Testing Philosophy](PHILOSOPHY.md) document, which explores concepts from Dr. Danny Coward, Dave Snowden's Cynefin framework, and key Agile luminaries.
+
+> 📋 For detailed quality standards, patterns, and language-specific implementations, see our [Quality Standards](QUALITY_STANDARDS.md) document.
+
+> 🔄 For our unified test nomenclature across all languages (Java, Go, Python, Bash), see our [Unified Test Nomenclature](UNIFIED_TEST_NOMENCLATURE.md) document.
+
+## Testing Pyramid
+
+Rinna follows the testing pyramid approach, with more tests at the lower levels (unit, component) and fewer tests at the higher levels (integration, acceptance, performance). This approach provides fast feedback on most code changes while ensuring comprehensive coverage of critical application workflows.
+
+```
+    ▲ Fewer
+    │
+    │    ┌───────────────┐
+    │    │  Performance  │ Slowest, most complex
+    │    └───────────────┘
+    │    ┌───────────────┐
+    │    │  Acceptance   │ End-to-end workflows
+    │    └───────────────┘
+    │    ┌───────────────┐
+    │    │  Integration  │ Tests between modules
+    │    └───────────────┘
+    │    ┌───────────────┐
+    │    │   Component   │ Tests within modules
+    │    └───────────────┘
+    │    ┌───────────────┐
+    │    │     Unit      │ Fastest, most granular
+    │    └───────────────┘
+    │
+    ▼ More
+```
+
 ## Test Categories
 
 Our test suite is organized into five distinct categories, each with a specific scope, purpose, and execution frequency:
@@ -88,6 +122,9 @@ public class SomeAcceptanceTest { /*...*/ }
 
 @Tag("performance")
 public class SomePerformanceTest { /*...*/ }
+
+@Tag("smoke")
+public class SmokeSuiteTest { /*...*/ }
 ```
 
 ### Maven Profiles
@@ -140,9 +177,55 @@ The CI pipeline is configured to run tests at the appropriate stages:
 5. **Performance Awareness**: Performance is tested before release
 6. **Maintainability**: Tests are categorized and can be run selectively
 
+## Code Coverage
+
+Rinna implements a polyglot code coverage strategy that aggregates coverage data from all languages used in the project:
+
+### Unified Coverage Reporting
+
+- **Automatic Coverage**: Code coverage is automatically calculated during test runs
+- **Polyglot Support**: Coverage for Java, Go, and Python components
+- **Consolidated View**: Weighted average coverage across all languages
+- **Language-Specific Thresholds**: Different coverage targets for each language
+
+### Implementation
+
+The unified coverage system uses:
+
+- **Java**: JaCoCo for Java coverage (target: 75%)
+- **Go**: Native Go coverage tools (target: 70%)
+- **Python**: pytest-cov (target: 65%)
+
+### Running Coverage Reports
+
+Coverage reports are generated automatically when running tests:
+
+```bash
+# Run tests with coverage
+rin-test unit          # Shows coverage for unit tests
+rin-test component     # Shows coverage for component tests
+rin-test               # Shows coverage for all tests
+
+# To skip coverage reporting
+rin-test --no-coverage 
+
+# Generate standalone coverage reports
+bin/polyglot-coverage.sh        # Generate text report 
+bin/polyglot-coverage.sh -o html  # Generate HTML report
+bin/polyglot-coverage.sh -o json  # Generate JSON report
+```
+
+### Coverage Requirements
+
+- **Overall**: 70% minimum coverage
+- **CI Mode**: 75% minimum coverage
+- **HTML Reports**: Available in `target/coverage/html/`
+- **Language-Specific Reports**: Available for each language
+
 ## References
 
 - "Clean Code" by Robert C. Martin
 - "Refactoring" by Martin Fowler
 - "Test-Driven Development: By Example" by Kent Beck
 - "Growing Object-Oriented Software, Guided by Tests" by Steve Freeman & Nat Pryce
+- "xUnit Test Patterns" by Gerard Meszaros

@@ -13,6 +13,12 @@ Welcome to the Rinna documentation. Rinna is a developer-centric workflow manage
 - 📚 [User Guide](user-guide/README.md) - Complete guide to using Rinna
 - 🧭 [Workflow Philosophy](user-guide/workflow-philosophy.md) - Why Rinna works the way it does
 
+### For Administrators
+- 🔑 [Admin Guide](user-guide/admin-guide.md) - Complete administration guide
+- ⚡ [Admin CLI Quick Start](user-guide/admin-cli-quickstart.md) - Essential admin commands
+- 🖥️ [Server Configuration](user-guide/admin-server-setup.md) - Detailed server setup
+- 📄 [Maven POM Sample](user-guide/admin-pom-sample.xml) - Ready-to-use Maven configuration
+
 ### For Developers
 - 🧩 [CLI Reference](user-guide/rin-cli.md) - Command-Line Interface tool reference
 - 🔧 [Development Guide](development/README.md) - Contributing to Rinna
@@ -74,6 +80,11 @@ Traditional project management tools are designed primarily for reporting to man
   - [Workflow Philosophy](user-guide/workflow-philosophy.md)
   - [Lota (Development Cycle)](user-guide/lota.md)
   - [Release Management](user-guide/releases.md)
+  
+- [Administrator Guide](user-guide/admin-guide.md)
+  - [Admin CLI Quick Start](user-guide/admin-cli-quickstart.md)
+  - [Server Configuration](user-guide/admin-server-setup.md)
+  - [Maven POM Sample](user-guide/admin-pom-sample.xml)
 
 - [Development](development/README.md)
   - [Architecture](development/architecture.md)

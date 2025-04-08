@@ -41,6 +41,18 @@ For more options:
 
 Important architectural decisions are documented as Architecture Decision Records (ADRs) in the [decisions](./decisions) directory.
 
+Key architectural decisions:
+
+1. [Record Architecture Decisions](./decisions/0001-record-architecture-decisions.md) - How we document architectural decisions
+2. [Automated C4 Architecture Diagrams](./decisions/0002-automated-c4-architecture-diagrams.md) - How we maintain up-to-date architecture diagrams
+3. [Adopt Clean Architecture for System Design](./decisions/0003-adopt-clean-architecture-for-system-design.md) - Our overall architectural approach
+
+To create a new ADR, use the `new-adr` script:
+
+```bash
+./bin/new-adr "Title of the decision"
+```
+
 ## Design Principles
 
 The Rinna project follows these key design principles:

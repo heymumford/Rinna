@@ -1,112 +1,134 @@
 # Rinna Package Structure
 
-This document describes the package structure of the Rinna application, following clean architecture principles with a simplified and flattened hierarchy.
+This document describes the package structure for the Rinna project, which follows Clean Architecture principles. We are currently in a transition phase, moving from the old package structure to a new, more consistent structure.
 
-## Overview
+## Clean Architecture Package Structure
 
-The Rinna package structure follows the principles of Clean Architecture, which separates code into distinct layers with clear dependencies flowing from the outside in:
+The Rinna project follows Clean Architecture principles with the following layers:
+
+![Clean Architecture Diagram](../diagrams/rinna_clean_architecture_diagram.svg)
+
+1. **Domain Layer** (Innermost)
+   - Contains business entities and core business logic
+   - Defines interfaces that outer layers implement
+   - Has no dependencies on other layers
+
+2. **Use Case Layer**
+   - Contains application-specific business rules
+   - Depends only on the Domain layer
+   - Defines interfaces for external dependencies
+
+3. **Interface Adapters Layer**
+   - Contains implementations of the interfaces defined in inner layers
+   - Converts data between formats suitable for use cases and external frameworks
+   - Includes controllers, presenters, gateways, and repositories
+
+4. **Frameworks & Drivers Layer** (Outermost)
+   - Contains framework details, UI, databases, etc.
+   - Implements interfaces defined by inner layers
+   - Connects to external systems
+
+## Package Structure Migration
+
+The codebase is currently being migrated from the old package structure to a new structure that better aligns with Clean Architecture principles.
+
+### Old Structure (Being Phased Out)
 
 ```
-org.rinna
-  ├── adapter       # Framework adapters (outside layer)
-  │   ├── repository  # Concrete repository implementations
-  │   └── service     # Service implementations
-  ├── config        # Application configuration
-  ├── domain        # Core domain (inner layer)
-  │   ├── model       # Domain model entities
-  │   ├── repository  # Repository interfaces
-  │   └── service     # Service interfaces
-  └── [legacy]      # Legacy packages (for backward compatibility)
+org.rinna.domain.entity    → Domain entities
+org.rinna.domain.usecase   → Service interfaces
+org.rinna.service.impl     → Service implementations
+org.rinna.persistence      → Repository implementations
+org.rinna.model            → Some domain entities
 ```
 
-## Package Responsibilities
+### New Structure (Being Adopted)
 
-### Domain Layer
+```
+org.rinna.domain.model     → Domain entities
+org.rinna.domain.service   → Service interfaces
+org.rinna.domain.repository → Repository interfaces
+org.rinna.adapter.service  → Service implementations
+org.rinna.adapter.repository → Repository implementations
+```
 
-The domain layer contains the core business logic and entities of the application. It has no dependencies on other layers.
+### Migration Status
 
-#### `org.rinna.domain.model`
+- ✅ Core domain model has been migrated to the new structure
+- ✅ Repository interfaces have been moved to `org.rinna.domain.repository`
+- ✅ Service interfaces have been moved to `org.rinna.domain.service`
+- 🔄 Repository implementations are being migrated to `org.rinna.adapter.repository`
+- 🔄 Service implementations are being migrated to `org.rinna.adapter.service`
+- ⏳ Compatibility classes for backward compatibility are temporarily maintained
+- ⏳ Test classes are being updated to use the new package structure
 
-Contains the domain model classes that represent the core business entities. These classes are pure Java and have no dependencies on frameworks or libraries.
+## Modules Package Structure
 
-Examples:
-- `WorkItem`
-- `WorkQueue`
-- `Release`
-- `Priority` (enum)
-- `WorkflowState` (enum)
+### Core Module (`rinna-core`)
 
-#### `org.rinna.domain.service`
+The core module contains the domain model and core business logic:
 
-Contains the service interfaces that define the business operations available in the domain. Previously known as `usecase`.
+```
+org.rinna.domain.model     → Core domain entities
+org.rinna.domain.service   → Service interfaces
+org.rinna.domain.repository → Repository interfaces
+org.rinna.adapter.service  → Service implementations
+org.rinna.adapter.repository → Repository implementations
+```
 
-Examples:
-- `ItemService`
-- `WorkflowService`
-- `ReleaseService`
-- `QueueService`
+### CLI Module (`rinna-cli`)
 
-#### `org.rinna.domain.repository`
+The CLI module provides command-line interfaces:
 
-Contains the repository interfaces that define the data access operations available in the domain.
+```
+org.rinna.cli              → Command-line application
+org.rinna.cli.command      → Command implementations
+org.rinna.cli.model        → CLI-specific models
+org.rinna.cli.service      → CLI services
+```
 
-Examples:
-- `ItemRepository`
-- `ReleaseRepository`
-- `QueueRepository`
-- `MetadataRepository`
+### API Module (`api`)
 
-### Adapter Layer
+The Go-based API module follows a similar structure:
 
-The adapter layer contains implementations of the interfaces defined in the domain layer. It depends on the domain layer but not vice versa.
+```
+api/internal/models        → API data models
+api/internal/handlers      → Request handlers
+api/internal/middleware    → API middleware
+api/internal/client        → Client code for API consumers
+```
 
-#### `org.rinna.adapter.service`
+## Package Dependencies
 
-Contains implementations of the service interfaces defined in the domain layer. Previously known as `service.impl`.
+The dependency rule of Clean Architecture must be followed:
 
-Examples:
-- `DefaultItemService`
-- `DefaultWorkflowService`
-- `DefaultReleaseService`
-- `DefaultQueueService`
+1. Domain layer has no dependencies on other layers
+2. Use Case layer depends only on Domain layer
+3. Interface Adapters layer depends on Use Case and Domain layers
+4. Frameworks & Drivers layer depends on all inner layers
 
-#### `org.rinna.adapter.repository`
+Any dependency that violates these rules should be considered a technical debt and refactored.
 
-Contains implementations of the repository interfaces defined in the domain layer. Previously known as `persistence`.
+## Guidelines for New Code
 
-Examples:
-- `InMemoryItemRepository`
-- `InMemoryReleaseRepository`
-- `InMemoryQueueRepository`
-- `InMemoryMetadataRepository`
+When adding new code to the project:
 
-### Configuration
+1. Place domain entities in `org.rinna.domain.model`
+2. Place service interfaces in `org.rinna.domain.service`
+3. Place repository interfaces in `org.rinna.domain.repository`
+4. Place service implementations in `org.rinna.adapter.service`
+5. Place repository implementations in `org.rinna.adapter.repository`
 
-#### `org.rinna.config`
+## Migration Tools
 
-Contains configuration classes for the application.
+Several tools have been developed to aid in the migration:
 
-Example:
-- `RinnaConfig`
-- `LoggingBridge`
+- `bin/migration/fix-imports.sh`: Updates import statements
+- `bin/package-viz.sh`: Visualize package dependencies
+- `bin/check-dependencies.sh`: Validates architectural boundaries
 
-## Legacy Packages
+## References
 
-The following packages are maintained for backward compatibility but are deprecated and should not be used in new code:
-
-- `org.rinna.model` → use `org.rinna.domain.model` instead
-- `org.rinna.repository` → use `org.rinna.domain.repository` instead  
-- `org.rinna.usecase` → use `org.rinna.domain.service` instead
-
-## Migration Guide
-
-If you're working with existing code that uses the old package structure, you should use the following mappings:
-
-| Old Package | New Package |
-|-------------|-------------|
-| `org.rinna.domain.entity` | `org.rinna.domain.model` |
-| `org.rinna.domain.usecase` | `org.rinna.domain.service` |
-| `org.rinna.service.impl` | `org.rinna.adapter.service` |
-| `org.rinna.persistence` | `org.rinna.adapter.repository` |
-
-You can use the migration scripts in `bin/migration/` to automate the updates of import statements in your code.
+- [ADR-0003: Adopt Clean Architecture for System Design](../architecture/decisions/0003-adopt-clean-architecture-for-system-design.md)
+- [ADR-0004: Refactor Package Structure to Align with Clean Architecture](../architecture/decisions/0004-refactor-package-structure-to-align-with-clean-architecture.md)
+- [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)

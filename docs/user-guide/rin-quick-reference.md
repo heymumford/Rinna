@@ -24,6 +24,17 @@
 | `tag` | Create git tag | `rin version tag` |
 | `release` | Create GitHub release | `rin version release` |
 
+## Test Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `test unit` | Run unit tests | `rin test unit` |
+| `test component` | Run component tests | `rin test component` |
+| `test integration` | Run integration tests | `rin test integration` |
+| `test acceptance` | Run acceptance tests | `rin test acceptance` |
+| `test performance` | Run performance tests | `rin test performance` |
+| `test-pyramid` | Run test pyramid analysis | `make test-pyramid` |
+
 ## Output Modes
 
 | Mode | Flag | Use Case | Example |
@@ -74,6 +85,30 @@ rin -e all
 cd rinna-core && ../bin/rin test
 ```
 
+### Generate Test Pyramid Report
+
+```
+./bin/test-pyramid-coverage.sh
+```
+
+## Utility Scripts
+
+| Script | Purpose | Example |
+|--------|---------|---------|
+| `bin/rin` | Main CLI tool | `bin/rin test` |
+| `bin/rin-version` | Version management | `bin/rin-version minor` |
+| `bin/run-checks.sh` | Architecture validation | `./bin/run-checks.sh` |
+| `bin/test-pyramid-coverage.sh` | Test pyramid analysis | `./bin/test-pyramid-coverage.sh` |
+
+## Architecture Validation
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `run-checks.sh` | All validation checks | `./bin/run-checks.sh` |
+| `dependency-validator.sh` | Check dependencies | `./bin/checks/dependency-validator.sh` |
+| `test-structure-validator.sh` | Check test structure | `./bin/checks/test-structure-validator.sh` |
+| `check-clean-architecture.sh` | Verify clean architecture | `./bin/checks/check-clean-architecture.sh` |
+
 ## Exit Codes
 
 - **0**: All operations completed successfully
@@ -83,13 +118,5 @@ cd rinna-core && ../bin/rin test
 
 - **Base Package**: `org.rinna`
 - **Core Package**: `org.rinna.core`
-- **Model Package**: `org.rinna.model`
-- **Service Package**: `org.rinna.service`
-
-## Utility Scripts
-
-| Script | Purpose | Example |
-|--------|---------|---------|
-| `bin/rin` | Main CLI tool | `bin/rin test` |
-| `bin/rin-version` | Version management | `bin/rin-version minor` |
-| `bin/refactor-package.sh` | Package refactoring | `bin/refactor-package.sh` |
+- **Domain Package**: `org.rinna.domain`
+- **Adapter Package**: `org.rinna.adapter`

@@ -50,123 +50,123 @@
 <path fill="#ebf3e7" stroke="#aeb6be" d="M164,-41C164,-41 402,-41 402,-41 408,-41 414,-47 414,-53 414,-53 414,-203 414,-203 414,-209 408,-215 402,-215 402,-215 164,-215 164,-215 158,-215 152,-209 152,-203 152,-203 152,-53 152,-53 152,-47 158,-41 164,-41"/>
 <text text-anchor="middle" x="217" y="-201.4" font-family="Sans-Serif" font-size="12.00" fill="#2d3436">External Interfaces</text>
 </g>
-<!-- 329f75655468469c9b314e221280b27f -->
+<!-- 506285a83d3a4fdb902114f12a7e7ade -->
 <g id="node1" class="node">
-<title>329f75655468469c9b314e221280b27f</title>
-<image xlink:href="/home/emumford/.local/lib/python3.13/site-packages/resources/programming/language/java.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="16.5" y="-387"/>
+<title>506285a83d3a4fdb902114f12a7e7ade</title>
+<image xlink:href="/home/emumford/NativeLinuxProjects/Rinna/.venv/lib/python3.13/site-packages/resources/programming/language/java.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="16.5" y="-387"/>
 <text text-anchor="middle" x="67" y="-271.6" font-family="Sans-Serif" font-size="13.00" fill="#2d3436">Entities</text>
 </g>
-<!-- 51541dce88064e6695884455452089be -->
+<!-- 2d5bc7299538473ca30d9d537fbe1164 -->
 <g id="node2" class="node">
-<title>51541dce88064e6695884455452089be</title>
-<image xlink:href="/home/emumford/.local/lib/python3.13/site-packages/resources/programming/language/java.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="304.5" y="-598"/>
+<title>2d5bc7299538473ca30d9d537fbe1164</title>
+<image xlink:href="/home/emumford/NativeLinuxProjects/Rinna/.venv/lib/python3.13/site-packages/resources/programming/language/java.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="304.5" y="-598"/>
 <text text-anchor="middle" x="355" y="-482.6" font-family="Sans-Serif" font-size="13.00" fill="#2d3436">Use Cases</text>
 </g>
-<!-- 51541dce88064e6695884455452089be&#45;&gt;329f75655468469c9b314e221280b27f -->
+<!-- 2d5bc7299538473ca30d9d537fbe1164&#45;&gt;506285a83d3a4fdb902114f12a7e7ade -->
 <g id="edge5" class="edge">
-<title>51541dce88064e6695884455452089be&#45;&gt;329f75655468469c9b314e221280b27f</title>
+<title>2d5bc7299538473ca30d9d537fbe1164&#45;&gt;506285a83d3a4fdb902114f12a7e7ade</title>
 <path fill="none" stroke="#7b8894" d="M304.17,-570C221.5,-570 67,-570 67,-570 67,-570 67,-415.29 67,-415.29"/>
 <polygon fill="#7b8894" stroke="#7b8894" points="70.5,-415.29 67,-405.29 63.5,-415.29 70.5,-415.29"/>
 </g>
-<!-- 269be149dfc74364a733aa081a7e4751 -->
+<!-- 473aac9855fb4359a5781d0e9a0738db -->
 <g id="node5" class="node">
-<title>269be149dfc74364a733aa081a7e4751</title>
-<image xlink:href="/home/emumford/.local/lib/python3.13/site-packages/resources/programming/language/java.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="304.5" y="-387"/>
+<title>473aac9855fb4359a5781d0e9a0738db</title>
+<image xlink:href="/home/emumford/NativeLinuxProjects/Rinna/.venv/lib/python3.13/site-packages/resources/programming/language/java.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="304.5" y="-387"/>
 <text text-anchor="middle" x="355" y="-271.6" font-family="Sans-Serif" font-size="13.00" fill="#2d3436">Gateways</text>
 </g>
-<!-- 51541dce88064e6695884455452089be&#45;&gt;269be149dfc74364a733aa081a7e4751 -->
+<!-- 2d5bc7299538473ca30d9d537fbe1164&#45;&gt;473aac9855fb4359a5781d0e9a0738db -->
 <g id="edge9" class="edge">
-<title>51541dce88064e6695884455452089be&#45;&gt;269be149dfc74364a733aa081a7e4751</title>
+<title>2d5bc7299538473ca30d9d537fbe1164&#45;&gt;473aac9855fb4359a5781d0e9a0738db</title>
 <path fill="none" stroke="#7b8894" d="M355,-478.99C355,-478.99 355,-415.02 355,-415.02"/>
 <polygon fill="#7b8894" stroke="#7b8894" points="358.5,-415.02 355,-405.02 351.5,-415.02 358.5,-415.02"/>
 </g>
-<!-- 50165809ee46472da42bf327e08a71b5 -->
+<!-- da4c2db24685420c91af4b391f5512ec -->
 <g id="node6" class="node">
-<title>50165809ee46472da42bf327e08a71b5</title>
-<image xlink:href="/home/emumford/.local/lib/python3.13/site-packages/resources/programming/language/java.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="160.5" y="-387"/>
+<title>da4c2db24685420c91af4b391f5512ec</title>
+<image xlink:href="/home/emumford/NativeLinuxProjects/Rinna/.venv/lib/python3.13/site-packages/resources/programming/language/java.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="160.5" y="-387"/>
 <text text-anchor="middle" x="211" y="-271.6" font-family="Sans-Serif" font-size="13.00" fill="#2d3436">Repositories</text>
 </g>
-<!-- 51541dce88064e6695884455452089be&#45;&gt;50165809ee46472da42bf327e08a71b5 -->
+<!-- 2d5bc7299538473ca30d9d537fbe1164&#45;&gt;da4c2db24685420c91af4b391f5512ec -->
 <g id="edge8" class="edge">
-<title>51541dce88064e6695884455452089be&#45;&gt;50165809ee46472da42bf327e08a71b5</title>
+<title>2d5bc7299538473ca30d9d537fbe1164&#45;&gt;da4c2db24685420c91af4b391f5512ec</title>
 <path fill="none" stroke="#7b8894" d="M304.23,-524C262.77,-524 211,-524 211,-524 211,-524 211,-415.25 211,-415.25"/>
 <polygon fill="#7b8894" stroke="#7b8894" points="214.5,-415.25 211,-405.25 207.5,-415.25 214.5,-415.25"/>
 </g>
-<!-- 018f9d879f854b36ada3c2162a10a679 -->
+<!-- 554df1fe1de44f3d80c097827219ec27 -->
 <g id="node3" class="node">
-<title>018f9d879f854b36ada3c2162a10a679</title>
-<image xlink:href="/home/emumford/.local/lib/python3.13/site-packages/resources/programming/language/java.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="592.5" y="-387"/>
+<title>554df1fe1de44f3d80c097827219ec27</title>
+<image xlink:href="/home/emumford/NativeLinuxProjects/Rinna/.venv/lib/python3.13/site-packages/resources/programming/language/java.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="592.5" y="-387"/>
 <text text-anchor="middle" x="643" y="-271.6" font-family="Sans-Serif" font-size="13.00" fill="#2d3436">Controllers</text>
 </g>
-<!-- 018f9d879f854b36ada3c2162a10a679&#45;&gt;51541dce88064e6695884455452089be -->
+<!-- 554df1fe1de44f3d80c097827219ec27&#45;&gt;2d5bc7299538473ca30d9d537fbe1164 -->
 <g id="edge3" class="edge">
-<title>018f9d879f854b36ada3c2162a10a679&#45;&gt;51541dce88064e6695884455452089be</title>
+<title>554df1fe1de44f3d80c097827219ec27&#45;&gt;2d5bc7299538473ca30d9d537fbe1164</title>
 <path fill="none" stroke="#7b8894" d="M643,-405.29C643,-474.17 643,-570 643,-570 643,-570 415.83,-570 415.83,-570"/>
 <polygon fill="#7b8894" stroke="#7b8894" points="415.83,-566.5 405.83,-570 415.83,-573.5 415.83,-566.5"/>
 </g>
-<!-- 8887399de9074bcf954043189e890e1b -->
+<!-- 0d30a1d409a840e2bad6d663c1802a9e -->
 <g id="node4" class="node">
-<title>8887399de9074bcf954043189e890e1b</title>
-<image xlink:href="/home/emumford/.local/lib/python3.13/site-packages/resources/programming/language/java.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="448.5" y="-387"/>
+<title>0d30a1d409a840e2bad6d663c1802a9e</title>
+<image xlink:href="/home/emumford/NativeLinuxProjects/Rinna/.venv/lib/python3.13/site-packages/resources/programming/language/java.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="448.5" y="-387"/>
 <text text-anchor="middle" x="499" y="-271.6" font-family="Sans-Serif" font-size="13.00" fill="#2d3436">Presenters</text>
 </g>
-<!-- 8887399de9074bcf954043189e890e1b&#45;&gt;51541dce88064e6695884455452089be -->
+<!-- 0d30a1d409a840e2bad6d663c1802a9e&#45;&gt;2d5bc7299538473ca30d9d537fbe1164 -->
 <g id="edge4" class="edge">
-<title>8887399de9074bcf954043189e890e1b&#45;&gt;51541dce88064e6695884455452089be</title>
+<title>0d30a1d409a840e2bad6d663c1802a9e&#45;&gt;2d5bc7299538473ca30d9d537fbe1164</title>
 <path fill="none" stroke="#7b8894" d="M499,-405.25C499,-458.77 499,-524 499,-524 499,-524 415.77,-524 415.77,-524"/>
 <polygon fill="#7b8894" stroke="#7b8894" points="415.77,-520.5 405.77,-524 415.77,-527.5 415.77,-520.5"/>
 </g>
-<!-- 40bb307b52d44078b3aa3c0811cf23fc -->
+<!-- c8ed5cb91b1d4a918f7bcd5ec860bb0d -->
 <g id="node7" class="node">
-<title>40bb307b52d44078b3aa3c0811cf23fc</title>
-<image xlink:href="/home/emumford/.local/lib/python3.13/site-packages/resources/programming/framework/spring.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="448.5" y="-168"/>
+<title>c8ed5cb91b1d4a918f7bcd5ec860bb0d</title>
+<image xlink:href="/home/emumford/NativeLinuxProjects/Rinna/.venv/lib/python3.13/site-packages/resources/programming/framework/spring.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="448.5" y="-168"/>
 <text text-anchor="middle" x="499" y="-52.6" font-family="Sans-Serif" font-size="13.00" fill="#2d3436">Web UI</text>
 </g>
-<!-- 8887399de9074bcf954043189e890e1b&#45;&gt;40bb307b52d44078b3aa3c0811cf23fc -->
+<!-- 0d30a1d409a840e2bad6d663c1802a9e&#45;&gt;c8ed5cb91b1d4a918f7bcd5ec860bb0d -->
 <g id="edge10" class="edge">
-<title>8887399de9074bcf954043189e890e1b&#45;&gt;40bb307b52d44078b3aa3c0811cf23fc</title>
+<title>0d30a1d409a840e2bad6d663c1802a9e&#45;&gt;c8ed5cb91b1d4a918f7bcd5ec860bb0d</title>
 <path fill="none" stroke="#7b8894" d="M482.17,-267.81C482.17,-267.81 482.17,-196.32 482.17,-196.32"/>
 <polygon fill="#7b8894" stroke="#7b8894" points="485.67,-196.32 482.17,-186.32 478.67,-196.32 485.67,-196.32"/>
 </g>
-<!-- 1f3e8ee8c03b43efbede7fd3ac0af1d3 -->
+<!-- 3f51340f87b34506b7dd3193601e82ef -->
 <g id="node10" class="node">
-<title>1f3e8ee8c03b43efbede7fd3ac0af1d3</title>
-<image xlink:href="/home/emumford/.local/lib/python3.13/site-packages/resources/programming/language/go.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="304.5" y="-168"/>
+<title>3f51340f87b34506b7dd3193601e82ef</title>
+<image xlink:href="/home/emumford/NativeLinuxProjects/Rinna/.venv/lib/python3.13/site-packages/resources/programming/language/go.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="304.5" y="-168"/>
 <text text-anchor="middle" x="355" y="-52.6" font-family="Sans-Serif" font-size="13.00" fill="#2d3436">External APIs</text>
 </g>
-<!-- 269be149dfc74364a733aa081a7e4751&#45;&gt;1f3e8ee8c03b43efbede7fd3ac0af1d3 -->
+<!-- 473aac9855fb4359a5781d0e9a0738db&#45;&gt;3f51340f87b34506b7dd3193601e82ef -->
 <g id="edge7" class="edge">
-<title>269be149dfc74364a733aa081a7e4751&#45;&gt;1f3e8ee8c03b43efbede7fd3ac0af1d3</title>
+<title>473aac9855fb4359a5781d0e9a0738db&#45;&gt;3f51340f87b34506b7dd3193601e82ef</title>
 <path fill="none" stroke="#7b8894" d="M355,-267.81C355,-267.81 355,-196.32 355,-196.32"/>
 <polygon fill="#7b8894" stroke="#7b8894" points="358.5,-196.32 355,-186.32 351.5,-196.32 358.5,-196.32"/>
 </g>
-<!-- 0af2c924a8f5400a82f1ed3ebd9f7c9f -->
+<!-- b1dfb817a7094ad6845b5454d50d69d2 -->
 <g id="node9" class="node">
-<title>0af2c924a8f5400a82f1ed3ebd9f7c9f</title>
-<image xlink:href="/home/emumford/.local/lib/python3.13/site-packages/resources/generic/database/sql.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="160.5" y="-168"/>
+<title>b1dfb817a7094ad6845b5454d50d69d2</title>
+<image xlink:href="/home/emumford/NativeLinuxProjects/Rinna/.venv/lib/python3.13/site-packages/resources/generic/database/sql.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="160.5" y="-168"/>
 <text text-anchor="middle" x="211" y="-52.6" font-family="Sans-Serif" font-size="13.00" fill="#2d3436">Database</text>
 </g>
-<!-- 50165809ee46472da42bf327e08a71b5&#45;&gt;0af2c924a8f5400a82f1ed3ebd9f7c9f -->
+<!-- da4c2db24685420c91af4b391f5512ec&#45;&gt;b1dfb817a7094ad6845b5454d50d69d2 -->
 <g id="edge6" class="edge">
-<title>50165809ee46472da42bf327e08a71b5&#45;&gt;0af2c924a8f5400a82f1ed3ebd9f7c9f</title>
+<title>da4c2db24685420c91af4b391f5512ec&#45;&gt;b1dfb817a7094ad6845b5454d50d69d2</title>
 <path fill="none" stroke="#7b8894" d="M211,-267.81C211,-267.81 211,-196.32 211,-196.32"/>
 <polygon fill="#7b8894" stroke="#7b8894" points="214.5,-196.32 211,-186.32 207.5,-196.32 214.5,-196.32"/>
 </g>
-<!-- 40bb307b52d44078b3aa3c0811cf23fc&#45;&gt;018f9d879f854b36ada3c2162a10a679 -->
+<!-- c8ed5cb91b1d4a918f7bcd5ec860bb0d&#45;&gt;554df1fe1de44f3d80c097827219ec27 -->
 <g id="edge1" class="edge">
-<title>40bb307b52d44078b3aa3c0811cf23fc&#45;&gt;018f9d879f854b36ada3c2162a10a679</title>
+<title>c8ed5cb91b1d4a918f7bcd5ec860bb0d&#45;&gt;554df1fe1de44f3d80c097827219ec27</title>
 <path fill="none" stroke="#7b8894" d="M515.83,-186.23C515.83,-208.23 515.83,-227 515.83,-227 515.83,-227 626.17,-227 626.17,-227 626.17,-227 626.17,-257.77 626.17,-257.77"/>
 <polygon fill="#7b8894" stroke="#7b8894" points="622.67,-257.77 626.17,-267.77 629.67,-257.77 622.67,-257.77"/>
 </g>
-<!-- 5621a1ab73c344deba1c7fac6a98dbe4 -->
+<!-- 9b642ec6fd3b407ea2ef7b94f8c1c797 -->
 <g id="node8" class="node">
-<title>5621a1ab73c344deba1c7fac6a98dbe4</title>
-<image xlink:href="/home/emumford/.local/lib/python3.13/site-packages/resources/programming/language/python.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="592.5" y="-168"/>
+<title>9b642ec6fd3b407ea2ef7b94f8c1c797</title>
+<image xlink:href="/home/emumford/NativeLinuxProjects/Rinna/.venv/lib/python3.13/site-packages/resources/programming/language/python.png" width="101px" height="101px" preserveAspectRatio="xMinYMin meet" x="592.5" y="-168"/>
 <text text-anchor="middle" x="643" y="-52.6" font-family="Sans-Serif" font-size="13.00" fill="#2d3436">CLI</text>
 </g>
-<!-- 5621a1ab73c344deba1c7fac6a98dbe4&#45;&gt;018f9d879f854b36ada3c2162a10a679 -->
+<!-- 9b642ec6fd3b407ea2ef7b94f8c1c797&#45;&gt;554df1fe1de44f3d80c097827219ec27 -->
 <g id="edge2" class="edge">
-<title>5621a1ab73c344deba1c7fac6a98dbe4&#45;&gt;018f9d879f854b36ada3c2162a10a679</title>
+<title>9b642ec6fd3b407ea2ef7b94f8c1c797&#45;&gt;554df1fe1de44f3d80c097827219ec27</title>
 <path fill="none" stroke="#7b8894" d="M659.83,-186.19C659.83,-186.19 659.83,-257.68 659.83,-257.68"/>
 <polygon fill="#7b8894" stroke="#7b8894" points="656.33,-257.68 659.83,-267.68 663.33,-257.68 656.33,-257.68"/>
 </g>
