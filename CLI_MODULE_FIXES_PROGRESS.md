@@ -17,7 +17,7 @@ This document tracks progress updating CLI commands to use the ViewCommand patte
 | AddCommand | ✅ Done | Prior | Already using the ViewCommand pattern |
 | ListCommand | ✅ Done | Prior | Already using the ViewCommand pattern |
 | UpdateCommand | ✅ Done | 2025-04-08 | Updated to use MetadataService with proper operation tracking |
-| ImportCommand | ⏳ Pending | | |
+| ImportCommand | ✅ Done | 2025-04-08 | Updated to use MetadataService with proper operation tracking |
 | BacklogCommand | ⏳ Pending | | |
 | UserAccessCommand | ⏳ Pending | | |
 | LsCommand | ⏳ Pending | | |
