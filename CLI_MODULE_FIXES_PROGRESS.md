@@ -14,9 +14,9 @@ This document tracks progress updating CLI commands to use the ViewCommand patte
 | StatsCommand | ✅ Done | 2025-04-08 | Added MetadataService integration and operation tracking |
 | MsgCommand | ✅ Done | 2025-04-08 | Added MetadataService integration and operation tracking |
 | CriticalPathCommand | ✅ Done | Prior | Already using the ViewCommand pattern |
-| AddCommand | ⏳ Pending | | |
-| ListCommand | ⏳ Pending | | |
-| UpdateCommand | ⏳ Pending | | |
+| AddCommand | ✅ Done | Prior | Already using the ViewCommand pattern |
+| ListCommand | ✅ Done | Prior | Already using the ViewCommand pattern |
+| UpdateCommand | ✅ Done | 2025-04-08 | Updated to use MetadataService with proper operation tracking |
 | ImportCommand | ⏳ Pending | | |
 | BacklogCommand | ⏳ Pending | | |
 | UserAccessCommand | ⏳ Pending | | |
