@@ -24,3 +24,4 @@ else
     echo "✅ PMD check passed."
     exit 0
 fi
+# Added test comment
