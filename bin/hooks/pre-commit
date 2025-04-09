@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Rinna Pre-Commit Hook
+# Runs validation checks before allowing commits
+
+# Path to the project root
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+
+echo "Running Rinna validation checks before commit..."
+
+# Run only PMD check for fast validation
+${PROJECT_ROOT}/bin/run-pmd-check.sh
+PMD_RESULT=$?
+
+if [ $PMD_RESULT -ne 0 ]; then
+    echo "❌ PMD checks failed. Please fix the issues before committing."
+    exit 1
+fi
+
+# Run the remaining check scripts
+${PROJECT_ROOT}/bin/run-checks.sh
+CHECKS_RESULT=$?
+
+if [ $CHECKS_RESULT -ne 0 ]; then
+    echo "❌ Pre-commit checks failed. Please fix the issues before committing."
+    exit 1
+else
+    echo "✅ Pre-commit checks passed. Proceeding with commit."
+    exit 0
+fi

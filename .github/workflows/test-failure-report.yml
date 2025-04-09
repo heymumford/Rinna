@@ -1,0 +1,232 @@
+name: Test Failure Analysis
+
+on:
+  workflow_dispatch:
+    inputs:
+      reports-dir:
+        description: 'Directory containing test reports'
+        required: true
+        default: 'target/surefire-reports'
+      failure-threshold:
+        description: 'Minimum number of failures to report'
+        required: true
+        default: '1'
+      notification-method:
+        description: 'Method to use for notifications'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - slack
+          - email
+          - internal
+          - all
+      send-summary-only:
+        description: 'Only include summary in notifications (not details)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  analyze-test-failures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download test reports
+        uses: actions/download-artifact@v3
+        with:
+          name: test-reports
+          path: ${{ github.event.inputs.reports-dir }}
+        continue-on-error: true
+
+      - name: Make scripts executable
+        run: chmod +x bin/test-failure-notify.sh
+
+      - name: Analyze test failures
+        run: |
+          SUMMARY_FLAG=""
+          if [ "${{ github.event.inputs.send-summary-only }}" == "true" ]; then
+            SUMMARY_FLAG="--summary-only"
+          fi
+          
+          ./bin/test-failure-notify.sh \
+            --reports-dir "${{ github.event.inputs.reports-dir }}" \
+            --notify-method "${{ github.event.inputs.notification-method }}" \
+            --slack-webhook "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            --email-to "${{ secrets.NOTIFICATION_EMAIL }}" \
+            --threshold "${{ github.event.inputs.failure-threshold }}" \
+            --ci \
+            --verbose \
+            $SUMMARY_FLAG
+        continue-on-error: true
+
+      - name: Generate HTML report
+        run: |
+          mkdir -p test-failure-reports
+          
+          # Create simple HTML report
+          cat > test-failure-reports/index.html <<EOL
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Test Failure Analysis</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+              h1, h2 { color: #333; }
+              .summary { background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+              .failures { background-color: #fff0f0; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+              .failure-item { border-left: 4px solid #ff6b6b; padding-left: 10px; margin-bottom: 10px; }
+              .build-info { background-color: #e6f7ff; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+              table { border-collapse: collapse; width: 100%; }
+              th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+              th { background-color: #f2f2f2; }
+              .timestamp { color: #666; font-size: 0.9em; }
+            </style>
+          </head>
+          <body>
+            <h1>Test Failure Analysis Report</h1>
+            <div class="timestamp">Generated on $(date '+%Y-%m-%d %H:%M:%S')</div>
+            
+            <h2>Test Summary</h2>
+            <div class="summary">
+              <table>
+                <tr>
+                  <th>Category</th>
+                  <th>Count</th>
+                </tr>
+          EOL
+          
+          # Extract test summary data
+          REPORTS_DIR="${{ github.event.inputs.reports-dir }}"
+          TOTAL_TESTS=0
+          TOTAL_FAILURES=0
+          TOTAL_ERRORS=0
+          TOTAL_SKIPPED=0
+          
+          for report in $(find "$REPORTS_DIR" -name "TEST-*.xml" 2>/dev/null); do
+            TESTS=$(grep -o 'tests="[0-9]*"' "$report" | head -1 | cut -d'"' -f2)
+            FAILURES=$(grep -o 'failures="[0-9]*"' "$report" | head -1 | cut -d'"' -f2)
+            ERRORS=$(grep -o 'errors="[0-9]*"' "$report" | head -1 | cut -d'"' -f2)
+            SKIPPED=$(grep -o 'skipped="[0-9]*"' "$report" | head -1 | cut -d'"' -f2)
+            
+            [[ -n "$TESTS" ]] && TOTAL_TESTS=$((TOTAL_TESTS + TESTS)) || true
+            [[ -n "$FAILURES" ]] && TOTAL_FAILURES=$((TOTAL_FAILURES + FAILURES)) || true
+            [[ -n "$ERRORS" ]] && TOTAL_ERRORS=$((TOTAL_ERRORS + ERRORS)) || true
+            [[ -n "$SKIPPED" ]] && TOTAL_SKIPPED=$((TOTAL_SKIPPED + SKIPPED)) || true
+          done
+          
+          # Add summary to HTML
+          cat >> test-failure-reports/index.html <<EOL
+                <tr>
+                  <td>Total Tests</td>
+                  <td>$TOTAL_TESTS</td>
+                </tr>
+                <tr>
+                  <td>Failures</td>
+                  <td>$TOTAL_FAILURES</td>
+                </tr>
+                <tr>
+                  <td>Errors</td>
+                  <td>$TOTAL_ERRORS</td>
+                </tr>
+                <tr>
+                  <td>Skipped</td>
+                  <td>$TOTAL_SKIPPED</td>
+                </tr>
+                <tr>
+                  <td>Passing Rate</td>
+                  <td>$(awk "BEGIN {printf \"%.1f%%\", (($TOTAL_TESTS - $TOTAL_FAILURES - $TOTAL_ERRORS) / $TOTAL_TESTS) * 100}")</td>
+                </tr>
+              </table>
+            </div>
+            
+            <h2>Build Information</h2>
+            <div class="build-info">
+              <table>
+                <tr>
+                  <th>Property</th>
+                  <th>Value</th>
+                </tr>
+                <tr>
+                  <td>Repository</td>
+                  <td>${{ github.repository }}</td>
+                </tr>
+                <tr>
+                  <td>Branch</td>
+                  <td>${{ github.ref_name }}</td>
+                </tr>
+                <tr>
+                  <td>Commit</td>
+                  <td>${{ github.sha }}</td>
+                </tr>
+                <tr>
+                  <td>Workflow</td>
+                  <td>${{ github.workflow }}</td>
+                </tr>
+                <tr>
+                  <td>Reports Directory</td>
+                  <td>${{ github.event.inputs.reports-dir }}</td>
+                </tr>
+              </table>
+            </div>
+          EOL
+          
+          # Add failure details
+          cat >> test-failure-reports/index.html <<EOL
+            <h2>Failures and Errors</h2>
+            <div class="failures">
+          EOL
+          
+          # Extract failures from XML reports
+          for report in $(find "$REPORTS_DIR" -name "TEST-*.xml" 2>/dev/null); do
+            if grep -q '<failure\|<error' "$report"; then
+              TEST_CLASS=$(grep -o 'name="[^"]*"' "$report" | head -1 | cut -d'"' -f2)
+              echo "<h3>$TEST_CLASS</h3>" >> test-failure-reports/index.html
+              
+              # Extract test cases with failures
+              grep -A 50 '<testcase' "$report" | grep -B 50 '</testcase>' | tr '\n' ' ' | \
+              sed -E "s/<testcase/\n<testcase/g" | grep -E '(<failure|<error)' | \
+              while read -r test_block; do
+                TEST_NAME=$(echo "$test_block" | grep -oP 'name="\K[^"]+')
+                TEST_CLASS=$(echo "$test_block" | grep -oP 'classname="\K[^"]+')
+                ERROR_MSG=$(echo "$test_block" | grep -oP 'message="\K[^"]+')
+                ERROR_TYPE=$(echo "$test_block" | grep -oP '(type="\K[^"]+)')
+                
+                if [ -n "$TEST_NAME" ] && [ -n "$TEST_CLASS" ]; then
+                  echo "<div class=\"failure-item\">" >> test-failure-reports/index.html
+                  echo "<strong>Test:</strong> $TEST_CLASS#$TEST_NAME<br>" >> test-failure-reports/index.html
+                  echo "<strong>Type:</strong> $ERROR_TYPE<br>" >> test-failure-reports/index.html
+                  echo "<strong>Message:</strong> $ERROR_MSG" >> test-failure-reports/index.html
+                  echo "</div>" >> test-failure-reports/index.html
+                fi
+              done
+            fi
+          done
+          
+          # Close HTML report
+          cat >> test-failure-reports/index.html <<EOL
+            </div>
+          </body>
+          </html>
+          EOL
+
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-failure-report
+          path: test-failure-reports/
+
+      - name: Publish report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: github.event.inputs.notification-method == 'all'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./test-failure-reports
+          destination_dir: test-reports
+          keep_files: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Update test failure report [skip ci]'

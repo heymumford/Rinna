@@ -1,6 +1,7 @@
 #!/bin/bash
 #
 # increment-build.sh - Increment the build number in version.properties
+# Wrapper script for version-manager.sh
 #
 # Copyright (c) 2025 Eric C. Mumford (@heymumford)
 # This file is subject to the terms and conditions defined in
@@ -10,71 +11,22 @@
 
 set -e
 
-# Path to the project root
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VERSION_FILE="$PROJECT_ROOT/version.properties"
-VERSION_SERVICE_FILE="$PROJECT_ROOT/version-service/version.properties"
+# Path to the project root and version manager
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+VERSION_MANAGER="${SCRIPT_DIR}/version-manager.sh"
 
-# Function to increment build number in a version.properties file
-increment_build_number() {
-  local file="$1"
-  if [ ! -f "$file" ]; then
-    echo "Error: Version file not found: $file"
-    return 1
-  fi
-  
-  # Get current build number
-  current_build=$(grep -m 1 "^buildNumber=" "$file" | cut -d'=' -f2)
-  if [ -z "$current_build" ]; then
-    echo "Error: Could not find buildNumber in $file"
-    return 1
-  fi
-  
-  # Increment build number
-  new_build=$((current_build + 1))
-  
-  # Update the file
-  sed -i "s/^buildNumber=.*/buildNumber=$new_build/" "$file"
-  
-  # Update the timestamp
-  current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-  sed -i "s/^build.timestamp=.*/build.timestamp=$current_timestamp/" "$file"
-  
-  echo "Updated build number in $file from $current_build to $new_build"
-  return 0
-}
-
-# Function to set a specific build number
-set_build_number() {
-  local file="$1"
-  local new_build="$2"
-  
-  if [ ! -f "$file" ]; then
-    echo "Error: Version file not found: $file"
-    return 1
-  fi
-  
-  # Get current build number
-  current_build=$(grep -m 1 "^buildNumber=" "$file" | cut -d'=' -f2)
-  if [ -z "$current_build" ]; then
-    echo "Error: Could not find buildNumber in $file"
-    return 1
-  fi
-  
-  # Update the file
-  sed -i "s/^buildNumber=.*/buildNumber=$new_build/" "$file"
-  
-  # Update the timestamp
-  current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-  sed -i "s/^build.timestamp=.*/build.timestamp=$current_timestamp/" "$file"
-  
-  echo "Updated build number in $file from $current_build to $new_build"
-  return 0
-}
+# Ensure version-manager.sh exists and is executable
+if [ ! -x "${VERSION_MANAGER}" ]; then
+  echo "Error: version-manager.sh not found or not executable."
+  echo "Please ensure it exists and has executable permissions."
+  exit 1
+fi
 
 # Parse command line arguments
 ACTION="increment"
 BUILD_NUMBER=""
+NO_COMMIT_FLAG=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -90,7 +42,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --no-commit)
-      NO_COMMIT="true"
+      NO_COMMIT_FLAG="--no-commit"
       shift
       ;;
     -h|--help)
@@ -112,43 +64,32 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Perform the requested action
+# Get current version and build number for display
+CURRENT_VERSION=$("${VERSION_MANAGER}" current | awk '{print $3}')
+CURRENT_BUILD=$("${VERSION_MANAGER}" current | awk '{print $5}' | tr -d ')')
+
+# Perform the requested action using version-manager.sh
 if [ "$ACTION" = "set" ]; then
-  echo "Setting build number to $BUILD_NUMBER..."
-  set_build_number "$VERSION_FILE" "$BUILD_NUMBER"
-  MAIN_RESULT=$?
+  echo "Setting build number to ${BUILD_NUMBER} (current: ${CURRENT_BUILD})..."
+  "${VERSION_MANAGER}" set-build "${BUILD_NUMBER}" ${NO_COMMIT_FLAG}
+  RESULT=$?
+else
+  echo "Incrementing build number from ${CURRENT_BUILD}..."
+  "${VERSION_MANAGER}" increment-build ${NO_COMMIT_FLAG}
+  RESULT=$?
+fi
+
+# Display outcome
+if [ $RESULT -eq 0 ]; then
+  # Get the new build number
+  NEW_BUILD=$("${VERSION_MANAGER}" current | awk '{print $5}' | tr -d ')')
+  echo "Build number updated successfully to ${NEW_BUILD}"
   
-  if [ -f "$VERSION_SERVICE_FILE" ]; then
-    set_build_number "$VERSION_SERVICE_FILE" "$BUILD_NUMBER"
-    SERVICE_RESULT=$?
-  else
-    SERVICE_RESULT=0
+  if [ -z "${NO_COMMIT_FLAG}" ]; then
+    echo "Changes committed. Push the changes with 'git push' to apply them to the repository."
   fi
 else
-  echo "Incrementing build number..."
-  increment_build_number "$VERSION_FILE"
-  MAIN_RESULT=$?
-  
-  if [ -f "$VERSION_SERVICE_FILE" ]; then
-    increment_build_number "$VERSION_SERVICE_FILE"
-    SERVICE_RESULT=$?
-  else
-    SERVICE_RESULT=0
-  fi
+  echo "Failed to update build number"
 fi
 
-# Commit the changes if requested
-if [ "$NO_COMMIT" != "true" ] && ([ $MAIN_RESULT -eq 0 ] || [ $SERVICE_RESULT -eq 0 ]); then
-  # Get the new build number for the commit message
-  new_build=$(grep -m 1 "^buildNumber=" "$VERSION_FILE" | cut -d'=' -f2)
-  
-  # Add the files to git
-  git add "$VERSION_FILE" "$VERSION_SERVICE_FILE" 2>/dev/null
-  
-  # Create a commit
-  git commit -m "Update build number to $new_build [skip ci]" --no-verify
-  
-  echo "Changes committed. Push the changes with 'git push' to apply them to the repository."
-fi
-
-exit 0
+exit $RESULT

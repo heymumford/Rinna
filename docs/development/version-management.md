@@ -13,10 +13,13 @@ Rinna implements a centralized version management system that maintains version 
 3. **Clean Architecture Design**: Clear separation between core logic and language-specific adapters
 4. **Verification System**: Built-in consistency checks across all languages
 5. **Simplified Tooling**: One command to update versions across all components
-6. **Precise Targeting**: Version updater uses explicit file-pattern mappings
-7. **Self-Healing**: Automatic recovery from failed updates
-8. **Autonomous Operation**: No user input required during version updates
-9. **Dry-Run Support**: Preview version changes without applying them
+6. **XMLStarlet Integration**: XML files are handled through dedicated XMLStarlet tools
+7. **Precise Targeting**: Version updater uses explicit file-pattern mappings
+8. **Self-Healing**: Automatic recovery from failed updates
+9. **Autonomous Operation**: No user input required during version updates
+10. **Dry-Run Support**: Preview version changes without applying them
+11. **Comprehensive Logging**: Detailed logs for troubleshooting and verification
+12. **Automatic Backups**: All modified files are backed up before changes
 
 ## Architecture
 
@@ -90,7 +93,37 @@ build.git.commit=runtime
 
 ## Command Line Interface
 
-The version management system is accessible through the `bin/rin-version` utility:
+There are two ways to manage versions:
+
+### Using the version-manager.sh directly
+
+The core version management functionality is accessible through the `bin/version-manager.sh` utility:
+
+```bash
+# Show current version
+bin/version-manager.sh current
+
+# Verify consistency
+bin/version-manager.sh verify
+
+# Bump versions
+bin/version-manager.sh bump major           # 1.0.0 -> 2.0.0
+bin/version-manager.sh bump minor           # 1.3.0 -> 1.4.0
+bin/version-manager.sh bump patch           # 1.3.1 -> 1.3.2
+bin/version-manager.sh bump patch --no-commit # Without creating a git commit
+
+# Set specific version
+bin/version-manager.sh set 2.5.0
+bin/version-manager.sh set 2.5.0 --no-commit
+
+# Build number management
+bin/version-manager.sh increment-build      # Increment build number
+bin/version-manager.sh set-build 100        # Set specific build number
+```
+
+### Using the rin-version wrapper
+
+The user-friendly wrapper provides a simplified interface:
 
 ```bash
 # Show current version
@@ -127,40 +160,44 @@ The system includes a comprehensive verification process that ensures all files 
 
 ## Implementation Details
 
-### Robust Version Updater
+### Centralized Version Manager
 
-The core of the version management system is the robust version updater:
+The core of the version management system is the unified version manager:
 
-- `bin/robust-version-updater.sh`: Precise version updating utility
+- `bin/version-manager.sh`: Centralized version management tool
+  - Provides a single interface for all version operations
+  - Uses XMLStarlet for precise XML/POM file manipulation
   - Uses explicit file-pattern mappings to target specific version strings
   - Self-monitors and automatically recovers from failures
   - Maintains detailed logs for troubleshooting
   - Executes autonomously without user intervention
   - Includes dry-run mode for previewing changes
-  - Creates automatic backups of modified files
+  - Creates automatic backups of modified files in the project's backup directory
 
-### Core Version Service
+### XML Tools Library
 
-The version service architecture follows Clean Architecture principles:
+A dedicated library for XML manipulation ensures that all POM files are handled correctly:
 
-- `version-service/core/version.go`: Core domain model and rules
-- `version-service/core/registry.go`: Interface definitions
-- `version-service/core/properties_registry.go`: Properties file implementation
+- `bin/xml-tools.sh`: XML manipulation utilities
+  - Uses XMLStarlet for all XML operations
+  - Provides functions for querying, updating, and verifying XML content
+  - Ensures consistency across all POM files
+  - Prevents text-based tools like sed or grep from corrupting XML files
 
-### Language Adapters
+### Backwards Compatibility Wrappers
 
-Each language has a dedicated adapter for reading and writing version information:
+Several scripts provide backwards compatibility with older workflows:
 
-- `version-service/adapters/java/maven_handler.go`: Handles Maven POM files
-- `version-service/adapters/go/go_handler.go`: Manages Go version files
-- `version-service/adapters/python/python_handler.go`: Updates Python version references
+- `bin/update-versions.sh`: Updates all version references
+- `bin/increment-build.sh`: Increments the build number
+- `bin/check-versions.sh`: Verifies version consistency
 
 ### Command-Line Interface
 
 The user-facing interface is implemented as a unified command:
 
 - `bin/rin-version`: User-friendly CLI for version management
-  - Delegates to the robust version updater for actual updates
+  - Delegates to the version-manager.sh for actual updates
   - Provides simplified commands for common operations
   - Supports dry-run mode for all commands
 
@@ -176,17 +213,17 @@ The user-facing interface is implemented as a unified command:
 
 If version inconsistencies are found:
 
-1. Run `bin/rin-version update` to synchronize all files
-2. Verify again with `bin/rin-version verify`
-3. For complex issues, check the implementation-specific handlers
+1. Run `bin/version-manager.sh set [current-version]` to synchronize all files
+2. Verify again with `bin/version-manager.sh verify`
+3. For complex issues, check the logs for details
 
 For more complex issues, detailed logs and backups are available:
 
-- Logs: `/tmp/rinna-version-*.log` files contain detailed operation logs
-- Backups: `/tmp/rinna-version-*/` directories contain backups of all modified files
-- Error Summaries: `/tmp/rinna-version-*/error-summary.txt` provides concise error details
+- Logs: `backup/version-*/version-manager.log` files contain detailed operation logs
+- Backups: `backup/version-*/` directories contain backups of all modified files
+- Error Summaries: Log files will contain detailed error information
 
-The robust updater automatically maintains a recovery state and will attempt to resume interrupted operations and self-heal any failed updates.
+The version manager automatically creates backups before making changes, allowing you to roll back if necessary. It also provides clear error messages and suggestions for fixes.
 
 ## Future Enhancements
 

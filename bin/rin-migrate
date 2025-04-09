@@ -1,0 +1,817 @@
+#!/usr/bin/env bash
+#
+# rin-migrate - Unified codebase migration utility for Rinna
+#
+# PURPOSE: Provide a centralized tool for running various code migrations
+#          and refactorings across the Rinna codebase
+#
+# Copyright (c) 2025 Eric C. Mumford (@heymumford)
+# This file is subject to the terms and conditions defined in
+# the LICENSE file, which is part of this source code package.
+# (MIT License)
+#
+
+set -eo pipefail
+
+# Determine script and project directories
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+RINNA_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+COMMON_DIR="$SCRIPT_DIR/common"
+UTILS_FILE="$COMMON_DIR/rinna_utils.sh"
+LOGGER_FILE="$COMMON_DIR/rinna_logger.sh"
+
+# Set up timestamp for log files and backups
+TIMESTAMP=$(date +%Y%m%d%H%M%S)
+LOG_DIR="$RINNA_DIR/logs"
+MIGRATION_LOG="$LOG_DIR/migration-$TIMESTAMP.log"
+BACKUP_DIR="$RINNA_DIR/backup"
+
+# Source common utilities if available
+if [ -f "$UTILS_FILE" ]; then
+  source "$UTILS_FILE"
+fi
+
+# Source logger if available
+if [ -f "$LOGGER_FILE" ]; then
+  CALLER_NAME="rin-migrate"
+  source "$LOGGER_FILE"
+  set_log_level "INFO"
+else
+  # Define basic logging functions if logger not available
+  RED='\033[0;31m'
+  GREEN='\033[0;32m'
+  YELLOW='\033[0;33m'
+  BLUE='\033[0;34m'
+  NC='\033[0m' # No Color
+  
+  log_info() { echo -e "${BLUE}[INFO] $1${NC}"; }
+  log_success() { echo -e "${GREEN}[SUCCESS] $1${NC}"; }
+  log_warn() { echo -e "${YELLOW}[WARN] $1${NC}"; }
+  log_error() { echo -e "${RED}[ERROR] $1${NC}" >&2; }
+  log_fatal() { echo -e "${RED}[FATAL] $1${NC}" >&2; exit 1; }
+fi
+
+# Ensure log and backup directories exist
+mkdir -p "$LOG_DIR"
+mkdir -p "$BACKUP_DIR"
+
+# Default values
+VERBOSE=false
+DRY_RUN=false
+BACKUP=true
+FORCE=false
+MIGRATION_TYPE=""
+
+# Function to create backup
+create_backup() {
+  local type="$1"
+  
+  if [[ "$BACKUP" != "true" ]]; then
+    log_info "Backup creation skipped (--no-backup flag)"
+    return 0
+  fi
+  
+  log_info "Creating backup before $type migration"
+  
+  # Create timestamped backup directory
+  local backup_path="$BACKUP_DIR/migration-$type-$TIMESTAMP"
+  mkdir -p "$backup_path"
+  
+  # Backup src directory if it exists
+  if [[ -d "$RINNA_DIR/src" ]]; then
+    log_info "Backing up src directory"
+    cp -r "$RINNA_DIR/src" "$backup_path/"
+  fi
+  
+  # Backup rinna-core if it exists
+  if [[ -d "$RINNA_DIR/rinna-core" ]]; then
+    log_info "Backing up rinna-core directory"
+    cp -r "$RINNA_DIR/rinna-core" "$backup_path/"
+  fi
+  
+  # Backup rinna-cli if it exists
+  if [[ -d "$RINNA_DIR/rinna-cli" ]]; then
+    log_info "Backing up rinna-cli directory"
+    cp -r "$RINNA_DIR/rinna-cli" "$backup_path/"
+  fi
+  
+  # Backup pom.xml files
+  log_info "Backing up POM files"
+  find "$RINNA_DIR" -name "pom.xml" -not -path "*/target/*" -exec cp --parents {} "$backup_path/" \;
+  
+  log_success "Backup created at $backup_path"
+  echo "$backup_path" > "$LOG_DIR/latest-migration-backup.txt"
+  
+  return 0
+}
+
+# Function to run imports migration
+run_imports_migration() {
+  log_info "Running imports migration"
+  
+  if [[ "$BACKUP" == "true" ]]; then
+    create_backup "imports"
+  fi
+  
+  if [[ "$DRY_RUN" == "true" ]]; then
+    log_info "Dry run mode - not executing imports migration"
+    return 0
+  fi
+  
+  # Get list of Java files that need imports fixed
+  local java_files=$(find "$RINNA_DIR" -name "*.java" -not -path "*/target/*")
+  local count=$(echo "$java_files" | wc -l)
+  
+  log_info "Found $count Java files to process"
+  
+  # Fix imports for domain model classes
+  log_info "Fixing domain model imports"
+  local domain_classes=("WorkItem" "WorkItemType" "WorkQueue" "WorkflowState" "Priority" 
+                        "Project" "Release" "WorkItemCreateRequest" "WorkItemMetadata" 
+                        "DefaultWorkItem" "DefaultProject" "DefaultRelease" "DefaultWorkQueue" 
+                        "DocumentConfig" "WorkItemRecord")
+  
+  local total=${#domain_classes[@]}
+  local i=0
+  
+  for class in "${domain_classes[@]}"; do
+    ((i++))
+    [[ "$VERBOSE" == "true" ]] && log_info "[$i/$total] Fixing imports for $class"
+    
+    for file in $java_files; do
+      if grep -q "import org.rinna.domain.$class;" "$file"; then
+        if [[ "$VERBOSE" == "true" ]]; then
+          log_info "Updating imports in $file"
+        fi
+        sed -i "s/import org.rinna.domain.$class;/import org.rinna.domain.model.$class;/g" "$file"
+      fi
+    done
+  done
+  
+  # Fix imports for service interfaces
+  log_info "Fixing service interface imports"
+  local service_classes=("ItemService" "WorkflowService" "ReleaseService" "QueueService" 
+                         "DocumentService" "InvalidTransitionException")
+  
+  total=${#service_classes[@]}
+  i=0
+  
+  for service in "${service_classes[@]}"; do
+    ((i++))
+    [[ "$VERBOSE" == "true" ]] && log_info "[$i/$total] Fixing imports for $service"
+    
+    for file in $java_files; do
+      if grep -q "import org.rinna.usecase.$service;" "$file" || grep -q "import org.rinna.domain.$service;" "$file"; then
+        if [[ "$VERBOSE" == "true" ]]; then
+          log_info "Updating imports in $file"
+        fi
+        sed -i "s/import org.rinna.usecase.$service;/import org.rinna.domain.service.$service;/g" "$file"
+        sed -i "s/import org.rinna.domain.$service;/import org.rinna.domain.service.$service;/g" "$file"
+      fi
+    done
+  done
+  
+  # Fix package imports
+  log_info "Fixing package imports"
+  local package_mappings=(
+    "org.rinna.domain.entity:org.rinna.domain.model"
+    "org.rinna.domain.usecase:org.rinna.domain.service"
+    "org.rinna.adapter.persistence:org.rinna.adapter.repository"
+    "org.rinna.persistence:org.rinna.adapter.repository"
+  )
+  
+  total=${#package_mappings[@]}
+  i=0
+  
+  for mapping in "${package_mappings[@]}"; do
+    ((i++))
+    local src_pkg="${mapping%%:*}"
+    local dest_pkg="${mapping##*:}"
+    
+    [[ "$VERBOSE" == "true" ]] && log_info "[$i/$total] Fixing imports from $src_pkg to $dest_pkg"
+    
+    for file in $java_files; do
+      if grep -q "import $src_pkg." "$file"; then
+        if [[ "$VERBOSE" == "true" ]]; then
+          log_info "Updating imports in $file"
+        fi
+        sed -i "s/import $src_pkg\./import $dest_pkg./g" "$file"
+      fi
+    done
+  done
+  
+  log_success "Imports migration completed successfully"
+  return 0
+}
+
+# Function to run package structure migration
+run_structure_migration() {
+  log_info "Running package structure migration"
+  
+  if [[ "$BACKUP" == "true" ]]; then
+    create_backup "structure"
+  fi
+  
+  if [[ "$DRY_RUN" == "true" ]]; then
+    log_info "Dry run mode - not executing structure migration"
+    return 0
+  fi
+  
+  # Create new package structure in rinna-core if it exists
+  if [[ -d "$RINNA_DIR/rinna-core" ]]; then
+    log_info "Setting up package structure in rinna-core"
+    
+    # Create target directories
+    mkdir -p "$RINNA_DIR/rinna-core/src/main/java/org/rinna/domain/model"
+    mkdir -p "$RINNA_DIR/rinna-core/src/main/java/org/rinna/domain/service"
+    mkdir -p "$RINNA_DIR/rinna-core/src/main/java/org/rinna/adapter/repository"
+    
+    # Move entity files to model package if they exist
+    if [[ -d "$RINNA_DIR/rinna-core/src/main/java/org/rinna/domain/entity" ]]; then
+      log_info "Moving entity files to model package"
+      cp -r "$RINNA_DIR/rinna-core/src/main/java/org/rinna/domain/entity/"* \
+         "$RINNA_DIR/rinna-core/src/main/java/org/rinna/domain/model/"
+    fi
+    
+    # Move usecase files to service package if they exist
+    if [[ -d "$RINNA_DIR/rinna-core/src/main/java/org/rinna/domain/usecase" ]]; then
+      log_info "Moving usecase files to service package"
+      cp -r "$RINNA_DIR/rinna-core/src/main/java/org/rinna/domain/usecase/"* \
+         "$RINNA_DIR/rinna-core/src/main/java/org/rinna/domain/service/"
+    fi
+    
+    # Move persistence files to repository package if they exist
+    if [[ -d "$RINNA_DIR/rinna-core/src/main/java/org/rinna/adapter/persistence" ]]; then
+      log_info "Moving persistence files to repository package"
+      cp -r "$RINNA_DIR/rinna-core/src/main/java/org/rinna/adapter/persistence/"* \
+         "$RINNA_DIR/rinna-core/src/main/java/org/rinna/adapter/repository/"
+    fi
+    
+    # Update package declarations in moved files
+    log_info "Updating package declarations in new files"
+    find "$RINNA_DIR/rinna-core/src/main/java/org/rinna/domain/model" -name "*.java" -exec \
+      sed -i 's/package org.rinna.domain.entity;/package org.rinna.domain.model;/g' {} \;
+      
+    find "$RINNA_DIR/rinna-core/src/main/java/org/rinna/domain/service" -name "*.java" -exec \
+      sed -i 's/package org.rinna.domain.usecase;/package org.rinna.domain.service;/g' {} \;
+      
+    find "$RINNA_DIR/rinna-core/src/main/java/org/rinna/adapter/repository" -name "*.java" -exec \
+      sed -i 's/package org.rinna.adapter.persistence;/package org.rinna.adapter.repository;/g' {} \;
+  fi
+  
+  # Create new package structure in src if it exists
+  if [[ -d "$RINNA_DIR/src" ]]; then
+    log_info "Setting up package structure in src directory"
+    
+    # Create target directories
+    mkdir -p "$RINNA_DIR/src/main/java/org/rinna/domain/model"
+    mkdir -p "$RINNA_DIR/src/main/java/org/rinna/domain/service"
+    mkdir -p "$RINNA_DIR/src/main/java/org/rinna/adapter/repository"
+    
+    # Move entity files to model package if they exist
+    if [[ -d "$RINNA_DIR/src/main/java/org/rinna/domain/entity" ]]; then
+      log_info "Moving entity files to model package"
+      cp -r "$RINNA_DIR/src/main/java/org/rinna/domain/entity/"* \
+         "$RINNA_DIR/src/main/java/org/rinna/domain/model/"
+    fi
+    
+    # Move usecase files to service package if they exist
+    if [[ -d "$RINNA_DIR/src/main/java/org/rinna/domain/usecase" ]]; then
+      log_info "Moving usecase files to service package"
+      cp -r "$RINNA_DIR/src/main/java/org/rinna/domain/usecase/"* \
+         "$RINNA_DIR/src/main/java/org/rinna/domain/service/"
+    fi
+    
+    # Move persistence files to repository package if they exist
+    if [[ -d "$RINNA_DIR/src/main/java/org/rinna/adapter/persistence" ]]; then
+      log_info "Moving persistence files to repository package"
+      cp -r "$RINNA_DIR/src/main/java/org/rinna/adapter/persistence/"* \
+         "$RINNA_DIR/src/main/java/org/rinna/adapter/repository/"
+    fi
+    
+    # Move direct domain files to model if they exist
+    for file in "$RINNA_DIR"/src/main/java/org/rinna/domain/*.java; do
+      if [[ -f "$file" && ! "$file" =~ "APIToken.java" && ! "$file" =~ "WebhookConfig.java" ]]; then
+        local filename=$(basename "$file")
+        
+        # Skip service interfaces
+        if [[ "$filename" =~ "Service.java" || "$filename" =~ "Exception.java" ]]; then
+          cp "$file" "$RINNA_DIR/src/main/java/org/rinna/domain/service/"
+          sed -i 's/package org.rinna.domain;/package org.rinna.domain.service;/g' \
+              "$RINNA_DIR/src/main/java/org/rinna/domain/service/$filename"
+        else
+          cp "$file" "$RINNA_DIR/src/main/java/org/rinna/domain/model/"
+          sed -i 's/package org.rinna.domain;/package org.rinna.domain.model;/g' \
+              "$RINNA_DIR/src/main/java/org/rinna/domain/model/$filename"
+        fi
+      fi
+    done
+    
+    # Update package declarations in moved files
+    log_info "Updating package declarations in src files"
+    find "$RINNA_DIR/src/main/java/org/rinna/domain/model" -name "*.java" -exec \
+      sed -i 's/package org.rinna.domain.entity;/package org.rinna.domain.model;/g' {} \;
+      
+    find "$RINNA_DIR/src/main/java/org/rinna/domain/service" -name "*.java" -exec \
+      sed -i 's/package org.rinna.domain.usecase;/package org.rinna.domain.service;/g' {} \;
+      
+    find "$RINNA_DIR/src/main/java/org/rinna/adapter/repository" -name "*.java" -exec \
+      sed -i 's/package org.rinna.adapter.persistence;/package org.rinna.adapter.repository;/g' {} \;
+  fi
+  
+  log_success "Package structure migration completed successfully"
+  return 0
+}
+
+# Function to run module path migration
+run_module_paths() {
+  log_info "Running module paths migration"
+  
+  if [[ "$BACKUP" == "true" ]]; then
+    create_backup "module-paths"
+  fi
+  
+  if [[ "$DRY_RUN" == "true" ]]; then
+    log_info "Dry run mode - not executing module paths migration"
+    return 0
+  fi
+  
+  # Ensure rinna-core directory exists
+  if [[ ! -d "$RINNA_DIR/rinna-core" ]]; then
+    mkdir -p "$RINNA_DIR/rinna-core/src/main/java"
+    mkdir -p "$RINNA_DIR/rinna-core/src/main/resources"
+    mkdir -p "$RINNA_DIR/rinna-core/src/test/java"
+    mkdir -p "$RINNA_DIR/rinna-core/src/test/resources"
+  fi
+  
+  # Copy from src to rinna-core if src exists
+  if [[ -d "$RINNA_DIR/src/main/java" ]]; then
+    log_info "Copying from src to rinna-core"
+    rsync -a "$RINNA_DIR/src/main/java/" "$RINNA_DIR/rinna-core/src/main/java/"
+  fi
+  
+  if [[ -d "$RINNA_DIR/src/main/resources" ]]; then
+    log_info "Copying resources from src to rinna-core"
+    rsync -a "$RINNA_DIR/src/main/resources/" "$RINNA_DIR/rinna-core/src/main/resources/"
+  fi
+  
+  if [[ -d "$RINNA_DIR/src/test/java" ]]; then
+    log_info "Copying tests from src to rinna-core"
+    rsync -a "$RINNA_DIR/src/test/java/" "$RINNA_DIR/rinna-core/src/test/java/"
+  fi
+  
+  if [[ -d "$RINNA_DIR/src/test/resources" ]]; then
+    log_info "Copying test resources from src to rinna-core"
+    rsync -a "$RINNA_DIR/src/test/resources/" "$RINNA_DIR/rinna-core/src/test/resources/"
+  fi
+  
+  # Ensure cli directory exists
+  if [[ ! -d "$RINNA_DIR/rinna-cli" ]]; then
+    mkdir -p "$RINNA_DIR/rinna-cli/src/main/java"
+    mkdir -p "$RINNA_DIR/rinna-cli/src/main/resources"
+    mkdir -p "$RINNA_DIR/rinna-cli/src/test/java"
+    mkdir -p "$RINNA_DIR/rinna-cli/src/test/resources"
+  fi
+  
+  log_success "Module paths migration completed successfully"
+  return 0
+}
+
+# Function to run tests migration
+run_tests_migration() {
+  log_info "Running tests migration"
+  
+  if [[ "$BACKUP" == "true" ]]; then
+    create_backup "tests"
+  fi
+  
+  if [[ "$DRY_RUN" == "true" ]]; then
+    log_info "Dry run mode - not executing tests migration"
+    return 0
+  fi
+  
+  # Update test imports
+  log_info "Updating test imports"
+  local test_files=$(find "$RINNA_DIR" -path "*/src/test/java/*" -name "*.java")
+  
+  for file in $test_files; do
+    if grep -q "import org.rinna.domain.entity." "$file" || \
+       grep -q "import org.rinna.domain.usecase." "$file" || \
+       grep -q "import org.rinna.adapter.persistence." "$file"; then
+       
+      if [[ "$VERBOSE" == "true" ]]; then
+        log_info "Updating imports in $file"
+      fi
+      
+      sed -i 's/import org.rinna.domain.entity\./import org.rinna.domain.model./g' "$file"
+      sed -i 's/import org.rinna.domain.usecase\./import org.rinna.domain.service./g' "$file"
+      sed -i 's/import org.rinna.adapter.persistence\./import org.rinna.adapter.repository./g' "$file"
+    fi
+    
+    # Update direct imports for domain classes
+    local domain_classes=("WorkItem" "WorkItemType" "WorkQueue" "WorkflowState" "Priority" 
+                          "Project" "Release" "WorkItemCreateRequest" "WorkItemMetadata" 
+                          "DefaultWorkItem" "DefaultProject" "DefaultRelease" "DefaultWorkQueue" 
+                          "DocumentConfig" "WorkItemRecord")
+    
+    for class in "${domain_classes[@]}"; do
+      if grep -q "import org.rinna.domain.$class;" "$file"; then
+        sed -i "s/import org.rinna.domain.$class;/import org.rinna.domain.model.$class;/g" "$file"
+      fi
+    done
+    
+    # Update direct imports for service interfaces
+    local service_classes=("ItemService" "WorkflowService" "ReleaseService" "QueueService" 
+                           "DocumentService" "InvalidTransitionException")
+    
+    for service in "${service_classes[@]}"; do
+      if grep -q "import org.rinna.usecase.$service;" "$file" || grep -q "import org.rinna.domain.$service;" "$file"; then
+        sed -i "s/import org.rinna.usecase.$service;/import org.rinna.domain.service.$service;/g" "$file"
+        sed -i "s/import org.rinna.domain.$service;/import org.rinna.domain.service.$service;/g" "$file"
+      fi
+    done
+  done
+  
+  # Fix test package declarations if needed
+  find "$RINNA_DIR" -path "*/src/test/java/org/rinna/domain/*" -name "*.java" -exec \
+    sed -i 's/package org.rinna.domain.entity;/package org.rinna.domain.model;/g' {} \;
+    
+  find "$RINNA_DIR" -path "*/src/test/java/org/rinna/domain/*" -name "*.java" -exec \
+    sed -i 's/package org.rinna.domain.usecase;/package org.rinna.domain.service;/g' {} \;
+    
+  log_success "Tests migration completed successfully"
+  return 0
+}
+
+# Function to run versioning migration
+run_versioning() {
+  log_info "Running versioning migration"
+  
+  if [[ "$BACKUP" == "true" ]]; then
+    create_backup "versioning"
+  fi
+  
+  if [[ "$DRY_RUN" == "true" ]]; then
+    log_info "Dry run mode - not executing versioning migration"
+    return 0
+  fi
+  
+  # Check if we have the rin-version script
+  if [[ -x "$RINNA_DIR/bin/rin-version" ]]; then
+    log_info "Running version update..."
+    
+    # Update versions with rin-version
+    "$RINNA_DIR/bin/rin-version" update
+    
+    log_success "Version update completed"
+  else
+    log_warn "rin-version script not found or not executable"
+    log_warn "Skipping version migration"
+  fi
+  
+  return 0
+}
+
+# Function to run pom file migration
+run_pom_migration() {
+  log_info "Running POM files migration"
+  
+  if [[ "$BACKUP" == "true" ]]; then
+    create_backup "pom"
+  fi
+  
+  if [[ "$DRY_RUN" == "true" ]]; then
+    log_info "Dry run mode - not executing POM migration"
+    return 0
+  fi
+  
+  # Update root pom.xml if it exists
+  if [[ -f "$RINNA_DIR/pom.xml" ]]; then
+    log_info "Updating root POM file"
+    
+    # Add rinna-core and rinna-cli as modules if they don't exist
+    if ! grep -q "<module>rinna-core</module>" "$RINNA_DIR/pom.xml"; then
+      sed -i '/<modules>/a \        <module>rinna-core</module>' "$RINNA_DIR/pom.xml"
+    fi
+    
+    if ! grep -q "<module>rinna-cli</module>" "$RINNA_DIR/pom.xml"; then
+      sed -i '/<modules>/a \        <module>rinna-cli</module>' "$RINNA_DIR/pom.xml"
+    fi
+  fi
+  
+  # Create rinna-core pom.xml if it doesn't exist
+  if [[ ! -f "$RINNA_DIR/rinna-core/pom.xml" ]]; then
+    log_info "Creating rinna-core POM file"
+    mkdir -p "$RINNA_DIR/rinna-core"
+    
+    cat > "$RINNA_DIR/rinna-core/pom.xml" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.rinna</groupId>
+        <artifactId>rinna</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>rinna-core</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Rinna Core</name>
+    <description>Core domain model and services for Rinna workflow management</description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <!-- Add your dependencies here -->
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+EOF
+  fi
+  
+  # Create rinna-cli pom.xml if it doesn't exist
+  if [[ ! -f "$RINNA_DIR/rinna-cli/pom.xml" ]]; then
+    log_info "Creating rinna-cli POM file"
+    mkdir -p "$RINNA_DIR/rinna-cli"
+    
+    cat > "$RINNA_DIR/rinna-cli/pom.xml" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.rinna</groupId>
+        <artifactId>rinna</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>rinna-cli</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Rinna CLI</name>
+    <description>Command-line interface for Rinna workflow management</description>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.rinna</groupId>
+            <artifactId>rinna-core</artifactId>
+            <version>\${project.version}</version>
+        </dependency>
+        <!-- Add CLI-specific dependencies here -->
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+EOF
+  fi
+  
+  log_success "POM files migration completed successfully"
+  return 0
+}
+
+# Function to run comprehensive migration
+run_comprehensive_migration() {
+  log_info "Starting comprehensive migration"
+  
+  if [[ "$BACKUP" == "true" ]]; then
+    create_backup "comprehensive"
+  fi
+  
+  # Run all migrations in the correct order
+  log_info "Running all migrations in sequence"
+  
+  # Step 1: Fix imports
+  FORCE=true BACKUP=false run_imports_migration
+  
+  # Step 2: Update package structure
+  FORCE=true BACKUP=false run_structure_migration
+  
+  # Step 3: Update module paths
+  FORCE=true BACKUP=false run_module_paths
+  
+  # Step 4: Update tests
+  FORCE=true BACKUP=false run_tests_migration
+  
+  # Step 5: Update POM files
+  FORCE=true BACKUP=false run_pom_migration
+  
+  # Step 6: Update versioning
+  FORCE=true BACKUP=false run_versioning
+  
+  log_success "Comprehensive migration completed successfully"
+  
+  # Verify build
+  if [[ -f "$RINNA_DIR/pom.xml" ]]; then
+    log_info "Verifying build after migration"
+    
+    if cd "$RINNA_DIR" && mvn clean compile -q; then
+      log_success "Build verification successful"
+    else
+      log_error "Build verification failed"
+      log_error "Please check the Maven output for errors"
+      log_error "If needed, restore from backup at $(cat "$LOG_DIR/latest-migration-backup.txt")"
+      return 1
+    fi
+  fi
+  
+  return 0
+}
+
+# Function to display migration status
+display_migration_status() {
+  log_info "Migration Status"
+  
+  local class_count=$(find "$RINNA_DIR" -name "*.java" | wc -l)
+  log_info "Total Java classes: $class_count"
+  
+  local model_count=$(find "$RINNA_DIR" -path "*/domain/model/*" -name "*.java" | wc -l)
+  log_info "Domain model classes: $model_count"
+  
+  local service_count=$(find "$RINNA_DIR" -path "*/domain/service/*" -name "*.java" | wc -l)
+  log_info "Domain service interfaces: $service_count"
+  
+  local repository_count=$(find "$RINNA_DIR" -path "*/adapter/repository/*" -name "*.java" | wc -l)
+  log_info "Repository implementations: $repository_count"
+  
+  local old_package_count=$(find "$RINNA_DIR" -path "*/domain/entity/*" -name "*.java" | wc -l)
+  old_package_count=$((old_package_count + $(find "$RINNA_DIR" -path "*/domain/usecase/*" -name "*.java" | wc -l)))
+  old_package_count=$((old_package_count + $(find "$RINNA_DIR" -path "*/adapter/persistence/*" -name "*.java" | wc -l)))
+  
+  if [[ $old_package_count -gt 0 ]]; then
+    log_warn "Found $old_package_count classes in old package structure"
+    log_warn "Migration may not be complete"
+  else
+    log_success "No classes found in old package structure"
+  fi
+  
+  # Check for broken imports
+  local broken_imports=$(grep -r "import org.rinna.domain.entity\." --include="*.java" "$RINNA_DIR" | wc -l)
+  broken_imports=$((broken_imports + $(grep -r "import org.rinna.domain.usecase\." --include="*.java" "$RINNA_DIR" | wc -l)))
+  broken_imports=$((broken_imports + $(grep -r "import org.rinna.adapter.persistence\." --include="*.java" "$RINNA_DIR" | wc -l)))
+  
+  if [[ $broken_imports -gt 0 ]]; then
+    log_warn "Found $broken_imports broken imports"
+    log_warn "Migration may not be complete"
+  else
+    log_success "No broken imports found"
+  fi
+}
+
+# Show help message
+show_help() {
+  cat << EOT
+${BLUE}rin-migrate${NC} - Unified codebase migration utility for Rinna
+
+This tool provides a centralized interface for running various code migrations
+and refactorings across the Rinna codebase.
+
+Usage: rin-migrate [options] <migration-type>
+
+Migration Types:
+  imports               Fix import statements to use new package structure
+  structure             Migrate package structure to Clean Architecture pattern
+  module-paths          Set up multi-module structure
+  tests                 Update test imports and package structure
+  versioning            Update version references
+  pom                   Update POM files for multi-module structure
+  comprehensive         Run all migrations in the correct order
+  status                Show current migration status
+
+Options:
+  -v, --verbose         Enable verbose output
+  -n, --dry-run         Show what would be done without making changes
+  -f, --force           Force migration even if already performed
+  --no-backup           Skip backup creation
+  -h, --help            Show this help message
+
+Examples:
+  rin-migrate imports             # Fix Java import statements
+  rin-migrate -v structure        # Migrate package structure with verbose output
+  rin-migrate -n comprehensive    # Show what a comprehensive migration would do
+  rin-migrate status              # Show current migration status
+EOT
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -v|--verbose)
+      VERBOSE=true
+      shift
+      ;;
+    -n|--dry-run)
+      DRY_RUN=true
+      shift
+      ;;
+    -f|--force)
+      FORCE=true
+      shift
+      ;;
+    --no-backup)
+      BACKUP=false
+      shift
+      ;;
+    -h|--help)
+      show_help
+      exit 0
+      ;;
+    imports|structure|module-paths|tests|versioning|pom|comprehensive|status)
+      MIGRATION_TYPE="$1"
+      shift
+      ;;
+    --*)
+      log_error "Unknown option: $1"
+      show_help
+      exit 1
+      ;;
+    *)
+      # If it doesn't match known options and doesn't start with -, assume it's the migration type
+      if [[ "$1" != -* ]]; then
+        MIGRATION_TYPE="$1"
+      else
+        log_error "Unknown option: $1"
+        show_help
+        exit 1
+      fi
+      shift
+      ;;
+  esac
+done
+
+# Validate migration type
+if [[ -z "$MIGRATION_TYPE" ]]; then
+  log_error "No migration type specified"
+  show_help
+  exit 1
+fi
+
+# Create log file
+log_info "Starting migration: $MIGRATION_TYPE"
+log_info "Log file: $MIGRATION_LOG"
+
+# Run the appropriate migration
+case "$MIGRATION_TYPE" in
+  imports)
+    run_imports_migration
+    ;;
+  structure)
+    run_structure_migration
+    ;;
+  module-paths)
+    run_module_paths
+    ;;
+  tests)
+    run_tests_migration
+    ;;
+  versioning)
+    run_versioning
+    ;;
+  pom)
+    run_pom_migration
+    ;;
+  comprehensive)
+    run_comprehensive_migration
+    ;;
+  status)
+    display_migration_status
+    ;;
+  *)
+    log_error "Unknown migration type: $MIGRATION_TYPE"
+    show_help
+    exit 1
+    ;;
+esac
+
+log_success "Migration '$MIGRATION_TYPE' completed"

@@ -1,0 +1,52 @@
+# Cucumber configuration file with standardized reporting and profiles
+# Location: /home/emumford/NativeLinuxProjects/Rinna/rinna-cli/src/test/resources/cucumber.yml
+
+default: >
+  --plugin pretty
+  --plugin html:target/cucumber-reports/cucumber.html
+  --plugin json:target/cucumber-reports/cucumber.json
+  --plugin junit:target/cucumber-reports/cucumber.xml
+  --monochrome
+  --tags "@bdd"
+  --glue org.rinna.cli.bdd
+  --strict
+
+# Profiles for specific feature sets
+grep: >
+  --tags "@grep"
+  --plugin pretty
+  --plugin html:target/cucumber-reports/grep-command.html
+  --monochrome
+  --glue org.rinna.cli.bdd
+
+linux: >
+  --tags "@linux" 
+  --plugin pretty
+  --plugin html:target/cucumber-reports/linux-commands.html
+  --monochrome
+  --glue org.rinna.cli.bdd
+
+messaging: >
+  --tags "@messaging"
+  --plugin pretty
+  --plugin html:target/cucumber-reports/messaging-commands.html
+  --plugin json:target/cucumber-reports/messaging-commands.json
+  --monochrome
+  --glue org.rinna.cli.bdd
+
+smoke: >
+  --tags "@smoke"
+  --plugin pretty
+  --plugin html:target/cucumber-reports/smoke-tests.html
+  --monochrome
+  --glue org.rinna.cli.bdd
+
+# Parallel execution profile (disabled by default)
+parallel: >
+  --plugin pretty
+  --plugin html:target/cucumber-reports/cucumber-parallel.html
+  --plugin json:target/cucumber-reports/cucumber-parallel.json
+  --monochrome
+  --tags "@bdd"
+  --glue org.rinna.cli.bdd
+  --threads 4

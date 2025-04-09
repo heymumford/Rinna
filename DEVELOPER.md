@@ -324,17 +324,27 @@ See [Testing Strategy](docs/testing/TESTING_STRATEGY.md) for detailed documentat
 
 ### Version Management
 
-Rinna uses a centralized version management system:
+Rinna uses a centralized version management system with XMLStarlet integration:
 
 ```bash
+# Using the high-level wrapper:
 bin/rin-version current   # View version information
 bin/rin-version patch     # Bump patch version
 bin/rin-version minor     # Bump minor version
 bin/rin-version verify    # Check consistency
 bin/rin-version update    # Sync all files with version.properties
+
+# Using the version manager directly (more options available):
+bin/version-manager.sh current          # View version information
+bin/version-manager.sh bump patch       # Bump patch version
+bin/version-manager.sh increment-build  # Increment build number
+bin/version-manager.sh set 2.0.0        # Set specific version
+bin/version-manager.sh verify           # Check version consistency
 ```
 
-See [Version Management](docs/development/version-management.md) for details.
+IMPORTANT: Always use these tools for version management. Never manually edit version-related files or use text manipulation tools like sed/grep on XML files.
+
+See [Version Management](docs/development/version-management.md) for comprehensive details.
 
 ## Specialized Developer Guides
 

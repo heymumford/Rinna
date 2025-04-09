@@ -1,0 +1,52 @@
+name: Architecture Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  validate-architecture:
+    name: Validate Architecture
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: Run Architecture Validation Checks
+      run: |
+        echo "Running architecture validation checks..."
+        ./bin/run-checks.sh
+        
+        # Run package structure validation
+        if [ -f "./bin/checks/enforce-package-structure.sh" ]; then
+          echo "Running package structure validation..."
+          ./bin/checks/enforce-package-structure.sh
+        fi
+      
+    - name: Run Maven Build with Architecture Validation
+      run: |
+        # Validate architecture for each module
+        echo "Validating rinna-core architecture..."
+        cd rinna-core && mvn -B clean verify -P validate-architecture
+        
+        echo "Validating rinna-cli architecture..."
+        cd ../rinna-cli && mvn -B clean verify -P validate-architecture || true
+        
+        echo "Validating rinna-data-sqlite architecture..."
+        cd ../rinna-data-sqlite && mvn -B clean verify -P validate-architecture || true
+        
+        # Run parent validation
+        cd ..
+        mvn -B validate -P validate-architecture

@@ -1,0 +1,147 @@
+name: Cross-Language Tests
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'api/**'
+      - 'python/**'
+      - 'bin/**'
+      - 'test/cross-language/**'
+      - '.github/workflows/cross-language-tests.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'api/**'
+      - 'python/**'
+      - 'bin/**'
+      - 'test/cross-language/**'
+      - '.github/workflows/cross-language-tests.yml'
+  workflow_dispatch:
+    inputs:
+      test_groups:
+        description: 'Test groups to run (comma-separated: core,auth,notification,config,all)'
+        required: false
+        default: 'all'
+      parallel:
+        description: 'Run test groups in parallel'
+        required: false
+        default: 'true'
+        type: boolean
+      fail_fast:
+        description: 'Stop on first test failure'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  cross-language-tests:
+    name: Cross-Language Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        java-version: [21]
+        go-version: [1.21]
+        python-version: [3.9]
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Set up JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.java-version }}
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Set up Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest requests pytest-cov
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f python/requirements.txt ]; then pip install -r python/requirements.txt; fi
+      
+      - name: Build components
+        run: |
+          # Build Java components
+          mvn install -DskipTests
+          
+          # Build Go components
+          cd api
+          go build -o ../bin/rinnasrv ./cmd/rinnasrv
+          cd ..
+          
+          # Install Python package
+          pip install -e python/
+      
+      - name: Run cross-language tests
+        run: |
+          # Make test scripts executable
+          chmod +x bin/ci-cross-language-tests.sh
+          chmod +x test/cross-language/*.sh
+          
+          # Run tests
+          bin/ci-cross-language-tests.sh \
+            --ci \
+            --parallel=${{ github.event.inputs.parallel || 'true' }} \
+            --fail-fast=${{ github.event.inputs.fail_fast || 'false' }} \
+            --groups=${{ github.event.inputs.test_groups || 'all' }} \
+            --junit=target/cross-language-reports/junit-report.xml
+      
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: cross-language-test-logs
+          path: |
+            target/cross-language-reports/*.log
+            target/cross-language-reports/*.md
+          retention-days: 7
+      
+      - name: Upload JUnit reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: cross-language-junit-reports
+          path: target/cross-language-reports/*.xml
+          retention-days: 7
+      
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v3
+        if: always()
+        with:
+          report_paths: 'target/cross-language-reports/*.xml'
+          check_name: 'Cross-Language Test Results'
+          fail_on_failure: true
+      
+      - name: Post Summary
+        if: always()
+        run: |
+          SUMMARY_FILE=$(ls -t target/cross-language-reports/summary-*.md | head -1)
+          if [ -f "$SUMMARY_FILE" ]; then
+            echo "::group::Test Summary"
+            cat "$SUMMARY_FILE"
+            echo "::endgroup::"
+            
+            # Add to job summary
+            cat "$SUMMARY_FILE" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No summary file found"
+          fi

@@ -75,6 +75,16 @@ public class MockWorkflowService implements WorkflowService {
     }
     
     /**
+     * Gets work item's status (keeping both getStatus and getState for backward compatibility)
+     * 
+     * @param item the work item
+     * @return the status
+     */
+    public WorkflowState getStatus(WorkItem item) {
+        return item.getState();
+    }
+    
+    /**
      * Gets items in a specific state.
      *
      * @param state the workflow state
@@ -89,6 +99,16 @@ public class MockWorkflowService implements WorkflowService {
             }
         }
         return result;
+    }
+    
+    /**
+     * Gets items with a specific status. Alias for getItemsInState for backwards compatibility.
+     *
+     * @param status the workflow status
+     * @return a list of work items
+     */
+    public List<WorkItem> getItemsWithStatus(WorkflowState status) {
+        return getItemsInState(status);
     }
     
     /**

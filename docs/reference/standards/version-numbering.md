@@ -82,26 +82,26 @@ Some components may have their own version numbers if they can evolve independen
 Version information is maintained in:
 
 - `version.properties`: Primary source of truth for version numbers
-- `pom.xml`: Maven project version
-- `package.json`: Node.js package version
-- `go.mod`: Go module version
+- `pom.xml`: Maven project version (uses XMLStarlet for precise updates)
+- Go version files: Version constants in .go files
+- Other configuration files: Updated automatically by version tools
 
-### Version Command
+### Version Management Tools
 
-The `bin/rin-version` utility manages version numbers:
+Rinna provides two tools for version management:
+
+#### High-Level Wrapper (bin/rin-version)
+
+The user-friendly `bin/rin-version` utility provides a simplified interface:
 
 ```bash
 # Display current version
 bin/rin-version current
 
-# Increment major version
-bin/rin-version major
-
-# Increment minor version
-bin/rin-version minor
-
-# Increment patch version
-bin/rin-version patch
+# Increment versions
+bin/rin-version major           # 1.0.0 -> 2.0.0
+bin/rin-version minor           # 1.3.0 -> 1.4.0 
+bin/rin-version patch           # 1.3.1 -> 1.3.2
 
 # Set specific version
 bin/rin-version set 2.1.0
@@ -115,9 +115,38 @@ bin/rin-version release
 # Create git tag for current version
 bin/rin-version tag
 
-# Verify version consistency across files
-bin/rin-version verify
+# Verify and update
+bin/rin-version verify          # Check version consistency
+bin/rin-version update          # Update all files from version.properties
 ```
+
+#### Direct Version Manager (bin/version-manager.sh)
+
+For more advanced control, use the core version manager directly:
+
+```bash
+# Display current version
+bin/version-manager.sh current
+
+# Bump versions
+bin/version-manager.sh bump major           # 1.0.0 -> 2.0.0
+bin/version-manager.sh bump minor           # 1.3.0 -> 1.4.0
+bin/version-manager.sh bump patch           # 1.3.1 -> 1.3.2
+bin/version-manager.sh bump patch --no-commit # Without creating a git commit
+
+# Set specific version
+bin/version-manager.sh set 2.1.0
+bin/version-manager.sh set 2.1.0 --no-commit
+
+# Build number management
+bin/version-manager.sh increment-build      # Increment build number
+bin/version-manager.sh set-build 100        # Set specific build number
+
+# Verification
+bin/version-manager.sh verify               # Check version consistency
+```
+
+IMPORTANT: Always use these version management tools. Never manually edit version.properties, POM files, or other version-related files directly. The tools ensure consistency and use XMLStarlet for safe XML manipulation.
 
 ## API Version Management
 

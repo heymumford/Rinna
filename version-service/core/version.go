@@ -33,19 +33,26 @@ type VersionInfo struct {
 	IsConsistent bool   `json:"isConsistent"`
 }
 
+// Version information set during build process
+var (
+	Version   = "1.6.2"
+	CommitSHA = "runtime"
+	BuildTime = "2025-04-09T14:16:07Z"
+)
+
 // NewVersionInfo creates a new VersionInfo with default values
 func NewVersionInfo() *VersionInfo {
 	now := time.Now().UTC()
 	return &VersionInfo{
 		Major:        1,
-		Minor:        0,
-		Patch:        0,
-		FullVersion:  "1.0.0",
-		LastUpdated:  now.Format("2006-01-02"),
-		ReleaseType:  "SNAPSHOT",
-		BuildNumber:  1,
-		BuildTime:    now.Format("2006-01-02T15:04:05Z"),
-		GitCommit:    "runtime",
+		Minor:        6,
+		Patch:        2,
+		FullVersion:  Version,
+		LastUpdated:  "2025-04-09",
+		ReleaseType:  "RELEASE",
+		BuildNumber:  501,
+		BuildTime:    BuildTime,
+		GitCommit:    CommitSHA,
 		IsConsistent: true,
 	}
 }

@@ -1,0 +1,1056 @@
+swagger: '2.0'
+info:
+  title: Rinna API
+  description: API for the Rinna project management system
+  version: 1.0.0
+  contact:
+    name: Eric C. Mumford
+    email: info@example.com
+  license:
+    name: MIT
+host: localhost:8080
+basePath: /api/v1
+schemes:
+  - http
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+securityDefinitions:
+  ApiKeyAuth:
+    type: apiKey
+    in: header
+    name: Authorization
+paths:
+  /health:
+    get:
+      tags:
+        - health
+      summary: Get system health status
+      description: Returns detailed information about the health of all system components
+      operationId: getHealth
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/HealthStatus'
+        500:
+          description: Internal server error
+          
+  /health/live:
+    get:
+      tags:
+        - health
+      summary: Liveness probe
+      description: Simple check to verify the service is running
+      operationId: getLiveness
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Service is alive
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "UP"
+        500:
+          description: Service is not running
+          
+  /health/ready:
+    get:
+      tags:
+        - health
+      summary: Readiness probe
+      description: Check if service is ready to accept requests
+      operationId: getReadiness
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Service is ready
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: "READY"
+        503:
+          description: Service is not ready
+          
+  /projects:
+    get:
+      tags:
+        - projects
+      summary: List all projects
+      description: Returns a list of projects with optional pagination and filtering
+      operationId: listProjects
+      parameters:
+        - name: active
+          in: query
+          description: Filter by active status
+          required: false
+          type: boolean
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          type: integer
+          format: int32
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          type: integer
+          format: int32
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Project'
+        401:
+          description: Unauthorized
+        500:
+          description: Internal server error
+          
+    post:
+      tags:
+        - projects
+      summary: Create a new project
+      description: Creates a new project with the provided information
+      operationId: createProject
+      parameters:
+        - name: body
+          in: body
+          description: Project object to be created
+          required: true
+          schema:
+            $ref: '#/definitions/ProjectCreateRequest'
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        201:
+          description: Project created successfully
+          schema:
+            $ref: '#/definitions/Project'
+        400:
+          description: Invalid input
+        401:
+          description: Unauthorized
+        500:
+          description: Internal server error
+          
+  /projects/{key}:
+    get:
+      tags:
+        - projects
+      summary: Get project by key
+      description: Returns a project by its unique key
+      operationId: getProjectByKey
+      parameters:
+        - name: key
+          in: path
+          description: Project key
+          required: true
+          type: string
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/Project'
+        401:
+          description: Unauthorized
+        404:
+          description: Project not found
+        500:
+          description: Internal server error
+          
+    put:
+      tags:
+        - projects
+      summary: Update an existing project
+      description: Updates a project with the provided information
+      operationId: updateProject
+      parameters:
+        - name: key
+          in: path
+          description: Project key
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: Updated project object
+          required: true
+          schema:
+            $ref: '#/definitions/ProjectUpdateRequest'
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Project updated successfully
+          schema:
+            $ref: '#/definitions/Project'
+        400:
+          description: Invalid input
+        401:
+          description: Unauthorized
+        404:
+          description: Project not found
+        500:
+          description: Internal server error
+          
+  /projects/{key}/workitems:
+    get:
+      tags:
+        - projects
+        - workitems
+      summary: Get work items for a project
+      description: Returns work items associated with a specific project
+      operationId: getProjectWorkItems
+      parameters:
+        - name: key
+          in: path
+          description: Project key
+          required: true
+          type: string
+        - name: status
+          in: query
+          description: Filter by work item status
+          required: false
+          type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          type: integer
+          format: int32
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          type: integer
+          format: int32
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/WorkItem'
+        401:
+          description: Unauthorized
+        404:
+          description: Project not found
+        500:
+          description: Internal server error
+          
+  /releases:
+    get:
+      tags:
+        - releases
+      summary: List all releases
+      description: Returns a list of releases with optional pagination and filtering
+      operationId: listReleases
+      parameters:
+        - name: status
+          in: query
+          description: Filter by release status
+          required: false
+          type: string
+          enum: [PLANNED, IN_PROGRESS, RELEASED, CANCELLED]
+        - name: project
+          in: query
+          description: Filter by project key
+          required: false
+          type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          type: integer
+          format: int32
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          type: integer
+          format: int32
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Release'
+        401:
+          description: Unauthorized
+        500:
+          description: Internal server error
+          
+    post:
+      tags:
+        - releases
+      summary: Create a new release
+      description: Creates a new release with the provided information
+      operationId: createRelease
+      parameters:
+        - name: body
+          in: body
+          description: Release object to be created
+          required: true
+          schema:
+            $ref: '#/definitions/ReleaseCreateRequest'
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        201:
+          description: Release created successfully
+          schema:
+            $ref: '#/definitions/Release'
+        400:
+          description: Invalid input
+        401:
+          description: Unauthorized
+        500:
+          description: Internal server error
+          
+  /releases/{id}:
+    get:
+      tags:
+        - releases
+      summary: Get release by ID
+      description: Returns a release by its unique ID
+      operationId: getReleaseById
+      parameters:
+        - name: id
+          in: path
+          description: Release ID
+          required: true
+          type: string
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/Release'
+        401:
+          description: Unauthorized
+        404:
+          description: Release not found
+        500:
+          description: Internal server error
+          
+    put:
+      tags:
+        - releases
+      summary: Update an existing release
+      description: Updates a release with the provided information
+      operationId: updateRelease
+      parameters:
+        - name: id
+          in: path
+          description: Release ID
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: Updated release object
+          required: true
+          schema:
+            $ref: '#/definitions/ReleaseUpdateRequest'
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Release updated successfully
+          schema:
+            $ref: '#/definitions/Release'
+        400:
+          description: Invalid input
+        401:
+          description: Unauthorized
+        404:
+          description: Release not found
+        500:
+          description: Internal server error
+          
+  /releases/{id}/workitems:
+    get:
+      tags:
+        - releases
+        - workitems
+      summary: Get work items for a release
+      description: Returns work items associated with a specific release
+      operationId: getReleaseWorkItems
+      parameters:
+        - name: id
+          in: path
+          description: Release ID
+          required: true
+          type: string
+        - name: status
+          in: query
+          description: Filter by work item status
+          required: false
+          type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          type: integer
+          format: int32
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          type: integer
+          format: int32
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/WorkItem'
+        401:
+          description: Unauthorized
+        404:
+          description: Release not found
+        500:
+          description: Internal server error
+          
+  /workitems:
+    get:
+      tags:
+        - workitems
+      summary: List all work items
+      description: Returns a list of work items with optional pagination and filtering
+      operationId: listWorkItems
+      parameters:
+        - name: status
+          in: query
+          description: Filter by work item status
+          required: false
+          type: string
+          enum: [FOUND, TRIAGED, IN_DEV, TESTING, DONE, CLOSED]
+        - name: priority
+          in: query
+          description: Filter by priority
+          required: false
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        - name: type
+          in: query
+          description: Filter by work item type
+          required: false
+          type: string
+          enum: [BUG, FEATURE, CHORE]
+        - name: project
+          in: query
+          description: Filter by project key
+          required: false
+          type: string
+        - name: release
+          in: query
+          description: Filter by release ID
+          required: false
+          type: string
+        - name: assignee
+          in: query
+          description: Filter by assignee
+          required: false
+          type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          type: integer
+          format: int32
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          type: integer
+          format: int32
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/WorkItem'
+        401:
+          description: Unauthorized
+        500:
+          description: Internal server error
+          
+    post:
+      tags:
+        - workitems
+      summary: Create a new work item
+      description: Creates a new work item with the provided information
+      operationId: createWorkItem
+      parameters:
+        - name: body
+          in: body
+          description: Work item object to be created
+          required: true
+          schema:
+            $ref: '#/definitions/WorkItemCreateRequest'
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        201:
+          description: Work item created successfully
+          schema:
+            $ref: '#/definitions/WorkItem'
+        400:
+          description: Invalid input
+        401:
+          description: Unauthorized
+        500:
+          description: Internal server error
+          
+  /workitems/{id}:
+    get:
+      tags:
+        - workitems
+      summary: Get work item by ID
+      description: Returns a work item by its unique ID
+      operationId: getWorkItemById
+      parameters:
+        - name: id
+          in: path
+          description: Work item ID
+          required: true
+          type: string
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/WorkItem'
+        401:
+          description: Unauthorized
+        404:
+          description: Work item not found
+        500:
+          description: Internal server error
+          
+    put:
+      tags:
+        - workitems
+      summary: Update an existing work item
+      description: Updates a work item with the provided information
+      operationId: updateWorkItem
+      parameters:
+        - name: id
+          in: path
+          description: Work item ID
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: Updated work item object
+          required: true
+          schema:
+            $ref: '#/definitions/WorkItemUpdateRequest'
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Work item updated successfully
+          schema:
+            $ref: '#/definitions/WorkItem'
+        400:
+          description: Invalid input
+        401:
+          description: Unauthorized
+        404:
+          description: Work item not found
+        500:
+          description: Internal server error
+          
+  /workitems/{id}/transitions:
+    post:
+      tags:
+        - workitems
+      summary: Transition a work item to a new state
+      description: Transitions a work item from its current state to a new state
+      operationId: transitionWorkItem
+      parameters:
+        - name: id
+          in: path
+          description: Work item ID
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: Transition details
+          required: true
+          schema:
+            $ref: '#/definitions/WorkItemTransitionRequest'
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Work item transitioned successfully
+          schema:
+            $ref: '#/definitions/WorkItem'
+        400:
+          description: Invalid transition
+        401:
+          description: Unauthorized
+        404:
+          description: Work item not found
+        422:
+          description: Invalid transition for current state
+        500:
+          description: Internal server error
+          
+  /webhooks/github:
+    post:
+      tags:
+        - webhooks
+      summary: GitHub webhook handler (legacy path)
+      description: Handles incoming GitHub events
+      operationId: handleGithubWebhook
+      parameters:
+        - name: X-GitHub-Event
+          in: header
+          description: GitHub event type
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: GitHub event payload
+          required: true
+          schema:
+            $ref: '#/definitions/GitHubEvent'
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Event processed successfully
+        400:
+          description: Invalid event payload
+        500:
+          description: Internal server error
+          
+  /api/v1/webhooks/github:
+    post:
+      tags:
+        - webhooks
+      summary: GitHub webhook handler
+      description: Handles incoming GitHub events
+      operationId: handleGithubWebhookV1
+      parameters:
+        - name: X-GitHub-Event
+          in: header
+          description: GitHub event type
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: GitHub event payload
+          required: true
+          schema:
+            $ref: '#/definitions/GitHubEvent'
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Event processed successfully
+        400:
+          description: Invalid event payload
+        500:
+          description: Internal server error
+          
+definitions:
+  HealthStatus:
+    type: object
+    properties:
+      status:
+        type: string
+        example: "OK"
+      version:
+        type: string
+        example: "1.0.0"
+      timestamp:
+        type: string
+        format: date-time
+      components:
+        type: array
+        items:
+          $ref: '#/definitions/ComponentHealth'
+          
+  ComponentHealth:
+    type: object
+    properties:
+      name:
+        type: string
+        example: "database"
+      status:
+        type: string
+        enum: [UP, DOWN, DEGRADED]
+      message:
+        type: string
+      details:
+        type: object
+        additionalProperties:
+          type: string
+          
+  Project:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+      key:
+        type: string
+        example: "RINNA"
+      name:
+        type: string
+        example: "Rinna Project"
+      description:
+        type: string
+      active:
+        type: boolean
+        default: true
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+          
+  ProjectCreateRequest:
+    type: object
+    required:
+      - key
+      - name
+    properties:
+      key:
+        type: string
+        example: "RINNA"
+      name:
+        type: string
+        example: "Rinna Project"
+      description:
+        type: string
+      active:
+        type: boolean
+        default: true
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+          
+  ProjectUpdateRequest:
+    type: object
+    properties:
+      name:
+        type: string
+        example: "Rinna Project"
+      description:
+        type: string
+      active:
+        type: boolean
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+          
+  Release:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+      name:
+        type: string
+        example: "Summer Release 2025"
+      version:
+        type: string
+        example: "1.4.0"
+      description:
+        type: string
+      status:
+        type: string
+        enum: [PLANNED, IN_PROGRESS, RELEASED, CANCELLED]
+        default: PLANNED
+      startDate:
+        type: string
+        format: date
+      endDate:
+        type: string
+        format: date
+      projectKey:
+        type: string
+        example: "RINNA"
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+          
+  ReleaseCreateRequest:
+    type: object
+    required:
+      - name
+      - version
+      - projectKey
+    properties:
+      name:
+        type: string
+        example: "Summer Release 2025"
+      version:
+        type: string
+        example: "1.4.0"
+      description:
+        type: string
+      status:
+        type: string
+        enum: [PLANNED, IN_PROGRESS, RELEASED, CANCELLED]
+        default: PLANNED
+      startDate:
+        type: string
+        format: date
+      endDate:
+        type: string
+        format: date
+      projectKey:
+        type: string
+        example: "RINNA"
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+          
+  ReleaseUpdateRequest:
+    type: object
+    properties:
+      name:
+        type: string
+        example: "Summer Release 2025"
+      version:
+        type: string
+        example: "1.4.0"
+      description:
+        type: string
+      status:
+        type: string
+        enum: [PLANNED, IN_PROGRESS, RELEASED, CANCELLED]
+      startDate:
+        type: string
+        format: date
+      endDate:
+        type: string
+        format: date
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+          
+  WorkItem:
+    type: object
+    properties:
+      id:
+        type: string
+        format: uuid
+      title:
+        type: string
+        example: "Fix login button on home page"
+      description:
+        type: string
+      type:
+        type: string
+        enum: [BUG, FEATURE, CHORE]
+      priority:
+        type: string
+        enum: [LOW, MEDIUM, HIGH]
+      status:
+        type: string
+        enum: [FOUND, TRIAGED, IN_DEV, TESTING, DONE, CLOSED]
+      assignee:
+        type: string
+      projectKey:
+        type: string
+        example: "RINNA"
+      releaseId:
+        type: string
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+          
+  WorkItemCreateRequest:
+    type: object
+    required:
+      - title
+      - type
+      - projectKey
+    properties:
+      title:
+        type: string
+        example: "Fix login button on home page"
+      description:
+        type: string
+      type:
+        type: string
+        enum: [BUG, FEATURE, CHORE]
+      priority:
+        type: string
+        enum: [LOW, MEDIUM, HIGH]
+        default: MEDIUM
+      status:
+        type: string
+        enum: [FOUND, TRIAGED, IN_DEV, TESTING, DONE, CLOSED]
+        default: FOUND
+      assignee:
+        type: string
+      projectKey:
+        type: string
+        example: "RINNA"
+      releaseId:
+        type: string
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+          
+  WorkItemUpdateRequest:
+    type: object
+    properties:
+      title:
+        type: string
+      description:
+        type: string
+      type:
+        type: string
+        enum: [BUG, FEATURE, CHORE]
+      priority:
+        type: string
+        enum: [LOW, MEDIUM, HIGH]
+      assignee:
+        type: string
+      releaseId:
+        type: string
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+          
+  WorkItemTransitionRequest:
+    type: object
+    required:
+      - targetStatus
+    properties:
+      targetStatus:
+        type: string
+        enum: [FOUND, TRIAGED, IN_DEV, TESTING, DONE, CLOSED]
+      comment:
+        type: string
+          
+  GitHubEvent:
+    type: object
+    properties:
+      action:
+        type: string
+        example: "opened"
+      repository:
+        type: object
+        properties:
+          name:
+            type: string
+          full_name:
+            type: string
+          owner:
+            type: object
+            properties:
+              login:
+                type: string
+      sender:
+        type: object
+        properties:
+          login:
+            type: string
+      # This is a simplified representation - actual GitHub events are more complex
+
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      details:
+        type: array
+        items:
+          type: string

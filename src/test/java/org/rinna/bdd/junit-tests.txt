@@ -1,0 +1,4 @@
+org.rinna.bdd.NewUserAuthRunner
+org.rinna.bdd.WorkItemAddRunner
+org.rinna.bdd.WorkItemListingRunner
+org.rinna.bdd.WorkItemManagementRunner

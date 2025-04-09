@@ -1,0 +1,114 @@
+version: '3.8'
+
+# Named volumes for persistent data
+volumes:
+  go-api-data:
+  java-data:
+  python-data:
+  test-output:
+  coverage-data:
+  shared-storage:
+
+services:
+  # Go API service
+  api-server:
+    build:
+      context: ./api
+    ports:
+      - "8080:8080"
+    environment:
+      - JAVA_SERVICE_URL=http://java-service:8081
+      - PYTHON_SERVICE_URL=http://python-service:5000
+    depends_on:
+      - java-service
+      - python-service
+    volumes:
+      - go-api-data:/app/data
+      - shared-storage:/shared
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # Java Core service
+  java-service:
+    build:
+      context: ./
+      dockerfile: java.Dockerfile
+    ports:
+      - "8081:8081"
+    volumes:
+      - java-data:/app/data
+      - shared-storage:/shared
+    restart: unless-stopped
+
+  # Python Service
+  python-service:
+    build:
+      context: ./
+      dockerfile: python/Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - python-data:/app/data
+      - shared-storage:/shared
+    restart: unless-stopped
+    command: ["-m", "uvicorn", "python.rinna.api.main:app", "--host", "0.0.0.0", "--port", "5000"]
+    environment:
+      - PYTHONPATH=/app
+      - API_URL=http://api-server:8080
+
+  # Test services
+  python-tests:
+    build:
+      context: ./
+      dockerfile: python/Dockerfile
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+    profiles: ["testing"]
+    volumes:
+      - test-output:/app/test-output
+      - coverage-data:/app/coverage
+      - shared-storage:/shared
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - PYTHONPATH=/app:/app/python
+      - PYTHONDONTWRITEBYTECODE=1
+      - API_URL=http://api-server:8080
+    command: ${TEST_LEVEL:-all}
+
+  # Development environment with all components
+  dev-environment:
+    build:
+      context: ./
+      dockerfile: python/Dockerfile
+    profiles: ["dev"]
+    ports:
+      - "8888:8888"  # For Jupyter notebook if needed
+    volumes:
+      - ./python:/app/python
+      - ./api:/app/api
+      - shared-storage:/shared
+    environment:
+      - PYTHONPATH=/app:/app/python
+      - DEV_MODE=true
+    entrypoint: ["/bin/bash"]
+    command: ["-c", "echo 'Development environment ready' && /bin/bash"]
+
+  # Python API documentation service
+  python-docs:
+    build:
+      context: ./
+      dockerfile: python/Dockerfile
+    profiles: ["docs"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./python:/app/python
+    command: ["-m", "mkdocs", "serve", "-a", "0.0.0.0:8000"]
+    environment:
+      - PYTHONPATH=/app

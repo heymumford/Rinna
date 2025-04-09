@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+
+#
+# rin-path - Rinna Critical Path Analyzer
+#
+# PURPOSE: Show the critical path of work items in a project
+#
+# Copyright (c) 2025 Eric C. Mumford (@heymumford)
+# 
+# Developed with analytical assistance from AI tools.
+# All rights reserved.
+# 
+# This source code is licensed under the MIT License
+# found in the LICENSE file in the root directory of this source tree.
+#
+
+set -e
+
+# Determine script and project directories
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+RINNA_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Print error and exit
+error() {
+  echo -e "${RED}Error: $1${NC}" >&2
+  exit 1
+}
+
+# Show help text
+show_help() {
+  cat << EOF
+${BLUE}rin path${NC} - Critical Path Analysis
+
+Usage: rin path [options]
+
+Description:
+  Shows the critical path of work items in a project.
+  The critical path is the sequence of dependent tasks that determines
+  the minimum time needed to complete the project.
+
+Options:
+  -b, --blockers       Show only blocking items
+  -P, --project <name> Filter by project name
+  --item <id>          Show dependencies for a specific work item
+  --format <format>    Output format (table, json, dot)
+  -h, --help           Show this help message
+
+Examples:
+  rin path                     # Show critical path for the current project
+  rin path --blockers          # Show only blocking items
+  rin path --item WI-123       # Show dependencies for work item WI-123
+  rin path --format json       # Output in JSON format
+EOF
+}
+
+# Process command-line arguments
+BLOCKERS=false
+PROJECT=""
+ITEM=""
+FORMAT="table"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -b|--blockers)
+      BLOCKERS=true
+      shift
+      ;;
+    -P|--project)
+      PROJECT="$2"
+      shift 2
+      ;;
+    --project=*)
+      PROJECT="${1#*=}"
+      shift
+      ;;
+    --item)
+      ITEM="$2"
+      shift 2
+      ;;
+    --item=*)
+      ITEM="${1#*=}"
+      shift
+      ;;
+    --format)
+      FORMAT="$2"
+      shift 2
+      ;;
+    --format=*)
+      FORMAT="${1#*=}"
+      shift
+      ;;
+    -h|--help)
+      show_help
+      exit 0
+      ;;
+    *)
+      error "Unknown option: $1"
+      ;;
+  esac
+done
+
+# Build Java command
+JAVA_ARGS=("-cp" "$RINNA_DIR/rinna-cli/target/rinna-cli-1.3.6.jar:$RINNA_DIR/rinna-cli/target/classes" "org.rinna.cli.RinnaCli" "path")
+
+# Add options
+if [[ "$BLOCKERS" == "true" ]]; then
+  JAVA_ARGS+=("--blockers")
+fi
+
+if [[ -n "$PROJECT" ]]; then
+  JAVA_ARGS+=("--project" "$PROJECT")
+fi
+
+if [[ -n "$ITEM" ]]; then
+  JAVA_ARGS+=("--item" "$ITEM")
+fi
+
+if [[ -n "$FORMAT" ]]; then
+  JAVA_ARGS+=("--format" "$FORMAT")
+fi
+
+# Check if we have compiled classes
+if [[ ! -d "$RINNA_DIR/rinna-cli/target/classes" ]]; then
+  echo -e "${YELLOW}Warning: Compiled classes not found. Attempting to build...${NC}"
+  cd "$RINNA_DIR" && mvn compile -pl rinna-cli
+fi
+
+# Execute the Java command
+if command -v java &> /dev/null; then
+  java "${JAVA_ARGS[@]}"
+else
+  error "Java not found. Please install Java 21 or later."
+fi
