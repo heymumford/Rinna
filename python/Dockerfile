@@ -18,6 +18,15 @@ WORKDIR /app
 # Install system dependencies 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    # Dependencies for WeasyPrint and other libraries
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libpangocairo-1.0-0 \
+    libcairo2 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
+    poppler-utils \
+    # Clean up
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better layer caching
@@ -59,6 +68,10 @@ ENV PATH=/home/appuser/.local/bin:$PATH
 
 # Copy Python package 
 COPY python/ /app/python/
+
+# Create reports directory
+RUN mkdir -p /app/python/rinna/reports/templates/css && \
+    chown -R appuser:appuser /app/python/rinna/reports
 
 # Copy test scripts
 COPY bin/test-python-pyramid.sh /app/bin/

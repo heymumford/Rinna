@@ -5,6 +5,7 @@ volumes:
   test-output:
   coverage-data:
   python-cache:
+  reports-data:
 
 services:
   # Base test service - builds and runs tests
@@ -44,11 +45,13 @@ services:
       - test-output:/app/test-output
       - coverage-data:/app/coverage
       - python-cache:/app/.cache
+      - reports-data:/app/reports
     environment:
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - PYTHONPATH=/app:/app/python
       - PYTHONDONTWRITEBYTECODE=1
       - DEV_MODE=true
+      - REPORTS_DIR=/app/reports
     image: rinna-python-dev:latest
     profiles: ["dev"]
     entrypoint: ["/bin/bash"]
@@ -60,10 +63,13 @@ services:
       context: ..
       dockerfile: python/Dockerfile.prod
       target: production
+    volumes:
+      - reports-data:/app/reports
     environment:
       - PYTHONPATH=/app
       - API_URL=${API_URL:-http://localhost:8080}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - REPORTS_DIR=/app/reports
     image: rinna-python:latest
     profiles: ["service", "prod"]
     ports:
@@ -74,6 +80,31 @@ services:
       timeout: 10s
       retries: 3
       start_period: 5s
+
+  # Report generation service - specialized for PDF rendering
+  report-service:
+    build:
+      context: ..
+      dockerfile: python/Dockerfile.prod
+      target: production
+    volumes:
+      - reports-data:/app/reports
+    environment:
+      - PYTHONPATH=/app
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - REPORTS_DIR=/app/reports
+      - PORT=5001
+    image: rinna-report-service:latest
+    profiles: ["reports", "prod"]
+    ports:
+      - "${REPORT_PORT:-5001}:5001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    command: ["uvicorn", "rinna.api.main:app", "--host", "0.0.0.0", "--port", "5001"]
 
   # Specific test pyramid levels
   unit-tests:
@@ -106,3 +137,14 @@ services:
     extends: python-tests
     command: ["--no-install", "--skip-quality=false", "--no-coverage"]
     profiles: ["quality", "testing"]
+    
+  # Report generation tests only
+  report-tests:
+    extends: python-tests
+    command: ["--verbose", "--pattern=test_report*"]
+    profiles: ["reports", "testing"]
+    volumes:
+      - test-output:/app/test-output
+      - coverage-data:/app/coverage
+      - python-cache:/app/.cache
+      - reports-data:/app/reports

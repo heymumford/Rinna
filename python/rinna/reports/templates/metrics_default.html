@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <style>
+        /* Styles are defined in the CSS files loaded by the renderer */
+    </style>
+</head>
+<body>
+    <!-- Cover page -->
+    <div class="cover">
+        <h1>{{ title }}</h1>
+        <div class="subtitle">{{ subtitle }}</div>
+        <div class="date">Generated: {{ timestamp }}</div>
+    </div>
+    
+    <!-- Content pages -->
+    {% for section in sections %}
+    <section>
+        <h1>{{ section.title }}</h1>
+        
+        {% if section.description %}
+        <p>{{ section.description }}</p>
+        {% endif %}
+        
+        {% if section.metrics %}
+        <div class="metrics-card">
+            <div class="metrics-grid">
+                {% for metric in section.metrics %}
+                <div class="metric-item">
+                    <div class="metric-title">{{ metric.name }}</div>
+                    <div class="metric-value">{{ metric.value }}</div>
+                    {% if metric.description %}
+                    <div class="metric-description">{{ metric.description }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Optional table view -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                    {% if section.metrics[0].description %}
+                    <th>Description</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for metric in section.metrics %}
+                <tr>
+                    <td>{{ metric.name }}</td>
+                    <td>{{ metric.value }}</td>
+                    {% if metric.description %}
+                    <td>{{ metric.description }}</td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        
+        {% if section.subsections %}
+        {% for subsection in section.subsections %}
+        <div class="subsection">
+            <h2>{{ subsection.title }}</h2>
+            
+            {% if subsection.description %}
+            <p>{{ subsection.description }}</p>
+            {% endif %}
+            
+            {% if subsection.content %}
+            <div class="content">{{ subsection.content }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+    </section>
+    {% endfor %}
+</body>
+</html>
