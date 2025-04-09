@@ -6,14 +6,16 @@ with high-quality templates using open source tools like WeasyPrint,
 ReportLab, or xhtml2pdf.
 """
 
-import io
-import os
 import json
 import logging
+import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, BinaryIO
+from typing import Any, BinaryIO, Dict, List, Optional, Union
+
+# Type stubs for external dependencies that might be missing
+# This is handled through pyproject.toml configuration for mypy
 
 # Default templates directory relative to this file
 DEFAULT_TEMPLATES_DIR = Path(__file__).parent / "templates"

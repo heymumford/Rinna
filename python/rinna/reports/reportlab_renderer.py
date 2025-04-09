@@ -9,8 +9,7 @@ import io
 import json
 import logging
 import os
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple
 
 from .renderer import ReportFormat, ReportRenderer, TemplateManager
 
@@ -129,7 +128,8 @@ class ReportLabRenderer(ReportRenderer):
             RGB tuple (0-255)
         """
         hex_color = hex_color.lstrip("#")
-        return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+        rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+        return (rgb[0], rgb[1], rgb[2])  # Explicitly return a 3-tuple
     
     def render(
         self,
@@ -162,18 +162,21 @@ class ReportLabRenderer(ReportRenderer):
         # Lazy import ReportLab to avoid dependency if not used
         try:
             from reportlab.lib import colors
-            from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+            from reportlab.lib.enums import TA_CENTER
             from reportlab.lib.pagesizes import A4, letter
-            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-            from reportlab.platypus import (
-                SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
-            )
-            from reportlab.platypus.flowables import Flowable
+            from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
             from reportlab.lib.units import inch
-        except ImportError:
+            from reportlab.platypus import (
+                Paragraph,
+                SimpleDocTemplate,
+                Spacer,
+                Table,
+                TableStyle,
+            )
+        except ImportError as import_err:
             raise ValueError(
                 "ReportLab is not installed. Install with 'pip install reportlab'"
-            )
+            ) from import_err
         
         # Determine page size
         page_size_str = style.get("pageSize", "A4").upper()
@@ -349,7 +352,6 @@ class ReportLabRenderer(ReportRenderer):
             # Convert PDF to PNG (first page only)
             try:
                 from pdf2image import convert_from_bytes
-                from PIL import Image
                 
                 output = io.BytesIO()
                 images = convert_from_bytes(pdf_data, dpi=300)
@@ -358,9 +360,10 @@ class ReportLabRenderer(ReportRenderer):
                     return output.getvalue()
                 else:
                     raise ValueError("Failed to convert PDF to PNG")
-            except ImportError:
+            except ImportError as import_err:
                 raise ValueError(
                     "pdf2image is not installed. Install with 'pip install pdf2image'"
-                )
+                ) from import_err
         else:
-            raise ValueError(f"Unsupported output format for ReportLab: {output_format}")
+            output_type = output_format.value if hasattr(output_format, "value") else output_format
+            raise ValueError(f"Unsupported ReportLab output: {output_type}")

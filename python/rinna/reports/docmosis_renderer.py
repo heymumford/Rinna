@@ -6,12 +6,11 @@ proprietary engine. This is kept separate from the open source renderers
 to allow for optional integration.
 """
 
-import io
 import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 from .renderer import ReportFormat, ReportRenderer, TemplateManager
 

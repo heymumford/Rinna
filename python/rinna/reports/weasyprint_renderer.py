@@ -6,10 +6,9 @@ open source tool for converting HTML/CSS to PDF.
 """
 
 import io
-import os
 import logging
-from pathlib import Path
-from typing import Any, Dict, Optional, Union
+import os
+from typing import Any, Dict, Optional
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -274,11 +273,11 @@ class WeasyPrintRenderer(ReportRenderer):
         """
         # Lazy import WeasyPrint to avoid dependency if not used
         try:
-            from weasyprint import HTML, CSS
-        except ImportError:
+            from weasyprint import CSS, HTML
+        except ImportError as import_err:
             raise ValueError(
                 "WeasyPrint is not installed. Install with 'pip install weasyprint'"
-            )
+            ) from import_err
         
         # Get template
         template = self.template_manager.get_template(template_id)
@@ -294,7 +293,7 @@ class WeasyPrintRenderer(ReportRenderer):
             html_content = jinja_template.render(**data)
         except Exception as e:
             logger.error(f"Error rendering template {template_id}: {e}")
-            raise ValueError(f"Failed to render template {template_id}: {e}")
+            raise ValueError(f"Failed to render template {template_id}: {e}") from e
         
         # Apply CSS
         css_files = [self.default_css_path]
@@ -319,7 +318,6 @@ class WeasyPrintRenderer(ReportRenderer):
             output.write(html_content.encode("utf-8"))
         elif output_format == ReportFormat.PNG:
             # For PNG, we need to render to a PDF then convert the first page
-            from PIL import Image
             from pdf2image import convert_from_bytes
             
             temp_pdf = io.BytesIO()
@@ -332,6 +330,7 @@ class WeasyPrintRenderer(ReportRenderer):
             else:
                 raise ValueError("Failed to convert PDF to PNG")
         else:
-            raise ValueError(f"Unsupported output format for WeasyPrint: {output_format}")
+            output_type = output_format.value if hasattr(output_format, "value") else output_format
+            raise ValueError(f"Unsupported WeasyPrint output: {output_type}")
         
         return output.getvalue()

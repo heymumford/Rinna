@@ -6,18 +6,20 @@ the various rendering backends. It serves as the main entry point for
 report generation functionality.
 """
 
-import json
 import logging
 import os
 import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, BinaryIO
+from typing import Any, Dict, List, MutableSequence, Optional, Union
 
 from .renderer import (
-    ReportFormat, RenderingEngine, ReportRenderer, TemplateManager,
-    create_renderer
+    RenderingEngine,
+    ReportFormat,
+    ReportRenderer,
+    TemplateManager,
+    create_renderer,
 )
 
 logger = logging.getLogger(__name__)
@@ -53,10 +55,15 @@ class ReportService:
             self.output_dir = Path(output_dir)
             os.makedirs(self.output_dir, exist_ok=True)
         else:
-            self.output_dir = None
+            # For type checking, use a default path that will be created when needed
+            temp_dir = Path(tempfile.gettempdir()) / "rinna_reports"
+            self.output_dir = temp_dir
         
         # Default engine
-        self.default_engine = default_engine if isinstance(default_engine, RenderingEngine) else RenderingEngine(default_engine)
+        if isinstance(default_engine, RenderingEngine):
+            self.default_engine = default_engine
+        else:
+            self.default_engine = RenderingEngine(default_engine)
         
         # Store renderers for reuse
         self._renderers: Dict[RenderingEngine, ReportRenderer] = {}
@@ -80,9 +87,17 @@ class ReportService:
             except ValueError as e:
                 logger.warning(f"Failed to create renderer for {engine}: {e}")
                 # Fall back to default engine if available
-                if engine != self.default_engine and self.default_engine not in self._renderers:
-                    self._renderers[engine] = create_renderer(self.default_engine, self.template_manager)
+                if engine != self.default_engine:
+                    if self.default_engine not in self._renderers:
+                        # Create default renderer
+                        self._renderers[engine] = create_renderer(
+                            self.default_engine, self.template_manager
+                        )
+                    else:
+                        # Use existing default renderer
+                        self._renderers[engine] = self._renderers[self.default_engine]
                 else:
+                    # Can't fall back if default engine failed
                     raise
         
         return self._renderers[engine]
@@ -246,8 +261,9 @@ class ReportService:
         }
         
         # Process metrics data
+        sections: MutableSequence[Dict[str, Any]] = []
         if "summary" in metrics_data:
-            data["sections"].append({
+            sections.append({
                 "title": "Summary",
                 "description": "Key metrics overview",
                 "metrics": [
@@ -255,6 +271,7 @@ class ReportService:
                     for key, value in metrics_data["summary"].items()
                 ]
             })
+        data["sections"] = sections
         
         # Process detailed sections
         for section_name, section_data in metrics_data.items():
@@ -266,6 +283,7 @@ class ReportService:
                 "metrics": []
             }
             
+            metrics: MutableSequence[Dict[str, Any]] = []
             if isinstance(section_data, dict):
                 for metric_name, metric_value in section_data.items():
                     metric = {
@@ -273,13 +291,14 @@ class ReportService:
                         "value": metric_value,
                         "description": ""
                     }
-                    section["metrics"].append(metric)
+                    metrics.append(metric)
             elif isinstance(section_data, list):
                 for item in section_data:
                     if isinstance(item, dict) and "name" in item and "value" in item:
-                        section["metrics"].append(item)
+                        metrics.append(item)
             
-            data["sections"].append(section)
+            section["metrics"] = metrics
+            sections.append(section)
         
         # Generate the report
         return self.generate_report(
@@ -317,9 +336,21 @@ class ReportService:
                 "low": 44
             },
             "team_performance": [
-                {"name": "Team Alpha", "value": 94, "description": "Completion percentage"},
-                {"name": "Team Beta", "value": 87, "description": "Completion percentage"},
-                {"name": "Team Gamma", "value": 91, "description": "Completion percentage"}
+                {
+                    "name": "Team Alpha",
+                    "value": 94,
+                    "description": "Completion percentage"
+                },
+                {
+                    "name": "Team Beta",
+                    "value": 87,
+                    "description": "Completion percentage"
+                },
+                {
+                    "name": "Team Gamma",
+                    "value": 91,
+                    "description": "Completion percentage"
+                }
             ],
             "monthly_trend": {
                 "january": 42,

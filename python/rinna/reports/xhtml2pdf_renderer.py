@@ -8,8 +8,7 @@ HTML to PDF converter that is simpler to install than WeasyPrint on some systems
 import io
 import logging
 import os
-from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -293,19 +292,23 @@ class XHTML2PDFRenderer(ReportRenderer):
             if output_format == ReportFormat.PDF:
                 # Add header and footer divs if not present
                 if "<div id=\"headerContent\">" not in html_content:
+                    header_style = "text-align: right; font-size: 9pt; color: #666;"
                     header = f"""
-                    <div id="headerContent" style="text-align: right; font-size: 9pt; color: #666;">
+                    <div id="headerContent" style="{header_style}">
                         {html_data.get("report_title", "Report")}
                     </div>
                     """
-                    footer = """
-                    <div id="footerContent" style="text-align: right; font-size: 9pt; color: #666;">
+                    footer_style = "text-align: right; font-size: 9pt; color: #666;"
+                    footer = f"""
+                    <div id="footerContent" style="{footer_style}">
                         Page <pdf:pagenumber> of <pdf:pagecount>
                     </div>
                     """
                     # Insert after <body>
                     if "<body>" in html_content:
-                        html_content = html_content.replace("<body>", f"<body>{header}{footer}")
+                        html_content = html_content.replace(
+                            "<body>", f"<body>{header}{footer}"
+                        )
             
             # Add stylesheet reference
             if output_format == ReportFormat.PDF:
@@ -318,11 +321,13 @@ class XHTML2PDFRenderer(ReportRenderer):
                 
                 # Add CSS to head if not already present
                 if "<head>" in html_content and css_path_str not in html_content:
-                    html_content = html_content.replace("<head>", f"<head>\n{css_path_str}")
+                    html_content = html_content.replace(
+                        "<head>", f"<head>\n{css_path_str}"
+                    )
             
         except Exception as e:
             logger.error(f"Error rendering template {template_id}: {e}")
-            raise ValueError(f"Failed to render template {template_id}: {e}")
+            raise ValueError(f"Failed to render template {template_id}: {e}") from e
         
         # Generate output based on format
         output = io.BytesIO()
@@ -331,10 +336,10 @@ class XHTML2PDFRenderer(ReportRenderer):
             # Lazy import to avoid dependency if not used
             try:
                 import xhtml2pdf.pisa as pisa
-            except ImportError:
+            except ImportError as import_err:
                 raise ValueError(
                     "XHTML2PDF is not installed. Install with 'pip install xhtml2pdf'"
-                )
+                ) from import_err
             
             # Convert HTML to PDF
             pisa_status = pisa.CreatePDF(
@@ -351,6 +356,7 @@ class XHTML2PDFRenderer(ReportRenderer):
             output.write(html_content.encode("utf-8"))
             
         else:
-            raise ValueError(f"Unsupported output format for XHTML2PDF: {output_format}")
+            output_type = output_format.value if hasattr(output_format, "value") else output_format
+            raise ValueError(f"Unsupported XHTML2PDF output: {output_type}")
         
         return output.getvalue()
