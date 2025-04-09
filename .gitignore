@@ -140,8 +140,8 @@ engineering_spec_v0.3.md
 !**/test/**/*Test.java
 
 ## Scripts that should be in utils/
-activate-java.sh
-activate-python.sh
+activate-*.sh
+!utils/activate-*.sh
 
 ## Binary files 
 /bin/rin-cli
@@ -164,6 +164,7 @@ activate-python.sh
 !/bin/test_c4_diagrams.py
 !/bin/test-pyramid-coverage.sh
 !/bin/checks/*.sh
+!/bin/scripts/*.sh
 
 ## Build and test artifacts
 # Note: These are specifically excluded since they are auto-generated or temporary
@@ -187,6 +188,12 @@ backup/
 # Ensure all documentation files are included
 !docs/
 !docs/**/*.md
+!docs/implementation/
+!docs/implementation/*.md
+!docs/standards/
+!docs/standards/*.md
+!docs/project-status/
+!docs/project-status/*.md
 !docs/**/*.txt
 
 # Allow specific files that would otherwise be ignored

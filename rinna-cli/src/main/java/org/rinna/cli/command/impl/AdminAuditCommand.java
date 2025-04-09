@@ -10,6 +10,8 @@ package org.rinna.cli.command.impl;
 
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.service.AuditService;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.util.OutputFormatter;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -25,6 +27,7 @@ import java.util.concurrent.Callable;
 /**
  * Command handler for audit-related operations.
  * This class implements the functionality for the 'rin admin audit' command.
+ * It follows the ViewCommand pattern with MetadataService integration for operation tracking.
  */
 public class AdminAuditCommand implements Callable<Integer> {
     
@@ -32,6 +35,7 @@ public class AdminAuditCommand implements Callable<Integer> {
     private String[] args = new String[0];
     private final ServiceManager serviceManager;
     private final Scanner scanner;
+    private final MetadataService metadataService;
     
     /**
      * Creates a new AdminAuditCommand with the specified ServiceManager.
@@ -40,6 +44,7 @@ public class AdminAuditCommand implements Callable<Integer> {
      */
     public AdminAuditCommand(ServiceManager serviceManager) {
         this.serviceManager = serviceManager;
+        this.metadataService = serviceManager.getMetadataService();
         this.scanner = new Scanner(System.in, java.nio.charset.StandardCharsets.UTF_8.name());
     }
     
@@ -93,49 +98,96 @@ public class AdminAuditCommand implements Callable<Integer> {
     
     @Override
     public Integer call() {
-        if (operation == null || operation.isEmpty()) {
-            displayHelp();
-            return 1;
+        // Create operation parameters for tracking
+        Map<String, Object> params = new HashMap<>();
+        params.put("operation", operation != null ? operation : "help");
+        params.put("argsCount", args.length);
+        if (args.length > 0) {
+            params.put("arg0", args[0]);
         }
+        params.put("format", format);
+        params.put("verbose", verbose);
         
-        // Get the audit service
-        AuditService auditService = serviceManager.getAuditService();
-        if (auditService == null) {
-            outputError("Audit service is not available.");
-            return 1;
-        }
+        // Start tracking operation
+        String operationId = metadataService.startOperation("admin-audit", "AUDIT", params);
         
-        // Delegate to the appropriate operation
-        switch (operation) {
-            case "list":
-                return handleListOperation(auditService);
-            
-            case "configure":
-                return handleConfigureOperation(auditService);
-            
-            case "status":
-                return handleStatusOperation(auditService);
-            
-            case "export":
-                return handleExportOperation(auditService);
-            
-            case "mask":
-                return handleMaskOperation(auditService);
-            
-            case "alert":
-                return handleAlertOperation(auditService);
-            
-            case "investigation":
-                return handleInvestigationOperation(auditService);
-            
-            case "help":
-                displayHelp();
-                return 0;
-            
-            default:
-                System.err.println("Error: Unknown audit operation: " + operation);
-                displayHelp();
+        try {
+            if (operation == null || operation.isEmpty()) {
+                displayHelp(operationId);
                 return 1;
+            }
+            
+            // Get the audit service
+            AuditService auditService = serviceManager.getAuditService();
+            if (auditService == null) {
+                String errorMessage = "Audit service is not available.";
+                outputError(errorMessage);
+                metadataService.failOperation(operationId, new IllegalStateException(errorMessage));
+                return 1;
+            }
+            
+            // Delegate to the appropriate operation
+            int result;
+            switch (operation) {
+                case "list":
+                    result = handleListOperation(auditService, operationId);
+                    break;
+                
+                case "configure":
+                    result = handleConfigureOperation(auditService, operationId);
+                    break;
+                
+                case "status":
+                    result = handleStatusOperation(auditService, operationId);
+                    break;
+                
+                case "export":
+                    result = handleExportOperation(auditService, operationId);
+                    break;
+                
+                case "mask":
+                    result = handleMaskOperation(auditService, operationId);
+                    break;
+                
+                case "alert":
+                    result = handleAlertOperation(auditService, operationId);
+                    break;
+                
+                case "investigation":
+                    result = handleInvestigationOperation(auditService, operationId);
+                    break;
+                
+                case "help":
+                    displayHelp(operationId);
+                    result = 0;
+                    break;
+                
+                default:
+                    String errorMessage = "Unknown audit operation: " + operation;
+                    System.err.println("Error: " + errorMessage);
+                    displayHelp(operationId);
+                    metadataService.failOperation(operationId, new IllegalArgumentException(errorMessage));
+                    result = 1;
+                    break;
+            }
+            
+            // Complete operation if successful
+            if (result == 0) {
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("success", true);
+                resultData.put("operation", operation);
+                metadataService.completeOperation(operationId, resultData);
+            }
+            
+            return result;
+        } catch (Exception e) {
+            String errorMessage = e.getMessage();
+            outputError(errorMessage);
+            if (verbose) {
+                e.printStackTrace();
+            }
+            metadataService.failOperation(operationId, e);
+            return 1;
         }
     }
     
@@ -143,20 +195,31 @@ public class AdminAuditCommand implements Callable<Integer> {
      * Handles the 'list' operation to display audit logs.
      * 
      * @param auditService the audit service
+     * @param parentOperationId the parent operation ID for tracking
      * @return the exit code
      */
-    private int handleListOperation(AuditService auditService) {
+    private int handleListOperation(AuditService auditService, String parentOperationId) {
+        // Create operation parameters for tracking
+        Map<String, Object> params = new HashMap<>();
+        params.put("operation", "list");
+        
+        // Parse options from arguments
         Map<String, String> options = parseOptions(args);
         
         String user = options.getOrDefault("user", null);
         Integer days = null;
         Integer limit = null;
         
+        params.put("user", user);
+        
         if (options.containsKey("days")) {
             try {
                 days = Integer.parseInt(options.get("days"));
+                params.put("days", days);
             } catch (NumberFormatException e) {
-                outputError("Invalid value for --days. Must be a number.");
+                String errorMessage = "Invalid value for --days. Must be a number.";
+                outputError(errorMessage);
+                metadataService.trackOperationError(parentOperationId, "list", errorMessage, e);
                 return 1;
             }
         }
@@ -164,11 +227,17 @@ public class AdminAuditCommand implements Callable<Integer> {
         if (options.containsKey("limit")) {
             try {
                 limit = Integer.parseInt(options.get("limit"));
+                params.put("limit", limit);
             } catch (NumberFormatException e) {
-                outputError("Invalid value for --limit. Must be a number.");
+                String errorMessage = "Invalid value for --limit. Must be a number.";
+                outputError(errorMessage);
+                metadataService.trackOperationError(parentOperationId, "list", errorMessage, e);
                 return 1;
             }
         }
+        
+        // Start tracking sub-operation
+        String listOperationId = metadataService.trackOperation("admin-audit-list", params);
         
         try {
             String result = auditService.listAuditLogs(user, days, limit);
@@ -186,17 +255,27 @@ public class AdminAuditCommand implements Callable<Integer> {
                 
                 resultData.put("data", auditData);
                 
-                System.out.println(toJson(resultData));
+                System.out.println(OutputFormatter.toJson(resultData, verbose));
             } else {
                 System.out.println(result);
             }
             
+            // Track operation success
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("success", true);
+            resultData.put("user", user);
+            resultData.put("days", days);
+            resultData.put("limit", limit);
+            metadataService.completeOperation(listOperationId, resultData);
+            
             return 0;
         } catch (Exception e) {
-            outputError("Error listing audit logs: " + e.getMessage());
+            String errorMessage = "Error listing audit logs: " + e.getMessage();
+            outputError(errorMessage);
             if (verbose) {
                 e.printStackTrace();
             }
+            metadataService.failOperation(listOperationId, e);
             return 1;
         }
     }
@@ -671,83 +750,105 @@ public class AdminAuditCommand implements Callable<Integer> {
     
     /**
      * Displays help information for audit commands.
+     * 
+     * @param operationId the parent operation ID for tracking
      */
-    private void displayHelp() {
-        if ("json".equalsIgnoreCase(format)) {
-            Map<String, Object> helpData = new HashMap<>();
-            helpData.put("result", "success");
-            helpData.put("command", "admin audit");
-            helpData.put("usage", "rin admin audit <operation> [options]");
+    private void displayHelp(String operationId) {
+        // Create operation parameters for tracking
+        Map<String, Object> helpData = new HashMap<>();
+        helpData.put("command", "admin audit");
+        helpData.put("action", "help");
+        helpData.put("format", format);
+        
+        // Start tracking sub-operation
+        String helpOperationId = metadataService.trackOperation("admin-audit-help", helpData);
+        
+        try {
+            if ("json".equalsIgnoreCase(format)) {
+                Map<String, Object> jsonHelpData = new HashMap<>();
+                jsonHelpData.put("result", "success");
+                jsonHelpData.put("command", "admin audit");
+                jsonHelpData.put("usage", "rin admin audit <operation> [options]");
+                
+                List<Map<String, String>> operations = new ArrayList<>();
+                operations.add(createInfoMap("list", "List audit logs"));
+                operations.add(createInfoMap("configure", "Configure audit logging settings"));
+                operations.add(createInfoMap("status", "Show audit system status"));
+                operations.add(createInfoMap("export", "Export audit logs to file"));
+                operations.add(createInfoMap("mask", "Configure sensitive data masking"));
+                operations.add(createInfoMap("alert", "Manage audit alerts"));
+                operations.add(createInfoMap("investigation", "Manage security investigations"));
+                jsonHelpData.put("operations", operations);
+                
+                Map<String, List<Map<String, String>>> operationOptions = new HashMap<>();
+                
+                List<Map<String, String>> listOptions = new ArrayList<>();
+                listOptions.add(createInfoMap("--user=<username>", "Filter logs by username"));
+                listOptions.add(createInfoMap("--days=<num>", "Show logs from last N days"));
+                listOptions.add(createInfoMap("--limit=<num>", "Limit number of logs shown"));
+                operationOptions.put("list", listOptions);
+                
+                List<Map<String, String>> configureOptions = new ArrayList<>();
+                configureOptions.add(createInfoMap("--retention=<days>", "Set log retention period in days"));
+                operationOptions.put("configure", configureOptions);
+                
+                List<Map<String, String>> exportOptions = new ArrayList<>();
+                exportOptions.add(createInfoMap("--from=<date>", "Start date (YYYY-MM-DD)"));
+                exportOptions.add(createInfoMap("--to=<date>", "End date (YYYY-MM-DD)"));
+                exportOptions.add(createInfoMap("--format=<format>", "Export format (csv, json, pdf)"));
+                operationOptions.put("export", exportOptions);
+                
+                List<Map<String, String>> investigationOptions = new ArrayList<>();
+                investigationOptions.add(createInfoMap("--user=<username>", "Username to investigate"));
+                investigationOptions.add(createInfoMap("--days=<num>", "Days of history to investigate"));
+                investigationOptions.add(createInfoMap("--action=<action>", "Action to perform (LOCK_ACCOUNT, RESET_PASSWORD, etc.)"));
+                operationOptions.put("investigation", investigationOptions);
+                
+                jsonHelpData.put("operation_options", operationOptions);
+                
+                System.out.println(OutputFormatter.toJson(jsonHelpData, verbose));
+            } else {
+                System.out.println("Usage: rin admin audit <operation> [options]");
+                System.out.println();
+                System.out.println("Operations:");
+                System.out.println("  list          - List audit logs");
+                System.out.println("  configure     - Configure audit logging settings");
+                System.out.println("  status        - Show audit system status");
+                System.out.println("  export        - Export audit logs to file");
+                System.out.println("  mask          - Configure sensitive data masking");
+                System.out.println("  alert         - Manage audit alerts");
+                System.out.println("  investigation - Manage security investigations");
+                System.out.println();
+                System.out.println("Options for 'list':");
+                System.out.println("  --user=<username>  - Filter logs by username");
+                System.out.println("  --days=<num>       - Show logs from last N days");
+                System.out.println("  --limit=<num>      - Limit number of logs shown");
+                System.out.println();
+                System.out.println("Options for 'configure':");
+                System.out.println("  --retention=<days> - Set log retention period in days");
+                System.out.println();
+                System.out.println("Options for 'export':");
+                System.out.println("  --from=<date>      - Start date (YYYY-MM-DD)");
+                System.out.println("  --to=<date>        - End date (YYYY-MM-DD)");
+                System.out.println("  --format=<format>  - Export format (csv, json, pdf)");
+                System.out.println();
+                System.out.println("Options for 'investigation create':");
+                System.out.println("  --user=<username>  - Username to investigate");
+                System.out.println("  --days=<num>       - Days of history to investigate");
+                System.out.println();
+                System.out.println("Options for 'investigation actions':");
+                System.out.println("  --action=<action>  - Action to perform (LOCK_ACCOUNT, RESET_PASSWORD, etc.)");
+                System.out.println("  --user=<username>  - Target username for the action");
+            }
             
-            List<Map<String, String>> operations = new ArrayList<>();
-            operations.add(createInfoMap("list", "List audit logs"));
-            operations.add(createInfoMap("configure", "Configure audit logging settings"));
-            operations.add(createInfoMap("status", "Show audit system status"));
-            operations.add(createInfoMap("export", "Export audit logs to file"));
-            operations.add(createInfoMap("mask", "Configure sensitive data masking"));
-            operations.add(createInfoMap("alert", "Manage audit alerts"));
-            operations.add(createInfoMap("investigation", "Manage security investigations"));
-            helpData.put("operations", operations);
-            
-            Map<String, List<Map<String, String>>> operationOptions = new HashMap<>();
-            
-            List<Map<String, String>> listOptions = new ArrayList<>();
-            listOptions.add(createInfoMap("--user=<username>", "Filter logs by username"));
-            listOptions.add(createInfoMap("--days=<num>", "Show logs from last N days"));
-            listOptions.add(createInfoMap("--limit=<num>", "Limit number of logs shown"));
-            operationOptions.put("list", listOptions);
-            
-            List<Map<String, String>> configureOptions = new ArrayList<>();
-            configureOptions.add(createInfoMap("--retention=<days>", "Set log retention period in days"));
-            operationOptions.put("configure", configureOptions);
-            
-            List<Map<String, String>> exportOptions = new ArrayList<>();
-            exportOptions.add(createInfoMap("--from=<date>", "Start date (YYYY-MM-DD)"));
-            exportOptions.add(createInfoMap("--to=<date>", "End date (YYYY-MM-DD)"));
-            exportOptions.add(createInfoMap("--format=<format>", "Export format (csv, json, pdf)"));
-            operationOptions.put("export", exportOptions);
-            
-            List<Map<String, String>> investigationOptions = new ArrayList<>();
-            investigationOptions.add(createInfoMap("--user=<username>", "Username to investigate"));
-            investigationOptions.add(createInfoMap("--days=<num>", "Days of history to investigate"));
-            investigationOptions.add(createInfoMap("--action=<action>", "Action to perform (LOCK_ACCOUNT, RESET_PASSWORD, etc.)"));
-            operationOptions.put("investigation", investigationOptions);
-            
-            helpData.put("operation_options", operationOptions);
-            
-            System.out.println(toJson(helpData));
-        } else {
-            System.out.println("Usage: rin admin audit <operation> [options]");
-            System.out.println();
-            System.out.println("Operations:");
-            System.out.println("  list          - List audit logs");
-            System.out.println("  configure     - Configure audit logging settings");
-            System.out.println("  status        - Show audit system status");
-            System.out.println("  export        - Export audit logs to file");
-            System.out.println("  mask          - Configure sensitive data masking");
-            System.out.println("  alert         - Manage audit alerts");
-            System.out.println("  investigation - Manage security investigations");
-            System.out.println();
-            System.out.println("Options for 'list':");
-            System.out.println("  --user=<username>  - Filter logs by username");
-            System.out.println("  --days=<num>       - Show logs from last N days");
-            System.out.println("  --limit=<num>      - Limit number of logs shown");
-            System.out.println();
-            System.out.println("Options for 'configure':");
-            System.out.println("  --retention=<days> - Set log retention period in days");
-            System.out.println();
-            System.out.println("Options for 'export':");
-            System.out.println("  --from=<date>      - Start date (YYYY-MM-DD)");
-            System.out.println("  --to=<date>        - End date (YYYY-MM-DD)");
-            System.out.println("  --format=<format>  - Export format (csv, json, pdf)");
-            System.out.println();
-            System.out.println("Options for 'investigation create':");
-            System.out.println("  --user=<username>  - Username to investigate");
-            System.out.println("  --days=<num>       - Days of history to investigate");
-            System.out.println();
-            System.out.println("Options for 'investigation actions':");
-            System.out.println("  --action=<action>  - Action to perform (LOCK_ACCOUNT, RESET_PASSWORD, etc.)");
-            System.out.println("  --user=<username>  - Target username for the action");
+            // Track operation success
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("success", true);
+            resultData.put("format", format);
+            metadataService.completeOperation(helpOperationId, resultData);
+        } catch (Exception e) {
+            metadataService.failOperation(helpOperationId, e);
+            throw e; // Rethrow to be caught by caller
         }
     }
     
@@ -761,7 +862,7 @@ public class AdminAuditCommand implements Callable<Integer> {
             Map<String, Object> errorData = new HashMap<>();
             errorData.put("result", "error");
             errorData.put("message", message);
-            System.out.println(toJson(errorData));
+            System.out.println(OutputFormatter.toJson(errorData, verbose));
         } else {
             System.err.println("Error: " + message);
         }
@@ -777,81 +878,10 @@ public class AdminAuditCommand implements Callable<Integer> {
             Map<String, Object> successData = new HashMap<>();
             successData.put("result", "success");
             successData.put("message", message);
-            System.out.println(toJson(successData));
+            System.out.println(OutputFormatter.toJson(successData, verbose));
         } else {
             System.out.println(message);
         }
-    }
-    
-    /**
-     * Converts an object to JSON.
-     *
-     * @param obj the object to convert
-     * @return the JSON string
-     */
-    private String toJson(Object obj) {
-        // Simple JSON conversion for the test
-        // In a real implementation, this would use Jackson or similar
-        StringBuilder json = new StringBuilder();
-        if (obj instanceof Map) {
-            json.append("{");
-            Map<?, ?> map = (Map<?, ?>) obj;
-            boolean first = true;
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-                if (!first) {
-                    json.append(", ");
-                }
-                first = false;
-                json.append("\"").append(entry.getKey()).append("\": ");
-                if (entry.getValue() instanceof String) {
-                    json.append("\"").append(escapeJson(entry.getValue().toString())).append("\"");
-                } else {
-                    json.append(toJson(entry.getValue()));
-                }
-            }
-            json.append("}");
-        } else if (obj instanceof List) {
-            json.append("[");
-            List<?> list = (List<?>) obj;
-            boolean first = true;
-            for (Object item : list) {
-                if (!first) {
-                    json.append(", ");
-                }
-                first = false;
-                if (item instanceof String) {
-                    json.append("\"").append(escapeJson(item.toString())).append("\"");
-                } else {
-                    json.append(toJson(item));
-                }
-            }
-            json.append("]");
-        } else if (obj instanceof String) {
-            json.append("\"").append(escapeJson(obj.toString())).append("\"");
-        } else if (obj instanceof Number) {
-            json.append(obj);
-        } else if (obj instanceof Boolean) {
-            json.append(obj);
-        } else if (obj == null) {
-            json.append("null");
-        } else {
-            json.append("\"").append(escapeJson(obj.toString())).append("\"");
-        }
-        return json.toString();
-    }
-    
-    /**
-     * Escapes special characters in a string for JSON.
-     *
-     * @param str the string to escape
-     * @return the escaped string
-     */
-    private String escapeJson(String str) {
-        return str.replace("\\", "\\\\")
-                 .replace("\"", "\\\"")
-                 .replace("\n", "\\n")
-                 .replace("\r", "\\r")
-                 .replace("\t", "\\t");
     }
     
     /**

@@ -663,7 +663,6 @@ class BacklogCommandTest {
                 
                 // Create a mock BacklogCommand with a misbehaving createMockWorkItem method
                 BacklogCommand brokenCommand = new BacklogCommand(mockBacklogService, mockItemService) {
-                    @Override
                     protected WorkItem createMockWorkItem(UUID id, String title, WorkItemType type) {
                         throw new NullPointerException("Test NPE");
                     }

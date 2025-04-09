@@ -16,10 +16,10 @@
 
 [📥 Download](https://github.com/heymumford/Rinna/releases) • 
 [📚 User Guide](docs/user-guide/README.md) • 
-[👩‍💻 Developer Guide](DEVELOPER.md) • 
+[👩‍💻 Developer Guide](docs/development/DEVELOPER.md) • 
 [🚀 Getting Started](docs/getting-started/README.md) • 
 [🧪 TDD Guide](rinna-cli/TDD_GUIDE.md) • 
-[🤝 Contribute](CONTRIBUTING.md) • 
+[🤝 Contribute](docs/CONTRIBUTING.md) • 
 [📋 Changelog](CHANGELOG.md)
 
 </div>
@@ -380,14 +380,61 @@ Rinna follows clean architecture principles with well-defined interfaces for ext
 - [📋 Changelog](CHANGELOG.md) - Release history
 
 ### For Developers
-- [👩‍💻 Developer Guide](DEVELOPER.md) - Complete guide for developing Rinna
-- [🤝 Contribution Guidelines](CONTRIBUTING.md) - How to contribute
+- [👩‍💻 Developer Guide](docs/development/DEVELOPER.md) - Complete guide for developing Rinna
+- [🤝 Contribution Guidelines](docs/CONTRIBUTING.md) - How to contribute
 - [🧪 Testing Strategy](docs/testing/TESTING_STRATEGY.md) - Comprehensive testing approach
 - [🏗️ Architecture](docs/development/architecture.md) - System architecture
 - [🔧 Build System](docs/development/build-system.md) - Build and development workflow
 - [📊 Version Management](docs/development/version-management.md) - Version control approach
 
-For complete developer documentation, see the [Developer Guide](DEVELOPER.md).
+For complete developer documentation, see the [Developer Guide](docs/development/DEVELOPER.md).
+
+## Project Structure
+
+### Directory Structure
+
+The project follows a clean and organized directory structure:
+
+- `/api` - Go-based API server for Rinna
+- `/bin` - Executable scripts and utilities
+  - `/bin/checks` - Architecture validation scripts
+  - `/bin/scripts` - Utility scripts for build, test, and demos
+- `/config` - Configuration files for all components
+  - `/config/checkstyle` - Java style checking rules
+  - `/config/git` - Git-related configurations
+  - `/config/maven` - Maven test configurations
+  - `/config/owasp` - Security scanning configurations
+  - `/config/pmd` - Code quality rules
+  - `/config/python` - Python tooling configurations
+  - `/config/sonar` - Code analysis configurations
+  - `/config/spotbugs` - Bug detection configurations
+- `/docs` - Comprehensive documentation
+  - `/docs/architecture` - Architecture decisions and diagrams
+  - `/docs/development` - Developer guides and reference
+  - `/docs/implementation` - Implementation details and summaries
+  - `/docs/project-status` - Project tracking and status reports
+  - `/docs/standards` - Coding standards and guidelines
+  - `/docs/testing` - Testing strategies and guides
+  - `/docs/user-guide` - End-user documentation
+- `/python` - Python modules and components
+- `/rinna-cli` - Java CLI implementation
+- `/rinna-core` - Core domain model and business logic
+- `/rinna-data-sqlite` - SQLite persistence implementation
+- `/src` - Main application code
+- `/utils` - Environment activation scripts and utilities
+
+### Code Organization
+
+- Core domain model is in `rinna-core/src/main/java/org/rinna/domain/entity`
+- Service interfaces are in `rinna-core/src/main/java/org/rinna/domain/usecase`
+- Service implementations are in `rinna-core/src/main/java/org/rinna/adapter/service`
+- In-memory repositories are in `rinna-core/src/main/java/org/rinna/adapter/persistence`
+- API server is in `api/cmd/rinnasrv`
+- API health package is in `api/pkg/health`
+- Python modules are in `python/rinna/`
+- Python tests are in `python/tests/`
+- Python quality configurations are in `config/python/` and `pyproject.toml`
+- Architecture validation scripts are in `bin/checks/`
 
 ## License and Acknowledgments
 

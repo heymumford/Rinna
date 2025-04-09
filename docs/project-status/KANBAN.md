@@ -5,8 +5,14 @@ This document provides a consolidated view of all tasks across the Rinna project
 ## 📋 Prioritized Backlog
 
 ### P0: Critical (Infrastructure & Security)
+- **Build System Fixes**
+  - Fix dependency resolution between rinna-core and rinna-cli modules
+  - Update import statements in SQLite module for domain model classes
+  - Resolve Maven repository caching issues for local dependencies
+  - Fix test compilation issues in SQLite persistence tests
+  - Implement proper version synchronization across modules
 - **Critical Quality Gates**
-  - Continue extending test patterns to remaining CLI commands
+  - Continue extending test patterns to remaining CLI commands (In Progress)
   - Set up basic CI pipeline for build verification
   - Establish code quality thresholds and automate checks
 - **Test Framework Completion**
@@ -158,7 +164,22 @@ This document provides a consolidated view of all tasks across the Rinna project
 
 ## 🔬 Test Design & Implementation
 - **Command Testing Implementation**
-  - Continue extending test patterns to remaining CLI commands
+  - Continue extending test patterns to remaining CLI commands (In Progress)
+    - ✅ UndoCommand tests completed (unit, BDD, component tests)
+    - ✅ BugCommand tests completed (unit, BDD, component tests)
+    - ✅ FindCommand tests completed (unit, BDD, component tests)
+    - ✅ OperationsCommand tests completed (unit, BDD, component tests)
+    - ✅ MsgCommand tests completed (unit, BDD, component tests)
+    - ✅ ServerCommand tests completed (unit, BDD, component tests)
+    - ✅ EditCommand tests completed (unit, BDD, component tests)
+    - ✅ HistoryCommand tests completed (unit, BDD, component tests)
+    - ✅ CommentCommand tests completed (unit, BDD, component tests)
+    - ✅ ListCommand tests completed (unit, BDD, component tests)
+    - ✅ ViewCommand tests completed (unit, BDD, component tests)
+    - ✅ UpdateCommand tests completed (unit, BDD, component tests)
+    - ✅ AddCommand tests completed (unit, BDD, component tests)
+    - ✅ ScheduleCommand tests completed (unit, BDD, component tests)
+    - ✅ BacklogCommand tests completed (unit, BDD, component tests)
   - Ensure all CLI commands have comprehensive test coverage following the established patterns
 
 ## 🚧 In Development (Implementation)

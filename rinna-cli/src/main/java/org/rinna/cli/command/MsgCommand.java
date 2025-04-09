@@ -14,6 +14,7 @@ import org.rinna.cli.messaging.MessageService;
 import org.rinna.cli.messaging.MessageStatus;
 import org.rinna.cli.messaging.RinnaMessage;
 import org.rinna.cli.service.ConfigurationService;
+import org.rinna.cli.service.DefaultConfigurationService;
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.ProjectContext;
 import org.rinna.cli.service.ServiceManager;
@@ -295,8 +296,10 @@ public class MsgCommand implements Callable<Integer> {
             String token = messageService.authenticate(username, password);
             if (token != null) {
                 // Store authentication info
-                configService.setCurrentUser(username);
-                configService.setAuthToken(token);
+                if (configService instanceof DefaultConfigurationService) {
+                    ((DefaultConfigurationService)configService).setCurrentUser(username);
+                    ((DefaultConfigurationService)configService).setAuthToken(token);
+                }
                 System.out.println("Authentication successful. Welcome, " + username + "!");
                 
                 // Check for unread messages

@@ -1267,6 +1267,35 @@ class AddCommandTest {
         private int createItemCallCount = 0;
         private WorkItem lastCreatedItem;
         private boolean throwExceptionOnCreate = false;
+        
+        @Override
+        public List<WorkItem> findByType(WorkItemType type) {
+            return items.stream()
+                .filter(item -> item.getType() == type)
+                .collect(java.util.stream.Collectors.toList());
+        }
+        
+        @Override
+        public List<WorkItem> findByAssignee(String assignee) {
+            return items.stream()
+                .filter(item -> assignee.equals(item.getAssignee()))
+                .collect(java.util.stream.Collectors.toList());
+        }
+        
+        @Override
+        public WorkItem createWorkItem(WorkItemCreateRequest request) {
+            WorkItem item = new WorkItem();
+            item.setTitle(request.getTitle());
+            item.setDescription(request.getDescription());
+            item.setType(request.getType());
+            item.setPriority(request.getPriority());
+            item.setAssignee(request.getAssignee());
+            item.setReporter(request.getReporter());
+            item.setProject(request.getProject());
+            item.setState(WorkflowState.CREATED);
+            return createItem(item);
+        }
+        
         private boolean throwOutOfMemoryError = false;
         private boolean returnNullOnCreate = false;
         private String exactIdForNextItem;

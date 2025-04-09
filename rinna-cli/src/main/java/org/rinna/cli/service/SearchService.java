@@ -93,11 +93,16 @@ public interface SearchService {
     
     /**
      * Find work items by searching the text content.
+     * This is an alias for searchByText for backward compatibility.
      *
      * @param text the text to search for
      * @return a list of work items containing the text
      */
-    List<WorkItem> findItemsByText(String text);
+    default List<WorkItem> findItemsByText(String text) {
+        return searchByText(text);
+    }
+    
+    /* Removed duplicate searchByText default method */
     
     /**
      * Find work items by metadata.

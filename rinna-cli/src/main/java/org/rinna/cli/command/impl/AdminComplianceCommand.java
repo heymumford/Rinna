@@ -10,6 +10,8 @@ package org.rinna.cli.command.impl;
 
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.service.ComplianceService;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.util.OutputFormatter;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -21,13 +23,17 @@ import java.util.concurrent.Callable;
 /**
  * Command handler for compliance-related operations.
  * This class implements the functionality for the 'rin admin compliance' command.
+ * It follows the ViewCommand pattern with MetadataService integration for operation tracking.
  */
 public class AdminComplianceCommand implements Callable<Integer> {
     
     private String operation;
     private String[] args = new String[0];
     private final ServiceManager serviceManager;
+    private final MetadataService metadataService;
     private final Scanner scanner;
+    private String format = "text";
+    private boolean verbose = false;
     
     /**
      * Creates a new AdminComplianceCommand with the specified ServiceManager.
@@ -36,6 +42,7 @@ public class AdminComplianceCommand implements Callable<Integer> {
      */
     public AdminComplianceCommand(ServiceManager serviceManager) {
         this.serviceManager = serviceManager;
+        this.metadataService = serviceManager.getMetadataService();
         this.scanner = new Scanner(System.in, java.nio.charset.StandardCharsets.UTF_8.name());
     }
     
@@ -63,7 +70,16 @@ public class AdminComplianceCommand implements Callable<Integer> {
      * @param jsonOutput true to use JSON output
      */
     public void setJsonOutput(boolean jsonOutput) {
-        // Not implemented yet
+        this.format = jsonOutput ? "json" : "text";
+    }
+    
+    /**
+     * Sets the output format (text or json).
+     *
+     * @param format the output format
+     */
+    public void setFormat(String format) {
+        this.format = format;
     }
     
     /**
@@ -72,45 +88,89 @@ public class AdminComplianceCommand implements Callable<Integer> {
      * @param verbose true for verbose output
      */
     public void setVerbose(boolean verbose) {
-        // Not implemented yet
+        this.verbose = verbose;
     }
     
     @Override
     public Integer call() {
-        if (operation == null || operation.isEmpty()) {
-            displayHelp();
-            return 1;
+        // Create operation parameters for tracking
+        Map<String, Object> params = new HashMap<>();
+        params.put("operation", operation != null ? operation : "help");
+        params.put("argsCount", args.length);
+        if (args.length > 0) {
+            params.put("arg0", args[0]);
         }
+        params.put("format", format);
+        params.put("verbose", verbose);
         
-        // Get the compliance service
-        ComplianceService complianceService = serviceManager.getComplianceService();
-        if (complianceService == null) {
-            System.err.println("Error: Compliance service is not available.");
-            return 1;
-        }
+        // Start tracking operation
+        String operationId = metadataService.startOperation("admin-compliance", "COMPLIANCE", params);
         
-        // Delegate to the appropriate operation
-        switch (operation) {
-            case "report":
-                return handleReportOperation(complianceService);
-            
-            case "configure":
-                return handleConfigureOperation(complianceService);
-            
-            case "validate":
-                return handleValidateOperation(complianceService);
-            
-            case "status":
-                return handleStatusOperation(complianceService);
-            
-            case "help":
-                displayHelp();
-                return 0;
-            
-            default:
-                System.err.println("Error: Unknown compliance operation: " + operation);
-                displayHelp();
+        try {
+            if (operation == null || operation.isEmpty()) {
+                displayHelp(operationId);
                 return 1;
+            }
+            
+            // Get the compliance service
+            ComplianceService complianceService = serviceManager.getComplianceService();
+            if (complianceService == null) {
+                String errorMessage = "Compliance service is not available.";
+                outputError(errorMessage);
+                metadataService.failOperation(operationId, new IllegalStateException(errorMessage));
+                return 1;
+            }
+            
+            // Delegate to the appropriate operation
+            int result;
+            switch (operation) {
+                case "report":
+                    result = handleReportOperation(complianceService, operationId);
+                    break;
+                
+                case "configure":
+                    result = handleConfigureOperation(complianceService, operationId);
+                    break;
+                
+                case "validate":
+                    result = handleValidateOperation(complianceService, operationId);
+                    break;
+                
+                case "status":
+                    result = handleStatusOperation(complianceService, operationId);
+                    break;
+                
+                case "help":
+                    displayHelp(operationId);
+                    result = 0;
+                    break;
+                
+                default:
+                    String errorMessage = "Unknown compliance operation: " + operation;
+                    System.err.println("Error: " + errorMessage);
+                    displayHelp(operationId);
+                    metadataService.failOperation(operationId, new IllegalArgumentException(errorMessage));
+                    result = 1;
+                    break;
+            }
+            
+            // Complete operation if successful
+            if (result == 0) {
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("success", true);
+                resultData.put("operation", operation);
+                metadataService.completeOperation(operationId, resultData);
+            }
+            
+            return result;
+        } catch (Exception e) {
+            String errorMessage = e.getMessage();
+            outputError(errorMessage);
+            if (verbose) {
+                e.printStackTrace();
+            }
+            metadataService.failOperation(operationId, e);
+            return 1;
         }
     }
     
@@ -118,19 +178,61 @@ public class AdminComplianceCommand implements Callable<Integer> {
      * Handles the 'report' operation to generate compliance reports.
      * 
      * @param complianceService the compliance service
+     * @param parentOperationId the parent operation ID for tracking
      * @return the exit code
      */
-    private int handleReportOperation(ComplianceService complianceService) {
+    private int handleReportOperation(ComplianceService complianceService, String parentOperationId) {
+        // Create operation parameters for tracking
+        Map<String, Object> params = new HashMap<>();
+        params.put("operation", "report");
+        
+        // Parse options from arguments
         Map<String, String> options = parseOptions(args);
+        
         String type = options.getOrDefault("type", "GDPR");
         String period = options.getOrDefault("period", "current");
         
+        params.put("type", type);
+        params.put("period", period);
+        
+        // Start tracking sub-operation
+        String reportOperationId = metadataService.trackOperation("admin-compliance-report", params);
+        
         try {
             String report = complianceService.generateComplianceReport(type, period);
-            System.out.println(report);
+            
+            if ("json".equalsIgnoreCase(format)) {
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("result", "success");
+                resultData.put("operation", "report");
+                
+                Map<String, Object> reportData = new HashMap<>();
+                reportData.put("type", type);
+                reportData.put("period", period);
+                reportData.put("report", report);
+                
+                resultData.put("data", reportData);
+                
+                System.out.println(OutputFormatter.toJson(resultData, verbose));
+            } else {
+                System.out.println(report);
+            }
+            
+            // Track operation success
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("success", true);
+            resultData.put("type", type);
+            resultData.put("period", period);
+            metadataService.completeOperation(reportOperationId, resultData);
+            
             return 0;
         } catch (Exception e) {
-            System.err.println("Error generating compliance report: " + e.getMessage());
+            String errorMessage = "Error generating compliance report: " + e.getMessage();
+            outputError(errorMessage);
+            if (verbose) {
+                e.printStackTrace();
+            }
+            metadataService.failOperation(reportOperationId, e);
             return 1;
         }
     }
@@ -139,76 +241,133 @@ public class AdminComplianceCommand implements Callable<Integer> {
      * Handles the 'configure' operation to set up project compliance.
      * 
      * @param complianceService the compliance service
+     * @param parentOperationId the parent operation ID for tracking
      * @return the exit code
      */
-    private int handleConfigureOperation(ComplianceService complianceService) {
+    private int handleConfigureOperation(ComplianceService complianceService, String parentOperationId) {
+        // Create operation parameters for tracking
+        Map<String, Object> params = new HashMap<>();
+        params.put("operation", "configure");
+        
+        // Parse options from arguments
         Map<String, String> options = parseOptions(args);
+        
         String projectName = options.getOrDefault("project", null);
+        params.put("project", projectName);
         
         if (projectName == null) {
-            System.err.println("Error: Missing required parameter --project.");
+            String errorMessage = "Missing required parameter --project.";
+            outputError(errorMessage);
+            metadataService.trackOperationError(parentOperationId, "configure", errorMessage, 
+                    new IllegalArgumentException(errorMessage));
             return 1;
         }
         
-        System.out.println("Compliance Configuration for Project: " + projectName);
-        System.out.println("-".repeat(projectName.length() + 35));
-        System.out.println();
-        
-        System.out.println("Select applicable compliance frameworks (comma-separated):");
-        System.out.println("1. GDPR - General Data Protection Regulation");
-        System.out.println("2. HIPAA - Health Insurance Portability and Accountability Act");
-        System.out.println("3. SOC2 - Service Organization Control 2");
-        System.out.println("4. PCI-DSS - Payment Card Industry Data Security Standard");
-        System.out.println("5. ISO27001 - Information Security Management");
-        System.out.print("Enter frameworks [1]: ");
-        
-        String frameworksInput = scanner.nextLine().trim();
-        List<String> frameworks;
-        
-        if (frameworksInput.isEmpty()) {
-            frameworks = List.of("GDPR"); // Default
-        } else if (frameworksInput.matches("^[1-5](,[1-5])*$")) {
-            // User entered numbers
-            frameworks = Arrays.stream(frameworksInput.split(","))
-                .map(s -> {
-                    switch (s) {
-                        case "1": return "GDPR";
-                        case "2": return "HIPAA";
-                        case "3": return "SOC2";
-                        case "4": return "PCI-DSS";
-                        case "5": return "ISO27001";
-                        default: return "";
-                    }
-                })
-                .filter(s -> !s.isEmpty())
-                .toList();
-        } else {
-            // User entered framework names
-            frameworks = Arrays.asList(frameworksInput.split("\\s*,\\s*"));
-        }
-        
-        System.out.print("Assign a compliance reviewer (username): ");
-        String reviewer = scanner.nextLine().trim();
-        
-        if (reviewer.isEmpty()) {
-            System.err.println("Error: Compliance reviewer cannot be empty.");
-            return 1;
-        }
+        // Start tracking sub-operation
+        String configureOperationId = metadataService.trackOperation("admin-compliance-configure", params);
         
         try {
-            boolean success = complianceService.configureProjectCompliance(projectName, frameworks, reviewer);
-            if (success) {
-                System.out.println();
-                System.out.println("Compliance configuration updated successfully for project: " + projectName);
-                System.out.println("Frameworks: " + String.join(", ", frameworks));
-                System.out.println("Reviewer: " + reviewer);
-                return 0;
+            if ("json".equalsIgnoreCase(format)) {
+                // In JSON mode, we need parameters passed in the command arguments
+                outputError("Interactive configuration is not supported in JSON mode. Please provide all parameters as command arguments.");
+                metadataService.failOperation(configureOperationId, 
+                        new UnsupportedOperationException("Interactive configuration not supported in JSON mode"));
+                return 1;
+            }
+            
+            System.out.println("Compliance Configuration for Project: " + projectName);
+            System.out.println("-".repeat(projectName.length() + 35));
+            System.out.println();
+            
+            System.out.println("Select applicable compliance frameworks (comma-separated):");
+            System.out.println("1. GDPR - General Data Protection Regulation");
+            System.out.println("2. HIPAA - Health Insurance Portability and Accountability Act");
+            System.out.println("3. SOC2 - Service Organization Control 2");
+            System.out.println("4. PCI-DSS - Payment Card Industry Data Security Standard");
+            System.out.println("5. ISO27001 - Information Security Management");
+            System.out.print("Enter frameworks [1]: ");
+            
+            String frameworksInput = scanner.nextLine().trim();
+            List<String> frameworks;
+            
+            if (frameworksInput.isEmpty()) {
+                frameworks = List.of("GDPR"); // Default
+            } else if (frameworksInput.matches("^[1-5](,[1-5])*$")) {
+                // User entered numbers
+                frameworks = Arrays.stream(frameworksInput.split(","))
+                    .map(s -> {
+                        switch (s) {
+                            case "1": return "GDPR";
+                            case "2": return "HIPAA";
+                            case "3": return "SOC2";
+                            case "4": return "PCI-DSS";
+                            case "5": return "ISO27001";
+                            default: return "";
+                        }
+                    })
+                    .filter(s -> !s.isEmpty())
+                    .toList();
             } else {
-                System.err.println("Error: Failed to update compliance configuration.");
+                // User entered framework names
+                frameworks = Arrays.asList(frameworksInput.split("\\s*,\\s*"));
+            }
+            
+            // Track framework selection
+            metadataService.trackOperationDetail(configureOperationId, "frameworks", frameworks);
+            
+            System.out.print("Assign a compliance reviewer (username): ");
+            String reviewer = scanner.nextLine().trim();
+            
+            if (reviewer.isEmpty()) {
+                String errorMessage = "Compliance reviewer cannot be empty.";
+                outputError(errorMessage);
+                metadataService.trackOperationError(configureOperationId, "reviewer_validation", errorMessage,
+                        new IllegalArgumentException(errorMessage));
+                return 1;
+            }
+            
+            // Track reviewer assignment
+            metadataService.trackOperationDetail(configureOperationId, "reviewer", reviewer);
+            
+            try {
+                boolean success = complianceService.configureProjectCompliance(projectName, frameworks, reviewer);
+                if (success) {
+                    System.out.println();
+                    System.out.println("Compliance configuration updated successfully for project: " + projectName);
+                    System.out.println("Frameworks: " + String.join(", ", frameworks));
+                    System.out.println("Reviewer: " + reviewer);
+                    
+                    // Track operation success
+                    Map<String, Object> resultData = new HashMap<>();
+                    resultData.put("success", true);
+                    resultData.put("project", projectName);
+                    resultData.put("frameworks", frameworks);
+                    resultData.put("reviewer", reviewer);
+                    metadataService.completeOperation(configureOperationId, resultData);
+                    
+                    return 0;
+                } else {
+                    String errorMessage = "Failed to update compliance configuration.";
+                    outputError(errorMessage);
+                    metadataService.failOperation(configureOperationId, new RuntimeException(errorMessage));
+                    return 1;
+                }
+            } catch (Exception e) {
+                String errorMessage = "Error configuring compliance: " + e.getMessage();
+                outputError(errorMessage);
+                if (verbose) {
+                    e.printStackTrace();
+                }
+                metadataService.failOperation(configureOperationId, e);
                 return 1;
             }
         } catch (Exception e) {
-            System.err.println("Error configuring compliance: " + e.getMessage());
+            String errorMessage = "Error in configuration process: " + e.getMessage();
+            outputError(errorMessage);
+            if (verbose) {
+                e.printStackTrace();
+            }
+            metadataService.failOperation(configureOperationId, e);
             return 1;
         }
     }
@@ -217,23 +376,64 @@ public class AdminComplianceCommand implements Callable<Integer> {
      * Handles the 'validate' operation to check project compliance.
      * 
      * @param complianceService the compliance service
+     * @param parentOperationId the parent operation ID for tracking
      * @return the exit code
      */
-    private int handleValidateOperation(ComplianceService complianceService) {
+    private int handleValidateOperation(ComplianceService complianceService, String parentOperationId) {
+        // Create operation parameters for tracking
+        Map<String, Object> params = new HashMap<>();
+        params.put("operation", "validate");
+        
+        // Parse options from arguments
         Map<String, String> options = parseOptions(args);
+        
         String projectName = options.getOrDefault("project", null);
+        params.put("project", projectName);
         
         if (projectName == null) {
-            System.err.println("Error: Missing required parameter --project.");
+            String errorMessage = "Missing required parameter --project.";
+            outputError(errorMessage);
+            metadataService.trackOperationError(parentOperationId, "validate", errorMessage, 
+                    new IllegalArgumentException(errorMessage));
             return 1;
         }
         
+        // Start tracking sub-operation
+        String validateOperationId = metadataService.trackOperation("admin-compliance-validate", params);
+        
         try {
             String validationReport = complianceService.validateProjectCompliance(projectName);
-            System.out.println(validationReport);
+            
+            if ("json".equalsIgnoreCase(format)) {
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("result", "success");
+                resultData.put("operation", "validate");
+                
+                Map<String, Object> validateData = new HashMap<>();
+                validateData.put("project", projectName);
+                validateData.put("report", validationReport);
+                
+                resultData.put("data", validateData);
+                
+                System.out.println(OutputFormatter.toJson(resultData, verbose));
+            } else {
+                System.out.println(validationReport);
+            }
+            
+            // Track operation success
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("success", true);
+            resultData.put("project", projectName);
+            metadataService.completeOperation(validateOperationId, resultData);
+            
             return 0;
         } catch (Exception e) {
-            System.err.println("Error validating compliance: " + e.getMessage());
+            String errorMessage = "Error validating compliance: " + e.getMessage();
+            outputError(errorMessage);
+            if (verbose) {
+                e.printStackTrace();
+            }
+            metadataService.failOperation(validateOperationId, e);
             return 1;
         }
     }
@@ -242,11 +442,22 @@ public class AdminComplianceCommand implements Callable<Integer> {
      * Handles the 'status' operation to display compliance status.
      * 
      * @param complianceService the compliance service
+     * @param parentOperationId the parent operation ID for tracking
      * @return the exit code
      */
-    private int handleStatusOperation(ComplianceService complianceService) {
+    private int handleStatusOperation(ComplianceService complianceService, String parentOperationId) {
+        // Create operation parameters for tracking
+        Map<String, Object> params = new HashMap<>();
+        params.put("operation", "status");
+        
+        // Parse options from arguments
         Map<String, String> options = parseOptions(args);
+        
         String projectName = options.getOrDefault("project", null);
+        params.put("project", projectName);
+        
+        // Start tracking sub-operation
+        String statusOperationId = metadataService.trackOperation("admin-compliance-status", params);
         
         try {
             String status;
@@ -256,10 +467,38 @@ public class AdminComplianceCommand implements Callable<Integer> {
                 status = complianceService.getSystemComplianceStatus();
             }
             
-            System.out.println(status);
+            if ("json".equalsIgnoreCase(format)) {
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("result", "success");
+                resultData.put("operation", "status");
+                
+                Map<String, Object> statusData = new HashMap<>();
+                statusData.put("project", projectName);
+                statusData.put("status", status);
+                statusData.put("scope", projectName != null ? "project" : "system");
+                
+                resultData.put("data", statusData);
+                
+                System.out.println(OutputFormatter.toJson(resultData, verbose));
+            } else {
+                System.out.println(status);
+            }
+            
+            // Track operation success
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("success", true);
+            resultData.put("project", projectName);
+            resultData.put("scope", projectName != null ? "project" : "system");
+            metadataService.completeOperation(statusOperationId, resultData);
+            
             return 0;
         } catch (Exception e) {
-            System.err.println("Error getting compliance status: " + e.getMessage());
+            String errorMessage = "Error getting compliance status: " + e.getMessage();
+            outputError(errorMessage);
+            if (verbose) {
+                e.printStackTrace();
+            }
+            metadataService.failOperation(statusOperationId, e);
             return 1;
         }
     }
@@ -296,30 +535,135 @@ public class AdminComplianceCommand implements Callable<Integer> {
     
     /**
      * Displays help information for compliance commands.
+     * 
+     * @param operationId the parent operation ID for tracking
      */
-    private void displayHelp() {
-        System.out.println("Usage: rin admin compliance <operation> [options]");
-        System.out.println();
-        System.out.println("Operations:");
-        System.out.println("  report     - Generate compliance reports");
-        System.out.println("  configure  - Configure project compliance requirements");
-        System.out.println("  validate   - Validate project against compliance requirements");
-        System.out.println("  status     - Show compliance status");
-        System.out.println();
-        System.out.println("Options for 'report':");
-        System.out.println("  --type=<type>     - Compliance framework (GDPR, HIPAA, SOC2, PCI-DSS, ISO27001)");
-        System.out.println("  --period=<period> - Reporting period (e.g., Q1-2025, current)");
-        System.out.println();
-        System.out.println("Options for 'configure':");
-        System.out.println("  --project=<name>  - Project to configure");
-        System.out.println();
-        System.out.println("Options for 'validate':");
-        System.out.println("  --project=<name>  - Project to validate");
-        System.out.println();
-        System.out.println("Options for 'status':");
-        System.out.println("  --project=<name>  - Project to check (optional, defaults to system-wide)");
-        System.out.println();
-        System.out.println("For detailed help on a specific operation, use:");
-        System.out.println("  rin admin compliance <operation> help");
+    private void displayHelp(String operationId) {
+        // Create operation parameters for tracking
+        Map<String, Object> helpData = new HashMap<>();
+        helpData.put("command", "admin compliance");
+        helpData.put("action", "help");
+        helpData.put("format", format);
+        
+        // Start tracking sub-operation
+        String helpOperationId = metadataService.trackOperation("admin-compliance-help", helpData);
+        
+        try {
+            if ("json".equalsIgnoreCase(format)) {
+                Map<String, Object> jsonHelpData = new HashMap<>();
+                jsonHelpData.put("result", "success");
+                jsonHelpData.put("command", "admin compliance");
+                jsonHelpData.put("usage", "rin admin compliance <operation> [options]");
+                
+                List<Map<String, String>> operations = new ArrayList<>();
+                operations.add(createInfoMap("report", "Generate compliance reports"));
+                operations.add(createInfoMap("configure", "Configure project compliance requirements"));
+                operations.add(createInfoMap("validate", "Validate project against compliance requirements"));
+                operations.add(createInfoMap("status", "Show compliance status"));
+                jsonHelpData.put("operations", operations);
+                
+                Map<String, List<Map<String, String>>> operationOptions = new HashMap<>();
+                
+                List<Map<String, String>> reportOptions = new ArrayList<>();
+                reportOptions.add(createInfoMap("--type=<type>", "Compliance framework (GDPR, HIPAA, SOC2, PCI-DSS, ISO27001)"));
+                reportOptions.add(createInfoMap("--period=<period>", "Reporting period (e.g., Q1-2025, current)"));
+                operationOptions.put("report", reportOptions);
+                
+                List<Map<String, String>> configureOptions = new ArrayList<>();
+                configureOptions.add(createInfoMap("--project=<name>", "Project to configure"));
+                operationOptions.put("configure", configureOptions);
+                
+                List<Map<String, String>> validateOptions = new ArrayList<>();
+                validateOptions.add(createInfoMap("--project=<name>", "Project to validate"));
+                operationOptions.put("validate", validateOptions);
+                
+                List<Map<String, String>> statusOptions = new ArrayList<>();
+                statusOptions.add(createInfoMap("--project=<name>", "Project to check (optional, defaults to system-wide)"));
+                operationOptions.put("status", statusOptions);
+                
+                jsonHelpData.put("operation_options", operationOptions);
+                
+                System.out.println(OutputFormatter.toJson(jsonHelpData, verbose));
+            } else {
+                System.out.println("Usage: rin admin compliance <operation> [options]");
+                System.out.println();
+                System.out.println("Operations:");
+                System.out.println("  report     - Generate compliance reports");
+                System.out.println("  configure  - Configure project compliance requirements");
+                System.out.println("  validate   - Validate project against compliance requirements");
+                System.out.println("  status     - Show compliance status");
+                System.out.println();
+                System.out.println("Options for 'report':");
+                System.out.println("  --type=<type>     - Compliance framework (GDPR, HIPAA, SOC2, PCI-DSS, ISO27001)");
+                System.out.println("  --period=<period> - Reporting period (e.g., Q1-2025, current)");
+                System.out.println();
+                System.out.println("Options for 'configure':");
+                System.out.println("  --project=<name>  - Project to configure");
+                System.out.println();
+                System.out.println("Options for 'validate':");
+                System.out.println("  --project=<name>  - Project to validate");
+                System.out.println();
+                System.out.println("Options for 'status':");
+                System.out.println("  --project=<name>  - Project to check (optional, defaults to system-wide)");
+                System.out.println();
+                System.out.println("For detailed help on a specific operation, use:");
+                System.out.println("  rin admin compliance <operation> help");
+            }
+            
+            // Track operation success
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("success", true);
+            resultData.put("format", format);
+            metadataService.completeOperation(helpOperationId, resultData);
+        } catch (Exception e) {
+            metadataService.failOperation(helpOperationId, e);
+            throw e; // Rethrow to be caught by caller
+        }
+    }
+    
+    /**
+     * Outputs an error message in either JSON or text format.
+     *
+     * @param message the error message
+     */
+    private void outputError(String message) {
+        if ("json".equalsIgnoreCase(format)) {
+            Map<String, Object> errorData = new HashMap<>();
+            errorData.put("result", "error");
+            errorData.put("message", message);
+            System.out.println(OutputFormatter.toJson(errorData, verbose));
+        } else {
+            System.err.println("Error: " + message);
+        }
+    }
+    
+    /**
+     * Outputs a success message or data in either JSON or text format.
+     *
+     * @param message the success message or data
+     */
+    private void outputSuccess(String message) {
+        if ("json".equalsIgnoreCase(format)) {
+            Map<String, Object> successData = new HashMap<>();
+            successData.put("result", "success");
+            successData.put("message", message);
+            System.out.println(OutputFormatter.toJson(successData, verbose));
+        } else {
+            System.out.println(message);
+        }
+    }
+    
+    /**
+     * Creates a map with name and description keys.
+     *
+     * @param name the name
+     * @param description the description
+     * @return the map
+     */
+    private Map<String, String> createInfoMap(String name, String description) {
+        Map<String, String> map = new HashMap<>();
+        map.put("name", name);
+        map.put("description", description);
+        return map;
     }
 }

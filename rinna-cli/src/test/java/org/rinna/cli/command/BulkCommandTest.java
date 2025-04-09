@@ -253,7 +253,7 @@ public class BulkCommandTest {
     @Test
     public void testCustomFieldsUpdate() {
         // Setup test data and mocks
-        when(searchService.findItemsByText("authentication")).thenReturn(Arrays.asList(testItems.get(0)));
+        when(searchService.searchByText("authentication")).thenReturn(Arrays.asList(testItems.get(0)));
         
         // Set filter and custom field update
         command.setFilter("text", "authentication");
@@ -305,7 +305,7 @@ public class BulkCommandTest {
     @Test
     public void testNoMatchingItems() {
         // Setup mocks to return empty list
-        when(searchService.findItemsByText("nonexistent")).thenReturn(List.of());
+        when(searchService.searchByText("nonexistent")).thenReturn(List.of());
         
         // Set filter and update
         command.setFilter("text", "nonexistent");

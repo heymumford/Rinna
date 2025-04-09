@@ -156,16 +156,7 @@ public class MockSearchService implements SearchService {
         return results;
     }
     
-    /**
-     * Find work items by searching the text content.
-     *
-     * @param text the text to search for
-     * @return a list of work items containing the text
-     */
-    @Override
-    public List<WorkItem> findItemsByText(String text) {
-        return findText(text);
-    }
+    // Using default implementation of findItemsByText from the interface
     
     /**
      * Find work items by metadata.

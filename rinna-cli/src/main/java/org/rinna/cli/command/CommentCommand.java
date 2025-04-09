@@ -447,4 +447,22 @@ public class CommentCommand implements Callable<Integer> {
         this.verbose = verbose;
         return this;
     }
+    
+    /**
+     * Gets the comment text.
+     * 
+     * @return the comment text
+     */
+    public String getComment() {
+        return commentText;
+    }
+    
+    /**
+     * Gets the item ID.
+     * 
+     * @return the item ID
+     */
+    public UUID getItemId() {
+        return itemId;
+    }
 }

@@ -84,8 +84,8 @@ class UpdateCommandTest {
         mockItemService.addTestItem(testItem);
         
         // Set up mock service manager
-        when(mockServiceManager.getMockItemService()).thenReturn(mockItemService);
-        when(mockServiceManager.getMockWorkflowService()).thenReturn(mockWorkflowService);
+        when(mockServiceManager.getItemService()).thenReturn(mockItemService);
+        when(mockServiceManager.getWorkflowService()).thenReturn(mockWorkflowService);
         when(mockServiceManager.getConfigurationService()).thenReturn(mockConfigService);
     }
     
@@ -1372,6 +1372,45 @@ class UpdateCommandTest {
             return null;
         }
         
+        @Override
+        public WorkItem updateCustomFields(String id, Map<String, String> customFields) {
+            // Not implemented for testing
+            return null;
+        }
+        
+        @Override
+        public WorkItem updateAssignee(String id, String assignee) {
+            WorkItem item = getItem(id);
+            if (item != null) {
+                item.setAssignee(assignee);
+                return item;
+            }
+            return null;
+        }
+        
+        @Override
+        public WorkItem createWorkItem(WorkItemCreateRequest request) {
+            // Not implemented for testing
+            return null;
+        }
+        
+        @Override
+        public List<WorkItem> findByAssignee(String assignee) {
+            // Not implemented for testing
+            return Collections.emptyList();
+        }
+        
+        @Override
+        public List<WorkItem> findByType(WorkItemType type) {
+            // Not implemented for testing
+            return Collections.emptyList();
+        }
+        
+        @Override
+        public List<WorkItem> getAllWorkItems() {
+            return getAllItems();
+        }
+        
         // Getters for test verification
         public int getGetItemCallCount() {
             return getItemCallCount;
@@ -1637,7 +1676,7 @@ class UpdateCommandTest {
     /**
      * Mock implementation of ConfigurationService for testing.
      */
-    private static class MockConfigurationService extends ConfigurationService {
+    private static class MockConfigurationService implements ConfigurationService {
         private String currentUser;
         private String currentProject;
         private boolean getCurrentUserWasCalled = false;
@@ -1677,6 +1716,47 @@ class UpdateCommandTest {
         
         public boolean getCurrentProjectWasCalled() {
             return getCurrentProjectWasCalled;
+        }
+        
+        // Implement other required methods with default implementations
+        @Override
+        public String getServerUrl() {
+            return "http://localhost:8080";
+        }
+        
+        @Override
+        public boolean isAuthenticated() {
+            return currentUser != null;
+        }
+        
+        @Override
+        public String getAuthToken() {
+            return "test-token";
+        }
+        
+        @Override
+        public String getDefaultVersion() {
+            return "1.0";
+        }
+        
+        @Override
+        public String getDefaultBugAssignee() {
+            return "bugfixer";
+        }
+        
+        @Override
+        public boolean getAutoAssignBugs() {
+            return true;
+        }
+        
+        @Override
+        public String getProperty(String key, String defaultValue) {
+            return defaultValue;
+        }
+        
+        @Override
+        public boolean isRemoteServicesAvailable() {
+            return false;
         }
     }
     

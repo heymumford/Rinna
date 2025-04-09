@@ -23,6 +23,7 @@ import org.rinna.cli.messaging.MessageService;
 import org.rinna.cli.messaging.MessageStatus;
 import org.rinna.cli.messaging.RinnaMessage;
 import org.rinna.cli.service.ConfigurationService;
+import org.rinna.cli.service.DefaultConfigurationService;
 import org.rinna.cli.service.MockMessageService;
 import org.rinna.cli.service.ProjectContext;
 import org.rinna.cli.service.ServiceManager;
@@ -64,7 +65,7 @@ class MsgCommandTest {
     
     private ServiceManager mockServiceManager;
     private MessageService mockMessageService;
-    private ConfigurationService mockConfigService;
+    private DefaultConfigurationService mockConfigService;
     private ProjectContext mockProjectContext;
     
     private MsgCommand command;
@@ -86,7 +87,7 @@ class MsgCommandTest {
         // Create mocks
         mockServiceManager = Mockito.mock(ServiceManager.class);
         mockMessageService = Mockito.mock(MessageService.class);
-        mockConfigService = Mockito.mock(ConfigurationService.class);
+        mockConfigService = Mockito.mock(DefaultConfigurationService.class);
         mockProjectContext = Mockito.mock(ProjectContext.class);
         
         // Configure mocks

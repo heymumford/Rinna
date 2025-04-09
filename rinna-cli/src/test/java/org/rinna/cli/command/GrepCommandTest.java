@@ -1390,7 +1390,7 @@ public class GrepCommandTest {
                     itemId2, 
                     "Authentication documentation", 
                     "Create comprehensive authentication documentation",
-                    WorkItemType.DOCUMENTATION,
+                    WorkItemType.TASK,
                     Priority.MEDIUM,
                     WorkflowState.READY
                 );

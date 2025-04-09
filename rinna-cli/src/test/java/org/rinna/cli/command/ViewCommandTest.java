@@ -1127,12 +1127,12 @@ public class ViewCommandTest {
         }
         
         @Override
-        public boolean updateItem(String id, WorkItem item) {
-            if (items.containsKey(id)) {
-                items.put(id, item);
-                return true;
+        public WorkItem updateItem(WorkItem item) {
+            if (items.containsKey(item.getId())) {
+                items.put(item.getId(), item);
+                return item;
             }
-            return false;
+            return null;
         }
         
         @Override
@@ -1141,8 +1141,68 @@ public class ViewCommandTest {
         }
         
         @Override
-        public List<WorkItem> findItems() {
+        public WorkItem findItemByShortId(String shortId) {
+            return null;
+        }
+        
+        @Override
+        public WorkItem updateTitle(UUID id, String title, String user) {
+            return null;
+        }
+        
+        @Override
+        public WorkItem updateDescription(UUID id, String description, String user) {
+            return null;
+        }
+        
+        @Override
+        public WorkItem updateField(UUID id, String field, String value, String user) {
+            return null;
+        }
+        
+        @Override
+        public WorkItem assignTo(UUID id, String assignee, String user) {
+            return null;
+        }
+        
+        @Override
+        public WorkItem updatePriority(UUID id, Priority priority, String user) {
+            return null;
+        }
+        
+        @Override
+        public WorkItem updateCustomFields(String id, java.util.Map<String, String> customFields) {
+            return null;
+        }
+        
+        @Override
+        public WorkItem updateAssignee(String id, String assignee) {
+            return null;
+        }
+        
+        @Override
+        public WorkItem createWorkItem(org.rinna.cli.model.WorkItemCreateRequest request) {
+            return null;
+        }
+        
+        @Override
+        public java.util.List<WorkItem> findByAssignee(String assignee) {
             return java.util.Collections.emptyList();
+        }
+        
+        @Override
+        public java.util.List<WorkItem> findByType(WorkItemType type) {
+            return java.util.Collections.emptyList();
+        }
+        
+        @Override
+        public java.util.List<WorkItem> getAllWorkItems() {
+            return new java.util.ArrayList<>(items.values());
+        }
+        
+        @Override
+        public java.util.List<WorkItem> getAllItems() {
+            return new java.util.ArrayList<>(items.values());
         }
     }
 }

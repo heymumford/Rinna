@@ -94,9 +94,9 @@ public class BulkCommandComponentTest {
         createTestData();
         
         // Configure mock services
-        when(serviceManager.getMockItemService()).thenReturn(itemService);
-        when(serviceManager.getMockWorkflowService()).thenReturn(workflowService);
-        when(serviceManager.getMockSearchService()).thenReturn(searchService);
+        when(serviceManager.getItemService()).thenReturn(itemService);
+        when(serviceManager.getWorkflowService()).thenReturn(workflowService);
+        when(serviceManager.getSearchService()).thenReturn(searchService);
         when(serviceManager.getMetadataService()).thenReturn(metadataService);
         when(serviceManager.getConfigurationService()).thenReturn(configService);
         
@@ -126,7 +126,7 @@ public class BulkCommandComponentTest {
             if (i % 3 == 0) {
                 item.setState(WorkflowState.IN_PROGRESS);
             } else if (i % 3 == 1) {
-                item.setState(WorkflowState.TODO);
+                item.setState(WorkflowState.CREATED);
             } else {
                 item.setState(WorkflowState.READY);
             }
@@ -204,11 +204,11 @@ public class BulkCommandComponentTest {
     @Test
     public void testComplexFilteringScenario() {
         // Setup mocks for the service responses
-        when(searchService.findItemsByText("Test")).thenReturn(testItems);
+        when(searchService.searchByText("Test")).thenReturn(testItems);
         
         // Configure command
         command.setFilter("text", "Test")  // Primary filter
-               .setFilter("status", "TODO") // Secondary filter
+               .setFilter("status", "CREATED") // Secondary filter
                .setFilter("assignee", "user1") // Tertiary filter
                .setUpdate("set-priority", "HIGH")
                .setUpdate("set-status", "IN_PROGRESS");
@@ -250,8 +250,9 @@ public class BulkCommandComponentTest {
         verify(metadataService).completeOperation(eq("op-main"), any());
         
         // Verify service interactions
-        verify(searchService).findItemsByText("Test");
-        verify(workflowService, atLeastOnce()).transition(anyString(), eq("testuser"), eq(WorkflowState.IN_PROGRESS), anyString());
+        verify(searchService).searchByText("Test");
+        // Use explicit UUID type for the first parameter to avoid ambiguity
+        verify(workflowService, atLeastOnce()).transition(any(String.class), eq("testuser"), eq(WorkflowState.IN_PROGRESS), anyString());
         verify(itemService, atLeastOnce()).updatePriority(any(), eq(Priority.HIGH), eq("testuser"));
         
         // Verify output
@@ -262,11 +263,11 @@ public class BulkCommandComponentTest {
     @Test
     public void testCustomFieldsWithJsonOutput() {
         // Setup mocks
-        when(workflowService.findByStatus(WorkflowState.TODO)).thenReturn(
-            testItems.stream().filter(i -> i.getState() == WorkflowState.TODO).toList());
+        when(workflowService.findByStatus(WorkflowState.CREATED)).thenReturn(
+            testItems.stream().filter(i -> i.getState() == WorkflowState.CREATED).toList());
         
         // Configure command
-        command.setFilter("status", "TODO")
+        command.setFilter("status", "CREATED")
                .setUpdate("field-component", "ui")
                .setUpdate("field-effort", "3")
                .setUpdate("field-reviewer", "seniordev")
@@ -305,8 +306,8 @@ public class BulkCommandComponentTest {
     @Test
     public void testErrorHandlingAndOperationFailure() {
         // Setup mocks
-        when(workflowService.findByStatus(WorkflowState.TODO)).thenReturn(
-            testItems.stream().filter(i -> i.getState() == WorkflowState.TODO).toList());
+        when(workflowService.findByStatus(WorkflowState.CREATED)).thenReturn(
+            testItems.stream().filter(i -> i.getState() == WorkflowState.CREATED).toList());
         
         // Configure command with invalid status
         command.setFilter("status", "TODO")
@@ -389,7 +390,8 @@ public class BulkCommandComponentTest {
     @Test
     public void testMultipleUpdateTypes() {
         // Setup mocks
-        when(searchService.findItemsByMetadata(any())).thenReturn(testItems.subList(0, 2));
+        Map<String, String> metadata = Map.of("project", "TestProject");
+        when(searchService.findItemsByMetadata(eq(metadata))).thenReturn(testItems.subList(0, 2));
         
         // Configure command with multiple update types
         command.setFilter("project", "TestProject")

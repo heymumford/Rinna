@@ -1,296 +1,179 @@
-# CLI Module Fixes Progress
+# CLI Module Command Implementation Progress
 
-## Completed Tasks
+This document tracks progress updating CLI commands to use the ViewCommand pattern with proper MetadataService integration.
 
-1. **Fixed Java 21 Features**
-   - Converted string templates (`STR."..."`) to standard string concatenation in core module
-   - Updated multiple files including:
-     - `DefaultQueueService.java`
-     - `DefaultDocumentService.java`
-     - `DefaultWorkflowService.java`
-     - `DefaultItemService.java`
-     - `InvalidTransitionException.java`
+## Command Update Status
 
-2. **Implemented Service Interfaces**
-   - Implemented domain `BacklogService` interface in `MockBacklogService`
-   - Enhanced the ServiceManager to properly expose domain interfaces
-   - Fixed `MockWorkflowService` to properly implement domain `WorkflowService` interface
+| Command | Status | Date | Notes |
+|---------|--------|------|-------|
+| ViewCommand | ✅ Done | Prior | Reference implementation pattern |
+| BugCommand | ✅ Done | Prior | Updated to match ViewCommand pattern |
+| LoginCommand | ✅ Done | Prior | Updated to match ViewCommand pattern |
+| LogoutCommand | ✅ Done | Prior | Updated to match ViewCommand pattern |
+| GrepCommand | ✅ Done | 2025-04-08 | Added MetadataService integration and operation tracking |
+| StatsCommand | ✅ Done | 2025-04-08 | Added MetadataService integration and operation tracking |
+| MsgCommand | ✅ Done | 2025-04-08 | Added MetadataService integration and operation tracking |
+| CriticalPathCommand | ✅ Done | Prior | Already using the ViewCommand pattern |
+| AddCommand | ✅ Done | Prior | Already using the ViewCommand pattern |
+| ListCommand | ✅ Done | Prior | Already using the ViewCommand pattern |
+| UpdateCommand | ✅ Done | 2025-04-08 | Updated to use MetadataService with proper operation tracking |
+| ImportCommand | ✅ Done | 2025-04-08 | Updated to use MetadataService with proper operation tracking |
+| BacklogCommand | ✅ Done | 2025-04-08 | Updated to use MetadataService with proper operation tracking |
+| LsCommand | ✅ Done | 2025-04-08 | Added JSON output format support and MetadataService integration |
+| CatCommand | ✅ Done | 2025-04-08 | Added JSON output format support and MetadataService integration |
+| UserAccessCommand | ✅ Done | 2025-04-08 | Updated all action handlers with operation tracking |
+| FindCommand | ✅ Done | 2025-04-08 | Added JSON output format and operation tracking |
+| OperationsCommand | ✅ Done | 2025-04-08 | Enhanced with OutputFormatter and operation tracking |
+| DoneCommand | ✅ Done | 2025-04-08 | Added JSON output support and MetadataService integration |
+| HistoryCommand | ✅ Done | 2025-04-08 | Updated with MetadataService integration and OutputFormatter |
+| AdminCommand | ✅ Done | 2025-04-08 | Added MetadataService integration and cascading operation tracking |
+| EditCommand | ✅ Done | 2025-04-08 | Added MetadataService integration with field-level tracking and OutputFormatter |
+| UndoCommand | ✅ Done | 2025-04-08 | Added MetadataService integration with multi-level operation tracking and OutputFormatter |
+| ScheduleCommand | ✅ Done | 2025-04-08 | Added hierarchical operation tracking with sub-operations and improved format handling |
+| ReportCommand | ✅ Done | 2025-04-08 | Added multi-level operation tracking for config creation and report generation |
+| CommentCommand | ✅ Done | 2025-04-08 | Added hierarchical operation tracking for validation, resolution, and display |
+| TestCommand | ✅ Done | 2025-04-08 | Added hierarchical operation tracking with format-specific output methods |
+| ServerCommand | ✅ Done | 2025-04-08 | Added comprehensive service operation tracking with sub-operations for service management |
+| NotifyCommand | ✅ Done | 2025-04-08 | Added detailed operation tracking for notification management and user interaction |
+| WorkflowCommand | ✅ Done | 2025-04-08 | Added hierarchical operation tracking for state transitions with validation and error handling |
+| BulkCommand | ✅ Done | 2025-04-08 | Added hierarchical operation tracking for bulk updates with per-field and per-item tracking |
 
-3. **Created CLI-Specific Support Classes**
-   - Created CLI-specific `InvalidTransitionException` to match the domain version
-   - Added proper exception handling in adapter methods
-   - Added proper type conversion between CLI and domain models
+## Pattern Implementation Summary
 
-4. **Implemented Complete Adapter Pattern**
-   - Created all necessary adapter classes that implement domain interfaces (8 of 8 completed)
-   - Implemented comprehensive ServiceFactory to centralize service creation
-   - Updated ServiceManager to properly manage both CLI and domain service instances
-   - Created bidirectional model conversion for all service adapters
+The ViewCommand pattern includes the following key components:
 
-## Today's Progress (4/7/2025)
+1. **Constructor Consistency**: Both default constructor and service-injected constructor
+   ```java
+   public CommandName() {
+       this(ServiceManager.getInstance());
+   }
+   
+   public CommandName(ServiceManager serviceManager) {
+       this.serviceManager = serviceManager;
+       this.metadataService = serviceManager.getMetadataService();
+       // Other service initialization
+   }
+   ```
 
-1. **Implemented Missing Adapter**
-   - Completed RecoveryServiceAdapter implementation
-   - Created proper bidirectional model conversion for recovery-related types
-   - Extended ServiceFactory with recovery service creation methods
-   - Updated ServiceManager to properly initialize and manage domain recovery service
+2. **Operation Tracking**: Standard pattern for tracking command operations
+   ```java
+   // Start tracking with parameters
+   Map<String, Object> params = new HashMap<>();
+   params.put("param1", value1);
+   String operationId = metadataService.startOperation("command-name", "OPERATION_TYPE", params);
+   
+   try {
+       // Command implementation
+       
+       // Success tracking
+       Map<String, Object> result = new HashMap<>();
+       result.put("result_key", resultValue);
+       metadataService.completeOperation(operationId, result);
+       return 0;
+   } catch (Exception e) {
+       // Error tracking
+       metadataService.failOperation(operationId, e);
+       return 1;
+   }
+   ```
 
-2. **Completed Adapter Implementation**
-   - Finalized all adapter implementations (8 of 8 completed)
-   - Created complete set of adapter classes that implement domain interfaces:
-     - ✅ WorkflowServiceAdapter
-     - ✅ BacklogServiceAdapter
-     - ✅ ItemServiceAdapter
-     - ✅ CommentServiceAdapter
-     - ✅ HistoryServiceAdapter
-     - ✅ SearchServiceAdapter
-     - ✅ MonitoringServiceAdapter
-     - ✅ RecoveryServiceAdapter
+3. **Method Signatures**: For helper methods, include operation ID parameter
+   ```java
+   private int helperMethod(String param, String operationId) {
+       // Method implementation
+       
+       // Success tracking
+       Map<String, Object> result = new HashMap<>();
+       result.put("result_key", resultValue);
+       metadataService.completeOperation(operationId, result);
+       return 0;
+   }
+   ```
 
-3. **Enhanced Service Management**
-   - Ensured all services are properly initialized in ServiceManager
-   - Updated ServiceManager interface to expose both CLI and domain service variants
-   - Used consistent patterns for service creation and management
-   - Ensured proper typecasting for all service types
+4. **Common Parameters**: Standard parameters for configuration
+   ```java
+   private String format = "text"; // Output format
+   private boolean verbose = false; // Verbose output flag
+   ```
 
-## Today's Progress (4/7/2025 - continued)
-
-1. **Implemented Local Domain Model Classes**
-   - Created domain-specific model classes in the CLI module to resolve dependency issues
-   - Added DomainWorkItem, DomainWorkItemType, DomainWorkflowState, and DomainPriority
-   - Added domain service interfaces to the CLI module
-   - Implemented local InvalidTransitionException for domain-to-CLI exception translation
-
-2. **Enhanced Mapping Utilities**
-   - Extended ModelMapper to work with domain model classes
-   - Added bidirectional conversion methods for all model types
-   - Added new methods to StateMapper for domain<->CLI enum conversions
-   - Ensured proper error handling for invalid enum conversions
-
-3. **Updated CLI Commands**
-   - Updated several commands to use the ServiceManager with the new adapters:
-     - ViewCommand now uses ItemService to retrieve work items
-     - DoneCommand now uses WorkflowService for state transitions
-     - AddCommand now uses ItemService to create work items
-     - ListCommand now uses SearchService for filtering and sorting
-     - UpdateCommand now handles both field updates and transitions
-     - BugCommand now uses ItemService to create bug records
-     - CommentCommand now uses CommentService to add comments
-     - HistoryCommand now uses HistoryService to retrieve history
-     - UndoCommand now uses history and service adapters for change reversal
-     - StatsCommand now uses proper service adapters for statistics
-     - AdminCommand now uses proper service adapters for admin functionality
-     - NotifyCommand now uses NotificationService with proper error handling
-     - ServerCommand now uses service status tracking with proper error handling
-   - Added proper error handling for service interactions
-   - Enhanced command output with more detailed information
-   - Added JSON output support for better integration with external tools
-   - Improved error messages and user guidance throughout
-   - Added verbose output mode for detailed diagnostics
-
-## Today's Progress (4/7/2025 - final)
-
-1. **Implemented Operation Metadata Tracking**
-   - Created MetadataService interface for operation tracking
-   - Implemented MockMetadataService with in-memory storage
-   - Added operation tracking to ServiceManager
-   - Updated AddCommand with comprehensive metadata tracking
-   - Created OperationsCommand for managing metadata
-   - Added JSON output and verbose mode support for metadata operations
-   - Integrated metadata tracking with existing audit service
-   - Added detailed statistics for command execution
-   - Implemented parameters and result tracking for all operations
-   - Added secure error tracking with contextual information
-   - Ensure comprehensive traceability across command executions
-   - Added operation history retention management
-
-2. **Enhanced ServiceManager Integration**
-   - Updated ServiceManager to expose the MetadataService
-   - Ensured singleton pattern for metadata tracking
-   - Added proper API for retrieving metadata service
-   - Established consistent error handling patterns
-   - Improved service lifecycle management
-   - Added parameter sanitization for sensitive data
-
-3. **Completed JSON Output Support**
-   - Standardized JSON output format across all commands
-   - Added proper escaping for JSON strings
-   - Ensured consistent error response format in JSON
-   - Improved feedback with operation IDs for tracking
-   - Implemented uniform JSON structure for all commands
-   - Added verbose mode indicators in JSON output
-   - Ensured proper error handling in both text and JSON modes
-
-## Today's Progress (4/8/2025)
-
-1. **Implemented Core Command Updates**
-   - Updated CriticalPathCommand to use the ModelMapper and service architecture
-   - Created OutputFormatter utility for standardized output formatting
-   - Implemented UpdateCommand with comprehensive ModelMapper integration
-   - Added proper service initialization with ServiceManager
-   - Enhanced error handling with contextualized exception messages
-   - Added verbose output mode for detailed diagnostics
-   - Implemented JSON output with standardized format
-   - Integrated metadata tracking for operation traceability
-   - Enhanced UpdateCommand to respect workflow transitions
-   - Added backward compatibility support for existing workflows
-   - Improved error reporting with specific guidance
-   - Ensured proper input validation across all commands
-
-2. **Enhanced ModelMapper Implementation**
-   - Added support for immutable WorkItemRecord class
-   - Implemented record-aware conversion mechanisms
-   - Added special handling for Java Record classes using reflection
-   - Enhanced bidirectional conversion between CLI and domain models
-   - Added support for Optional fields in core domain models
-   - Improved error handling for property access in record classes
-   - Added direct accessor method support for Java Records
-   - Maintained backward compatibility with older model implementations
-   - Enhanced field mapping with proper type conversion for all model types
-   - Extended model conversion with proper handling of project and visibility fields
-   - Ensured robust UUID handling across model boundaries
-
-3. **Updated ViewCommand Implementation**
-   - Enhanced with proper ServiceManager integration
-   - Implemented comprehensive metadata tracking with MetadataService
-   - Added JSON output support with OutputFormatter
-   - Implemented robust error handling with proper context
-   - Enhanced output formatting with null-safety
-   - Added support for verbose mode with additional details
-   - Improved field handling with proper null checks
-   - Implemented proper ModelMapper usage for UUID conversion
-   - Created support for operation tracking with proper lifecycle
-   - Added detailed error reporting for diagnostic purposes
-
-## Today's Progress (4/8/2025 - continued)
-
-1. **Improved Record Class Handling in ModelMapper**
-   - Added robust Java Record detection with fallback mechanism for different Java versions
-   - Implemented a dedicated `isRecord()` method with proper error handling
-   - Enhanced record handling with comprehensive tests
-   - Added verification tests for record to CLI model conversion
-   - Created tests for Optional field handling in Record classes
-   - Added mockito-based tests for record class functionality
-   - Enhanced test coverage for edge case handling
-   - Improved reflection-based property access with better error handling
-   - Ensured proper record detection in both modern and legacy Java environments
-   - Added compatibility with different Record implementation approaches
-   - Fixed record detection to work with future Java versions
-   - Made the record detection more robust against reflection exceptions
-
-2. **Implemented Reporting Command Updates**
-   - Updated ScheduleCommand to use the ModelMapper and service architecture
-   - Enhanced ReportService integration with proper type conversion
-   - Added absolute path resolution for report output files
-   - Implemented next run time calculation for scheduled reports 
-   - Added metadata tracking for report scheduling operations
-   - Enhanced JSON output support for reporting commands
-   - Improved error handling with detailed diagnostics
-   - Created MockReportService with comprehensive report management
-   - Added report type and format parsing with fuzzy matching
-   - Extended ServiceFactory with report service creation methods
-   - Updated ServiceManager to initialize and manage report services
-   - Implemented backward compatibility for existing report formats
-
-3. **Extended Reporting Functionality**
-   - Implemented ReportCommand with ServiceManager integration
-   - Enhanced OutputFormatter with static JSON conversion methods 
-   - Added robust error handling with contextual error messages
-   - Implemented JSON output for report results with file metadata
-   - Added comprehensive operation metadata tracking
-   - Improved output formatting for both text and JSON modes
-   - Added path resolution for consistent absolute paths
-   - Enhanced date parsing with proper error handling
-   - Implemented verbose mode for detailed diagnostic output
-   - Ensured backward compatibility with existing report templates
-   - Improved consistency in how CLI commands handle errors
-   - Enhanced security with proper parameter validation
-
-4. **Enhanced Comment Command Implementation**
-   - Refactored CommentCommand to use ServiceManager properly
-   - Added structured error handling with contextual diagnostics
-   - Implemented operation metadata tracking for audit purposes
-   - Enhanced JSON output with standardized format for compatibility
-   - Added helper methods for different output formats
-   - Improved code structure with smaller, focused methods
-   - Enhanced error message clarity for better user guidance
-   - Added verbose output option for detailed error information
-   - Implemented JSON comment representation through data mapping
-   - Streamlined code with functional programming for comment listing
-   - Added proper parameter validation for robust operation
-   - Enhanced comment display formatting for better readability
-
-## Current Issues
-
-1. **Dependency Resolution**
-   - Maven is having issues installing the rinna-core module to the local repository
-   - Fixed the assembly plugin configuration in the core module
-   - Created local domain model classes to resolve dependency issues
-   - Created temporary workaround with local interfaces in the CLI module
-
-2. **Compatibility Between Models**
-   - Ensured proper data conversion between CLI and domain models
-   - Added bidirectional model conversions and type mapping
-   - Implemented error handling for conversion failures
-   - Fixed missing fields in the WorkItem model (reporter, version)
-
-3. **Filtering and Query Support**
-   - Enhanced ItemService with filtering capabilities
-   - Added support for short ID formats (e.g., "BUG-123") in commands
-   - Implemented isVisible() method for permission checks
-   - Added utility methods for converting between different ID formats
+5. **Consistent Error Handling**: Common approach for error handling
+   ```java
+   try {
+       // Command implementation
+   } catch (Exception e) {
+       System.err.println("Error: " + e.getMessage());
+       if (verbose) {
+           e.printStackTrace();
+       }
+       metadataService.failOperation(operationId, e);
+       return 1;
+   }
+   ```
 
 ## Next Steps
 
-1. **Complete Command Implementation Updates**
-   - Update the remaining specialized CLI commands:
-     - ✅ AdminCommand for admin user functionality
-     - ✅ ServerCommand for server interaction
-     - ✅ NotifyCommand for notification handling
-   - ✅ Add proper metadata tracking across all operations
-   - ✅ Implement consistent CLI output formatting across all commands
-
-2. **Testing and Validation**
-   - Create unit tests for the adapter classes
-   - Test bidirectional model conversion
-   - End-to-end testing of CLI commands
-   - Create integration tests for CLI-core interaction
-
-3. **Service Lifecycle Management**
-   - Implement proper service initialization and shutdown
-   - Add configuration options for services
-   - Create better error handling for service dependencies
-   - Improve error recovery for service failures
-
-4. **User Experience Improvements**
-   - ✅ Enhance error messages with more specific guidance
-   - ✅ Add JSON output support for core commands (ViewCommand, ListCommand, StatsCommand, etc.)
-   - ✅ Implement verbose vs. concise output mode for better diagnostics
-   - Add JSON output support for remaining commands
-   - Add configuration options for output formatting
-
-## Architectural Improvements
-
-The new adapter-based approach provides several benefits:
-
-1. **Loose Coupling**: CLI module is no longer tightly coupled to domain implementations
-2. **Clean Interfaces**: Each module exposes only the interfaces it needs
-3. **Better Testing**: Each adapter can be tested independently
-4. **Maintainability**: Changes to domain model won't break CLI module
-5. **Flexibility**: New implementations can be added without changing the CLI code
-
-## Build Commands for Testing
-
-```bash
-# Build the core module skipping all checks and tests
-mvn -Dmaven.test.skip=true -Dcheckstyle.skip=true -Dpmd.skip=true -Dspotbugs.skip=true -Dexec.skip=true clean install -pl rinna-core
-
-# Fix the core module JAR packaging
-mvn -Dmaven.test.skip=true -DskipAssembly=true install -pl rinna-core
-
-# Manually install the JAR to the local Maven repository
-mvn -Dmaven.install.skip=false install:install-file -Dfile=rinna-core/target/rinna-core-1.11.0.jar -DgroupId=org.rinna -DartifactId=rinna-core -Dversion=1.11.0 -Dpackaging=jar
-
-# Build just the CLI module
-mvn -Dmaven.test.skip=true -Dcheckstyle.skip=true -Dpmd.skip=true -Dspotbugs.skip=true -Dexec.skip=true clean compile -pl rinna-cli
-```
+1. ✅ All CLI commands have been updated to follow the ViewCommand pattern
+2. ✅ Added unit tests for BulkCommand to verify MetadataService integration
+3. ✅ Created component tests for BulkCommand with hierarchical operation tracking
+4. ✅ Created MetadataServiceIntegrationTest with common operation tracking patterns
+5. ✅ Added CriticalPathCommand tests with operation tracking verification
+6. ✅ Added AdminCommandTest with comprehensive operation tracking verification
+7. ✅ Added unit tests to verify main and subcommand delegated operation tracking
+8. ✅ Added unit tests to verify error handling with proper operation tracking
+9. ✅ Fixed AdminAuditCommand format handling to properly implement the ViewCommand pattern
+10. ✅ Added CommentCommandTest with comprehensive MetadataService integration testing
+11. ✅ Improved ModuleFixes documentation to include testing approach
+12. ✅ Added TestCommandTest with hierarchical operation tracking verification
+13. ✅ Added ScheduleCommandTest with comprehensive operation tracking tests
+14. ✅ Added ReportCommandTest with hierarchical operation tracking and complex parameter testing
+15. ✅ Added LsCommandTest with comprehensive MetadataService integration and format option verification
+16. ✅ Added HistoryCommandTest with time range filtering and hierarchical operation tracking verification
+17. ✅ Added UndoCommandTest with comprehensive test coverage
+18. ✅ Added BugCommandTest with comprehensive test coverage
+19. ✅ Added FindCommandTest with comprehensive test coverage
+20. ✅ Added OperationsCommandTest with comprehensive test coverage
+21. ✅ Added ServerCommandTest with comprehensive test coverage
+22. ✅ Added ServerCommandComponentTest with service integration tests
+23. ✅ Added ServerCommand BDD tests with server-commands.feature
+24. ✅ Added EditCommand BDD tests with edit-commands.feature
+25. ✅ Added EditCommandComponentTest with service integration tests
+26. ✅ Added HistoryCommand BDD tests with history-commands.feature
+27. ✅ Added HistoryCommandComponentTest with service integration tests
+28. ✅ Added CommentCommand BDD tests with comment-commands.feature
+29. ✅ Added CommentCommandComponentTest with service integration tests
+30. ✅ Added ListCommand BDD tests with list-commands.feature
+31. ✅ Added ListCommandComponentTest with service integration tests
+32. ✅ Added ViewCommand BDD tests with view-commands.feature
+33. ✅ Added ViewCommandComponentTest with service integration tests
+34. ✅ Added UpdateCommand BDD tests with update-commands.feature
+35. ✅ Added UpdateCommandComponentTest with service integration tests
+36. ✅ Added AddCommand BDD tests with add-commands.feature
+37. ✅ Added AddCommandComponentTest with service integration tests
+38. ✅ Added ScheduleCommand BDD tests with comprehensive test scenarios
+39. ✅ Added ScheduleCommandComponentTest with service integration tests
+40. ✅ Added BacklogCommand BDD tests with comprehensive test scenarios
+41. ✅ Added BacklogCommandComponentTest with service integration tests
+42. ✅ Added DoneCommand BDD tests with comprehensive test scenarios
+43. ✅ Added DoneCommandComponentTest with service integration tests
+44. ✅ Added LoginCommandComponentTest with comprehensive service integration tests
+45. ✅ Added LogoutCommandComponentTest with comprehensive service integration tests
+46. ✅ Added LsCommand BDD tests with comprehensive test scenarios
+47. ✅ Added LsCommandComponentTest with comprehensive service integration tests
+48. ✅ Verified FindCommand has comprehensive tests including unit, component, and BDD tests with full coverage
+49. ✅ Added StatsCommandComponentTest with comprehensive service integration tests
+50. ✅ Added NotifyCommandComponentTest with comprehensive service integration tests for hierarchical operation tracking
+51. ✅ Added GrepCommandComponentTest with service integration tests for search functionality and operation tracking
+52. ✅ Added UserAccessCommandComponentTest with service integration tests for permission management and security operations
+53. ✅ Added ReportCommandComponentTest with hierarchical operation tracking tests for report generation
+54. ✅ Added TestCommandComponentTest with comprehensive integration tests for workflow state transitions
+55. ✅ Added AdminCommandComponentTest with comprehensive test coverage for hierarchical subcommand delegation
+56. 🎉 All CLI commands now have component tests with comprehensive MetadataService integration verification
+57. ✅ Fixed AdminAuditCommand to properly integrate with MetadataService using hierarchical operation tracking
+58. ✅ Fixed AdminComplianceCommand with comprehensive MetadataService integration for hierarchical operation tracking
+59. Fix remaining implementation issues in other admin subcommands (BackupCommand, MonitorCommand, etc.)
+60. Set up basic CI pipeline for build verification
+60. Establish code quality thresholds and automate checks
+61. Update CLI documentation to reflect operation tracking capabilities
+62. Implement a unified operation analytics dashboard to visualize command usage patterns
+63. Create helper utilities to simplify operation tracking in future commands
+64. Optimize MetadataService for high-volume operation tracking scenarios

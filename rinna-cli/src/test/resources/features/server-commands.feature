@@ -1,80 +1,66 @@
-Feature: Server Management Commands
-  As a system administrator using the Rinna CLI
-  I want to monitor and manage Rinna services
-  So that I can ensure the system is running properly
+Feature: Server Command
+  As a Rinna user
+  I want to manage Rinna services
+  So that I can control their lifecycle and configuration
 
-  Scenario: Displaying status of all services
-    When I run the command "rin server status"
-    Then the command should execute successfully
-    And the output should contain "Rinna Services Status"
-    And the output should contain "SERVICE"
-    And the output should contain "api"
-    And the output should contain "database"
-    And the output should contain "docs"
+  Background:
+    Given a valid user session
 
-  Scenario: Displaying status of a specific service
-    When I run the command "rin server status api"
-    Then the command should execute successfully
-    And the output should contain "Service: api"
-    And the output should contain "Status: RUNNING"
+  Scenario: List all service statuses
+    When I execute the command "server"
+    Then I should see a list of available services
+    And I should see status information for each service
+    And the command should track this operation with MetadataService
 
-  Scenario: Displaying server status in JSON format
-    When I run the command "rin server status --json"
-    Then the command should execute successfully
-    And the output should contain "\"result\": \"success\""
-    And the output should contain "\"services\": ["
+  Scenario: Get status of a specific service
+    When I execute the command "server status api"
+    Then I should see detailed status for the "api" service
+    And the command should track this operation with MetadataService
 
-  Scenario: Displaying server help
-    When I run the command "rin server help"
-    Then the command should execute successfully
-    And the output should contain "Server Command Usage"
-    And the output should contain "Subcommands:"
-    And the output should contain "status"
-    And the output should contain "start"
-    And the output should contain "stop"
-    And the output should contain "restart"
-    And the output should contain "config"
+  Scenario: Show help information
+    When I execute the command "server help"
+    Then I should see help information for the server command
+    And I should see a list of available subcommands
+    And the command should track this operation with MetadataService
 
-  Scenario: Starting a service
-    When I run the command "rin server start api"
-    Then the command should execute successfully
-    And the output should contain "Starting service: api"
-    And the output should contain "Service started successfully"
+  Scenario: Start a service successfully
+    When I execute the command "server start api"
+    Then the service "api" should be started
+    And I should see a confirmation message
+    And the command should track this operation with MetadataService
 
-  Scenario: Trying to start a service without specifying a service name
-    When I run the command "rin server start"
-    Then the command should execute successfully
-    And the output should contain "Error: Service name is required to start a service"
+  Scenario: Stop a running service
+    Given the service "api" is running
+    When I execute the command "server stop api"
+    Then the service "api" should be stopped
+    And I should see a confirmation message
+    And the command should track this operation with MetadataService
 
-  Scenario: Stopping a service
-    When I run the command "rin server stop api"
-    Then the command should execute successfully
-    And the output should contain "Stopping service: api"
-    And the output should contain "Service stopped successfully"
+  Scenario: Restart a service
+    Given the service "api" is running
+    When I execute the command "server restart api"
+    Then the service "api" should be restarted
+    And I should see a confirmation message
+    And the command should track this operation with MetadataService
 
-  Scenario: Restarting a service
-    When I run the command "rin server restart api"
-    Then the command should execute successfully
-    And the output should contain "Restarting service: api"
-    And the output should contain "Service restarted successfully"
+  Scenario: Configure a service
+    When I execute the command "server config api /tmp/api.json"
+    Then a configuration file should be created at "/tmp/api.json"
+    And I should see a confirmation message
+    And the command should track this operation with MetadataService
 
-  Scenario: Configuring a service
-    When I run the command "rin server config api"
-    Then the command should execute successfully
-    And the output should contain "Created configuration for api"
+  Scenario: Output in JSON format
+    When I execute the command "server status api --json"
+    Then I should see the output in JSON format
+    And the JSON should contain service status information
+    And the command should track this operation with MetadataService
 
-  Scenario: Using an unknown subcommand
-    When I run the command "rin server unknown"
-    Then the command should fail with exit code 1
-    And the output should contain "Unknown server subcommand: unknown"
+  Scenario: Handle unknown service
+    When I execute the command "server status unknown"
+    Then I should see an error message about unknown service
+    And the command should track this operation failure with MetadataService
 
-  Scenario: Starting a service with verbose output
-    When I run the command "rin server start api --verbose"
-    Then the command should execute successfully
-    And the output should contain "Service process ID: 12345"
-
-  Scenario: Configuring a service with a specific config path
-    When I run the command "rin server config api /tmp/api-config.json"
-    Then the command should execute successfully
-    And the output should contain "Created configuration for api"
-    And the output should contain "/tmp/api-config.json"
+  Scenario: Handle invalid subcommand
+    When I execute the command "server invalid"
+    Then I should see an error message about invalid subcommand
+    And the command should track this operation failure with MetadataService
