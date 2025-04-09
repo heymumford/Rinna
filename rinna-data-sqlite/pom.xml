@@ -10,7 +10,7 @@
   <name>Rinna SQLite Persistence</name>
   <description>SQLite persistence implementation for Rinna</description>
   <properties>
-    <sqlite.jdbc.version>3.43.0.0</sqlite.jdbc.version>
+    <sqlite.jdbc.version>3.49.1.0</sqlite.jdbc.version>
     <hikaricp.version>5.0.1</hikaricp.version>
   </properties>
   <dependencies>
