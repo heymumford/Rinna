@@ -122,7 +122,7 @@ private void displayServiceStatusAsJson(ServiceStatus status) {
 
 In addition to implementing the ViewCommand pattern across all CLI commands, we've made significant improvements to the testing infrastructure:
 
-1. **Unit Testing**: Created comprehensive unit tests for BulkCommand, CommentCommand, CriticalPathCommand, AdminCommand, ScheduleCommand, ReportCommand, and LsCommand that verify proper MetadataService integration
+1. **Unit Testing**: Created comprehensive unit tests for BulkCommand, CommentCommand, CriticalPathCommand, AdminCommand, ScheduleCommand, ReportCommand, LsCommand, and HistoryCommand that verify proper MetadataService integration
 2. **Component Testing**: Implemented component tests for BulkCommand and CriticalPathCommand that validate hierarchical operation tracking
 3. **Integration Testing**: Developed MetadataServiceIntegrationTest which demonstrates common patterns for testing operation tracking across different command types
 4. **End-to-End Testing**: Implemented end-to-end testing for CommentCommand that covers the full operation lifecycle including validation, error handling, and output formatting

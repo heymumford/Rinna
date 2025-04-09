@@ -127,7 +127,8 @@ The ViewCommand pattern includes the following key components:
 13. ✅ Added ScheduleCommandTest with comprehensive operation tracking tests
 14. ✅ Added ReportCommandTest with hierarchical operation tracking and complex parameter testing
 15. ✅ Added LsCommandTest with comprehensive MetadataService integration and format option verification
-16. Continue updating unit tests for remaining CLI commands to verify MetadataService integration
+16. ✅ Added HistoryCommandTest with time range filtering and hierarchical operation tracking verification
+17. Continue updating unit tests for remaining CLI commands to verify MetadataService integration
 14. Fix remaining implementation issues in subcommands to properly integrate with MetadataService
 15. Set up basic CI pipeline for build verification
 16. Establish code quality thresholds and automate checks
