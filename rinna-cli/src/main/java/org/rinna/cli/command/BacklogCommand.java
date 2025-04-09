@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 /**
@@ -226,7 +227,7 @@ public class BacklogCommand implements Callable<Integer> {
             
             // In a real implementation, this would add an item to the backlog via a service
             // Simulate success for mock implementation
-            boolean success = backlogService.addToBacklog(itemId);
+            boolean success = backlogService.addToBacklog(UUID.fromString(itemId));
             
             if (success) {
                 System.out.println("Item " + itemId + " added to backlog successfully");

@@ -11,7 +11,7 @@ package org.rinna.adapter.service;
 import org.rinna.domain.model.DefaultRelease;
 import org.rinna.domain.model.Release;
 import org.rinna.domain.model.WorkItem;
-import org.rinna.repository.ReleaseRepository;
+import org.rinna.domain.repository.ReleaseRepository;
 import org.rinna.domain.service.ItemService;
 import org.rinna.domain.service.ReleaseService;
 

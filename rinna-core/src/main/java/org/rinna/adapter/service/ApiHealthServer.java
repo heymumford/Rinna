@@ -13,12 +13,12 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.rinna.Rinna;
 import org.rinna.domain.model.DefaultWorkItem;
+import org.rinna.domain.service.ItemService;
 import org.rinna.domain.model.Priority;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
-import org.rinna.domain.service.ItemService;
 
 import java.util.ArrayList;
 import java.util.Optional;

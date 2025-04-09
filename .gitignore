@@ -24,14 +24,15 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# Python build artifacts only (not the source files)
+# Ensure we don't ignore actual Python modules and tests
 build/
 develop-eggs/
 dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/
@@ -39,6 +40,12 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Explicitly include all Python modules and tests
+!python/
+!python/rinna/
+!python/tests/
+!python/**/*.py
 
 ## Go
 /api/bin/
@@ -56,6 +63,8 @@ htmlcov/
 .test-tmp/
 test-output/
 surefire-reports/
+test-pyramid-report.json
+test-pyramid-report.txt
 
 # IDE and editors
 ## IntelliJ IDEA
@@ -70,8 +79,10 @@ out/
 .classpath
 .project
 .factorypath
-# Note: Not ignoring our bin directory where scripts are stored
-# bin/
+# Ensure bin directory and all scripts are tracked
+!bin/
+!bin/**/*.sh
+!bin/**/*.py
 tmp/
 *.tmp
 *.bak
@@ -122,8 +133,11 @@ engineering_spec_v0.3.md
 **/Demo.java
 **/DemoApp.java
 **/DemoTest.java
-**/Test.java
 /tmp/
+
+# Don't ignore actual test files - only simple example Test files
+!**/src/test/java/org/rinna/**/*Test.java
+!**/test/**/*Test.java
 
 ## Scripts that should be in utils/
 activate-java.sh
@@ -132,22 +146,24 @@ activate-python.sh
 ## Binary files 
 /bin/rin-cli
 
-# Important bin scripts that should be tracked (DO NOT IGNORE THESE)
-# /bin/rin
-# /bin/rin-version 
-# /bin/rin-config
-# /bin/rin-setup
-# /bin/check-versions.sh
-# /bin/update-versions.sh
-# /bin/run-tests.sh
-# /bin/rinna-tests.sh
-# /bin/rinna_config.py
-# /bin/start-java-server.sh
-# /bin/start-services.sh
-# /bin/test-end-to-end.sh
-# /bin/maven-cross-tests.sh
-# /bin/c4_diagrams.py
-# /bin/test_c4_diagrams.py
+# Important bin scripts that should be tracked (ensure these are NOT ignored)
+!/bin/rin
+!/bin/rin-version 
+!/bin/rin-config
+!/bin/rin-setup
+!/bin/check-versions.sh
+!/bin/update-versions.sh
+!/bin/run-tests.sh
+!/bin/rinna-tests.sh
+!/bin/rinna_config.py
+!/bin/start-java-server.sh
+!/bin/start-services.sh
+!/bin/test-end-to-end.sh
+!/bin/maven-cross-tests.sh
+!/bin/c4_diagrams.py
+!/bin/test_c4_diagrams.py
+!/bin/test-pyramid-coverage.sh
+!/bin/checks/*.sh
 
 ## Build and test artifacts
 # Note: These are specifically excluded since they are auto-generated or temporary
@@ -161,8 +177,17 @@ backup/
 **/src-*/
 **/*.backup/
 
-# Generated files
-/docs/architecture/diagrams/
+# Generated diagram files only - not all docs
+/docs/architecture/diagrams/*.svg
+/docs/architecture/diagrams/*.png
+/docs/architecture/diagrams/*.jpg
+/docs/architecture/diagrams/*.pdf
+/docs/architecture/diagrams/build/
+
+# Ensure all documentation files are included
+!docs/
+!docs/**/*.md
+!docs/**/*.txt
 
 # Allow specific files that would otherwise be ignored
 !CLAUDE.md

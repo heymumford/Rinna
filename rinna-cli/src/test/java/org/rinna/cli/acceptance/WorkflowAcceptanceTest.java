@@ -62,7 +62,7 @@ public class WorkflowAcceptanceTest {
         assertTrue(viewResult, "Should be able to view the created work item");
         
         // 3. Update the work item status
-        boolean updateResult = updateWorkItemStatus(itemId, WorkflowState.IN_DEV);
+        boolean updateResult = updateWorkItemStatus(itemId, WorkflowState.IN_PROGRESS);
         assertTrue(updateResult, "Should be able to update work item status");
         
         // 4. Assign the work item
@@ -70,14 +70,14 @@ public class WorkflowAcceptanceTest {
         assertTrue(assignResult, "Should be able to assign the work item");
         
         // 5. Complete the work item
-        boolean completeResult = updateWorkItemStatus(itemId, WorkflowState.CLOSED);
+        boolean completeResult = updateWorkItemStatus(itemId, WorkflowState.DONE);
         assertTrue(completeResult, "Should be able to complete the work item");
         
         // Verify the execution flow is correctly recorded
         assertEquals(5, executedCommands.size(), "Should have executed 5 workflow steps");
         assertTrue(executedCommands.get(0).contains("create"), "First step should be create");
         assertTrue(executedCommands.get(1).contains("view"), "Second step should be view");
-        assertTrue(executedCommands.get(4).contains("update") && executedCommands.get(4).contains("CLOSED"), "Last step should update status to CLOSED");
+        assertTrue(executedCommands.get(4).contains("update") && executedCommands.get(4).contains("DONE"), "Last step should update status to DONE");
     }
     
     @Test
@@ -96,7 +96,7 @@ public class WorkflowAcceptanceTest {
             final String itemId = itemIds.get(i);
             threads[i] = new Thread(() -> {
                 assertTrue(viewWorkItem(itemId), "Should view item " + itemId);
-                assertTrue(updateWorkItemStatus(itemId, WorkflowState.IN_DEV), 
+                assertTrue(updateWorkItemStatus(itemId, WorkflowState.IN_PROGRESS), 
                            "Should update item " + itemId);
             });
             threads[i].start();

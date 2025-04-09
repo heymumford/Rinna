@@ -177,33 +177,32 @@ public class MsgCommand implements Callable<Integer> {
             // Handle subcommands
             if (subcommand == null || subcommand.isEmpty()) {
                 // No subcommand, list all messages
-                result = listMessages(operationId);
+                result = listMessages();
             } else if ("login".equals(subcommand)) {
-                result = login(operationId);
+                result = login();
             } else if ("unread".equals(subcommand)) {
-                result = listUnreadMessages(operationId);
+                result = listUnreadMessages();
             } else if ("project".equals(subcommand)) {
-                result = handleProjectCommand(operationId);
+                result = handleProjectCommand();
             } else if ("read".equals(subcommand) && args != null && args.length > 0) {
-                result = readMessage(args[0], operationId);
+                result = readMessage(args[0]);
             } else if ("delete".equals(subcommand) && args != null && args.length > 0) {
-                result = deleteMessage(args[0], operationId);
+                result = deleteMessage(args[0]);
             } else if ("reply".equals(subcommand) && args != null && args.length > 1) {
                 result = replyToMessage(args[0], 
-                    String.join(" ", args).substring(args[0].length()).trim(), 
-                    operationId);
+                    String.join(" ", args).substring(args[0].length()).trim());
             } else if ("from".equals(subcommand) && args != null && args.length > 0) {
-                result = listMessagesFromSender(args[0], operationId);
+                result = listMessagesFromSender(args[0]);
             } else if (subcommand.startsWith("-")) {
                 // Handle option flags
                 if ("--unread".equals(subcommand)) {
-                    result = listUnreadMessages(operationId);
+                    result = listUnreadMessages();
                 } else if (subcommand.startsWith("--from=")) {
                     String sender = subcommand.substring("--from=".length());
-                    result = listMessagesFromSender(sender, operationId);
+                    result = listMessagesFromSender(sender);
                 } else if (subcommand.startsWith("--project=")) {
                     String projectName = subcommand.substring("--project=".length());
-                    result = listMessagesFromProject(projectName, operationId);
+                    result = listMessagesFromProject(projectName);
                 } else if ("--help".equals(subcommand) || "-h".equals(subcommand)) {
                     showHelp();
                     
@@ -246,7 +245,7 @@ public class MsgCommand implements Callable<Integer> {
                     return 1;
                 }
                 
-                result = sendMessage(recipient, message, operationId);
+                result = sendMessage(recipient, message);
             }
             
             return result;
@@ -398,6 +397,17 @@ public class MsgCommand implements Callable<Integer> {
     }
     
     /**
+     * Lists all messages for the current user (simplified version).
+     *
+     * @return exit code
+     */
+    private int listMessages() {
+        // Generate a new operation ID
+        String operationId = metadataService.startOperation("message", "LIST", new HashMap<>());
+        return listMessages(operationId);
+    }
+    
+    /**
      * Lists all messages for the current user.
      *
      * @param operationId the operation ID for tracking
@@ -432,6 +442,17 @@ public class MsgCommand implements Callable<Integer> {
     }
     
     /**
+     * Lists unread messages for the current user (simplified version).
+     *
+     * @return exit code
+     */
+    private int listUnreadMessages() {
+        // Generate a new operation ID
+        String operationId = metadataService.startOperation("message", "LIST_UNREAD", new HashMap<>());
+        return listUnreadMessages(operationId);
+    }
+    
+    /**
      * Lists unread messages for the current user.
      *
      * @param operationId the operation ID for tracking
@@ -462,6 +483,20 @@ public class MsgCommand implements Callable<Integer> {
         
         metadataService.completeOperation(operationId, resultData);
         return 0;
+    }
+    
+    /**
+     * Lists messages from a specific sender (simplified version).
+     *
+     * @param sender the sender username
+     * @return exit code
+     */
+    private int listMessagesFromSender(String sender) {
+        // Generate a new operation ID
+        Map<String, Object> params = new HashMap<>();
+        params.put("sender", sender);
+        String operationId = metadataService.startOperation("message", "LIST_FROM_SENDER", params);
+        return listMessagesFromSender(sender, operationId);
     }
     
     /**
@@ -504,16 +539,25 @@ public class MsgCommand implements Callable<Integer> {
      * Lists messages from a specific project.
      *
      * @param projectName the project name
+     * @param operationId the operation ID for tracking
      * @return exit code
      */
-    private int listMessagesFromProject(String projectName) {
+    private int listMessagesFromProject(String projectName, String operationId) {
         String currentUser = configService.getCurrentUser();
         List<RinnaMessage> messages = messageService.getMessagesForUserByProject(currentUser, projectName);
         
         System.out.println("Messages from project " + projectName + ":");
         
+        // Record operation data
+        Map<String, Object> resultData = new HashMap<>();
+        resultData.put("user", currentUser);
+        resultData.put("project", projectName);
+        resultData.put("count", messages.size());
+        resultData.put("action", "list_from_project");
+        
         if (messages.isEmpty()) {
             System.out.println("No messages found from project " + projectName + ".");
+            metadataService.completeOperation(operationId, resultData);
             return 0;
         }
         
@@ -523,11 +567,65 @@ public class MsgCommand implements Callable<Integer> {
             messageService.markMessageAsRead(message.getId());
         }
         
+        metadataService.completeOperation(operationId, resultData);
         return 0;
     }
     
     /**
+     * Lists messages from a specific project (simplified version).
+     *
+     * @param projectName the project name
+     * @return exit code
+     */
+    private int listMessagesFromProject(String projectName) {
+        // Generate a new operation ID
+        Map<String, Object> params = new HashMap<>();
+        params.put("project", projectName);
+        String operationId = metadataService.startOperation("message", "LIST_FROM_PROJECT", params);
+        return listMessagesFromProject(projectName, operationId);
+    }
+    
+    /**
      * Reads a specific message.
+     *
+     * @param messageId the message ID
+     * @param operationId the operation ID for tracking
+     * @return exit code
+     */
+    private int readMessage(String messageId, String operationId) {
+        RinnaMessage message = messageService.getMessage(messageId);
+        
+        if (message == null) {
+            System.err.println("Error: Message with ID '" + messageId + "' not found");
+            metadataService.failOperation(operationId, new IllegalArgumentException("Message not found: " + messageId));
+            return 1;
+        }
+        
+        String currentUser = configService.getCurrentUser();
+        if (!message.getRecipient().equals(currentUser)) {
+            System.err.println("Error: Cannot read: You don't have permission to read this message");
+            metadataService.failOperation(operationId, new SecurityException("Permission denied: cannot read message"));
+            return 1;
+        }
+        
+        printMessageDetails(message);
+        
+        // Mark message as read
+        messageService.markMessageAsRead(messageId);
+        
+        // Record successful operation
+        Map<String, Object> resultData = new HashMap<>();
+        resultData.put("message_id", messageId);
+        resultData.put("sender", message.getSender());
+        resultData.put("project", message.getProject());
+        resultData.put("action", "read");
+        metadataService.completeOperation(operationId, resultData);
+        
+        return 0;
+    }
+    
+    /**
+     * Reads a specific message (simplified version).
      *
      * @param messageId the message ID
      * @return exit code
@@ -555,33 +653,75 @@ public class MsgCommand implements Callable<Integer> {
     }
     
     /**
-     * Deletes a specific message.
+     * Deletes a specific message (simplified version).
      *
      * @param messageId the message ID
      * @return exit code
      */
     private int deleteMessage(String messageId) {
+        // Generate a new operation ID
+        Map<String, Object> params = new HashMap<>();
+        params.put("message_id", messageId);
+        String operationId = metadataService.startOperation("message", "DELETE", params);
+        return deleteMessage(messageId, operationId);
+    }
+    
+    /**
+     * Deletes a specific message.
+     *
+     * @param messageId the message ID
+     * @param operationId the operation ID for tracking
+     * @return exit code
+     */
+    private int deleteMessage(String messageId, String operationId) {
         RinnaMessage message = messageService.getMessage(messageId);
         
         if (message == null) {
             System.err.println("Error: Message with ID '" + messageId + "' not found");
+            metadataService.failOperation(operationId, new IllegalArgumentException("Message not found: " + messageId));
             return 1;
         }
         
         String currentUser = configService.getCurrentUser();
         if (!message.getRecipient().equals(currentUser)) {
             System.err.println("Error: Cannot delete: You don't have permission to delete this message");
+            metadataService.failOperation(operationId, new SecurityException("Permission denied: cannot delete message"));
             return 1;
         }
         
         // Delete the message
         if (messageService.deleteMessage(messageId, currentUser)) {
             System.out.println("Message deleted");
+            
+            // Record successful operation
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("message_id", messageId);
+            resultData.put("sender", message.getSender());
+            resultData.put("action", "delete");
+            metadataService.completeOperation(operationId, resultData);
+            
             return 0;
         } else {
             System.err.println("Error: Failed to delete message");
+            metadataService.failOperation(operationId, new RuntimeException("Failed to delete message"));
             return 1;
         }
+    }
+    
+    /**
+     * Replies to a specific message (simplified version).
+     *
+     * @param messageId    the message ID
+     * @param replyContent the reply content
+     * @return exit code
+     */
+    private int replyToMessage(String messageId, String replyContent) {
+        // Generate a new operation ID
+        Map<String, Object> params = new HashMap<>();
+        params.put("message_id", messageId);
+        params.put("content_length", replyContent != null ? replyContent.length() : 0);
+        String operationId = metadataService.startOperation("message", "REPLY", params);
+        return replyToMessage(messageId, replyContent, operationId);
     }
     
     /**
@@ -589,24 +729,28 @@ public class MsgCommand implements Callable<Integer> {
      *
      * @param messageId    the message ID
      * @param replyContent the reply content
+     * @param operationId  the operation ID for tracking
      * @return exit code
      */
-    private int replyToMessage(String messageId, String replyContent) {
+    private int replyToMessage(String messageId, String replyContent, String operationId) {
         RinnaMessage originalMessage = messageService.getMessage(messageId);
         
         if (originalMessage == null) {
             System.err.println("Error: Message with ID '" + messageId + "' not found");
+            metadataService.failOperation(operationId, new IllegalArgumentException("Message not found: " + messageId));
             return 1;
         }
         
         String currentUser = configService.getCurrentUser();
         if (!originalMessage.getRecipient().equals(currentUser)) {
             System.err.println("Error: Cannot reply: You don't have permission to reply to this message");
+            metadataService.failOperation(operationId, new SecurityException("Permission denied: cannot reply to message"));
             return 1;
         }
         
         if (replyContent == null || replyContent.isEmpty()) {
             System.err.println("Error: Reply content is required");
+            metadataService.failOperation(operationId, new IllegalArgumentException("Reply content is required"));
             return 1;
         }
         
@@ -626,11 +770,38 @@ public class MsgCommand implements Callable<Integer> {
         
         if (messageService.sendMessage(reply)) {
             System.out.println("Reply sent to " + originalMessage.getSender());
+            
+            // Record successful operation
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("message_id", reply.getId());
+            resultData.put("in_reply_to", messageId);
+            resultData.put("recipient", originalMessage.getSender());
+            resultData.put("project", originalMessage.getProject());
+            resultData.put("action", "reply");
+            metadataService.completeOperation(operationId, resultData);
+            
             return 0;
         } else {
             System.err.println("Error: Failed to send reply");
+            metadataService.failOperation(operationId, new RuntimeException("Failed to send reply"));
             return 1;
         }
+    }
+    
+    /**
+     * Sends a direct message to a recipient (simplified version).
+     *
+     * @param recipient     the recipient username
+     * @param messageContent the message content
+     * @return exit code
+     */
+    private int sendMessage(String recipient, String messageContent) {
+        // Generate a new operation ID
+        Map<String, Object> params = new HashMap<>();
+        params.put("recipient", recipient);
+        params.put("content_length", messageContent != null ? messageContent.length() : 0);
+        String operationId = metadataService.startOperation("message", "SEND", params);
+        return sendMessage(recipient, messageContent, operationId);
     }
     
     /**
@@ -638,9 +809,10 @@ public class MsgCommand implements Callable<Integer> {
      *
      * @param recipient     the recipient username
      * @param messageContent the message content
+     * @param operationId  the operation ID for tracking
      * @return exit code
      */
-    private int sendMessage(String recipient, String messageContent) {
+    private int sendMessage(String recipient, String messageContent, String operationId) {
         String currentUser = configService.getCurrentUser();
         String currentProject = projectContext.getCurrentProject();
         
@@ -648,6 +820,8 @@ public class MsgCommand implements Callable<Integer> {
         if (!projectContext.isProjectMember(currentProject, recipient)) {
             System.err.println("Error: Cannot send message: " + recipient + 
                     " is not a member of project " + currentProject);
+            metadataService.failOperation(operationId, 
+                new IllegalArgumentException("Recipient is not a member of current project"));
             return 1;
         }
         
@@ -665,9 +839,19 @@ public class MsgCommand implements Callable<Integer> {
         // Send the message
         if (messageService.sendMessage(message)) {
             System.out.println("Message sent to " + recipient);
+            
+            // Record successful operation
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("message_id", message.getId());
+            resultData.put("recipient", recipient);
+            resultData.put("project", currentProject);
+            resultData.put("action", "send");
+            metadataService.completeOperation(operationId, resultData);
+            
             return 0;
         } else {
             System.err.println("Error: Failed to send message");
+            metadataService.failOperation(operationId, new RuntimeException("Failed to send message"));
             return 1;
         }
     }

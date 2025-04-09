@@ -14,6 +14,109 @@
 
 set -eo pipefail
 
+# Debug mode for troubleshooting
+DEBUG=true
+
+# Add debug function
+debug_echo() {
+  if [[ "$DEBUG" == "true" ]]; then
+    echo "DEBUG: $*" >&2
+  fi
+}
+
+# Function to create minimal utilities file
+create_minimal_utilities() {
+  debug_echo "Creating minimal rinna_utils.sh file"
+  
+  cat > "$COMMON_DIR/rinna_utils.sh" << 'EOF'
+#!/usr/bin/env bash
+#
+# rinna_utils.sh - Common utility functions for Rinna shell scripts
+#
+# PURPOSE: Provide shared functions for all Rinna utility scripts
+#          to ensure consistent behavior and reduce code duplication
+#
+# Copyright (c) 2025 Eric C. Mumford (@heymumford)
+# This file is subject to the terms and conditions defined in
+# the LICENSE file, which is part of this source code package.
+# (MIT License)
+#
+
+# Ensure we fail on errors
+set -eo pipefail
+
+# Determine project directory
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+RINNA_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Constants
+VERSION_FILE="$RINNA_DIR/version.properties"
+LOG_DIR="$RINNA_DIR/logs"
+DEFAULT_LOG_FILE="$LOG_DIR/rinna.log"
+
+# ANSI color codes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+GRAY='\033[0;37m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+# Create log directory
+mkdir -p "$LOG_DIR"
+
+# UI functions - minimal set
+print_header() { echo -e "${BLUE}${BOLD}$1${NC}"; }
+print_success() { echo -e "${GREEN}✓ $1${NC}"; }
+print_warning() { echo -e "${YELLOW}! $1${NC}"; }
+print_error() { echo -e "${RED}✗ $1${NC}" >&2; }
+print_debug() { [[ "${VERBOSE:-$DEBUG}" == "true" ]] && echo -e "${GRAY}DEBUG: $1${NC}"; }
+print_step() { echo -e "  ${MAGENTA}→ $1${NC}"; }
+
+# Check if command exists
+command_exists() {
+  command -v "$1" &> /dev/null
+}
+
+# Get Rinna version
+get_version() {
+  if [ ! -f "$VERSION_FILE" ]; then
+    echo "unknown"
+    return 1
+  fi
+  
+  local version
+  version=$(grep -m 1 "^version=" "$VERSION_FILE" 2>/dev/null | cut -d'=' -f2)
+  
+  if [[ -z "$version" ]]; then
+    echo "unknown"
+    return 1
+  fi
+  
+  echo "$version"
+  return 0
+}
+
+# Detect if running in CI environment
+is_ci() {
+  if [[ -n "${CI:-}" || -n "${GITHUB_ACTIONS:-}" || -n "${GITLAB_CI:-}" || -n "${JENKINS_URL:-}" || -n "${TRAVIS:-}" ]]; then
+    echo "true"
+  else
+    echo "false"
+  fi
+}
+EOF
+
+  # Make the file executable
+  chmod +x "$COMMON_DIR/rinna_utils.sh"
+  debug_echo "Created minimal rinna_utils.sh file"
+}
+
+debug_echo "Starting setup script"
+
 # Determine script and project directories
 SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
@@ -22,8 +125,37 @@ CONFIG_DIR="$HOME/.config/rinna"
 CONFIG_FILE="$CONFIG_DIR/environment.conf"
 COMMON_DIR="$SCRIPT_DIR/common"
 
+debug_echo "SCRIPT_PATH=$SCRIPT_PATH"
+debug_echo "SCRIPT_DIR=$SCRIPT_DIR"
+debug_echo "RINNA_DIR=$RINNA_DIR"
+debug_echo "CONFIG_DIR=$CONFIG_DIR"
+debug_echo "COMMON_DIR=$COMMON_DIR"
+
 # Source common utilities
-source "$COMMON_DIR/rinna_utils.sh"
+debug_echo "About to source common utilities from $COMMON_DIR/rinna_utils.sh"
+# Export DEBUG and VERBOSE to be available to sourced scripts
+export DEBUG VERBOSE
+# Check if the file exists before sourcing
+if [[ -f "$COMMON_DIR/rinna_utils.sh" ]]; then
+    source "$COMMON_DIR/rinna_utils.sh"
+    debug_echo "Successfully sourced common utilities"
+else
+    echo -e "\033[0;31m✗ Error: Common utilities file not found: $COMMON_DIR/rinna_utils.sh\033[0m" >&2
+    echo "Creating directory structure..."
+    mkdir -p "$COMMON_DIR"
+    
+    # Create minimal rinna_utils.sh to get started
+    create_minimal_utilities
+    
+    # Try sourcing again
+    if [[ -f "$COMMON_DIR/rinna_utils.sh" ]]; then
+        source "$COMMON_DIR/rinna_utils.sh"
+        debug_echo "Successfully sourced minimal common utilities"
+    else
+        echo -e "\033[0;31m✗ Fatal error: Could not create utilities file\033[0m" >&2
+        exit 1
+    fi
+fi
 
 # Required versions
 REQUIRED_JAVA_VERSION="21"
@@ -53,74 +185,126 @@ fi
 
 # Parse command line arguments
 parse_args() {
+  debug_echo "Parsing command line arguments: $*"
   local arg
+  
+  # Check if no arguments were provided
+  if [[ $# -eq 0 ]]; then
+    debug_echo "No arguments provided, using defaults"
+  fi
   
   while [[ $# -gt 0 ]]; do
     arg="$1"
+    debug_echo "Processing argument: $arg"
+    
+    # Handle standalone config component specially
+    if [[ "$arg" == "config" && "$#" -eq 1 ]]; then
+      debug_echo "Detected standalone config component"
+      COMPONENTS=("config")
+      shift
+      continue
+    fi
+    
     case "$arg" in
       install|--install)
         INSTALL_MISSING="auto"
+        debug_echo "Set INSTALL_MISSING=auto"
         shift
         ;;
       check|--check)
         INSTALL_MISSING="never"
+        debug_echo "Set INSTALL_MISSING=never"
         shift
         ;;
-      config|--config)
+      config)
+        # This is a component name, not a command mode
+        COMPONENTS+=("$1")
+        debug_echo "Added component: $1"
+        shift
+        ;;
+      --config)
+        debug_echo "Config mode selected, will edit configuration"
+        # Edit config mode - interactive
         edit_config
         exit 0
         ;;
       --graphical)
         MODE="graphical"
+        debug_echo "Set MODE=graphical"
         shift
         ;;
       --fast)
         MODE="fast"
+        debug_echo "Set MODE=fast"
         shift
         ;;
       --minimal)
         MODE="minimal"
+        debug_echo "Set MODE=minimal"
         shift
         ;;
       -v|--verbose)
         VERBOSE="true"
-        set_log_level "debug"
+        export VERBOSE
+        debug_echo "Set VERBOSE=true"
+        
+        # Only set log level if function exists
+        if command -v set_log_level &>/dev/null; then
+          set_log_level "debug"
+          debug_echo "Set log level to debug"
+        else
+          debug_echo "set_log_level function not available yet"
+        fi
+        
         shift
         ;;
       -f|--force)
         FORCE="true"
+        debug_echo "Set FORCE=true"
         shift
         ;;
       -y|--yes)
         INTERACTIVE="false"
+        debug_echo "Set INTERACTIVE=false"
         shift
         ;;
       --no-backup)
         BACKUP="false"
+        debug_echo "Set BACKUP=false"
         shift
         ;;
       --skip-tests)
         SKIP_TESTS="true"
+        debug_echo "Set SKIP_TESTS=true"
         shift
         ;;
       --skip-system)
         SKIP_SYSTEM="true"
+        debug_echo "Set SKIP_SYSTEM=true"
         shift
         ;;
       --all|--optional)
         PYTHON_INSTALL_OPTIONAL="true"
+        debug_echo "Set PYTHON_INSTALL_OPTIONAL=true"
         shift
         ;;
-      java|go|python|maven|ui|api|config|venv)
+      java|go|python|maven|ui|api|venv|samples)
         COMPONENTS+=("$1")
+        debug_echo "Added component: $1"
         shift
         ;;
       help|--help|-h)
+        debug_echo "Help requested"
         show_help
         exit 0
         ;;
+      standard)
+        # We can safely ignore this as it's the default mode
+        debug_echo "Standard mode explicitly specified (redundant)"
+        shift
+        ;;
       *)
-        print_error "Unknown option: $arg"
+        echo -e "\033[0;31m✗ Unknown option: $arg\033[0m" >&2
         show_help
         exit 1
         ;;
@@ -129,13 +313,18 @@ parse_args() {
   
   # If no components specified, include all
   if [[ ${#COMPONENTS[@]} -eq 0 ]]; then
+    debug_echo "No components specified, using defaults"
     COMPONENTS=("java" "go" "python" "maven" "config")
     
     # Add venv for full setup
     if [[ "$MODE" != "minimal" ]]; then
       COMPONENTS+=("venv" "ui")
+      debug_echo "Added venv and ui components for non-minimal setup"
     fi
   fi
+  
+  debug_echo "Final components: ${COMPONENTS[*]}"
+  debug_echo "Setup mode: $MODE"
 }
 
 # Display help text
@@ -174,6 +363,7 @@ Components:
   api                 API service setup
   config              Configuration files and environment
   venv                Python virtual environment
+  samples             Java sample projects with Clean Architecture
 
 Examples:
   rin-setup-unified                  # Full setup with all components
@@ -443,6 +633,623 @@ edit_config() {
 #
 # Component-specific installation functions
 #
+
+# Setup Java sample projects
+setup_java_samples() {
+  print_header "Setting up Java sample projects..."
+  
+  # Check if Java is already installed
+  if ! check_java_version "$REQUIRED_JAVA_VERSION"; then
+    print_error "Java $REQUIRED_JAVA_VERSION is required for sample projects"
+    print_step "Please run 'bin/rin-setup-unified java' first"
+    return 1
+  fi
+  
+  # Create sample project directory
+  local samples_dir="$RINNA_DIR/samples"
+  mkdir -p "$samples_dir"
+  
+  # Check if we already have samples
+  if [[ -d "$samples_dir/hello-rinna" ]]; then
+    print_success "Sample projects already exist"
+    return 0
+  fi
+  
+  # Create a simple hello world project
+  local hello_dir="$samples_dir/hello-rinna"
+  mkdir -p "$hello_dir/src/main/java/org/rinna/samples"
+  mkdir -p "$hello_dir/src/test/java/org/rinna/samples"
+  
+  # Create pom.xml
+  cat > "$hello_dir/pom.xml" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.rinna.samples</groupId>
+    <artifactId>hello-rinna</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>${REQUIRED_JAVA_VERSION}</maven.compiler.source>
+        <maven.compiler.target>${REQUIRED_JAVA_VERSION}</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit.version>5.9.1</junit.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>\${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>\${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>org.rinna.samples.HelloRinna</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+EOF
+
+  # Create main class
+  cat > "$hello_dir/src/main/java/org/rinna/samples/HelloRinna.java" << 'EOF'
+package org.rinna.samples;
+
+/**
+ * A simple Hello Rinna application
+ */
+public class HelloRinna {
+    public static void main(String[] args) {
+        System.out.println(getGreeting());
+    }
+
+    public static String getGreeting() {
+        return "Hello, Rinna!";
+    }
+}
+EOF
+
+  # Create test class
+  cat > "$hello_dir/src/test/java/org/rinna/samples/HelloRinnaTest.java" << 'EOF'
+package org.rinna.samples;
+
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+class HelloRinnaTest {
+    @Test
+    void testGetGreeting() {
+        assertEquals("Hello, Rinna!", HelloRinna.getGreeting());
+    }
+}
+EOF
+
+  print_success "Created sample project at $hello_dir"
+  
+  # Create a more complex sample using Clean Architecture patterns
+  local clean_dir="$samples_dir/clean-arch-demo"
+  debug_echo "Creating clean architecture demo directories"
+  mkdir -p "$clean_dir/src/main/java/org/rinna/samples/clean/domain/entity"
+  mkdir -p "$clean_dir/src/main/java/org/rinna/samples/clean/domain/usecase"
+  mkdir -p "$clean_dir/src/main/java/org/rinna/samples/clean/adapter/persistence"
+  mkdir -p "$clean_dir/src/main/java/org/rinna/samples/clean/adapter/ui"
+  mkdir -p "$clean_dir/src/test/java/org/rinna/samples/clean/domain/usecase"
+  
+  # Create pom.xml
+  cat > "$clean_dir/pom.xml" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.rinna.samples</groupId>
+    <artifactId>clean-arch-demo</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>${REQUIRED_JAVA_VERSION}</maven.compiler.source>
+        <maven.compiler.target>${REQUIRED_JAVA_VERSION}</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit.version>5.9.1</junit.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>\${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>\${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>org.rinna.samples.clean.adapter.ui.ConsoleApp</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+EOF
+
+  # Create main files
+  cat > "$clean_dir/src/main/java/org/rinna/samples/clean/domain/entity/Task.java" << 'EOF'
+package org.rinna.samples.clean.domain.entity;
+
+import java.time.LocalDateTime;
+
+/**
+ * Task entity - core domain model
+ */
+public class Task {
+    private final String id;
+    private String title;
+    private String description;
+    private boolean completed;
+    private final LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    public Task(String id, String title, String description) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.completed = false;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = this.createdAt;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public boolean isCompleted() {
+        return completed;
+    }
+
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    @Override
+    public String toString() {
+        return "Task{" +
+                "id='" + id + '\'' +
+                ", title='" + title + '\'' +
+                ", completed=" + completed +
+                '}';
+    }
+}
+EOF
+
+  cat > "$clean_dir/src/main/java/org/rinna/samples/clean/domain/usecase/TaskRepository.java" << 'EOF'
+package org.rinna.samples.clean.domain.usecase;
+
+import org.rinna.samples.clean.domain.entity.Task;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Repository interface for Tasks - part of the domain boundary
+ */
+public interface TaskRepository {
+    Task save(Task task);
+    Optional<Task> findById(String id);
+    List<Task> findAll();
+    void delete(String id);
+}
+EOF
+
+  cat > "$clean_dir/src/main/java/org/rinna/samples/clean/domain/usecase/TaskService.java" << 'EOF'
+package org.rinna.samples.clean.domain.usecase;
+
+import org.rinna.samples.clean.domain.entity.Task;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * Task service - implements use cases for the domain
+ */
+public class TaskService {
+    private final TaskRepository taskRepository;
+
+    public TaskService(TaskRepository taskRepository) {
+        this.taskRepository = taskRepository;
+    }
+
+    public Task createTask(String title, String description) {
+        Task task = new Task(UUID.randomUUID().toString(), title, description);
+        return taskRepository.save(task);
+    }
+
+    public Optional<Task> getTaskById(String id) {
+        return taskRepository.findById(id);
+    }
+
+    public List<Task> getAllTasks() {
+        return taskRepository.findAll();
+    }
+
+    public Optional<Task> completeTask(String id) {
+        return taskRepository.findById(id)
+                .map(task -> {
+                    task.setCompleted(true);
+                    return taskRepository.save(task);
+                });
+    }
+
+    public void deleteTask(String id) {
+        taskRepository.delete(id);
+    }
+}
+EOF
+
+  cat > "$clean_dir/src/main/java/org/rinna/samples/clean/adapter/persistence/InMemoryTaskRepository.java" << 'EOF'
+package org.rinna.samples.clean.adapter.persistence;
+
+import org.rinna.samples.clean.domain.entity.Task;
+import org.rinna.samples.clean.domain.usecase.TaskRepository;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * In-memory implementation of the task repository
+ */
+public class InMemoryTaskRepository implements TaskRepository {
+    private final Map<String, Task> tasks = new ConcurrentHashMap<>();
+
+    @Override
+    public Task save(Task task) {
+        tasks.put(task.getId(), task);
+        return task;
+    }
+
+    @Override
+    public Optional<Task> findById(String id) {
+        return Optional.ofNullable(tasks.get(id));
+    }
+
+    @Override
+    public List<Task> findAll() {
+        return new ArrayList<>(tasks.values());
+    }
+
+    @Override
+    public void delete(String id) {
+        tasks.remove(id);
+    }
+}
+EOF
+
+  cat > "$clean_dir/src/main/java/org/rinna/samples/clean/adapter/ui/ConsoleApp.java" << 'EOF'
+package org.rinna.samples.clean.adapter.ui;
+
+import org.rinna.samples.clean.adapter.persistence.InMemoryTaskRepository;
+import org.rinna.samples.clean.domain.entity.Task;
+import org.rinna.samples.clean.domain.usecase.TaskRepository;
+import org.rinna.samples.clean.domain.usecase.TaskService;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Scanner;
+
+/**
+ * Console UI implementation for the task management app
+ */
+public class ConsoleApp {
+    private final TaskService taskService;
+    private final Scanner scanner;
+
+    public ConsoleApp(TaskService taskService) {
+        this.taskService = taskService;
+        this.scanner = new Scanner(System.in);
+    }
+
+    public static void main(String[] args) {
+        TaskRepository repository = new InMemoryTaskRepository();
+        TaskService service = new TaskService(repository);
+        ConsoleApp app = new ConsoleApp(service);
+        
+        // Add sample data
+        service.createTask("Learn Clean Architecture", "Study the principles of Clean Architecture");
+        service.createTask("Implement Rinna App", "Create a workflow management application");
+        
+        app.run();
+    }
+
+    public void run() {
+        boolean running = true;
+        while (running) {
+            displayMenu();
+            int choice = readIntInput();
+            
+            switch (choice) {
+                case 1:
+                    listTasks();
+                    break;
+                case 2:
+                    addTask();
+                    break;
+                case 3:
+                    completeTask();
+                    break;
+                case 4:
+                    deleteTask();
+                    break;
+                case 5:
+                    running = false;
+                    break;
+                default:
+                    System.out.println("Invalid option. Please try again.");
+            }
+        }
+        
+        System.out.println("Goodbye!");
+    }
+    
+    private void displayMenu() {
+        System.out.println("\n--- Task Manager ---");
+        System.out.println("1. List all tasks");
+        System.out.println("2. Add new task");
+        System.out.println("3. Mark task as completed");
+        System.out.println("4. Delete task");
+        System.out.println("5. Exit");
+        System.out.print("Enter your choice: ");
+    }
+    
+    private void listTasks() {
+        List<Task> tasks = taskService.getAllTasks();
+        
+        if (tasks.isEmpty()) {
+            System.out.println("No tasks found.");
+            return;
+        }
+        
+        System.out.println("\nTasks:");
+        for (Task task : tasks) {
+            System.out.printf("%s - %s [%s]%n", 
+                    task.getId(), 
+                    task.getTitle(),
+                    task.isCompleted() ? "Completed" : "Pending");
+        }
+    }
+    
+    private void addTask() {
+        System.out.print("Enter task title: ");
+        String title = scanner.nextLine();
+        
+        System.out.print("Enter task description: ");
+        String description = scanner.nextLine();
+        
+        Task task = taskService.createTask(title, description);
+        System.out.println("Task created with ID: " + task.getId());
+    }
+    
+    private void completeTask() {
+        System.out.print("Enter task ID to mark as completed: ");
+        String id = scanner.nextLine();
+        
+        Optional<Task> result = taskService.completeTask(id);
+        if (result.isPresent()) {
+            System.out.println("Task marked as completed.");
+        } else {
+            System.out.println("Task not found.");
+        }
+    }
+    
+    private void deleteTask() {
+        System.out.print("Enter task ID to delete: ");
+        String id = scanner.nextLine();
+        
+        taskService.deleteTask(id);
+        System.out.println("Task deleted (if it existed).");
+    }
+    
+    private int readIntInput() {
+        try {
+            return Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+}
+EOF
+
+  # Create test file
+  cat > "$clean_dir/src/test/java/org/rinna/samples/clean/domain/usecase/TaskServiceTest.java" << 'EOF'
+package org.rinna.samples.clean.domain.usecase;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.rinna.samples.clean.adapter.persistence.InMemoryTaskRepository;
+import org.rinna.samples.clean.domain.entity.Task;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class TaskServiceTest {
+    private TaskService taskService;
+    private TaskRepository taskRepository;
+
+    @BeforeEach
+    void setUp() {
+        taskRepository = new InMemoryTaskRepository();
+        taskService = new TaskService(taskRepository);
+    }
+
+    @Test
+    void createTask() {
+        Task task = taskService.createTask("Test Task", "Description");
+        
+        assertNotNull(task.getId());
+        assertEquals("Test Task", task.getTitle());
+        assertEquals("Description", task.getDescription());
+        assertFalse(task.isCompleted());
+    }
+
+    @Test
+    void getTaskById() {
+        Task task = taskService.createTask("Test Task", "Description");
+        
+        Optional<Task> found = taskService.getTaskById(task.getId());
+        
+        assertTrue(found.isPresent());
+        assertEquals(task.getId(), found.get().getId());
+    }
+
+    @Test
+    void getAllTasks() {
+        taskService.createTask("Task 1", "Description 1");
+        taskService.createTask("Task 2", "Description 2");
+        
+        List<Task> tasks = taskService.getAllTasks();
+        
+        assertEquals(2, tasks.size());
+    }
+
+    @Test
+    void completeTask() {
+        Task task = taskService.createTask("Test Task", "Description");
+        
+        Optional<Task> completed = taskService.completeTask(task.getId());
+        
+        assertTrue(completed.isPresent());
+        assertTrue(completed.get().isCompleted());
+    }
+
+    @Test
+    void deleteTask() {
+        Task task = taskService.createTask("Test Task", "Description");
+        
+        taskService.deleteTask(task.getId());
+        
+        assertTrue(taskService.getTaskById(task.getId()).isEmpty());
+    }
+}
+EOF
+
+  print_success "Created Clean Architecture demo at $clean_dir"
+  
+  # Try to build the sample projects
+  if command_exists mvn; then
+    print_step "Building sample projects..."
+    
+    cd "$hello_dir"
+    if mvn clean package -DskipTests; then
+      print_success "Successfully built hello-rinna sample"
+    else
+      print_warning "Failed to build hello-rinna sample"
+    fi
+    
+    cd "$clean_dir"
+    if mvn clean package -DskipTests; then
+      print_success "Successfully built clean-arch-demo sample"
+    else
+      print_warning "Failed to build clean-arch-demo sample"
+    fi
+  else
+    print_warning "Maven not available, skipping sample project build"
+  fi
+  
+  print_success "Java sample projects setup completed"
+  print_step "To run the samples:"
+  print_step "  java -jar $hello_dir/target/hello-rinna-1.0-SNAPSHOT.jar"
+  print_step "  java -jar $clean_dir/target/clean-arch-demo-1.0-SNAPSHOT.jar"
+  
+  return 0
+}
 
 # Setup Java environment
 setup_java() {
@@ -887,6 +1694,418 @@ setup_maven() {
     print_error "Maven installation failed"
     return 1
   fi
+}
+
+# Setup API service
+setup_api() {
+  print_header "Setting up API service..."
+  
+  # Check if Go is available
+  if ! command_exists go; then
+    print_error "Go is required for API setup but not found"
+    print_step "Please run 'bin/rin-setup-unified go' first"
+    return 1
+  fi
+  
+  # Check API directory structure
+  local api_dir="$RINNA_DIR/api"
+  if [[ ! -d "$api_dir" ]]; then
+    print_warning "API directory not found at $api_dir"
+    print_step "Creating API directory structure..."
+    mkdir -p "$api_dir/cmd/rinnasrv"
+    mkdir -p "$api_dir/internal/handlers"
+    mkdir -p "$api_dir/internal/middleware"
+    mkdir -p "$api_dir/internal/models"
+    mkdir -p "$api_dir/pkg/config"
+    mkdir -p "$api_dir/pkg/health"
+    mkdir -p "$api_dir/configs"
+    mkdir -p "$api_dir/test/integration"
+    print_success "Created API directory structure"
+  else
+    print_success "API directory structure already exists"
+  fi
+  
+  # Check for go.mod
+  if [[ ! -f "$api_dir/go.mod" ]]; then
+    print_step "Initializing Go module..."
+    cd "$api_dir"
+    go mod init github.com/rinna/api
+    print_success "Initialized Go module"
+  else
+    print_success "Go module already initialized"
+  fi
+  
+  # Check for config.yaml
+  local config_file="$api_dir/configs/config.yaml"
+  if [[ ! -f "$config_file" ]]; then
+    print_step "Creating API configuration file..."
+    
+    mkdir -p "$(dirname "$config_file")"
+    cat > "$config_file" << EOF
+# Rinna API Configuration
+# Generated by rin-setup-unified on $(date)
+
+# Server settings
+server:
+  port: 8080
+  host: "localhost"
+  read_timeout_seconds: 30
+  write_timeout_seconds: 30
+  shutdown_timeout_seconds: 10
+
+# Logging configuration
+logging:
+  level: "info"  # debug, info, warn, error, fatal
+  format: "json"  # text or json
+  output: "stdout"  # stdout, stderr, or file path
+
+# Health checks
+health:
+  enabled: true
+  endpoint: "/health"
+  status_path: "/status"
+
+# Middleware settings
+middleware:
+  cors:
+    enabled: true
+    allowed_origins: ["*"]
+    allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allowed_headers: ["Content-Type", "Authorization"]
+  auth:
+    enabled: false
+    jwt_secret: ""
+    token_expiration_hours: 24
+
+# Rate limiting
+rate_limit:
+  enabled: true
+  requests_per_minute: 60
+  burst: 10
+
+# Metrics
+metrics:
+  enabled: true
+  endpoint: "/metrics"
+
+# Database settings
+database:
+  type: "memory"  # memory, sqlite, postgres, mysql
+  connection_string: ""
+  max_open_conns: 10
+  max_idle_conns: 5
+  conn_max_lifetime_seconds: 3600
+EOF
+    
+    print_success "Created API configuration file at $config_file"
+  else
+    print_success "API configuration file already exists"
+  fi
+  
+  # Check for main.go in rinnasrv
+  local main_file="$api_dir/cmd/rinnasrv/main.go"
+  if [[ ! -f "$main_file" ]]; then
+    print_step "Creating minimal API server..."
+    
+    mkdir -p "$(dirname "$main_file")"
+    cat > "$main_file" << 'EOF'
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+)
+
+func main() {
+	port := getEnv("PORT", "8080")
+	addr := fmt.Sprintf(":%s", port)
+
+	// Create a basic router
+	mux := http.NewServeMux()
+	
+	// Add health check endpoint
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"UP","version":"development"}`))
+	})
+	
+	// Add root endpoint
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"message":"Rinna API Server","status":"running"}`))
+	})
+
+	// Create server with reasonable timeouts
+	server := &http.Server{
+		Addr:         addr,
+		Handler:      mux,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	// Start server in a goroutine
+	go func() {
+		log.Printf("Starting server on %s", addr)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server error: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shut down the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+
+	// Create a deadline to wait for current operations to complete
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	log.Println("Server gracefully stopped")
+}
+
+// getEnv retrieves an environment variable or returns a default value
+func getEnv(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultValue
+}
+EOF
+    
+    print_success "Created minimal API server at $main_file"
+  else
+    print_success "API server already exists"
+  fi
+  
+  # Create health package
+  local health_file="$api_dir/pkg/health/health.go"
+  if [[ ! -f "$health_file" ]]; then
+    print_step "Creating health check package..."
+    
+    mkdir -p "$(dirname "$health_file")"
+    cat > "$health_file" << 'EOF'
+package health
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"runtime"
+	"time"
+)
+
+// Status represents the health status of the application
+type Status struct {
+	Status    string            `json:"status"`
+	Version   string            `json:"version"`
+	Timestamp string            `json:"timestamp"`
+	Uptime    string            `json:"uptime"`
+	GoVersion string            `json:"goVersion"`
+	Memory    uint64            `json:"memoryUsageMB"`
+	Checks    map[string]string `json:"checks,omitempty"`
+}
+
+// Handler returns an HTTP handler for health checks
+func Handler(version string, startTime time.Time) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		
+		// Basic health check
+		status := Status{
+			Status:    "UP",
+			Version:   version,
+			Timestamp: time.Now().Format(time.RFC3339),
+			Uptime:    fmt.Sprintf("%s", time.Since(startTime).Round(time.Second)),
+			GoVersion: runtime.Version(),
+			Memory:    getMemoryUsage(),
+			Checks:    make(map[string]string),
+		}
+		
+		// Run additional checks here
+		
+		// Serialize and send response
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(status)
+	}
+}
+
+// getMemoryUsage returns memory usage in MB
+func getMemoryUsage() uint64 {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	return m.Alloc / 1024 / 1024
+}
+EOF
+    
+    print_success "Created health check package at $health_file"
+  else
+    print_success "Health check package already exists"
+  fi
+  
+  # Check if go.sum exists, if not run go mod tidy
+  if [[ ! -f "$api_dir/go.sum" ]]; then
+    print_step "Resolving Go dependencies..."
+    cd "$api_dir"
+    go mod tidy
+    print_success "Dependencies resolved"
+  fi
+  
+  # Attempt to build the API server
+  print_step "Building API server..."
+  cd "$api_dir"
+  if go build -o bin/rinnasrv ./cmd/rinnasrv; then
+    print_success "API server built successfully"
+  else
+    print_warning "Failed to build API server. Check Go configuration."
+    return 1
+  fi
+  
+  # Create API activation script
+  local activate_script="$RINNA_DIR/activate-api.sh"
+  cat > "$activate_script" << EOF
+#!/usr/bin/env bash
+# API environment setup for Rinna
+# Generated by rin-setup-unified on $(date)
+
+# Set API environment variables
+export RINNA_API_DIR="$api_dir"
+export PATH="\$RINNA_API_DIR/bin:\$PATH"
+export GO111MODULE=on
+
+# Print status
+echo "Rinna API environment activated"
+echo "API directory: \$RINNA_API_DIR"
+EOF
+
+  chmod +x "$activate_script"
+  print_success "Created API activation script at $activate_script"
+  
+  print_step "API service setup complete"
+  print_success "You can start the API with: $api_dir/bin/rinnasrv"
+  
+  return 0
+}
+
+# Setup configuration files
+setup_config() {
+  print_header "Setting up configuration files..."
+  
+  # Check if config directory exists
+  if [[ ! -d "$RINNA_DIR/config" ]]; then
+    mkdir -p "$RINNA_DIR/config"
+    print_success "Created config directory"
+  fi
+  
+  # Setup main configuration file
+  local main_config="$RINNA_DIR/config/rinna.yaml"
+  if [[ ! -f "$main_config" ]]; then
+    debug_echo "Creating main configuration file"
+    
+    cat > "$main_config" << EOF
+# Rinna Configuration File
+# Generated by rin-setup-unified on $(date)
+
+# Environment configuration
+environment:
+  # Production, Development, Testing, or CI
+  mode: Development
+
+# Java settings
+java:
+  version: "$REQUIRED_JAVA_VERSION"
+  options: "-Xmx1024m"
+
+# Go settings
+go:
+  version: "$REQUIRED_GO_VERSION"
+  module: "github.com/rinna/api"
+
+# Python settings
+python:
+  version: "$REQUIRED_PYTHON_VERSION"
+  virtual_env: ".venv"
+  requirements: "requirements.txt"
+
+# Database settings
+database:
+  type: "memory"  # Options: memory, sqlite, postgres, mysql
+  connection: ""
+
+# Logging configuration
+logging:
+  level: "info"  # Options: debug, info, warn, error
+  file: "logs/rinna.log"
+  max_size_mb: 10
+  max_backups: 5
+  compress: true
+
+# Service configuration
+services:
+  api:
+    port: 8080
+    address: "localhost"
+    timeout_seconds: 30
+    max_requests: 1000
+EOF
+
+    print_success "Created main configuration file at $main_config"
+  else
+    print_success "Main configuration file already exists"
+  fi
+  
+  # Create config symlinks if needed
+  if [[ ! -f "$RINNA_DIR/.rinna-config" ]]; then
+    ln -sf "$main_config" "$RINNA_DIR/.rinna-config"
+    print_success "Created configuration symlink"
+  fi
+  
+  # Create sample user config if not exists
+  if [[ ! -d "$HOME/.rinna" ]]; then
+    mkdir -p "$HOME/.rinna"
+  fi
+  
+  local user_config="$HOME/.rinna/config.yaml"
+  if [[ ! -f "$user_config" ]]; then
+    cat > "$user_config" << EOF
+# User specific configuration for Rinna
+# Generated by rin-setup-unified on $(date)
+
+# User preferences
+preferences:
+  editor: "${EDITOR:-auto}"
+  theme: "default"
+  color_mode: "auto"  # Options: auto, light, dark
+
+# Personal workspace settings
+workspace:
+  path: "~/rinna-workspace"
+  default_project: "default"
+EOF
+    
+    print_success "Created user configuration at $user_config"
+  else
+    print_success "User configuration already exists"
+  fi
+  
+  return 0
 }
 
 # Create Python virtual environment
@@ -1380,7 +2599,7 @@ run_fast_setup() {
         results+=($?)
         ;;
       config)
-        load_config
+        setup_config
         results+=($?)
         ;;
       venv)
@@ -1389,6 +2608,14 @@ run_fast_setup() {
         ;;
       ui)
         setup_ui
+        results+=($?)
+        ;;
+      api)
+        setup_api
+        results+=($?)
+        ;;
+      samples)
+        setup_java_samples
         results+=($?)
         ;;
       *)
@@ -1523,15 +2750,22 @@ display_final_message() {
 
 # Main function
 main() {
+  debug_echo "Starting main function with arguments: $*"
+  
   # Parse command line arguments
   parse_args "$@"
+  
+  # Add trap for error handling
+  trap 'echo -e "\033[0;31m✗ Error occurred at line $LINENO\033[0m" >&2' ERR
   
   # Show logo
   print_logo
   
   # Choose setup mode
+  debug_echo "Running in $MODE mode"
   case "$MODE" in
     graphical)
+      debug_echo "Graphical mode selected"
       # Load configuration
       load_config
       
@@ -1539,6 +2773,7 @@ main() {
       run_graphical_installer
       ;;
     fast)
+      debug_echo "Fast mode selected"
       # Set non-interactive mode for fast setup
       INTERACTIVE="false"
       
@@ -1549,8 +2784,10 @@ main() {
       run_fast_setup
       ;;
     minimal)
+      debug_echo "Minimal mode selected"
       # Set minimal components
       COMPONENTS=("java" "go" "maven")
+      debug_echo "Using minimal components: ${COMPONENTS[*]}"
       
       # Load configuration
       load_config
@@ -1559,32 +2796,71 @@ main() {
       run_fast_setup
       ;;
     standard|*)
+      debug_echo "Standard mode selected"
       # Load configuration
       load_config
       
       # Standard setup
       local all_passed=true
       local component
+      local result=0
       
       for component in "${COMPONENTS[@]}"; do
+        debug_echo "Setting up component: $component"
         case "$component" in
           java)
-            setup_java || all_passed=false
+            setup_java 
+            result=$?
+            debug_echo "setup_java returned: $result"
+            [[ $result -ne 0 ]] && all_passed=false
             ;;
           go)
-            setup_go || all_passed=false
+            setup_go
+            result=$?
+            debug_echo "setup_go returned: $result"
+            [[ $result -ne 0 ]] && all_passed=false
             ;;
           python)
-            setup_python || all_passed=false
+            setup_python
+            result=$?
+            debug_echo "setup_python returned: $result"
+            [[ $result -ne 0 ]] && all_passed=false
             ;;
           maven)
-            setup_maven || all_passed=false
+            setup_maven
+            result=$?
+            debug_echo "setup_maven returned: $result"
+            [[ $result -ne 0 ]] && all_passed=false
             ;;
           venv)
-            setup_python_venv || all_passed=false
+            setup_python_venv
+            result=$?
+            debug_echo "setup_python_venv returned: $result"
+            [[ $result -ne 0 ]] && all_passed=false
             ;;
           ui)
-            setup_ui || all_passed=false
+            setup_ui
+            result=$?
+            debug_echo "setup_ui returned: $result"
+            [[ $result -ne 0 ]] && all_passed=false
+            ;;
+          config)
+            setup_config
+            result=$?
+            debug_echo "setup_config returned: $result"
+            [[ $result -ne 0 ]] && all_passed=false
+            ;;
+          api)
+            setup_api
+            result=$?
+            debug_echo "setup_api returned: $result"
+            [[ $result -ne 0 ]] && all_passed=false
+            ;;
+          samples)
+            setup_java_samples
+            result=$?
+            debug_echo "setup_java_samples returned: $result"
+            [[ $result -ne 0 ]] && all_passed=false
             ;;
           *)
             print_warning "Unknown component: $component"
@@ -1593,24 +2869,36 @@ main() {
       done
       
       # Create master activation script
+      debug_echo "Creating master activation script"
       create_master_activation
       
       # Test environment unless skipped
       if [[ "$SKIP_TESTS" != "true" ]]; then
-        test_environment || all_passed=false
+        debug_echo "Running environment tests"
+        test_environment
+        result=$?
+        debug_echo "test_environment returned: $result"
+        [[ $result -ne 0 ]] && all_passed=false
+      else
+        debug_echo "Skipping environment tests"
       fi
       
       # Show final message
       if [[ "$all_passed" == true ]]; then
+        debug_echo "All components passed"
         display_final_message
         return 0
       else
-        print_warning "Setup completed with some components failing"
-        print_warning "Please check the logs and fix any issues"
+        echo -e "\033[0;33m! Setup completed with some components failing\033[0m"
+        echo -e "\033[0;33m! Please check the logs and fix any issues\033[0m"
         return 1
       fi
       ;;
   esac
+  
+  # Remove error trap
+  trap - ERR
+  debug_echo "Main function completed"
 }
 
 # Run main function with all arguments

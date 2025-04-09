@@ -1,8 +1,47 @@
-# Rinna Testing Framework
+# Rinna Test Documentation
 
-This document provides an overview of the standardized testing framework for the Rinna project.
+This directory contains comprehensive documentation for the Rinna testing strategy, architecture, and implementation guidelines. These documents provide a unified approach to testing across the multi-language Rinna codebase (Java, Go, Python).
 
-## Implementation Status
+## Core Test Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Test Automation Guide](TEST_AUTOMATION_GUIDE.md) | Complete guide to implementing automated tests at all levels across all languages |
+| [Test Pyramid Strategy](TEST_PYRAMID.md) | Overview of our five-layer test pyramid approach and philosophy |
+| [Unified Test Approach](UNIFIED_TEST_APPROACH.md) | Standardized approach to test organization, naming, and execution |
+| [Testing Strategy](TESTING_STRATEGY.md) | Overall testing strategy and guiding principles |
+
+## Practical Guidelines
+
+| Document | Description |
+|----------|-------------|
+| [Test Templates](TEST_TEMPLATES.md) | Ready-to-use templates for all test types across all languages |
+| [Test Automation Checklist](TEST_AUTOMATION_CHECKLIST.md) | Practical checklist for ensuring adequate test coverage |
+| [Test Troubleshooting Guide](TEST_TROUBLESHOOTING.md) | Solutions for common test automation issues |
+| [Test Compatibility Matrix](TEST_COMPATIBILITY_MATRIX.md) | Framework for ensuring cross-language test coverage |
+| [TDD Practical Guide](TDD_PRACTICAL_GUIDE.md) | Step-by-step guide to Test-Driven Development in a multi-language environment |
+| [Test Command Reference](TEST_COMMAND_REFERENCE.md) | Quick reference for test commands across all languages |
+
+## Specialized Topics
+
+| Document | Description |
+|----------|-------------|
+| [Admin Testing](ADMIN_TESTING.md) | Guidelines for testing administrative functionality |
+| [Cross-Language Testing](CROSS_LANGUAGE_TESTING.md) | Guide to cross-language testing with the test harness |
+| [Quality Standards](QUALITY_STANDARDS.md) | Quality standards for test implementation |
+| [TDD Features](TDD_FEATURES.md) | Test-Driven Development approach for feature implementation |
+| [Test Coverage Improvement Plan](TEST_COVERAGE_IMPROVEMENT_PLAN.md) | Plan for improving test coverage across the codebase |
+| [Model Mapper Testing](MODEL_MAPPER_TESTING.md) | Detailed testing of the ModelMapper component |
+
+## Migration and Implementation
+
+| Document | Description |
+|----------|-------------|
+| [Test Migration Summary](TEST_MIGRATION_SUMMARY.md) | Summary of test migration efforts |
+| [Test Implementation Plan](TEST_IMPLEMENTATION_PLAN.md) | Plan for implementing comprehensive test coverage |
+| [Test Cleanup Summary](TEST_CLEANUP_SUMMARY.md) | Summary of test cleanup efforts |
+
+## Standardized Test Structure
 
 We have implemented a standardized test approach with the following components:
 
@@ -28,56 +67,125 @@ We have implemented a standardized test approach with the following components:
    - Acceptance tests: `*AcceptanceTest.java`
    - Performance tests: `*PerformanceTest.java`
 
-4. **Test Runner**:
-   - `bin/rin-test` script for running tests by category
+## Test Framework Resources
 
-## Key Documents
+### Command-Line Tools
 
-1. [Unified Test Approach](UNIFIED_TEST_APPROACH.md) - The standardized approach to testing across all languages
-2. [Testing Strategy](TESTING_STRATEGY.md) - Overall testing strategy for Rinna
-3. [Admin Testing Guide](ADMIN_TESTING.md) - Guide for running and maintaining admin functionality tests
-4. [Test Migration Summary](./TEST_MIGRATION_SUMMARY.md) - Summary of the completed test migration
-5. [Test Coverage Summary](./TEST_COVERAGE_SUMMARY.md) - Summary of test coverage metrics
-6. [Test Coverage Improvement Plan](./TEST_COVERAGE_IMPROVEMENT_PLAN.md) - Plan for improving test coverage
-7. [Test Cleanup Summary](./TEST_CLEANUP_SUMMARY.md) - Summary of test cleanup efforts
-8. [Model Mapper Testing](./MODEL_MAPPER_TESTING.md) - Detailed testing of the ModelMapper component
-
-## Running Tests
-
-Use the `bin/rin-test` script to run tests by category:
+The Rinna project provides several command-line tools for test execution and analysis:
 
 ```bash
-# Run all tests
-./bin/rin-test
+# Run tests with the unified test framework
+./bin/rin-test                       # Run all tests
+./bin/rin-test unit                  # Run unit tests only
+./bin/rin-test component             # Run component tests only
+./bin/rin-test integration           # Run integration tests only
+./bin/rin-test acceptance            # Run acceptance tests only
+./bin/rin-test performance           # Run performance tests only
+./bin/rin-test admin                 # Run admin functionality tests
 
-# Run specific test categories
-./bin/rin-test unit
-./bin/rin-test component
-./bin/rin-test integration
-./bin/rin-test acceptance
-./bin/rin-test performance
-./bin/rin-test admin
-
-# Run fast tests (unit + component)
-./bin/rin-test fast
-
-# Run tests in parallel
-./bin/rin-test unit --parallel
-
-# Run tests with specific tags
-./bin/rin-test --tag=unit
-./bin/rin-test --tag=admin
+# Run tests with additional options
+./bin/rin-test --parallel unit       # Run tests in parallel
+./bin/rin-test fast                  # Run fast tests (unit + component)
+./bin/rin-test tag:workflow          # Run tests with specific tag
 
 # Run admin tests using the dedicated script
 ./bin/run-admin-tests.sh             # All admin tests
 ./bin/run-admin-tests.sh --config    # Configuration tests only
 ./bin/run-admin-tests.sh --integration # Maven & server tests only
 ./bin/run-admin-tests.sh --project   # Project management tests only
+
+# Analyze test distribution
+./bin/test-discovery.sh              # Discover and categorize tests
+./bin/test-pyramid-coverage.sh       # Analyze test pyramid coverage
+
+# Generate code coverage reports
+./bin/polyglot-coverage.sh           # Generate unified code coverage report
 ```
 
-## Test Writing Examples
+### Maven Profiles
 
-### Unit Test Example
+Java tests can be run using Maven profiles:
+
+```bash
+# Run tests with specific profile
+mvn test -P unit-tests               # Run unit tests only
+mvn test -P component-tests          # Run component tests only
+mvn verify -P integration-tests      # Run integration tests only
+mvn verify -P acceptance-tests       # Run acceptance tests only
+mvn verify -P performance-tests      # Run performance tests only
+```
+
+### Go Test Commands
+
+Go tests can be run using the standard Go test command:
+
+```bash
+# Run all Go tests
+cd api && go test ./...
+
+# Run specific test package
+cd api && go test ./pkg/health
+
+# Run tests with verbose output
+cd api && go test -v ./...
+
+# Run benchmarks
+cd api && go test -bench=. ./...
+```
+
+### Python Test Commands
+
+Python tests can be run using pytest:
+
+```bash
+# Run all Python tests
+cd python && python -m pytest
+
+# Run specific test module
+cd python && python -m pytest tests/unit/test_version.py
+
+# Run tests with coverage
+cd python && python -m pytest --cov=rinna
+```
+
+## Cross-Language Test Structure
+
+The Rinna project follows a standardized test directory structure across languages:
+
+```
+# Java tests
+src/test/java/org/rinna/
+├── unit/           # Unit tests 
+├── component/      # Component tests
+├── integration/    # Integration tests
+├── acceptance/     # Acceptance tests
+│   └── steps/      # Step definitions for BDD tests
+└── performance/    # Performance tests
+
+src/test/resources/
+├── features/       # BDD feature files
+└── testdata/       # Test data files
+
+# Go tests
+api/test/
+├── unit/           # Unit tests
+├── component/      # Component tests
+├── integration/    # Integration tests
+├── acceptance/     # Acceptance tests
+└── performance/    # Performance tests
+
+# Python tests
+python/tests/
+├── unit/           # Unit tests
+├── component/      # Component tests
+├── integration/    # Integration tests
+├── acceptance/     # Acceptance tests
+└── performance/    # Performance tests
+```
+
+## Test Implementation Examples
+
+### Java Unit Test Example
 
 ```java
 package org.rinna.unit.service;
@@ -98,59 +206,58 @@ public class ServiceTest {
 }
 ```
 
-### Component Test Example
+### BDD Testing Example
+
+BDD tests follow a standard structure:
+
+1. Feature files define scenarios in Gherkin syntax:
+
+```gherkin
+Feature: Work Item Management
+  As a user
+  I want to create and manage work items
+  So that I can track my project tasks
+
+  Scenario: Create a new work item
+    Given I am logged in
+    When I create a work item with title "Test Task"
+    Then the work item should be created successfully
+    And the work item should have the status "FOUND"
+```
+
+2. Step definitions implement the scenario steps:
 
 ```java
-package org.rinna.component.service;
+@Given("I am logged in")
+public void iAmLoggedIn() {
+    // Authentication implementation
+}
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
-import static org.junit.jupiter.api.Assertions.*;
+@When("I create a work item with title {string}")
+public void iCreateWorkItem(String title) {
+    workItem = workItemService.create(new WorkItemCreateRequest(title));
+}
 
-@Tag("component")
-@DisplayName("Service Component Tests")
-public class ServiceComponentTest {
-    @Test
-    @DisplayName("Should integrate with other components")
-    void shouldIntegrateWithOtherComponents() {
-        // Test implementation
-    }
+@Then("the work item should be created successfully")
+public void workItemShouldBeCreated() {
+    assertNotNull(workItem.getId());
 }
 ```
 
-## BDD Testing
+For more detailed examples and patterns, see the [Test Templates](TEST_TEMPLATES.md) document.
 
-BDD tests are placed in the acceptance layer with the following structure:
+## Contributing to Test Documentation
 
-1. Feature files in `src/test/resources/features/`
-2. Step definitions in `src/test/java/org/rinna/acceptance/steps/` or `src/test/java/org/rinna/bdd/`
-3. Test runners in `src/test/java/org/rinna/acceptance/` or `src/test/java/org/rinna/bdd/`
+When contributing to test documentation:
 
-For admin functionality testing specifically, see the [Admin Testing Guide](ADMIN_TESTING.md) for details on:
-- Running admin-specific BDD tests
-- Understanding the admin testing structure
-- Extending admin functionality tests
+1. Follow the established document structure
+2. Update relevant documentation when adding new test approaches
+3. Ensure examples cover all supported languages (Java, Go, Python)
+4. Keep test documentation aligned with code practices
+5. Include practical examples whenever possible
 
-## Maven Integration
+## Related Documentation
 
-Maven profiles are configured to run tests by category:
-
-```xml
-<profile>
-  <id>unit-tests</id>
-  <properties>
-    <test.groups>unit</test.groups>
-  </properties>
-</profile>
-```
-
-To use these profiles with Maven directly:
-
-```bash
-mvn test -P unit-tests
-mvn test -P component-tests
-mvn verify -P integration-tests
-mvn verify -P acceptance-tests
-mvn verify -P performance-tests
-```
+- [User Guide - Testing](../user-guide/testing.md) - Test documentation for users
+- [Development - Testing Strategy](../development/testing.md) - Testing information for developers
+- [Project CI/CD Pipeline](../development/ci-workflow.md) - CI/CD pipeline documentation

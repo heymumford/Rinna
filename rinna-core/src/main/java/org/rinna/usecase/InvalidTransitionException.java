@@ -26,7 +26,7 @@ public class InvalidTransitionException extends Exception {
      * Constructs a new InvalidTransitionException with the specified item ID and states.
      */
     public InvalidTransitionException(UUID itemId, WorkflowState currentState, WorkflowState targetState) {
-        super(STR."Invalid transition for item \{itemId}: \{currentState} → \{targetState}");
+        super("Invalid transition for item " + itemId + ": " + currentState + " → " + targetState);
         this.itemId = itemId;
         this.currentState = currentState;
         this.targetState = targetState;

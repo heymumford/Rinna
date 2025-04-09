@@ -12,7 +12,7 @@ import org.rinna.domain.model.DocumentConfig;
 import org.rinna.domain.model.Project;
 import org.rinna.domain.model.Release;
 import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.service.DocumentService;
+import org.rinna.usecase.DocumentService;
 
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -32,7 +32,7 @@ public class DocmosisDocumentService implements DocumentService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocmosisDocumentService.class);
     
     // Use lazy initialization pattern to avoid class loading errors if Docmosis isn't available
-    private static class DocmosisHolder {
+    private static final class DocmosisHolder {
         // These will cause ClassNotFoundError if Docmosis is not available,
         // but only when the class is loaded (not when DocmosisDocumentService is instantiated)
         private static final boolean DOCMOSIS_AVAILABLE;

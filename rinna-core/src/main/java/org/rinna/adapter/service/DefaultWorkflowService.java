@@ -12,7 +12,7 @@ import org.rinna.domain.model.DefaultWorkItem;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemRecord;
 import org.rinna.domain.model.WorkflowState;
-import org.rinna.repository.ItemRepository;
+import org.rinna.domain.repository.ItemRepository;
 import org.rinna.domain.service.InvalidTransitionException;
 import org.rinna.domain.service.WorkflowService;
 
@@ -39,7 +39,7 @@ public class DefaultWorkflowService implements WorkflowService {
         Objects.requireNonNull(targetState, "Target state cannot be null");
         
         WorkItem item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Work item not found: \{itemId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Work item not found: " + itemId));
         
         WorkflowState currentState = item.getStatus();
         

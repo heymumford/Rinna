@@ -10,8 +10,11 @@ package org.rinna.repository;
 
 import org.rinna.domain.WorkItem;
 import org.rinna.domain.WorkItemCreateRequest;
+import org.rinna.domain.WorkItemType;
+import org.rinna.domain.WorkflowState;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -58,7 +61,7 @@ public interface ItemRepository {
      * @param type the type of work items to find
      * @return a list of work items of the given type
      */
-    List<WorkItem> findByType(String type);
+    List<WorkItem> findByType(WorkItemType type);
     
     /**
      * Finds work items by their status.
@@ -66,7 +69,7 @@ public interface ItemRepository {
      * @param status the status of work items to find
      * @return a list of work items with the given status
      */
-    List<WorkItem> findByStatus(String status);
+    List<WorkItem> findByStatus(WorkflowState status);
     
     /**
      * Finds work items by their assignee.
@@ -75,6 +78,25 @@ public interface ItemRepository {
      * @return a list of work items assigned to the given assignee
      */
     List<WorkItem> findByAssignee(String assignee);
+    
+    /**
+     * Updates the metadata of a work item.
+     * 
+     * @param id the ID of the work item to update
+     * @param metadata the new metadata
+     * @return the updated work item
+     * @throws IllegalArgumentException if the work item does not exist
+     */
+    WorkItem updateMetadata(UUID id, Map<String, String> metadata);
+    
+    /**
+     * Finds work items by a custom field value.
+     * 
+     * @param field the name of the custom field
+     * @param value the value of the custom field
+     * @return a list of work items with the given custom field value
+     */
+    List<WorkItem> findByCustomField(String field, String value);
     
     /**
      * Deletes a work item by its ID.

@@ -13,8 +13,8 @@ import org.rinna.cli.service.ContextManager;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.service.MockItemService;
 import org.rinna.cli.service.MockSearchService;
+import org.rinna.cli.service.ItemService;
 import org.rinna.cli.domain.model.SearchResult;
 import org.rinna.cli.domain.model.SearchResult.Match;
 import org.rinna.cli.util.OutputFormatter;
@@ -172,58 +172,44 @@ public class GrepCommand implements Callable<Integer> {
                 return 1;
             }
             
-            // Get the search service
-            MockSearchService searchService = serviceManager.getMockSearchService();
-            if (searchService == null) {
+            // Get the search service (should be using the adapter pattern)
+            Object searchServiceObj = serviceManager.getSearchService();
+            if (searchServiceObj == null) {
                 System.err.println("Error: Search service not available");
                 metadataService.failOperation(operationId, new IllegalStateException("Search service not available"));
                 return 1;
             }
             
+            // For backward compatibility, handle both adapter and direct access
+            MockSearchService searchService;
+            if (searchServiceObj instanceof MockSearchService) {
+                searchService = (MockSearchService) searchServiceObj;
+            } else {
+                searchService = serviceManager.getMockSearchService();
+                if (searchService == null) {
+                    System.err.println("Error: Search service unavailable");
+                    metadataService.failOperation(operationId, new IllegalStateException("Search service unavailable"));
+                    return 1;
+                }
+            }
+            
             // Store the search in history
             contextManager.addToSearchHistory(pattern);
             
-            // Perform the search using domain model
+            // Perform the search using the service
             List<WorkItem> matchingItems = searchService.findText(pattern, caseSensitive);
             
             // Convert WorkItems to SearchResults for display
             List<SearchResult> results = convertWorkItemsToSearchResults(matchingItems, pattern);
             
-            // Display results
-            if (results.isEmpty()) {
-                System.out.println("No matches found for: " + pattern);
-                
-                // Record the successful operation with zero results
-                Map<String, Object> resultData = new HashMap<>();
-                resultData.put("matches_found", 0);
-                resultData.put("pattern", pattern);
-                metadataService.completeOperation(operationId, resultData);
-            } else {
-                if (countOnly) {
-                    displayCountSummary(results);
-                } else {
-                    if ("json".equalsIgnoreCase(outputFormat)) {
-                        displayJsonOutput(results);
-                    } else if ("csv".equalsIgnoreCase(outputFormat)) {
-                        displayCsvOutput(results);
-                    } else {
-                        displayTextOutput(results);
-                    }
-                }
-                
-                // Record the successful operation with result summary
-                Map<String, Object> resultData = new HashMap<>();
-                resultData.put("matches_found", countMatchesTotal(results));
-                resultData.put("items_matched", results.size());
-                resultData.put("pattern", pattern);
-                metadataService.completeOperation(operationId, resultData);
-            }
+            // Display results based on format and options
+            displayResults(results, operationId);
             
             return 0;
         } catch (Exception e) {
             // Enhanced error handling with context
             String errorMessage = "Error executing grep command: " + e.getMessage();
-            System.err.println("Error: " + e.getMessage());
+            System.err.println("Error: " + errorMessage);
             
             // Record detailed error information if verbose mode is enabled
             if (verbose) {
@@ -235,6 +221,48 @@ public class GrepCommand implements Callable<Integer> {
             
             return 1;
         }
+    }
+    
+    /**
+     * Displays the search results in the appropriate format.
+     * 
+     * @param results the search results to display
+     * @param operationId the operation ID for tracking
+     */
+    private void displayResults(List<SearchResult> results, String operationId) {
+        if (results.isEmpty()) {
+            System.out.println("No matches found for: " + pattern);
+            
+            // Record the successful operation with zero results
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("matches_found", 0);
+            resultData.put("pattern", pattern);
+            metadataService.completeOperation(operationId, resultData);
+            return;
+        }
+        
+        // Display based on format and options
+        if (countOnly) {
+            displayCountSummary(results);
+        } else {
+            switch (outputFormat.toLowerCase()) {
+                case "json":
+                    displayJsonOutput(results);
+                    break;
+                case "csv":
+                    displayCsvOutput(results);
+                    break;
+                default:
+                    displayTextOutput(results);
+            }
+        }
+        
+        // Record the successful operation with result summary
+        Map<String, Object> resultData = new HashMap<>();
+        resultData.put("matches_found", countMatchesTotal(results));
+        resultData.put("items_matched", results.size());
+        resultData.put("pattern", pattern);
+        metadataService.completeOperation(operationId, resultData);
     }
     
     /**
@@ -287,9 +315,10 @@ public class GrepCommand implements Callable<Integer> {
         
         // Group results by work item
         for (SearchResult result : results) {
-            // Get the work item details
+            // Get the work item details using the item service
             UUID itemId = result.getWorkItemId();
-            WorkItem item = serviceManager.getMockItemService().getItem(itemId.toString());
+            ItemService itemService = serviceManager.getItemService();
+            WorkItem item = itemService.getItem(itemId.toString());
             
             if (item != null) {
                 System.out.println("Work Item: " + item.getId() + " - " + item.getTitle());
@@ -465,55 +494,52 @@ public class GrepCommand implements Callable<Integer> {
      * @param results the search results
      */
     private void displayJsonOutput(List<SearchResult> results) {
-        StringBuilder json = new StringBuilder();
-        json.append("{\n");
-        json.append("  \"pattern\": \"").append(pattern).append("\",\n");
-        json.append("  \"results\": [\n");
+        // Prepare a Map to be converted to JSON
+        Map<String, Object> jsonData = new HashMap<>();
+        jsonData.put("pattern", pattern);
+        jsonData.put("caseSensitive", caseSensitive);
+        jsonData.put("exactMatch", exactMatch);
         
-        boolean first = true;
+        List<Map<String, Object>> resultsList = new ArrayList<>();
+        
         for (SearchResult result : results) {
-            if (!first) {
-                json.append(",\n");
-            }
-            first = false;
+            Map<String, Object> resultMap = new HashMap<>();
             
-            // Get the work item details
+            // Get the work item details using the item service
             UUID itemId = result.getWorkItemId();
-            WorkItem item = serviceManager.getMockItemService().getItem(itemId.toString());
+            ItemService itemService = serviceManager.getItemService();
+            WorkItem item = itemService.getItem(itemId.toString());
             
             if (item != null) {
-                json.append("    {\n");
-                json.append("      \"id\": \"").append(item.getId()).append("\",\n");
-                json.append("      \"title\": \"").append(item.getTitle()).append("\",\n");
-                json.append("      \"type\": \"").append(item.getType()).append("\",\n");
-                json.append("      \"priority\": \"").append(item.getPriority()).append("\",\n");
-                json.append("      \"status\": \"").append(item.getState()).append("\",\n");
-                json.append("      \"matches\": [\n");
+                resultMap.put("id", item.getId());
+                resultMap.put("title", item.getTitle());
+                resultMap.put("type", item.getType() != null ? item.getType().toString() : null);
+                resultMap.put("priority", item.getPriority() != null ? item.getPriority().toString() : null);
+                resultMap.put("status", item.getState() != null ? item.getState().toString() : null);
                 
+                List<Map<String, Object>> matchesList = new ArrayList<>();
                 List<Match> matches = result.getMatches();
-                for (int i = 0; i < matches.size(); i++) {
-                    Match match = matches.get(i);
-                    json.append("        {\n");
-                    json.append("          \"text\": \"").append(match.getMatchedText()).append("\",\n");
-                    json.append("          \"start\": ").append(match.getStart()).append(",\n");
-                    json.append("          \"end\": ").append(match.getEnd()).append("\n");
-                    json.append("        }");
-                    
-                    if (i < matches.size() - 1) {
-                        json.append(",");
-                    }
-                    json.append("\n");
+                
+                for (Match match : matches) {
+                    Map<String, Object> matchMap = new HashMap<>();
+                    matchMap.put("text", match.getMatchedText());
+                    matchMap.put("start", match.getStart());
+                    matchMap.put("end", match.getEnd());
+                    matchesList.add(matchMap);
                 }
                 
-                json.append("      ]\n");
-                json.append("    }");
+                resultMap.put("matches", matchesList);
+                resultsList.add(resultMap);
             }
         }
         
-        json.append("\n  ]\n");
-        json.append("}");
+        jsonData.put("results", resultsList);
+        jsonData.put("totalMatches", countMatchesTotal(results));
+        jsonData.put("matchedItems", results.size());
         
-        System.out.println(json.toString());
+        // Use the OutputFormatter for consistent JSON output
+        String jsonOutput = OutputFormatter.toJson(jsonData, verbose);
+        System.out.println(jsonOutput);
     }
     
     /**

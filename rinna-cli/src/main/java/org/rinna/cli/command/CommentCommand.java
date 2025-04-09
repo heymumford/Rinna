@@ -11,10 +11,12 @@ package org.rinna.cli.command;
 
 import org.rinna.cli.domain.model.Comment;
 import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.service.ContextManager;
+import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.MockCommentService;
+import org.rinna.cli.service.MockItemService;
 import org.rinna.cli.service.MockWorkflowService;
 import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.util.ModelMapper;
 import org.rinna.cli.util.OutputFormatter;
 
 import java.util.HashMap;
@@ -25,143 +27,170 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 
 /**
- * Command to add a comment to the current work item in progress.
+ * Command to add a comment to a work item.
+ * Follows the ViewCommand pattern with operation tracking.
  */
 public class CommentCommand implements Callable<Integer> {
-    private String user;
-    private String comment;
+    // Command parameters
+    private String username;
+    private String commentText;
     private UUID itemId;
-    private boolean jsonOutput = false;
+    private String format = "text"; // Output format (text or json)
     private boolean verbose = false;
     
+    // Service dependencies
     private final ServiceManager serviceManager;
     private final MockCommentService commentService;
     private final MockWorkflowService workflowService;
+    private final MockItemService itemService;
+    private final MetadataService metadataService;
+    private final ContextManager contextManager;
     
     /**
-     * Constructor initializing the service manager.
+     * Constructs a new comment command with the default service manager.
      */
     public CommentCommand() {
-        this.serviceManager = ServiceManager.getInstance();
+        this(ServiceManager.getInstance());
+    }
+    
+    /**
+     * Constructs a new comment command with the provided service manager.
+     * This constructor allows for dependency injection, making the command more testable.
+     * 
+     * @param serviceManager the service manager to use
+     */
+    public CommentCommand(ServiceManager serviceManager) {
+        this.serviceManager = serviceManager;
         this.commentService = serviceManager.getMockCommentService();
         this.workflowService = serviceManager.getMockWorkflowService();
-        this.user = System.getProperty("user.name");
+        this.itemService = serviceManager.getMockItemService();
+        this.metadataService = serviceManager.getMetadataService();
+        this.contextManager = ContextManager.getInstance();
+        this.username = System.getProperty("user.name");
     }
     
     /**
-     * Sets the comment text.
-     *
-     * @param comment the comment text
+     * Executes the command with proper operation tracking.
      */
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-    
-    /**
-     * Sets the work item ID to comment on.
-     * If not set, the comment will be added to the current work item in progress.
-     *
-     * @param itemId the work item ID
-     */
-    public void setItemId(String itemId) {
+    @Override
+    public Integer call() {
+        // Create operation parameters for tracking
+        Map<String, Object> params = new HashMap<>();
+        params.put("username", username);
+        params.put("format", format);
+        params.put("verbose", verbose);
+        
+        if (itemId != null) {
+            params.put("itemId", itemId.toString());
+        }
+        
+        if (commentText != null) {
+            params.put("hasComment", true);
+            params.put("commentLength", commentText.length());
+        }
+        
+        // Start tracking main operation
+        String operationId = metadataService.startOperation("comment", "CREATE", params);
+        
         try {
-            this.itemId = UUID.fromString(itemId);
-        } catch (IllegalArgumentException e) {
-            // Check if this is a short ID format (e.g., "WI-123")
-            if (itemId != null && itemId.contains("-")) {
-                try {
-                    // Attempt to get the full ID from the service using the short ID
-                    String shortId = itemId;
-                    WorkItem workItem = serviceManager.getMockItemService().findItemByShortId(shortId);
-                    if (workItem != null) {
-                        this.itemId = UUID.fromString(workItem.getId());
-                    } else {
-                        throw new IllegalArgumentException("Work item not found with ID: " + shortId);
-                    }
-                } catch (Exception ex) {
-                    throw new IllegalArgumentException("Invalid work item ID: " + itemId);
+            // 1. Validate comment text
+            validateComment(operationId);
+            
+            // 2. Resolve the item ID if not specified
+            resolveItemId(operationId);
+            
+            // 3. Create a sub-operation for adding the comment
+            Map<String, Object> addParams = new HashMap<>();
+            addParams.put("itemId", itemId.toString());
+            addParams.put("username", username);
+            String addOpId = metadataService.startOperation("comment-add", "CREATE", addParams);
+            
+            try {
+                // 4. Add the comment
+                commentService.addComment(itemId, username, commentText);
+                
+                // 5. Record success
+                Map<String, Object> addResult = new HashMap<>();
+                addResult.put("success", true);
+                addResult.put("itemId", itemId.toString());
+                metadataService.completeOperation(addOpId, addResult);
+                
+                // 6. Output the result
+                boolean isJsonOutput = "json".equalsIgnoreCase(format);
+                
+                // Record the item in context for future commands
+                contextManager.setCurrentItemId(itemId.toString());
+                
+                int resultCode;
+                if (verbose) {
+                    // Display all comments for the item
+                    resultCode = displayDetailedResult(itemId, isJsonOutput, operationId);
+                } else {
+                    // Display simple success message
+                    resultCode = displaySimpleResult(itemId, isJsonOutput, operationId);
                 }
-            } else {
-                throw new IllegalArgumentException("Invalid work item ID format: " + itemId);
+                
+                return resultCode;
+            } catch (Exception e) {
+                metadataService.failOperation(addOpId, e);
+                throw e;
             }
+        } catch (IllegalArgumentException e) {
+            return handleError("Invalid work item ID - " + e.getMessage(), e, operationId);
+        } catch (Exception e) {
+            return handleError("Failed to add comment - " + e.getMessage(), e, operationId);
         }
     }
     
     /**
-     * Sets the user adding the comment.
-     *
-     * @param user the user name
+     * Validates the comment text.
+     * 
+     * @param operationId the operation ID for tracking
+     * @throws IllegalArgumentException if the comment text is missing or empty
      */
-    public void setUser(String user) {
-        this.user = user;
-    }
-
-    /**
-     * Sets the output format to JSON.
-     *
-     * @param jsonOutput true for JSON output
-     */
-    public void setJsonOutput(boolean jsonOutput) {
-        this.jsonOutput = jsonOutput;
-    }
-
-    /**
-     * Sets verbose output mode.
-     *
-     * @param verbose true for verbose output
-     */
-    public void setVerbose(boolean verbose) {
-        this.verbose = verbose;
+    private void validateComment(String operationId) throws IllegalArgumentException {
+        if (commentText == null || commentText.isBlank()) {
+            IllegalArgumentException e = new IllegalArgumentException("Comment text is required");
+            metadataService.failOperation(operationId, e);
+            throw e;
+        }
     }
     
-    @Override
-    public Integer call() {
-        try {
-            // Track operation metadata
-            Map<String, Object> operationParams = new HashMap<>();
-            operationParams.put("user", user);
-            if (itemId != null) operationParams.put("itemId", itemId.toString());
-            if (comment != null) operationParams.put("hasComment", true);
+    /**
+     * Resolves the item ID if not specified.
+     * 
+     * @param operationId the operation ID for tracking
+     * @throws IllegalArgumentException if no work item is currently in progress
+     */
+    private void resolveItemId(String operationId) throws IllegalArgumentException {
+        if (itemId == null) {
+            Map<String, Object> resolveParams = new HashMap<>();
+            resolveParams.put("username", username);
+            String resolveOpId = metadataService.startOperation("comment-resolve-item", "READ", resolveParams);
             
-            serviceManager.getMetadataService().trackOperation("comment", operationParams);
-            
-            // Validate comment text
-            if (comment == null || comment.isBlank()) {
-                System.err.println("Error: Comment text is required");
-                return 1;
-            }
-            
-            // Get item ID if not specified
-            if (itemId == null) {
-                Optional<WorkItem> currentWip = workflowService.getCurrentWorkInProgress(user);
+            try {
+                Optional<WorkItem> currentWip = workflowService.getCurrentWorkInProgress(username);
                 
                 if (currentWip.isEmpty()) {
-                    System.err.println("Error: No work item is currently in progress");
-                    System.err.println("Tip: Use 'rin list --status=IN_PROGRESS' to see in-progress items");
-                    System.err.println("     Use 'rin comment <item-id> <comment>' to comment on a specific item");
-                    return 1;
+                    IllegalArgumentException e = new IllegalArgumentException("No work item is currently in progress");
+                    metadataService.failOperation(resolveOpId, e);
+                    throw e;
                 }
                 
                 itemId = UUID.fromString(currentWip.get().getId());
+                
+                Map<String, Object> resolveResult = new HashMap<>();
+                resolveResult.put("itemId", itemId.toString());
+                resolveResult.put("itemTitle", currentWip.get().getTitle());
+                metadataService.completeOperation(resolveOpId, resolveResult);
+                
                 if (verbose) {
                     System.out.println("Using current work item: " + itemId);
                 }
+            } catch (Exception e) {
+                metadataService.failOperation(resolveOpId, e);
+                throw e;
             }
-            
-            // Add the comment
-            commentService.addComment(itemId, user, comment);
-            
-            // Output the result
-            if (verbose) {
-                return outputDetailedResult(itemId);
-            } else {
-                return outputSimpleResult(itemId);
-            }
-            
-        } catch (IllegalArgumentException e) {
-            return handleError("Invalid work item ID - " + e.getMessage(), e);
-        } catch (Exception e) {
-            return handleError("Failed to add comment - " + e.getMessage(), e);
         }
     }
     
@@ -170,65 +199,117 @@ public class CommentCommand implements Callable<Integer> {
      * 
      * @param message the error message
      * @param e the exception
+     * @param operationId the operation ID for tracking
      * @return the exit code
      */
-    private int handleError(String message, Exception e) {
-        System.err.println("Error: " + message);
-        if (verbose) {
-            e.printStackTrace();
+    private int handleError(String message, Exception e, String operationId) {
+        // Record failure
+        if (operationId != null) {
+            metadataService.failOperation(operationId, e);
         }
+        
+        boolean isJsonOutput = "json".equalsIgnoreCase(format);
+        
+        if (isJsonOutput) {
+            OutputFormatter formatter = new OutputFormatter(true);
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", message);
+            error.put("message", e.getMessage());
+            formatter.outputObject("error", error);
+        } else {
+            System.err.println("Error: " + message);
+            if (verbose) {
+                e.printStackTrace();
+            }
+        }
+        
         return 1;
     }
     
     /**
-     * Outputs a simple success message.
+     * Displays a simple success message.
      * 
      * @param itemId the work item ID
+     * @param isJsonOutput whether to output in JSON format
+     * @param operationId the operation ID for tracking
      * @return the exit code
      */
-    private int outputSimpleResult(UUID itemId) {
-        if (jsonOutput) {
+    private int displaySimpleResult(UUID itemId, boolean isJsonOutput, String operationId) {
+        if (isJsonOutput) {
+            OutputFormatter formatter = new OutputFormatter(true);
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
             result.put("workItemId", itemId.toString());
             result.put("action", "comment_added");
-            result.put("user", user);
+            result.put("username", username);
             
-            System.out.println(OutputFormatter.toJson(result));
+            formatter.outputObject("comment", result);
         } else {
             System.out.println("Comment added to work item " + itemId);
         }
+        
+        // Record operation success
+        Map<String, Object> finalResult = new HashMap<>();
+        finalResult.put("success", true);
+        finalResult.put("itemId", itemId.toString());
+        metadataService.completeOperation(operationId, finalResult);
+        
         return 0;
     }
     
     /**
-     * Outputs detailed information including all comments.
+     * Displays detailed information including all comments.
      * 
      * @param itemId the work item ID
+     * @param isJsonOutput whether to output in JSON format
+     * @param operationId the operation ID for tracking
      * @return the exit code
      */
-    private int outputDetailedResult(UUID itemId) {
+    private int displayDetailedResult(UUID itemId, boolean isJsonOutput, String operationId) {
         try {
-            List<? extends Comment> comments = commentService.getComments(itemId);
+            // Create a sub-operation for listing comments
+            Map<String, Object> listParams = new HashMap<>();
+            listParams.put("itemId", itemId.toString());
+            String listOpId = metadataService.startOperation("comment-list", "READ", listParams);
             
-            if (jsonOutput) {
-                return outputJsonComments(itemId, comments);
-            } else {
-                return outputTextComments(itemId, comments);
+            try {
+                List<? extends Comment> comments = commentService.getComments(itemId);
+                
+                Map<String, Object> listResult = new HashMap<>();
+                listResult.put("commentCount", comments.size());
+                metadataService.completeOperation(listOpId, listResult);
+                
+                if (isJsonOutput) {
+                    displayCommentsAsJson(itemId, comments);
+                } else {
+                    displayCommentsAsText(itemId, comments);
+                }
+                
+                // Record operation success
+                Map<String, Object> finalResult = new HashMap<>();
+                finalResult.put("success", true);
+                finalResult.put("itemId", itemId.toString());
+                finalResult.put("commentCount", comments.size());
+                metadataService.completeOperation(operationId, finalResult);
+                
+                return 0;
+            } catch (Exception e) {
+                metadataService.failOperation(listOpId, e);
+                return handleError("Error retrieving comments: " + e.getMessage(), e, operationId);
             }
         } catch (Exception e) {
-            return handleError("Error retrieving comments: " + e.getMessage(), e);
+            return handleError("Error retrieving comments: " + e.getMessage(), e, operationId);
         }
     }
     
     /**
-     * Outputs comments in JSON format.
+     * Displays comments in JSON format.
      * 
      * @param itemId the work item ID
      * @param comments the list of comments
-     * @return the exit code
      */
-    private int outputJsonComments(UUID itemId, List<? extends Comment> comments) {
+    private void displayCommentsAsJson(UUID itemId, List<? extends Comment> comments) {
+        OutputFormatter formatter = new OutputFormatter(true);
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
         result.put("workItemId", itemId.toString());
@@ -250,18 +331,16 @@ public class CommentCommand implements Callable<Integer> {
         
         result.put("comments", commentsList);
         
-        System.out.println(OutputFormatter.toJson(result));
-        return 0;
+        formatter.outputObject("comments", result);
     }
     
     /**
-     * Outputs comments in text format.
+     * Displays comments in text format.
      * 
      * @param itemId the work item ID
      * @param comments the list of comments
-     * @return the exit code
      */
-    private int outputTextComments(UUID itemId, List<? extends Comment> comments) {
+    private void displayCommentsAsText(UUID itemId, List<? extends Comment> comments) {
         System.out.println("\nComments for work item " + itemId + ":");
         System.out.println("----------------------------------------");
         
@@ -277,6 +356,95 @@ public class CommentCommand implements Callable<Integer> {
                 System.out.println("----------------------------------------");
             }
         }
-        return 0;
+    }
+    
+    /**
+     * Sets the comment text.
+     *
+     * @param comment the comment text
+     * @return this command for chaining
+     */
+    public CommentCommand setComment(String comment) {
+        this.commentText = comment;
+        return this;
+    }
+    
+    /**
+     * Sets the work item ID to comment on.
+     * If not set, the comment will be added to the current work item in progress.
+     *
+     * @param itemId the work item ID
+     * @return this command for chaining
+     */
+    public CommentCommand setItemId(String itemId) {
+        try {
+            this.itemId = UUID.fromString(itemId);
+        } catch (IllegalArgumentException e) {
+            // Check if this is a short ID format (e.g., "WI-123")
+            if (itemId != null && itemId.contains("-")) {
+                try {
+                    // Attempt to get the full ID from the service using the short ID
+                    String shortId = itemId;
+                    WorkItem workItem = itemService.findItemByShortId(shortId);
+                    if (workItem != null) {
+                        this.itemId = UUID.fromString(workItem.getId());
+                    } else {
+                        throw new IllegalArgumentException("Work item not found with ID: " + shortId);
+                    }
+                } catch (Exception ex) {
+                    throw new IllegalArgumentException("Invalid work item ID: " + itemId);
+                }
+            } else {
+                throw new IllegalArgumentException("Invalid work item ID format: " + itemId);
+            }
+        }
+        return this;
+    }
+    
+    /**
+     * Sets the user adding the comment.
+     *
+     * @param username the user name
+     * @return this command for chaining
+     */
+    public CommentCommand setUsername(String username) {
+        this.username = username;
+        return this;
+    }
+
+    /**
+     * Sets the output format.
+     *
+     * @param format the output format ("text" or "json")
+     * @return this command for chaining
+     */
+    public CommentCommand setFormat(String format) {
+        this.format = format;
+        return this;
+    }
+
+    /**
+     * Sets the output format to JSON.
+     * This is a legacy setter that maps to the format parameter.
+     *
+     * @param jsonOutput true for JSON output
+     * @return this command for chaining
+     */
+    public CommentCommand setJsonOutput(boolean jsonOutput) {
+        if (jsonOutput) {
+            this.format = "json";
+        }
+        return this;
+    }
+
+    /**
+     * Sets verbose output mode.
+     *
+     * @param verbose true for verbose output
+     * @return this command for chaining
+     */
+    public CommentCommand setVerbose(boolean verbose) {
+        this.verbose = verbose;
+        return this;
     }
 }

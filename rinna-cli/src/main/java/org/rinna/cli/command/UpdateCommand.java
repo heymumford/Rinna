@@ -18,14 +18,15 @@ import org.rinna.cli.service.ConfigurationService;
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.MockItemService;
 import org.rinna.cli.service.MockWorkflowService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.util.ModelMapper;
-import org.rinna.cli.util.OutputFormatter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.ModelMapper;
+import org.rinna.cli.util.OutputFormatter;
 
 /**
  * Command to update an existing work item.

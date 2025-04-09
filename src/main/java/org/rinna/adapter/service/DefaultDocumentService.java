@@ -19,7 +19,7 @@ import org.rinna.domain.model.DocumentConfig;
 import org.rinna.domain.model.Project;
 import org.rinna.domain.model.Release;
 import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.service.DocumentService;
+import org.rinna.usecase.DocumentService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -51,22 +51,19 @@ public class DefaultDocumentService implements DocumentService {
     @Override
     public void generateWorkItemDocument(WorkItem workItem, Format format, TemplateType templateType, OutputStream output) {
         try {
-            String content = STR."""
-                # Work Item Details
-                
-                - ID: \{workItem.getId()}
-                - Title: \{workItem.getTitle()}
-                - Type: \{workItem.getType()}
-                - Status: \{workItem.getStatus()}
-                - Priority: \{workItem.getPriority()}
-                - Assignee: \{workItem.getAssignee() != null ? workItem.getAssignee() : "Unassigned"}
-                - Created: \{workItem.getCreatedAt()}
-                - Updated: \{workItem.getUpdatedAt()}
-                
-                ## Description
-                
-                \{workItem.getDescription() != null ? workItem.getDescription() : "No description provided"}
-                """;
+            StringBuilder contentBuilder = new StringBuilder();
+            contentBuilder.append("# Work Item Details\n\n");
+            contentBuilder.append("- ID: ").append(workItem.getId()).append("\n");
+            contentBuilder.append("- Title: ").append(workItem.getTitle()).append("\n");
+            contentBuilder.append("- Type: ").append(workItem.getType()).append("\n");
+            contentBuilder.append("- Status: ").append(workItem.getStatus()).append("\n");
+            contentBuilder.append("- Priority: ").append(workItem.getPriority()).append("\n");
+            contentBuilder.append("- Assignee: ").append(workItem.getAssignee() != null ? workItem.getAssignee() : "Unassigned").append("\n");
+            contentBuilder.append("- Created: ").append(workItem.getCreatedAt()).append("\n");
+            contentBuilder.append("- Updated: ").append(workItem.getUpdatedAt()).append("\n\n");
+            contentBuilder.append("## Description\n\n");
+            contentBuilder.append(workItem.getDescription() != null ? workItem.getDescription() : "No description provided");
+            String content = contentBuilder.toString();
             
             generateDocument(content, format, output);
         } catch (Exception e) {
@@ -78,19 +75,16 @@ public class DefaultDocumentService implements DocumentService {
     @Override
     public void generateProjectDocument(Project project, Format format, TemplateType templateType, OutputStream output) {
         try {
-            String content = STR."""
-                # Project Summary: \{project.getName()}
-                
-                - ID: \{project.getId()}
-                - Key: \{project.getKey()}
-                - Status: \{project.isActive() ? "Active" : "Inactive"}
-                - Created: \{project.getCreatedAt()}
-                - Updated: \{project.getUpdatedAt()}
-                
-                ## Description
-                
-                \{project.getDescription() != null ? project.getDescription() : "No description provided"}
-                """;
+            StringBuilder contentBuilder = new StringBuilder();
+            contentBuilder.append("# Project Summary: ").append(project.getName()).append("\n\n");
+            contentBuilder.append("- ID: ").append(project.getId()).append("\n");
+            contentBuilder.append("- Key: ").append(project.getKey()).append("\n");
+            contentBuilder.append("- Status: ").append(project.isActive() ? "Active" : "Inactive").append("\n");
+            contentBuilder.append("- Created: ").append(project.getCreatedAt()).append("\n");
+            contentBuilder.append("- Updated: ").append(project.getUpdatedAt()).append("\n\n");
+            contentBuilder.append("## Description\n\n");
+            contentBuilder.append(project.getDescription() != null ? project.getDescription() : "No description provided");
+            String content = contentBuilder.toString();
             
             generateDocument(content, format, output);
         } catch (Exception e) {
@@ -102,16 +96,13 @@ public class DefaultDocumentService implements DocumentService {
     @Override
     public void generateReleaseDocument(Release release, Format format, TemplateType templateType, OutputStream output) {
         try {
-            String content = STR."""
-                # Release Notes
-                
-                - Release: \{release.getVersion()}
-                - Date: \{release.getCreatedAt()}
-                
-                ## Description
-                
-                \{release.getDescription() != null ? release.getDescription() : "No description provided"}
-                """;
+            StringBuilder contentBuilder = new StringBuilder();
+            contentBuilder.append("# Release Notes\n\n");
+            contentBuilder.append("- Release: ").append(release.getVersion()).append("\n");
+            contentBuilder.append("- Date: ").append(release.getCreatedAt()).append("\n\n");
+            contentBuilder.append("## Description\n\n");
+            contentBuilder.append(release.getDescription() != null ? release.getDescription() : "No description provided");
+            String content = contentBuilder.toString();
             
             generateDocument(content, format, output);
         } catch (Exception e) {

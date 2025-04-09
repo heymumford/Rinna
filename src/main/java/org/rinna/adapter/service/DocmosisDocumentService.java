@@ -12,7 +12,7 @@ import org.rinna.domain.model.DocumentConfig;
 import org.rinna.domain.model.Project;
 import org.rinna.domain.model.Release;
 import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.service.DocumentService;
+import org.rinna.usecase.DocumentService;
 
 import java.io.OutputStream;
 import java.nio.file.Path;

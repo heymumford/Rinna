@@ -22,7 +22,7 @@ import java.util.logging.Logger;
 /**
  * Service for generating reports about work items.
  */
-public class ReportService {
+public final class ReportService {
     private static final Logger LOGGER = Logger.getLogger(ReportService.class.getName());
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static ReportService instance;
@@ -93,7 +93,7 @@ public class ReportService {
                 }
                 
                 // Read the report content
-                String reportContent = new String(java.nio.file.Files.readAllBytes(tempFile.toPath()));
+                String reportContent = new String(java.nio.file.Files.readAllBytes(tempFile.toPath()), java.nio.charset.StandardCharsets.UTF_8);
                 
                 // Send the report via email
                 EmailService emailService = EmailService.getInstance();

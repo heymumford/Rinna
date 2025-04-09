@@ -1,181 +1,556 @@
+/**
+ * Copyright (c) 2025 Eric C. Mumford (@heymumford)
+ * 
+ * Developed with analytical assistance from AI tools.
+ * All rights reserved.
+ * 
+ * This source code is licensed under the MIT License
+ * found in the LICENSE file in the root directory of this source tree.
+ */
 package org.rinna.cli.command;
 
 import org.rinna.cli.model.Priority;
 import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.model.WorkItem;
 import org.rinna.cli.model.WorkflowState;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.SearchService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.OutputFormatter;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
- * Command for listing work items.
+ * Command to list work items with filtering capabilities.
+ * This command searches for and displays work items based on specified criteria.
+ * Format options include text (default) and JSON.
+ * 
+ * Usage examples:
+ * - rin list
+ * - rin list --type=TASK
+ * - rin list --priority=HIGH
+ * - rin list --state=IN_PROGRESS
+ * - rin list --project=ProjectName
+ * - rin list --assignee=username
+ * - rin list --format=json
+ * - rin list --limit=50
+ * - rin list --sort-by=priority
+ * - rin list --descending
+ * - rin list --verbose
  */
-@Command(
-    name = "list",
-    description = "List work items with optional filtering",
-    mixinStandardHelpOptions = true
-)
 public class ListCommand implements Callable<Integer> {
-
-    @Option(names = {"-t", "--type"}, description = "Filter by type (FEATURE, BUG, TASK)")
+    
     private WorkItemType type;
-    
-    @Option(names = {"-p", "--priority"}, description = "Filter by priority (LOW, MEDIUM, HIGH, CRITICAL)")
     private Priority priority;
-    
-    @Option(names = {"-s", "--status"}, description = "Filter by workflow state")
-    private WorkflowState status;
-    
-    @Option(names = {"-P", "--project"}, description = "Filter by project")
+    private int limit = 100;
     private String project;
-    
-    @Option(names = {"-a", "--assignee"}, description = "Filter by assignee")
     private String assignee;
+    private WorkflowState state;
+    private String sortBy;
+    private boolean descending = false;
+    private String format = "text";
+    private boolean verbose = false;
     
-    @Option(names = {"-l", "--limit"}, description = "Maximum number of items to show")
-    private int limit = 20;
+    private final ServiceManager serviceManager;
+    private final MetadataService metadataService;
     
-    @Option(names = {"--format"}, description = "Output format (table, json)")
-    private String format = "table";
+    /**
+     * Creates a new ListCommand with default services.
+     */
+    public ListCommand() {
+        this(ServiceManager.getInstance());
+    }
+    
+    /**
+     * Creates a new ListCommand with the specified service manager.
+     * 
+     * @param serviceManager the service manager to use
+     */
+    public ListCommand(ServiceManager serviceManager) {
+        this.serviceManager = serviceManager;
+        this.metadataService = serviceManager.getMetadataService();
+    }
     
     @Override
     public Integer call() {
+        // Operation tracking parameters
+        Map<String, Object> params = new HashMap<>();
+        params.put("type", type != null ? type.name() : null);
+        params.put("priority", priority != null ? priority.name() : null);
+        params.put("state", state != null ? state.name() : null);
+        params.put("project", project);
+        params.put("assignee", assignee);
+        params.put("limit", limit);
+        params.put("sort_by", sortBy);
+        params.put("descending", descending);
+        params.put("format", format);
+        params.put("verbose", verbose);
+        
+        // Start tracking the operation
+        String operationId = metadataService.startOperation("list", "READ", params);
+        
         try {
-            // In a real implementation, we would call a service to get work items
-            // Here, we just display sample data
-            System.out.println("Work Items:");
-            System.out.println("--------------------------------------------------------------------------------");
-            System.out.printf("%-8s %-40s %-10s %-10s %-15s %s%n", 
-                             "ID", "TITLE", "TYPE", "PRIORITY", "PROJECT", "ASSIGNEE");
-            System.out.println("--------------------------------------------------------------------------------");
+            // Get the search service from the service manager
+            SearchService searchService = serviceManager.getMockSearchService();
             
-            // Generate some fake items
-            for (int i = 0; i < Math.min(limit, 10); i++) {
-                int id = 100 + i;
-                WorkItemType itemType;
-                if (i % 3 == 0) {
-                    itemType = WorkItemType.BUG;
-                } else if (i % 3 == 1) {
-                    itemType = WorkItemType.FEATURE;
-                } else {
-                    itemType = WorkItemType.TASK;
-                }
-                
-                // Skip if doesn't match type filter
-                if (type != null && itemType != type) {
-                    continue;
-                }
-                
-                Priority itemPriority;
-                if (i % 4 == 0) {
-                    itemPriority = Priority.CRITICAL;
-                } else if (i % 4 == 1) {
-                    itemPriority = Priority.HIGH;
-                } else if (i % 4 == 2) {
-                    itemPriority = Priority.MEDIUM;
-                } else {
-                    itemPriority = Priority.LOW;
-                }
-                
-                // Skip if doesn't match priority filter
-                if (priority != null && itemPriority != priority) {
-                    continue;
-                }
-                
-                String itemProject;
-                if (i % 5 == 0) {
-                    itemProject = "auth-system";
-                } else if (i % 5 == 1) {
-                    itemProject = "data-layer";
-                } else if (i % 5 == 2) {
-                    itemProject = "api-gateway";
-                } else if (i % 5 == 3) {
-                    itemProject = "search-service";
-                } else {
-                    itemProject = "notification";
-                }
-                
-                // Skip if doesn't match project filter
-                if (project != null && !project.isEmpty() && !project.equals(itemProject)) {
-                    continue;
-                }
-                
-                String itemAssignee;
-                if (i % 6 == 0) {
-                    itemAssignee = "alice";
-                } else if (i % 6 == 1) {
-                    itemAssignee = "bob";
-                } else if (i % 6 == 2) {
-                    itemAssignee = "carol";
-                } else if (i % 6 == 3) {
-                    itemAssignee = "dave";
-                } else if (i % 6 == 4) {
-                    itemAssignee = "eve";
-                } else {
-                    itemAssignee = null;
-                }
-                
-                // Skip if doesn't match assignee filter
-                if (assignee != null && !assignee.isEmpty() && 
-                    (itemAssignee == null || !assignee.equals(itemAssignee))) {
-                    continue;
-                }
-                
-                String title = generateTitle(itemType, itemProject);
-                if (title.length() > 40) {
-                    title = title.substring(0, 37) + "...";
-                }
-                
-                System.out.printf("%-8s %-40s %-10s %-10s %-15s %s%n",
-                                 "WI-" + id,
-                                 title,
-                                 itemType,
-                                 itemPriority,
-                                 itemProject,
-                                 itemAssignee != null ? itemAssignee : "-");
+            // Build search criteria
+            Map<String, String> criteria = new HashMap<>();
+            
+            if (type != null) {
+                criteria.put("type", type.name());
             }
             
-            System.out.println("--------------------------------------------------------------------------------");
-            System.out.printf("Displaying %d item(s)%n", Math.min(limit, 10));
+            if (priority != null) {
+                criteria.put("priority", priority.name());
+            }
             
+            if (state != null) {
+                criteria.put("state", state.name());
+            }
+            
+            if (project != null && !project.isEmpty()) {
+                criteria.put("project", project);
+            }
+            
+            if (assignee != null && !assignee.isEmpty()) {
+                criteria.put("assignee", assignee);
+            }
+            
+            // Perform the search
+            List<WorkItem> items = searchService.findWorkItems(criteria, limit);
+            
+            // Sort the items if needed
+            if (sortBy != null && !sortBy.isEmpty()) {
+                items = sortItems(items, sortBy, descending);
+            }
+            
+            // No items found
+            if (items.isEmpty()) {
+                System.out.println("No work items found matching the criteria.");
+                
+                // Record the successful operation with zero results
+                Map<String, Object> result = new HashMap<>();
+                result.put("count", 0);
+                metadataService.completeOperation(operationId, result);
+                
+                return 0;
+            }
+            
+            // Output based on format
+            if ("json".equalsIgnoreCase(format)) {
+                outputJsonResults(items);
+            } else {
+                outputTextResults(items);
+            }
+            
+            // Record the successful operation
+            Map<String, Object> result = new HashMap<>();
+            result.put("count", items.size());
+            result.put("displayed", Math.min(items.size(), limit));
+            result.put("criteria", criteria);
+            
+            metadataService.completeOperation(operationId, result);
             return 0;
+            
         } catch (Exception e) {
-            System.err.println("Error listing work items: " + e.getMessage());
+            // Enhanced error handling with context
+            String errorMessage = "Error listing work items: " + e.getMessage();
+            System.err.println(errorMessage);
+            
+            // Record detailed error information if verbose mode is enabled
+            if (verbose) {
+                e.printStackTrace();
+            }
+            
+            // Record the failed operation with error details
+            metadataService.failOperation(operationId, e);
+            
             return 1;
         }
     }
     
-    private String generateTitle(WorkItemType type, String project) {
-        String title;
-        if (type == WorkItemType.BUG) {
-            String[] bugTitles = {
-                "Fix connection handling in " + project,
-                project + " crashes when processing large inputs",
-                "Memory leak in " + project + " under high load",
-                "Incorrect error handling in " + project,
-                project + " UI display issues on mobile devices"
-            };
-            title = bugTitles[(int)(Math.random() * bugTitles.length)];
-        } else if (type == WorkItemType.FEATURE) {
-            String[] featureTitles = {
-                "Add support for OAuth2 in " + project,
-                "Implement caching layer for " + project,
-                "New dashboard for " + project + " analytics",
-                "Export functionality for " + project + " data",
-                "Integration with external APIs for " + project
-            };
-            title = featureTitles[(int)(Math.random() * featureTitles.length)];
-        } else {
-            String[] taskTitles = {
-                "Update documentation for " + project,
-                "Performance optimization for " + project,
-                "Security review for " + project,
-                "Refactor " + project + " codebase",
-                "Add more test coverage for " + project
-            };
-            title = taskTitles[(int)(Math.random() * taskTitles.length)];
+    /**
+     * Outputs work items in JSON format.
+     * 
+     * @param items the work items to output
+     */
+    private void outputJsonResults(List<WorkItem> items) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("count", items.size());
+        
+        // Convert WorkItem objects to simple Maps to avoid serialization issues
+        List<Map<String, Object>> itemMaps = new ArrayList<>();
+        for (WorkItem item : items) {
+            Map<String, Object> itemMap = new HashMap<>();
+            itemMap.put("id", item.getId());
+            itemMap.put("title", item.getTitle());
+            itemMap.put("type", item.getType() != null ? item.getType().name() : null);
+            itemMap.put("priority", item.getPriority() != null ? item.getPriority().name() : null);
+            itemMap.put("state", item.getState() != null ? item.getState().name() : null);
+            itemMap.put("assignee", item.getAssignee());
+            itemMaps.add(itemMap);
         }
-        return title;
+        result.put("items", itemMaps);
+        
+        // Use the OutputFormatter for consistent JSON output
+        String json = OutputFormatter.toJson(result, verbose);
+        System.out.println(json);
+    }
+    
+    /**
+     * Outputs work items in text format.
+     * 
+     * @param items the work items to output
+     */
+    private void outputTextResults(List<WorkItem> items) {
+        System.out.println("Work Items:");
+        System.out.println("--------------------------------------------------------------------------------");
+        System.out.printf("%-20s %-40s %-10s %-10s %-12s %-10s%n", 
+                "ID", "TITLE", "TYPE", "PRIORITY", "STATUS", "ASSIGNEE");
+        System.out.println("--------------------------------------------------------------------------------");
+        
+        int totalItems = items.size();
+        int displayedItems = Math.min(totalItems, limit);
+        
+        for (int i = 0; i < displayedItems; i++) {
+            WorkItem item = items.get(i);
+            String title = item.getTitle();
+            if (title == null) {
+                title = "(No title)";
+            } else if (title.length() > 38) {
+                title = title.substring(0, 35) + "...";
+            }
+            
+            System.out.printf("%-20s %-40s %-10s %-10s %-12s %-10s%n", 
+                    item.getId(),
+                    title,
+                    item.getType() != null ? item.getType() : "-",
+                    item.getPriority() != null ? item.getPriority() : "-",
+                    item.getState() != null ? item.getState() : "-",
+                    item.getAssignee() != null ? item.getAssignee() : "-");
+            
+            // Show additional details in verbose mode
+            if (verbose) {
+                if (item.getDescription() != null && !item.getDescription().isEmpty()) {
+                    String desc = item.getDescription();
+                    if (desc.length() > 77) {
+                        desc = desc.substring(0, 74) + "...";
+                    }
+                    System.out.printf("          %s%n", desc);
+                }
+                
+                StringBuilder details = new StringBuilder();
+                
+                if (item.getCreated() != null) {
+                    details.append("Created: ").append(item.getCreated());
+                }
+                
+                if (item.getDueDate() != null) {
+                    if (details.length() > 0) details.append(" | ");
+                    details.append("Due: ").append(item.getDueDate());
+                }
+                
+                if (item.getProject() != null && !item.getProject().isEmpty()) {
+                    if (details.length() > 0) details.append(" | ");
+                    details.append("Project: ").append(item.getProject());
+                }
+                
+                if (details.length() > 0) {
+                    System.out.printf("          %s%n", details.toString());
+                    System.out.println();
+                }
+            }
+        }
+        
+        System.out.println("--------------------------------------------------------------------------------");
+        System.out.printf("Displaying %d of %d item(s)%n", displayedItems, totalItems);
+        
+        if (totalItems > displayedItems) {
+            System.out.printf("(Use --limit=%d to see more items)%n", totalItems);
+        }
+    }
+    
+    /**
+     * Sorts the list of work items by the specified field.
+     *
+     * @param items the list of work items
+     * @param field the field to sort by
+     * @param descending whether to sort in descending order
+     * @return the sorted list
+     */
+    private List<WorkItem> sortItems(List<WorkItem> items, String field, boolean descending) {
+        if (items == null || items.isEmpty()) {
+            return items;
+        }
+        
+        // Create a new list to avoid modifying the original
+        List<WorkItem> sortedItems = new ArrayList<>(items);
+        
+        // Sort the list based on the specified field
+        sortedItems.sort((item1, item2) -> {
+            int result = 0;
+            
+            switch (field.toLowerCase()) {
+                case "id":
+                    result = compareStrings(item1.getId(), item2.getId());
+                    break;
+                case "title":
+                    result = compareStrings(item1.getTitle(), item2.getTitle());
+                    break;
+                case "type":
+                    result = compareEnums(item1.getType(), item2.getType());
+                    break;
+                case "priority":
+                    result = compareEnums(item1.getPriority(), item2.getPriority());
+                    break;
+                case "status":
+                case "state":
+                    result = compareEnums(item1.getState(), item2.getState());
+                    break;
+                case "assignee":
+                    result = compareStrings(item1.getAssignee(), item2.getAssignee());
+                    break;
+                case "created":
+                    result = compareDates(item1.getCreated(), item2.getCreated());
+                    break;
+                case "updated":
+                    result = compareDates(item1.getUpdated(), item2.getUpdated());
+                    break;
+                default:
+                    // Default to sort by ID
+                    result = compareStrings(item1.getId(), item2.getId());
+            }
+            
+            // Reverse the result if descending order is requested
+            return descending ? -result : result;
+        });
+        
+        return sortedItems;
+    }
+    
+    /**
+     * Compares two strings for sorting, handling null values.
+     *
+     * @param s1 the first string
+     * @param s2 the second string
+     * @return comparison result
+     */
+    private int compareStrings(String s1, String s2) {
+        if (s1 == null && s2 == null) return 0;
+        if (s1 == null) return -1;
+        if (s2 == null) return 1;
+        return s1.compareTo(s2);
+    }
+    
+    /**
+     * Compares two enum values for sorting, handling null values.
+     *
+     * @param e1 the first enum
+     * @param e2 the second enum
+     * @return comparison result
+     */
+    private <T extends Enum<T>> int compareEnums(T e1, T e2) {
+        if (e1 == null && e2 == null) return 0;
+        if (e1 == null) return -1;
+        if (e2 == null) return 1;
+        return e1.name().compareTo(e2.name());
+    }
+    
+    /**
+     * Compares two dates for sorting, handling null values.
+     *
+     * @param d1 the first date
+     * @param d2 the second date
+     * @return comparison result
+     */
+    private int compareDates(java.time.LocalDateTime d1, java.time.LocalDateTime d2) {
+        if (d1 == null && d2 == null) return 0;
+        if (d1 == null) return -1;
+        if (d2 == null) return 1;
+        return d1.compareTo(d2);
+    }
+    
+    /**
+     * Gets the work item type filter.
+     *
+     * @return the work item type
+     */
+    public WorkItemType getType() {
+        return type;
+    }
+    
+    /**
+     * Sets the work item type filter.
+     *
+     * @param type the work item type
+     */
+    public void setType(WorkItemType type) {
+        this.type = type;
+    }
+    
+    /**
+     * Gets the priority filter.
+     *
+     * @return the priority
+     */
+    public Priority getPriority() {
+        return priority;
+    }
+    
+    /**
+     * Sets the priority filter.
+     *
+     * @param priority the priority
+     */
+    public void setPriority(Priority priority) {
+        this.priority = priority;
+    }
+    
+    /**
+     * Gets the maximum number of items to display.
+     *
+     * @return the limit
+     */
+    public int getLimit() {
+        return limit;
+    }
+    
+    /**
+     * Sets the maximum number of items to display.
+     *
+     * @param limit the limit
+     */
+    public void setLimit(int limit) {
+        this.limit = limit;
+    }
+    
+    /**
+     * Gets the project filter.
+     *
+     * @return the project
+     */
+    public String getProject() {
+        return project;
+    }
+    
+    /**
+     * Sets the project filter.
+     *
+     * @param project the project
+     */
+    public void setProject(String project) {
+        this.project = project;
+    }
+    
+    /**
+     * Gets the assignee filter.
+     *
+     * @return the assignee
+     */
+    public String getAssignee() {
+        return assignee;
+    }
+    
+    /**
+     * Sets the assignee filter.
+     *
+     * @param assignee the assignee
+     */
+    public void setAssignee(String assignee) {
+        this.assignee = assignee;
+    }
+    
+    /**
+     * Gets the workflow state filter.
+     *
+     * @return the workflow state
+     */
+    public WorkflowState getState() {
+        return state;
+    }
+    
+    /**
+     * Sets the workflow state filter.
+     *
+     * @param state the workflow state
+     */
+    public void setState(WorkflowState state) {
+        this.state = state;
+    }
+    
+    /**
+     * Gets the field to sort by.
+     *
+     * @return the sort field
+     */
+    public String getSortBy() {
+        return sortBy;
+    }
+    
+    /**
+     * Sets the field to sort by.
+     *
+     * @param sortBy the sort field
+     */
+    public void setSortBy(String sortBy) {
+        this.sortBy = sortBy;
+    }
+    
+    /**
+     * Gets whether to sort in descending order.
+     *
+     * @return true if descending order is enabled
+     */
+    public boolean isDescending() {
+        return descending;
+    }
+    
+    /**
+     * Sets whether to sort in descending order.
+     *
+     * @param descending true to enable descending order
+     */
+    public void setDescending(boolean descending) {
+        this.descending = descending;
+    }
+    
+    /**
+     * Gets the output format.
+     *
+     * @return the output format
+     */
+    public String getFormat() {
+        return format;
+    }
+    
+    /**
+     * Sets the output format (text or json).
+     *
+     * @param format the output format
+     */
+    public void setFormat(String format) {
+        this.format = format;
+    }
+    
+    /**
+     * Gets whether verbose output is enabled.
+     *
+     * @return true if verbose output is enabled
+     */
+    public boolean isVerbose() {
+        return verbose;
+    }
+    
+    /**
+     * Sets whether verbose output is enabled.
+     *
+     * @param verbose true to enable verbose output
+     */
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
     }
 }

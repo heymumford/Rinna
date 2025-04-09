@@ -18,7 +18,8 @@ else
     function echo_info() { echo -e "\033[0;34m$1\033[0m"; }
     function echo_success() { echo -e "\033[0;32m$1\033[0m"; }
     function echo_warning() { echo -e "\033[0;33m$1\033[0m"; }
-    function echo_error() { echo -e "\033[0;31m$1\033[0m"; }
+    function echo_error() { echo -e "\033[0;31m$1\033[0m" >&2; }
+    function print_error() { echo -e "\033[0;31m✗ $1\033[0m" >&2; }
 fi
 
 # Default values
@@ -100,7 +101,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         -l|--limit)
             if [[ -z "$2" || "$2" == -* ]]; then
-                echo_error "Error: --limit requires a value"
+                print_error "Error: --limit requires a value"
                 exit 1
             fi
             LIMIT="$2"
@@ -108,7 +109,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --format)
             if [[ -z "$2" || "$2" == -* ]]; then
-                echo_error "Error: --format requires a value"
+                print_error "Error: --format requires a value"
                 exit 1
             fi
             FORMAT="$2"
@@ -119,7 +120,7 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         *)
-            echo_error "Error: Unknown option: $1"
+            print_error "Error: Unknown option: $1"
             show_usage
             exit 1
             ;;
@@ -128,7 +129,7 @@ done
 
 # Validate format
 if [[ "$FORMAT" != "table" && "$FORMAT" != "json" ]]; then
-    echo_error "Error: Invalid format: $FORMAT. Must be 'table' or 'json'"
+    print_error "Error: Invalid format: $FORMAT. Must be 'table' or 'json'"
     exit 1
 fi
 

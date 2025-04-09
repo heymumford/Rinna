@@ -1,119 +1,158 @@
-/*
- * Domain entity for the Rinna workflow management system
- *
- * Copyright (c) 2025 Eric C. Mumford (@heymumford)
- * This file is subject to the terms and conditions defined in
- * the LICENSE file, which is part of this source code package.
- */
-
 package org.rinna.domain;
 
-import java.time.Instant;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Default implementation of the Project interface.
  */
 public class DefaultProject implements Project {
-    private final UUID id;
+
+    private final String id;
+    private String name;
+    private String description;
     private final String key;
-    private final String name;
-    private final String description;
-    private final Instant createdAt;
-    private final Instant updatedAt;
-    private final boolean active;
-    
-    private DefaultProject(UUID id, String key, String name, String description, 
-                         Instant createdAt, Instant updatedAt, boolean active) {
-        this.id = id;
-        this.key = key;
-        this.name = name;
+    private final LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private boolean active;
+    private final List<WorkItem> workItems;
+    private final List<Release> releases;
+
+    /**
+     * Create a new project with the specified details.
+     *
+     * @param id the project ID
+     * @param name the project name
+     * @param description the project description
+     * @param key the project key (abbreviation)
+     */
+    public DefaultProject(String id, String name, String description, String key) {
+        this.id = Objects.requireNonNull(id, "Project ID cannot be null");
+        this.name = Objects.requireNonNull(name, "Project name cannot be null");
         this.description = description;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.active = active;
+        this.key = Objects.requireNonNull(key, "Project key cannot be null");
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+        this.active = true;
+        this.workItems = new ArrayList<>();
+        this.releases = new ArrayList<>();
     }
-    
+
     @Override
-    public UUID getId() {
+    public String getId() {
         return id;
     }
-    
-    @Override
-    public String getKey() {
-        return key;
-    }
-    
+
     @Override
     public String getName() {
         return name;
     }
-    
+
+    /**
+     * Set the project name.
+     *
+     * @param name the new project name
+     */
+    public void setName(String name) {
+        this.name = Objects.requireNonNull(name, "Project name cannot be null");
+        this.updatedAt = LocalDateTime.now();
+    }
+
     @Override
     public String getDescription() {
         return description;
     }
-    
+
+    /**
+     * Set the project description.
+     *
+     * @param description the new project description
+     */
+    public void setDescription(String description) {
+        this.description = description;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     @Override
-    public Instant getCreatedAt() {
+    public String getKey() {
+        return key;
+    }
+
+    @Override
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
-    
+
     @Override
-    public Instant getUpdatedAt() {
+    public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
-    
+
     @Override
     public boolean isActive() {
         return active;
     }
-    
+
     /**
-     * Default builder implementation for creating DefaultProject instances.
+     * Set the active status of the project.
+     *
+     * @param active true to mark the project as active, false otherwise
      */
-    public static class Builder implements Project.Builder {
-        private String key;
-        private String name;
-        private String description;
-        private boolean active = true;
-        
-        @Override
-        public Builder key(String key) {
-            this.key = key;
-            return this;
+    public void setActive(boolean active) {
+        this.active = active;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @Override
+    public List<WorkItem> getWorkItems() {
+        return new ArrayList<>(workItems);
+    }
+
+    @Override
+    public void addWorkItem(WorkItem workItem) {
+        Objects.requireNonNull(workItem, "Work item cannot be null");
+        workItems.add(workItem);
+        updatedAt = LocalDateTime.now();
+    }
+
+    @Override
+    public List<Release> getReleases() {
+        return new ArrayList<>(releases);
+    }
+
+    @Override
+    public void addRelease(Release release) {
+        Objects.requireNonNull(release, "Release cannot be null");
+        releases.add(release);
+        updatedAt = LocalDateTime.now();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
         }
-        
-        @Override
-        public Builder name(String name) {
-            this.name = name;
-            return this;
+        if (o == null || getClass() != o.getClass()) {
+            return false;
         }
-        
-        @Override
-        public Builder description(String description) {
-            this.description = description;
-            return this;
-        }
-        
-        @Override
-        public Builder active(boolean active) {
-            this.active = active;
-            return this;
-        }
-        
-        @Override
-        public Project build() {
-            Instant now = Instant.now();
-            return new DefaultProject(
-                UUID.randomUUID(),
-                key,
-                name,
-                description,
-                now,
-                now,
-                active
-            );
-        }
+        DefaultProject that = (DefaultProject) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "DefaultProject{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", key='" + key + '\'' +
+                ", active=" + active +
+                '}';
     }
 }

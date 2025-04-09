@@ -15,7 +15,10 @@ import java.util.UUID;
 
 /**
  * Default implementation of the WorkItem interface.
+ * 
+ * @deprecated Use {@link WorkItemRecord} instead for immutability
  */
+@Deprecated(since = "1.2.7", forRemoval = true)
 public class DefaultWorkItem implements WorkItem {
     private final UUID id;
     private final String title;
@@ -33,7 +36,10 @@ public class DefaultWorkItem implements WorkItem {
     
     /**
      * Constructs a new DefaultWorkItem from a create request.
+     * 
+     * @deprecated Use {@link WorkItemRecord#fromRequest(UUID, WorkItemCreateRequest)} instead
      */
+    @Deprecated(since = "1.2.7", forRemoval = true)
     public DefaultWorkItem(UUID id, WorkItemCreateRequest request) {
         this(
             id,
@@ -54,7 +60,10 @@ public class DefaultWorkItem implements WorkItem {
     
     /**
      * Constructs a new DefaultWorkItem with the given parameters.
+     * 
+     * @deprecated Use {@link WorkItemRecord} instead
      */
+    @Deprecated(since = "1.2.7", forRemoval = true)
     public DefaultWorkItem(
             UUID id,
             String title,
@@ -84,7 +93,12 @@ public class DefaultWorkItem implements WorkItem {
         this.localOnly = localOnly;
     }
 
-    // Create a copy with modified fields
+    /**
+     * Creates a copy with modified fields.
+     * 
+     * @deprecated Use {@link WorkItemRecord#with(WorkflowState, Priority, String)} instead
+     */
+    @Deprecated(since = "1.2.7", forRemoval = true)
     public DefaultWorkItem with(
             WorkflowState status,
             Priority priority,
@@ -106,6 +120,14 @@ public class DefaultWorkItem implements WorkItem {
         );
     }
     
+    // Convert to WorkItemRecord
+    public WorkItemRecord toRecord() {
+        return new WorkItemRecord(
+            id, title, description, type, status, priority, assignee,
+            createdAt, updatedAt, parentId, projectId, visibility, localOnly
+        );
+    }
+    
     @Override public UUID getId() { return id; }
     @Override public String getTitle() { return title; }
     @Override public String getDescription() { return description; }
@@ -122,7 +144,10 @@ public class DefaultWorkItem implements WorkItem {
     
     /**
      * Updates the workflow state and updates the last update timestamp.
+     * 
+     * @deprecated Use immutable {@link WorkItemRecord#withStatus(WorkflowState)} instead
      */
+    @Deprecated(since = "1.2.7", forRemoval = true)
     public DefaultWorkItem setStatus(WorkflowState status) {
         this.status = Objects.requireNonNull(status, "Status cannot be null");
         this.updatedAt = Instant.now();
@@ -131,7 +156,10 @@ public class DefaultWorkItem implements WorkItem {
     
     /**
      * Updates the priority and updates the last update timestamp.
+     * 
+     * @deprecated Use immutable {@link WorkItemRecord#withPriority(Priority)} instead
      */
+    @Deprecated(since = "1.2.7", forRemoval = true)
     public DefaultWorkItem setPriority(Priority priority) {
         this.priority = Objects.requireNonNull(priority, "Priority cannot be null");
         this.updatedAt = Instant.now();
@@ -140,7 +168,10 @@ public class DefaultWorkItem implements WorkItem {
     
     /**
      * Updates the assignee and updates the last update timestamp.
+     * 
+     * @deprecated Use immutable {@link WorkItemRecord#withAssignee(String)} instead
      */
+    @Deprecated(since = "1.2.7", forRemoval = true)
     public DefaultWorkItem setAssignee(String assignee) {
         this.assignee = assignee;
         this.updatedAt = Instant.now();
@@ -150,8 +181,8 @@ public class DefaultWorkItem implements WorkItem {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof DefaultWorkItem that)) return false;
-        return Objects.equals(id, that.id);
+        if (!(o instanceof WorkItem that)) return false;
+        return Objects.equals(id, that.getId());
     }
     
     @Override
@@ -161,6 +192,7 @@ public class DefaultWorkItem implements WorkItem {
     
     @Override
     public String toString() {
-        return STR."DefaultWorkItem{id=\{id}, title='\{title}', type=\{type}, status=\{status}, priority=\{priority}}";
+        return "DefaultWorkItem{id=" + id + ", title='" + title + "', type=" + type + 
+               ", status=" + status + ", priority=" + priority + "}";
     }
 }

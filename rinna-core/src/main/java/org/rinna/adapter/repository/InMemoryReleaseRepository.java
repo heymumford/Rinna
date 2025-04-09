@@ -10,7 +10,7 @@ package org.rinna.adapter.repository;
 
 import org.rinna.domain.model.DefaultRelease;
 import org.rinna.domain.model.Release;
-import org.rinna.repository.ReleaseRepository;
+import org.rinna.domain.repository.ReleaseRepository;
 
 import java.util.ArrayList;
 import java.util.HashMap;

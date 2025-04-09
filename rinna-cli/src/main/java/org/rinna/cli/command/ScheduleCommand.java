@@ -16,8 +16,10 @@ import org.rinna.cli.report.ReportScheduler.ScheduleType;
 import org.rinna.cli.report.ReportScheduler.ScheduledReport;
 import org.rinna.cli.report.ReportService;
 import org.rinna.cli.report.ReportType;
+import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.MockReportService;
 import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.service.ContextManager;
 import org.rinna.cli.util.OutputFormatter;
 
 import java.io.File;
@@ -36,11 +38,13 @@ import java.util.logging.Logger;
  * Command to manage scheduled reports.
  * This command allows adding, listing, showing, and removing scheduled reports,
  * as well as starting and stopping the report scheduler.
+ * Follows the ViewCommand pattern with operation tracking.
  */
 public class ScheduleCommand implements Callable<Integer> {
     private static final Logger LOGGER = Logger.getLogger(ScheduleCommand.class.getName());
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     
+    // Command parameters
     private String action;
     private String id;
     private String name;
@@ -56,196 +60,219 @@ public class ScheduleCommand implements Callable<Integer> {
     private boolean emailEnabled;
     private List<String> emailRecipients = new ArrayList<>();
     private String emailSubject;
-    private boolean jsonOutput = false;
+    private String format = "text"; // Output format (text or json)
     private boolean verbose = false;
+    private String username = System.getProperty("user.name");
     
-    private final ServiceManager serviceManager = ServiceManager.getInstance();
+    // Service dependencies
+    private final ServiceManager serviceManager;
     private final MockReportService reportService;
+    private final MetadataService metadataService;
+    private final ContextManager contextManager;
     
     /**
-     * Constructs a new schedule command.
+     * Constructs a new schedule command with default service manager.
      */
     public ScheduleCommand() {
-        // Default values
-        this.action = "list";
-        this.reportService = serviceManager.getMockReportService();
+        this(ServiceManager.getInstance());
     }
     
     /**
-     * Executes the command.
+     * Constructs a new schedule command with the provided service manager.
+     * This constructor allows for dependency injection, making the command more testable.
+     * 
+     * @param serviceManager the service manager to use
+     */
+    public ScheduleCommand(ServiceManager serviceManager) {
+        // Default values
+        this.action = "list";
+        this.serviceManager = serviceManager;
+        this.reportService = serviceManager.getMockReportService();
+        this.metadataService = serviceManager.getMetadataService();
+        this.contextManager = ContextManager.getInstance();
+    }
+    
+    /**
+     * Executes the command with proper operation tracking.
      */
     @Override
     public Integer call() {
+        // Create operation parameters for tracking
+        Map<String, Object> params = new HashMap<>();
+        params.put("action", action);
+        params.put("format", format);
+        params.put("username", username);
+        params.put("verbose", verbose);
+        
+        if (id != null) params.put("id", id);
+        if (name != null) params.put("name", name);
+        if (reportType != null) params.put("reportType", reportType);
+        
+        // Start tracking operation
+        String operationId = metadataService.startOperation("schedule", "EXECUTE", params);
+        
         try {
-            // Track operation metadata
-            Map<String, Object> operationParams = new HashMap<>();
-            operationParams.put("action", action);
-            if (id != null) operationParams.put("id", id);
-            if (name != null) operationParams.put("name", name);
-            if (reportType != null) operationParams.put("reportType", reportType);
-            
-            serviceManager.getMetadataService().trackOperation("schedule", operationParams);
-            
             ReportScheduler scheduler = ReportScheduler.getInstance();
+            boolean isJsonOutput = "json".equalsIgnoreCase(format);
             
             switch (action.toLowerCase()) {
                 case "list":
-                    return listSchedules(scheduler);
+                    return listSchedules(scheduler, operationId, isJsonOutput);
                 case "add":
-                    return addSchedule(scheduler);
+                    return addSchedule(scheduler, operationId, isJsonOutput);
                 case "remove":
-                    return removeSchedule(scheduler);
+                    return removeSchedule(scheduler, operationId, isJsonOutput);
                 case "start":
-                    scheduler.start();
-                    if (jsonOutput) {
-                        OutputFormatter formatter = new OutputFormatter(true);
-                        Map<String, Object> result = new HashMap<>();
-                        result.put("status", "started");
-                        result.put("reportCount", scheduler.getScheduledReports().size());
-                        formatter.outputObject("scheduler", result);
-                    } else {
-                        System.out.println("Report scheduler started");
-                    }
-                    return 0;
+                    return startScheduler(scheduler, operationId, isJsonOutput);
                 case "stop":
-                    scheduler.stop();
-                    if (jsonOutput) {
-                        OutputFormatter formatter = new OutputFormatter(true);
-                        Map<String, Object> result = new HashMap<>();
-                        result.put("status", "stopped");
-                        formatter.outputObject("scheduler", result);
-                    } else {
-                        System.out.println("Report scheduler stopped");
-                    }
-                    return 0;
+                    return stopScheduler(scheduler, operationId, isJsonOutput);
                 case "show":
-                    return showSchedule(scheduler);
+                    return showSchedule(scheduler, operationId, isJsonOutput);
                 default:
-                    if (jsonOutput) {
-                        OutputFormatter formatter = new OutputFormatter(true);
-                        Map<String, Object> error = new HashMap<>();
-                        error.put("error", "Unknown action");
-                        error.put("action", action);
-                        error.put("validActions", List.of("list", "add", "remove", "start", "stop", "show"));
-                        formatter.outputObject("error", error);
-                    } else {
-                        System.err.println("Error: Unknown action: " + action);
-                        System.err.println("Valid actions: list, add, remove, start, stop, show");
-                    }
-                    return 1;
+                    return handleUnknownAction(operationId, isJsonOutput);
             }
         } catch (Exception e) {
-            if (jsonOutput) {
-                OutputFormatter formatter = new OutputFormatter(true);
-                Map<String, Object> error = new HashMap<>();
-                error.put("error", "Error executing schedule command");
-                error.put("message", e.getMessage());
-                formatter.outputObject("error", error);
-            } else {
-                if (verbose) {
-                    System.err.println("Error executing schedule command: " + e.getMessage());
-                    e.printStackTrace();
-                } else {
-                    System.err.println("Error: " + e.getMessage());
-                }
-            }
-            return 1;
+            return handleError(e, operationId);
         }
     }
     
     /**
-     * Lists all scheduled reports.
+     * Lists all scheduled reports with operation tracking.
      * 
      * @param scheduler the report scheduler
+     * @param operationId the operation ID for tracking
+     * @param isJsonOutput whether to output in JSON format
      * @return the exit code
      */
-    private int listSchedules(ReportScheduler scheduler) {
-        List<ScheduledReport> reports = scheduler.getScheduledReports();
+    private int listSchedules(ReportScheduler scheduler, String operationId, boolean isJsonOutput) {
+        // Create a sub-operation for listing
+        Map<String, Object> listParams = new HashMap<>();
+        listParams.put("action", "list");
+        String listOpId = metadataService.startOperation("schedule-list", "READ", listParams);
         
-        if (jsonOutput) {
-            OutputFormatter formatter = new OutputFormatter(true);
+        try {
+            List<ScheduledReport> reports = scheduler.getScheduledReports();
             
+            if (isJsonOutput) {
+                displaySchedulesAsJson(reports);
+            } else {
+                displaySchedulesAsText(reports);
+            }
+            
+            // Record operation success with result summary
             Map<String, Object> result = new HashMap<>();
             result.put("count", reports.size());
-            
-            List<Map<String, Object>> reportData = new ArrayList<>();
-            for (ScheduledReport report : reports) {
-                Map<String, Object> reportInfo = reportToMap(report);
-                reportData.add(reportInfo);
-            }
-            
-            result.put("reports", reportData);
-            formatter.outputObject("scheduledReports", result);
+            metadataService.completeOperation(listOpId, result);
+            metadataService.completeOperation(operationId, result);
             return 0;
-        } else {
-            if (reports.isEmpty()) {
-                System.out.println("No scheduled reports found");
-                return 0;
-            }
-            
-            System.out.println("Scheduled Reports:");
-            System.out.println("------------------");
-            
-            for (ScheduledReport report : reports) {
-                System.out.println("ID: " + report.getId());
-                System.out.println("Name: " + report.getName());
-                System.out.println("Type: " + report.getScheduleType());
-                System.out.println("Time: " + report.getTime());
-                
-                if (report.getScheduleType() == ScheduleType.WEEKLY && report.getDayOfWeek() != null) {
-                    System.out.println("Day of Week: " + report.getDayOfWeek());
-                } else if (report.getScheduleType() == ScheduleType.MONTHLY && report.getDayOfMonth() > 0) {
-                    System.out.println("Day of Month: " + report.getDayOfMonth());
-                }
-                
-                ReportConfig config = report.getConfig();
-                System.out.println("Report Type: " + config.getType());
-                System.out.println("Report Format: " + config.getFormat());
-                
-                if (config.getOutputPath() != null) {
-                    System.out.println("Output Path: " + config.getOutputPath());
-                }
-                
-                if (config.isEmailEnabled() && !config.getEmailRecipients().isEmpty()) {
-                    System.out.println("Email Recipients: " + String.join(", ", config.getEmailRecipients()));
-                }
-                
-                // Show more details in verbose mode
-                if (verbose) {
-                    if (config.getSortField() != null) {
-                        System.out.println("Sort Field: " + config.getSortField() + 
-                                (config.isAscending() ? " (ascending)" : " (descending)"));
-                    }
-                    
-                    if (config.isGroupByEnabled()) {
-                        System.out.println("Group By: " + config.getGroupByField());
-                    }
-                    
-                    if (config.getDescription() != null) {
-                        System.out.println("Description: " + config.getDescription());
-                    }
-                    
-                    // Calculate next run time
-                    LocalDateTime nextRun = calculateNextRunTime(report);
-                    if (nextRun != null) {
-                        System.out.println("Next Run: " + nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-                    }
-                }
-                
-                System.out.println();
-            }
-            
-            return 0;
+        } catch (Exception e) {
+            metadataService.failOperation(listOpId, e);
+            throw e; // Let the main operation handler catch this
         }
     }
     
     /**
-     * Adds a scheduled report.
+     * Displays scheduled reports in JSON format.
+     * 
+     * @param reports the list of scheduled reports
+     */
+    private void displaySchedulesAsJson(List<ScheduledReport> reports) {
+        OutputFormatter formatter = new OutputFormatter(true);
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("count", reports.size());
+        
+        List<Map<String, Object>> reportData = new ArrayList<>();
+        for (ScheduledReport report : reports) {
+            Map<String, Object> reportInfo = reportToMap(report);
+            reportData.add(reportInfo);
+        }
+        
+        result.put("reports", reportData);
+        formatter.outputObject("scheduledReports", result);
+    }
+    
+    /**
+     * Displays scheduled reports in text format.
+     * 
+     * @param reports the list of scheduled reports
+     */
+    private void displaySchedulesAsText(List<ScheduledReport> reports) {
+        if (reports.isEmpty()) {
+            System.out.println("No scheduled reports found");
+            return;
+        }
+        
+        System.out.println("Scheduled Reports:");
+        System.out.println("------------------");
+        
+        for (ScheduledReport report : reports) {
+            System.out.println("ID: " + report.getId());
+            System.out.println("Name: " + report.getName());
+            System.out.println("Type: " + report.getScheduleType());
+            System.out.println("Time: " + report.getTime());
+            
+            if (report.getScheduleType() == ScheduleType.WEEKLY && report.getDayOfWeek() != null) {
+                System.out.println("Day of Week: " + report.getDayOfWeek());
+            } else if (report.getScheduleType() == ScheduleType.MONTHLY && report.getDayOfMonth() > 0) {
+                System.out.println("Day of Month: " + report.getDayOfMonth());
+            }
+            
+            ReportConfig config = report.getConfig();
+            System.out.println("Report Type: " + config.getType());
+            System.out.println("Report Format: " + config.getFormat());
+            
+            if (config.getOutputPath() != null) {
+                System.out.println("Output Path: " + config.getOutputPath());
+            }
+            
+            if (config.isEmailEnabled() && !config.getEmailRecipients().isEmpty()) {
+                System.out.println("Email Recipients: " + String.join(", ", config.getEmailRecipients()));
+            }
+            
+            // Show more details in verbose mode
+            if (verbose) {
+                if (config.getSortField() != null) {
+                    System.out.println("Sort Field: " + config.getSortField() + 
+                            (config.isAscending() ? " (ascending)" : " (descending)"));
+                }
+                
+                if (config.isGroupByEnabled()) {
+                    System.out.println("Group By: " + config.getGroupByField());
+                }
+                
+                if (config.getDescription() != null) {
+                    System.out.println("Description: " + config.getDescription());
+                }
+                
+                // Calculate next run time
+                LocalDateTime nextRun = calculateNextRunTime(report);
+                if (nextRun != null) {
+                    System.out.println("Next Run: " + nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+                }
+            }
+            
+            System.out.println();
+        }
+    }
+    
+    /**
+     * Adds a scheduled report with operation tracking.
      * 
      * @param scheduler the report scheduler
+     * @param operationId the operation ID for tracking
+     * @param isJsonOutput whether to output in JSON format
      * @return the exit code
      */
-    private int addSchedule(ReportScheduler scheduler) {
+    private int addSchedule(ReportScheduler scheduler, String operationId, boolean isJsonOutput) {
+        // Create a sub-operation for adding
+        Map<String, Object> addParams = new HashMap<>();
+        addParams.put("action", "add");
+        addParams.put("name", name);
+        addParams.put("scheduleType", scheduleType);
+        addParams.put("reportType", reportType);
+        String addOpId = metadataService.startOperation("schedule-add", "CREATE", addParams);
+        
         try {
             // Validate required fields
             if (name == null || name.isEmpty()) {
@@ -347,43 +374,71 @@ public class ScheduleCommand implements Callable<Integer> {
             boolean success = scheduler.addScheduledReport(report);
             
             if (success) {
-                if (jsonOutput) {
-                    OutputFormatter formatter = new OutputFormatter(true);
-                    Map<String, Object> result = new HashMap<>();
-                    result.put("success", true);
-                    result.put("id", report.getId());
-                    result.put("name", report.getName());
-                    result.put("report", reportToMap(report));
-                    formatter.outputObject("addedSchedule", result);
+                // Record operation success
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", true);
+                result.put("id", report.getId());
+                result.put("name", report.getName());
+                
+                metadataService.completeOperation(addOpId, result);
+                metadataService.completeOperation(operationId, result);
+                
+                if (isJsonOutput) {
+                    displayAddedScheduleAsJson(report);
                 } else {
-                    System.out.println("Scheduled report added successfully");
-                    System.out.println("ID: " + report.getId());
+                    displayAddedScheduleAsText(report);
                 }
+                
                 return 0;
             } else {
                 throw new IllegalStateException("Error adding scheduled report");
             }
         } catch (Exception e) {
-            if (jsonOutput) {
-                OutputFormatter formatter = new OutputFormatter(true);
-                Map<String, Object> error = new HashMap<>();
-                error.put("error", "Error adding schedule");
-                error.put("message", e.getMessage());
-                formatter.outputObject("error", error);
-            } else {
-                System.err.println("Error: " + e.getMessage());
-            }
-            return 1;
+            metadataService.failOperation(addOpId, e);
+            throw e; // Let the main operation handler catch this
         }
     }
     
     /**
-     * Removes a scheduled report.
+     * Displays an added schedule in JSON format.
+     * 
+     * @param report the added scheduled report
+     */
+    private void displayAddedScheduleAsJson(ScheduledReport report) {
+        OutputFormatter formatter = new OutputFormatter(true);
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("id", report.getId());
+        result.put("name", report.getName());
+        result.put("report", reportToMap(report));
+        formatter.outputObject("addedSchedule", result);
+    }
+    
+    /**
+     * Displays an added schedule in text format.
+     * 
+     * @param report the added scheduled report
+     */
+    private void displayAddedScheduleAsText(ScheduledReport report) {
+        System.out.println("Scheduled report added successfully");
+        System.out.println("ID: " + report.getId());
+    }
+    
+    /**
+     * Removes a scheduled report with operation tracking.
      * 
      * @param scheduler the report scheduler
+     * @param operationId the operation ID for tracking
+     * @param isJsonOutput whether to output in JSON format
      * @return the exit code
      */
-    private int removeSchedule(ReportScheduler scheduler) {
+    private int removeSchedule(ReportScheduler scheduler, String operationId, boolean isJsonOutput) {
+        // Create a sub-operation for removing
+        Map<String, Object> removeParams = new HashMap<>();
+        removeParams.put("action", "remove");
+        removeParams.put("id", id);
+        String removeOpId = metadataService.startOperation("schedule-remove", "DELETE", removeParams);
+        
         try {
             if (id == null || id.isEmpty()) {
                 throw new IllegalArgumentException("ID is required");
@@ -395,43 +450,72 @@ public class ScheduleCommand implements Callable<Integer> {
             boolean success = scheduler.removeScheduledReport(id);
             
             if (success) {
-                if (jsonOutput) {
-                    OutputFormatter formatter = new OutputFormatter(true);
-                    Map<String, Object> result = new HashMap<>();
-                    result.put("success", true);
-                    result.put("id", id);
-                    if (report != null) {
-                        result.put("name", report.getName());
-                    }
-                    formatter.outputObject("removedSchedule", result);
-                } else {
-                    System.out.println("Scheduled report removed successfully");
+                // Record operation success
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", true);
+                result.put("id", id);
+                if (report != null) {
+                    result.put("name", report.getName());
                 }
+                
+                metadataService.completeOperation(removeOpId, result);
+                metadataService.completeOperation(operationId, result);
+                
+                if (isJsonOutput) {
+                    displayRemovedScheduleAsJson(id, report);
+                } else {
+                    displayRemovedScheduleAsText();
+                }
+                
                 return 0;
             } else {
                 throw new IllegalStateException("Scheduled report not found with ID: " + id);
             }
         } catch (Exception e) {
-            if (jsonOutput) {
-                OutputFormatter formatter = new OutputFormatter(true);
-                Map<String, Object> error = new HashMap<>();
-                error.put("error", "Error removing schedule");
-                error.put("message", e.getMessage());
-                formatter.outputObject("error", error);
-            } else {
-                System.err.println("Error: " + e.getMessage());
-            }
-            return 1;
+            metadataService.failOperation(removeOpId, e);
+            throw e; // Let the main operation handler catch this
         }
     }
     
     /**
-     * Shows a scheduled report.
+     * Displays a removed schedule in JSON format.
+     * 
+     * @param id the ID of the removed report
+     * @param report the removed scheduled report (may be null)
+     */
+    private void displayRemovedScheduleAsJson(String id, ScheduledReport report) {
+        OutputFormatter formatter = new OutputFormatter(true);
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("id", id);
+        if (report != null) {
+            result.put("name", report.getName());
+        }
+        formatter.outputObject("removedSchedule", result);
+    }
+    
+    /**
+     * Displays a removed schedule in text format.
+     */
+    private void displayRemovedScheduleAsText() {
+        System.out.println("Scheduled report removed successfully");
+    }
+    
+    /**
+     * Shows a scheduled report with operation tracking.
      * 
      * @param scheduler the report scheduler
+     * @param operationId the operation ID for tracking
+     * @param isJsonOutput whether to output in JSON format
      * @return the exit code
      */
-    private int showSchedule(ReportScheduler scheduler) {
+    private int showSchedule(ReportScheduler scheduler, String operationId, boolean isJsonOutput) {
+        // Create a sub-operation for showing
+        Map<String, Object> showParams = new HashMap<>();
+        showParams.put("action", "show");
+        showParams.put("id", id);
+        String showOpId = metadataService.startOperation("schedule-show", "READ", showParams);
+        
         try {
             if (id == null || id.isEmpty()) {
                 throw new IllegalArgumentException("ID is required");
@@ -443,101 +527,268 @@ public class ScheduleCommand implements Callable<Integer> {
                 throw new IllegalArgumentException("Scheduled report not found with ID: " + id);
             }
             
-            if (jsonOutput) {
-                OutputFormatter formatter = new OutputFormatter(true);
-                Map<String, Object> result = reportToMap(report);
-                
-                // Add next run time calculation
-                LocalDateTime nextRun = calculateNextRunTime(report);
-                if (nextRun != null) {
-                    result.put("nextRun", nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-                }
-                
-                formatter.outputObject("scheduledReport", result);
-                return 0;
+            // Record operation success
+            Map<String, Object> result = new HashMap<>();
+            result.put("id", report.getId());
+            result.put("name", report.getName());
+            result.put("type", report.getScheduleType().name());
+            
+            metadataService.completeOperation(showOpId, result);
+            metadataService.completeOperation(operationId, result);
+            
+            if (isJsonOutput) {
+                displayScheduleAsJson(report);
             } else {
-                System.out.println("ID: " + report.getId());
-                System.out.println("Name: " + report.getName());
-                
-                if (report.getDescription() != null && !report.getDescription().isEmpty()) {
-                    System.out.println("Description: " + report.getDescription());
-                }
-                
-                System.out.println("Schedule Type: " + report.getScheduleType());
-                System.out.println("Time: " + report.getTime());
-                
-                if (report.getScheduleType() == ScheduleType.WEEKLY && report.getDayOfWeek() != null) {
-                    System.out.println("Day of Week: " + report.getDayOfWeek());
-                } else if (report.getScheduleType() == ScheduleType.MONTHLY && report.getDayOfMonth() > 0) {
-                    System.out.println("Day of Month: " + report.getDayOfMonth());
-                }
-                
-                ReportConfig config = report.getConfig();
-                System.out.println("Report Type: " + config.getType());
-                System.out.println("Report Format: " + config.getFormat());
-                
-                if (config.getOutputPath() != null) {
-                    System.out.println("Output Path: " + config.getOutputPath());
-                }
-                
-                if (config.getTitle() != null) {
-                    System.out.println("Report Title: " + config.getTitle());
-                }
-                
-                if (config.isEmailEnabled()) {
-                    System.out.println("Email Enabled: Yes");
-                    
-                    if (!config.getEmailRecipients().isEmpty()) {
-                        System.out.println("Email Recipients: " + String.join(", ", config.getEmailRecipients()));
-                    }
-                    
-                    if (config.getEmailSubject() != null) {
-                        System.out.println("Email Subject: " + config.getEmailSubject());
-                    }
-                } else {
-                    System.out.println("Email Enabled: No");
-                }
-                
-                // Show more details in verbose mode
-                if (verbose) {
-                    if (config.getSortField() != null) {
-                        System.out.println("Sort Field: " + config.getSortField() + 
-                                (config.isAscending() ? " (ascending)" : " (descending)"));
-                    }
-                    
-                    if (config.isGroupByEnabled()) {
-                        System.out.println("Group By: " + config.getGroupByField());
-                    }
-                    
-                    Map<String, String> filters = config.getFilters();
-                    if (!filters.isEmpty()) {
-                        System.out.println("Filters:");
-                        for (Map.Entry<String, String> filter : filters.entrySet()) {
-                            System.out.println("  " + filter.getKey() + ": " + filter.getValue());
-                        }
-                    }
-                    
-                    // Calculate next run time
-                    LocalDateTime nextRun = calculateNextRunTime(report);
-                    if (nextRun != null) {
-                        System.out.println("Next Run: " + nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-                    }
-                }
-                
-                return 0;
+                displayScheduleAsText(report);
             }
+            
+            return 0;
         } catch (Exception e) {
-            if (jsonOutput) {
-                OutputFormatter formatter = new OutputFormatter(true);
-                Map<String, Object> error = new HashMap<>();
-                error.put("error", "Error showing schedule");
-                error.put("message", e.getMessage());
-                formatter.outputObject("error", error);
-            } else {
-                System.err.println("Error: " + e.getMessage());
-            }
-            return 1;
+            metadataService.failOperation(showOpId, e);
+            throw e; // Let the main operation handler catch this
         }
+    }
+    
+    /**
+     * Displays a schedule in JSON format.
+     * 
+     * @param report the scheduled report
+     */
+    private void displayScheduleAsJson(ScheduledReport report) {
+        OutputFormatter formatter = new OutputFormatter(true);
+        Map<String, Object> result = reportToMap(report);
+        
+        // Add next run time calculation
+        LocalDateTime nextRun = calculateNextRunTime(report);
+        if (nextRun != null) {
+            result.put("nextRun", nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+        }
+        
+        formatter.outputObject("scheduledReport", result);
+    }
+    
+    /**
+     * Displays a schedule in text format.
+     * 
+     * @param report the scheduled report
+     */
+    private void displayScheduleAsText(ScheduledReport report) {
+        System.out.println("ID: " + report.getId());
+        System.out.println("Name: " + report.getName());
+        
+        if (report.getDescription() != null && !report.getDescription().isEmpty()) {
+            System.out.println("Description: " + report.getDescription());
+        }
+        
+        System.out.println("Schedule Type: " + report.getScheduleType());
+        System.out.println("Time: " + report.getTime());
+        
+        if (report.getScheduleType() == ScheduleType.WEEKLY && report.getDayOfWeek() != null) {
+            System.out.println("Day of Week: " + report.getDayOfWeek());
+        } else if (report.getScheduleType() == ScheduleType.MONTHLY && report.getDayOfMonth() > 0) {
+            System.out.println("Day of Month: " + report.getDayOfMonth());
+        }
+        
+        ReportConfig config = report.getConfig();
+        System.out.println("Report Type: " + config.getType());
+        System.out.println("Report Format: " + config.getFormat());
+        
+        if (config.getOutputPath() != null) {
+            System.out.println("Output Path: " + config.getOutputPath());
+        }
+        
+        if (config.getTitle() != null) {
+            System.out.println("Report Title: " + config.getTitle());
+        }
+        
+        if (config.isEmailEnabled()) {
+            System.out.println("Email Enabled: Yes");
+            
+            if (!config.getEmailRecipients().isEmpty()) {
+                System.out.println("Email Recipients: " + String.join(", ", config.getEmailRecipients()));
+            }
+            
+            if (config.getEmailSubject() != null) {
+                System.out.println("Email Subject: " + config.getEmailSubject());
+            }
+        } else {
+            System.out.println("Email Enabled: No");
+        }
+        
+        // Show more details in verbose mode
+        if (verbose) {
+            if (config.getSortField() != null) {
+                System.out.println("Sort Field: " + config.getSortField() + 
+                        (config.isAscending() ? " (ascending)" : " (descending)"));
+            }
+            
+            if (config.isGroupByEnabled()) {
+                System.out.println("Group By: " + config.getGroupByField());
+            }
+            
+            Map<String, String> filters = config.getFilters();
+            if (!filters.isEmpty()) {
+                System.out.println("Filters:");
+                for (Map.Entry<String, String> filter : filters.entrySet()) {
+                    System.out.println("  " + filter.getKey() + ": " + filter.getValue());
+                }
+            }
+            
+            // Calculate next run time
+            LocalDateTime nextRun = calculateNextRunTime(report);
+            if (nextRun != null) {
+                System.out.println("Next Run: " + nextRun.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+            }
+        }
+    }
+    
+    /**
+     * Starts the report scheduler with operation tracking.
+     * 
+     * @param scheduler the report scheduler
+     * @param operationId the operation ID for tracking
+     * @param isJsonOutput whether to output in JSON format
+     * @return the exit code
+     */
+    private int startScheduler(ReportScheduler scheduler, String operationId, boolean isJsonOutput) {
+        // Create a sub-operation for starting
+        Map<String, Object> startParams = new HashMap<>();
+        startParams.put("action", "start");
+        String startOpId = metadataService.startOperation("schedule-start", "EXECUTE", startParams);
+        
+        try {
+            scheduler.start();
+            
+            // Record operation success
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "started");
+            result.put("reportCount", scheduler.getScheduledReports().size());
+            
+            metadataService.completeOperation(startOpId, result);
+            metadataService.completeOperation(operationId, result);
+            
+            if (isJsonOutput) {
+                displaySchedulerStatusAsJson("started", scheduler.getScheduledReports().size());
+            } else {
+                System.out.println("Report scheduler started");
+            }
+            
+            return 0;
+        } catch (Exception e) {
+            metadataService.failOperation(startOpId, e);
+            throw e; // Let the main operation handler catch this
+        }
+    }
+    
+    /**
+     * Stops the report scheduler with operation tracking.
+     * 
+     * @param scheduler the report scheduler
+     * @param operationId the operation ID for tracking
+     * @param isJsonOutput whether to output in JSON format
+     * @return the exit code
+     */
+    private int stopScheduler(ReportScheduler scheduler, String operationId, boolean isJsonOutput) {
+        // Create a sub-operation for stopping
+        Map<String, Object> stopParams = new HashMap<>();
+        stopParams.put("action", "stop");
+        String stopOpId = metadataService.startOperation("schedule-stop", "EXECUTE", stopParams);
+        
+        try {
+            scheduler.stop();
+            
+            // Record operation success
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "stopped");
+            
+            metadataService.completeOperation(stopOpId, result);
+            metadataService.completeOperation(operationId, result);
+            
+            if (isJsonOutput) {
+                displaySchedulerStatusAsJson("stopped", 0);
+            } else {
+                System.out.println("Report scheduler stopped");
+            }
+            
+            return 0;
+        } catch (Exception e) {
+            metadataService.failOperation(stopOpId, e);
+            throw e; // Let the main operation handler catch this
+        }
+    }
+    
+    /**
+     * Displays scheduler status in JSON format.
+     * 
+     * @param status the status of the scheduler
+     * @param reportCount the number of scheduled reports
+     */
+    private void displaySchedulerStatusAsJson(String status, int reportCount) {
+        OutputFormatter formatter = new OutputFormatter(true);
+        Map<String, Object> result = new HashMap<>();
+        result.put("status", status);
+        if ("started".equals(status)) {
+            result.put("reportCount", reportCount);
+        }
+        formatter.outputObject("scheduler", result);
+    }
+    
+    /**
+     * Handles an unknown action with operation tracking.
+     * 
+     * @param operationId the operation ID for tracking
+     * @param isJsonOutput whether to output in JSON format
+     * @return the exit code
+     */
+    private int handleUnknownAction(String operationId, boolean isJsonOutput) {
+        // Create error result
+        Map<String, Object> error = new HashMap<>();
+        error.put("error", "Unknown action");
+        error.put("action", action);
+        error.put("validActions", List.of("list", "add", "remove", "start", "stop", "show"));
+        
+        // Record operation failure
+        Exception exception = new IllegalArgumentException("Unknown action: " + action);
+        metadataService.failOperation(operationId, exception);
+        
+        if (isJsonOutput) {
+            OutputFormatter formatter = new OutputFormatter(true);
+            formatter.outputObject("error", error);
+        } else {
+            System.err.println("Error: Unknown action: " + action);
+            System.err.println("Valid actions: list, add, remove, start, stop, show");
+        }
+        
+        return 1;
+    }
+    
+    /**
+     * Handles errors with operation tracking.
+     * 
+     * @param exception the exception that occurred
+     * @param operationId the operation ID for tracking
+     * @return the exit code
+     */
+    private int handleError(Exception exception, String operationId) {
+        // Record operation failure
+        metadataService.failOperation(operationId, exception);
+        
+        if ("json".equalsIgnoreCase(format)) {
+            OutputFormatter formatter = new OutputFormatter(true);
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Error executing schedule command");
+            error.put("message", exception.getMessage());
+            formatter.outputObject("error", error);
+        } else {
+            if (verbose) {
+                System.err.println("Error executing schedule command: " + exception.getMessage());
+                exception.printStackTrace();
+            } else {
+                System.err.println("Error: " + exception.getMessage());
+            }
+        }
+        
+        return 1;
     }
     
     /**
@@ -860,13 +1111,27 @@ public class ScheduleCommand implements Callable<Integer> {
     }
     
     /**
+     * Sets the output format.
+     * 
+     * @param format the output format ("text" or "json")
+     * @return this command for chaining
+     */
+    public ScheduleCommand setFormat(String format) {
+        this.format = format;
+        return this;
+    }
+    
+    /**
      * Sets whether to use JSON output.
+     * This is a legacy setter that maps to the new format parameter.
      * 
      * @param jsonOutput true to use JSON output
      * @return this command for chaining
      */
     public ScheduleCommand setJsonOutput(boolean jsonOutput) {
-        this.jsonOutput = jsonOutput;
+        if (jsonOutput) {
+            this.format = "json";
+        }
         return this;
     }
     
@@ -878,6 +1143,17 @@ public class ScheduleCommand implements Callable<Integer> {
      */
     public ScheduleCommand setVerbose(boolean verbose) {
         this.verbose = verbose;
+        return this;
+    }
+    
+    /**
+     * Sets the username for operation tracking.
+     * 
+     * @param username the username
+     * @return this command for chaining
+     */
+    public ScheduleCommand setUsername(String username) {
+        this.username = username;
         return this;
     }
     
@@ -909,7 +1185,8 @@ public class ScheduleCommand implements Callable<Integer> {
         System.out.println("  --email               Enable email delivery");
         System.out.println("  --email-to=<addr>     Set email recipients (comma-separated)");
         System.out.println("  --email-subject=<s>   Set email subject line");
-        System.out.println("  --json                Output in JSON format");
+        System.out.println("  --format=<fmt>        Output format: text or json (default: text)");
+        System.out.println("  --json                Output in JSON format (legacy, use --format=json instead)");
         System.out.println("  --verbose             Show detailed information");
         System.out.println();
         System.out.println("Options for 'remove' and 'show':");

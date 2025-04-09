@@ -1,5 +1,5 @@
 /*
- * Domain entity for the Rinna workflow management system
+ * Model class for the Rinna workflow management system
  *
  * Copyright (c) 2025 Eric C. Mumford (@heymumford)
  * This file is subject to the terms and conditions defined in
@@ -8,61 +8,76 @@
 
 package org.rinna.domain.model;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Represents a request to create a new work item.
- * This is a value object that contains the data needed to create a work item.
+ * Request object for creating a new work item.
  */
-public record WorkItemCreateRequest(
-    String title,
-    String description,
-    WorkItemType type,
-    Priority priority,
-    String assignee,
-    UUID parentId,
-    UUID projectId,
-    String visibility,
-    boolean localOnly,
-    Map<String, String> metadata
-) {
-    /**
-     * Creates a new WorkItemCreateRequest with validated parameters.
-     * 
-     * @param title the title of the work item
-     * @param description the description of the work item
-     * @param type the type of the work item
-     * @param priority the priority of the work item
-     * @param assignee the assignee of the work item
-     * @param parentId the parent ID of the work item
-     * @param projectId the project ID of the work item
-     * @param visibility the visibility of the work item, defaults to "PUBLIC" if null
-     * @param localOnly whether the work item is local only
-     * @param metadata the metadata of the work item, defensive copy is created
-     */
-    public WorkItemCreateRequest {
-        if (title == null || title.isEmpty()) {
-            throw new IllegalArgumentException("Title is required");
-        }
-        if (type == null) {
-            throw new IllegalArgumentException("Type is required");
-        }
-        
-        // Instead of reassigning parameters (which causes PMD warnings),
-        // use default values in the Builder and validate properly here
-        if (visibility == null) {
-            throw new IllegalArgumentException("Visibility cannot be null");
-        }
-        if (metadata == null) {
-            throw new IllegalArgumentException("Metadata cannot be null");
-        }
+public final class WorkItemCreateRequest {
+    private final String title;
+    private final String description;
+    private final WorkItemType type;
+    private final Priority priority;
+    private final String assignee;
+    private final UUID parentId;
+    
+    private WorkItemCreateRequest(Builder builder) {
+        this.title = builder.title;
+        this.description = builder.description;
+        this.type = builder.type;
+        this.priority = builder.priority;
+        this.assignee = builder.assignee;
+        this.parentId = builder.parentId;
     }
-
+    
     /**
-     * Returns the parent ID as an Optional.
+     * Returns the title for the new work item.
+     * 
+     * @return the title
+     */
+    public String getTitle() {
+        return title;
+    }
+    
+    /**
+     * Returns the description for the new work item.
+     * 
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+    
+    /**
+     * Returns the type for the new work item.
+     * 
+     * @return the work item type
+     */
+    public WorkItemType getType() {
+        return type;
+    }
+    
+    /**
+     * Returns the priority for the new work item.
+     * 
+     * @return the priority
+     */
+    public Priority getPriority() {
+        return priority;
+    }
+    
+    /**
+     * Returns the assignee for the new work item.
+     * 
+     * @return the assignee
+     */
+    public String getAssignee() {
+        return assignee;
+    }
+    
+    /**
+     * Returns the parent ID for the new work item if it has a parent.
      * 
      * @return an Optional containing the parent ID, or empty if no parent
      */
@@ -71,21 +86,12 @@ public record WorkItemCreateRequest(
     }
     
     /**
-     * Returns the project ID as an Optional.
+     * Returns a new builder for creating a WorkItemCreateRequest.
      * 
-     * @return an Optional containing the project ID, or empty if not associated with a project
+     * @return a new builder instance
      */
-    public Optional<UUID> getProjectId() {
-        return Optional.ofNullable(projectId);
-    }
-    
-    /**
-     * Returns a defensive copy of the metadata.
-     * 
-     * @return the metadata as a map of key-value pairs
-     */
-    public Map<String, String> getMetadata() {
-        return new HashMap<>(metadata);
+    public static Builder builder() {
+        return new Builder();
     }
     
     /**
@@ -93,99 +99,91 @@ public record WorkItemCreateRequest(
      */
     public static class Builder {
         private String title;
-        private String description;
+        private String description = "";
         private WorkItemType type;
-        private Priority priority = Priority.MEDIUM; // Default
+        private Priority priority = Priority.MEDIUM;
         private String assignee;
         private UUID parentId;
-        private UUID projectId;
-        private String visibility = "PUBLIC"; // Default
-        private boolean localOnly = false; // Default
-        private Map<String, String> metadata = new HashMap<>();
         
+        /**
+         * Sets the title for the new work item.
+         * 
+         * @param title the title
+         * @return this builder instance
+         */
         public Builder title(String title) {
             this.title = title;
             return this;
         }
         
+        /**
+         * Sets the description for the new work item.
+         * 
+         * @param description the description
+         * @return this builder instance
+         */
         public Builder description(String description) {
             this.description = description;
             return this;
         }
         
+        /**
+         * Sets the type for the new work item.
+         * 
+         * @param type the work item type
+         * @return this builder instance
+         */
         public Builder type(WorkItemType type) {
             this.type = type;
             return this;
         }
         
+        /**
+         * Sets the priority for the new work item.
+         * 
+         * @param priority the priority
+         * @return this builder instance
+         */
         public Builder priority(Priority priority) {
             this.priority = priority;
             return this;
         }
         
+        /**
+         * Sets the assignee for the new work item.
+         * 
+         * @param assignee the assignee
+         * @return this builder instance
+         */
         public Builder assignee(String assignee) {
             this.assignee = assignee;
             return this;
         }
         
+        /**
+         * Sets the parent ID for the new work item.
+         * 
+         * @param parentId the parent ID
+         * @return this builder instance
+         */
         public Builder parentId(UUID parentId) {
             this.parentId = parentId;
             return this;
         }
         
-        public Builder projectId(UUID projectId) {
-            this.projectId = projectId;
-            return this;
-        }
-        
-        public Builder visibility(String visibility) {
-            this.visibility = visibility;
-            return this;
-        }
-        
-        public Builder localOnly(boolean localOnly) {
-            this.localOnly = localOnly;
-            return this;
-        }
-        
-        public Builder addMetadata(String key, String value) {
-            this.metadata.put(key, value);
-            return this;
-        }
-        
-        public Builder metadata(Map<String, String> metadata) {
-            this.metadata = new HashMap<>(metadata);
-            return this;
-        }
-        
+        /**
+         * Builds a new WorkItemCreateRequest with the configured values.
+         * 
+         * @return a new WorkItemCreateRequest instance
+         */
         public WorkItemCreateRequest build() {
-            // Ensure we have non-null values for required fields
-            if (title == null || title.isEmpty()) {
+            if (title == null || title.isBlank()) {
                 throw new IllegalStateException("Title is required");
             }
             if (type == null) {
                 throw new IllegalStateException("Type is required");
             }
-            
-            // Ensure we have a non-null value for visibility
-            String finalVisibility = visibility != null ? visibility : "PUBLIC";
-            
-            // Ensure we have a non-null value for metadata (create defensive copy)
-            Map<String, String> finalMetadata = metadata != null ? 
-                new HashMap<>(metadata) : new HashMap<>();
-                
-            return new WorkItemCreateRequest(
-                title,
-                description,
-                type,
-                priority,
-                assignee,
-                parentId,
-                projectId,
-                finalVisibility,
-                localOnly,
-                finalMetadata
-            );
+            return new WorkItemCreateRequest(this);
         }
     }
 }

@@ -18,7 +18,8 @@ else
     function echo_info() { echo -e "\033[0;34m$1\033[0m"; }
     function echo_success() { echo -e "\033[0;32m$1\033[0m"; }
     function echo_warning() { echo -e "\033[0;33m$1\033[0m"; }
-    function echo_error() { echo -e "\033[0;31m$1\033[0m"; }
+    function echo_error() { echo -e "\033[0;31m$1\033[0m" >&2; }
+    function print_error() { echo -e "\033[0;31m✗ $1\033[0m" >&2; }
 fi
 
 # Get user information

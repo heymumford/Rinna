@@ -19,7 +19,7 @@ import org.rinna.domain.model.DocumentConfig;
 import org.rinna.domain.model.Project;
 import org.rinna.domain.model.Release;
 import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.service.DocumentService;
+import org.rinna.usecase.DocumentService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -51,22 +51,17 @@ public class DefaultDocumentService implements DocumentService {
     @Override
     public void generateWorkItemDocument(WorkItem workItem, Format format, TemplateType templateType, OutputStream output) {
         try {
-            String content = STR."""
-                # Work Item Details
-                
-                - ID: \{workItem.getId()}
-                - Title: \{workItem.getTitle()}
-                - Type: \{workItem.getType()}
-                - Status: \{workItem.getStatus()}
-                - Priority: \{workItem.getPriority()}
-                - Assignee: \{workItem.getAssignee() != null ? workItem.getAssignee() : "Unassigned"}
-                - Created: \{workItem.getCreatedAt()}
-                - Updated: \{workItem.getUpdatedAt()}
-                
-                ## Description
-                
-                \{workItem.getDescription() != null ? workItem.getDescription() : "No description provided"}
-                """;
+            String content = "# Work Item Details\n\n" +
+                "- ID: " + workItem.getId() + "\n" +
+                "- Title: " + workItem.getTitle() + "\n" +
+                "- Type: " + workItem.getType() + "\n" +
+                "- Status: " + workItem.getStatus() + "\n" +
+                "- Priority: " + workItem.getPriority() + "\n" +
+                "- Assignee: " + (workItem.getAssignee() != null ? workItem.getAssignee() : "Unassigned") + "\n" +
+                "- Created: " + workItem.getCreatedAt() + "\n" +
+                "- Updated: " + workItem.getUpdatedAt();
+            content += "\n\n## Description\n\n" +
+                (workItem.getDescription() != null ? workItem.getDescription() : "No description provided");
             
             generateDocument(content, format, output);
         } catch (Exception e) {
@@ -78,19 +73,14 @@ public class DefaultDocumentService implements DocumentService {
     @Override
     public void generateProjectDocument(Project project, Format format, TemplateType templateType, OutputStream output) {
         try {
-            String content = STR."""
-                # Project Summary: \{project.getName()}
-                
-                - ID: \{project.getId()}
-                - Key: \{project.getKey()}
-                - Status: \{project.isActive() ? "Active" : "Inactive"}
-                - Created: \{project.getCreatedAt()}
-                - Updated: \{project.getUpdatedAt()}
-                
-                ## Description
-                
-                \{project.getDescription() != null ? project.getDescription() : "No description provided"}
-                """;
+            String content = "# Project Summary: " + project.getName() + "\n\n" +
+                "- ID: " + project.getId() + "\n" +
+                "- Key: " + project.getKey() + "\n" +
+                "- Status: " + (project.isActive() ? "Active" : "Inactive") + "\n" +
+                "- Created: " + project.getCreatedAt() + "\n" +
+                "- Updated: " + project.getUpdatedAt() + "\n\n" +
+                "## Description\n\n" +
+                (project.getDescription() != null ? project.getDescription() : "No description provided");
             
             generateDocument(content, format, output);
         } catch (Exception e) {
@@ -102,16 +92,11 @@ public class DefaultDocumentService implements DocumentService {
     @Override
     public void generateReleaseDocument(Release release, Format format, TemplateType templateType, OutputStream output) {
         try {
-            String content = STR."""
-                # Release Notes
-                
-                - Release: \{release.getVersion()}
-                - Date: \{release.getCreatedAt()}
-                
-                ## Description
-                
-                \{release.getDescription() != null ? release.getDescription() : "No description provided"}
-                """;
+            String content = "# Release Notes\n\n" +
+                "- Release: " + release.getVersion() + "\n" +
+                "- Date: " + release.getCreatedAt() + "\n\n" +
+                "## Description\n\n" +
+                (release.getDescription() != null ? release.getDescription() : "No description provided");
             
             generateDocument(content, format, output);
         } catch (Exception e) {

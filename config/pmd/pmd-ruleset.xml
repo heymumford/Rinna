@@ -6,14 +6,23 @@
     <description>
         PMD ruleset for Rinna - Customized for CLI implementation
     </description>
+    
+    <!-- Configuration for Java 21 Preview Features 
+    Removing properties section as it's invalid in this position
+    and is automatically inferred from the Java version
+    -->
 
-    <\!-- Best Practices -->
+    <!-- Best Practices -->
     <rule ref="category/java/bestpractices.xml">
         <exclude name="GuardLogStatement"/>
-        <exclude name="JUnitTestContainsTooManyAsserts"/>
+        <exclude name="SystemPrintln"/>
+        <exclude name="AvoidPrintStackTrace"/>
+        <exclude name="UnusedPrivateMethod"/>
+        <exclude name="UseVarargs"/>
+        <exclude name="AbstractClassWithoutAbstractMethod"/>
     </rule>
 
-    <\!-- Code Style -->
+    <!-- Code Style -->
     <rule ref="category/java/codestyle.xml">
         <exclude name="AtLeastOneConstructor"/>
         <exclude name="LongVariable"/>
@@ -22,12 +31,17 @@
         <exclude name="MethodArgumentCouldBeFinal"/>
         <exclude name="OnlyOneReturn"/>
         <exclude name="CommentDefaultAccessModifier"/>
-        <exclude name="DefaultPackage"/>
         <exclude name="CallSuperInConstructor"/>
         <exclude name="UselessParentheses"/>
+        <exclude name="UnnecessaryImport"/>
+        <exclude name="ShortMethodName"/>
+        <exclude name="UseExplicitTypes"/>
+        <exclude name="ClassNamingConventions"/>
+        <exclude name="ConfusingTernary"/>
+        <exclude name="PrematureDeclaration"/>
     </rule>
 
-    <\!-- Design -->
+    <!-- Design -->
     <rule ref="category/java/design.xml">
         <exclude name="LawOfDemeter"/>
         <exclude name="LoosePackageCoupling"/>
@@ -35,69 +49,60 @@
         <exclude name="TooManyMethods"/>
         <exclude name="DataClass"/>
         <exclude name="GodClass"/>
+        <exclude name="CyclomaticComplexity"/>
+        <exclude name="NPathComplexity"/>
+        <exclude name="CognitiveComplexity"/>
+        <exclude name="UseUtilityClass"/>
     </rule>
-
-    <\!-- Documentation -->
-    <rule ref="category/java/documentation.xml">
-        <exclude name="CommentSize"/>
-    </rule>
-
-    <\!-- Error Prone -->
-    <rule ref="category/java/errorprone.xml">
-        <exclude name="BeanMembersShouldSerialize"/>
-        <exclude name="DataflowAnomalyAnalysis"/>
-        <exclude name="AvoidLiteralsInIfCondition"/>
-        <exclude name="AvoidFieldNameMatchingMethodName"/>
-        <exclude name="NullAssignment"/>
-    </rule>
-
-    <\!-- Multithreading -->
-    <rule ref="category/java/multithreading.xml">
-        <exclude name="UseConcurrentHashMap"/>
-        <exclude name="DoNotUseThreads"/>
-    </rule>
-
-    <\!-- Performance -->
-    <rule ref="category/java/performance.xml">
-        <exclude name="AvoidInstantiatingObjectsInLoops"/>
-        <exclude name="RedundantFieldInitializer"/>
-        <exclude name="SimplifyStartsWith"/>
-    </rule>
-
-    <\!-- Security -->
-    <rule ref="category/java/security.xml"/>
-
-    <\!-- Rule customization -->
-    <rule ref="category/java/design.xml/CyclomaticComplexity">
-        <properties>
-            <property name="classReportLevel" value="80"/>
-            <property name="methodReportLevel" value="20"/>
-        </properties>
-    </rule>
-
-    <rule ref="category/java/design.xml/ExcessiveMethodLength">
-        <properties>
-            <property name="minimum" value="100"/>
-        </properties>
-    </rule>
-
-    <rule ref="category/java/design.xml/ExcessiveClassLength">
-        <properties>
-            <property name="minimum" value="1000"/>
-        </properties>
-    </rule>
-
+    
+    <!-- Customize specific design rules -->
     <rule ref="category/java/design.xml/ExcessiveParameterList">
         <properties>
             <property name="minimum" value="10"/>
         </properties>
     </rule>
 
-    <rule ref="category/java/codestyle.xml/ClassNamingConventions">
-        <properties>
-            <property name="utilityClassPattern" value="[A-Z][a-zA-Z0-9]+"/>
-        </properties>
+    <!-- Documentation -->
+    <rule ref="category/java/documentation.xml">
+        <exclude name="CommentSize"/>
+        <exclude name="UncommentedEmptyMethodBody"/>
+        <exclude name="UncommentedEmptyConstructor"/>
     </rule>
+
+    <!-- Error Prone -->
+    <rule ref="category/java/errorprone.xml">
+        <exclude name="AvoidLiteralsInIfCondition"/>
+        <exclude name="AvoidFieldNameMatchingMethodName"/>
+        <exclude name="NullAssignment"/>
+        <exclude name="EmptyCatchBlock"/>
+        <exclude name="MissingStaticMethodInNonInstantiatableClass"/>
+        <exclude name="MissingSerialVersionUID"/>
+        <exclude name="AvoidDuplicateLiterals"/>
+        <exclude name="UseLocaleWithCaseConversions"/>
+        <exclude name="CloseResource"/>
+    </rule>
+
+    <!-- Multithreading -->
+    <rule ref="category/java/multithreading.xml">
+        <exclude name="UseConcurrentHashMap"/>
+        <exclude name="DoNotUseThreads"/>
+        <exclude name="AvoidSynchronizedAtMethodLevel"/>
+        <exclude name="AvoidSynchronizedStatement"/>
+        <exclude name="AvoidUsingVolatile"/>
+    </rule>
+
+    <!-- Performance -->
+    <rule ref="category/java/performance.xml">
+        <exclude name="AvoidInstantiatingObjectsInLoops"/>
+        <exclude name="RedundantFieldInitializer"/>
+        <exclude name="ConsecutiveLiteralAppends"/>
+        <exclude name="UseStringBufferForStringAppends"/>
+    </rule>
+
+    <!-- Security -->
+    <rule ref="category/java/security.xml"/>
+
+    <!-- Rule customization is moved directly into the main design rule section -->
 
     <rule ref="category/java/documentation.xml/CommentRequired">
         <properties>

@@ -1,158 +1,84 @@
-/*
- * Domain entity for the Rinna workflow management system
- *
- * Copyright (c) 2025 Eric C. Mumford (@heymumford)
- * This file is subject to the terms and conditions defined in
- * the LICENSE file, which is part of this source code package.
- */
-
 package org.rinna.domain;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Represents a request to create a new work item.
- * This is a value object that contains the data needed to create a work item.
+ * Compatibility class for WorkItemCreateRequest that delegates to the new class.
+ * @deprecated Use org.rinna.domain.model.WorkItemCreateRequest instead.
  */
-public record WorkItemCreateRequest(
-    String title,
-    String description,
-    WorkItemType type,
-    Priority priority,
-    String assignee,
-    UUID parentId,
-    UUID projectId,
-    String visibility,
-    boolean localOnly,
-    Map<String, String> metadata
-) {
+@Deprecated(forRemoval = true)
+public class WorkItemCreateRequest {
+    private final String title;
+    private final String description;
+    private final Priority priority;
+    private final WorkItemType type;
+
     /**
-     * Creates a new WorkItemCreateRequest with validated parameters.
+     * Constructor for compatibility with old code.
      */
-    public WorkItemCreateRequest {
-        if (title == null || title.isEmpty()) {
-            throw new IllegalArgumentException("Title is required");
-        }
-        if (type == null) {
-            throw new IllegalArgumentException("Type is required");
-        }
-        visibility = visibility != null ? visibility : "PUBLIC";
-        metadata = metadata != null ? new HashMap<>(metadata) : new HashMap<>();
+    public WorkItemCreateRequest(String title, String description, Priority priority, WorkItemType type) {
+        this.title = title;
+        this.description = description;
+        this.priority = priority;
+        this.type = type;
     }
 
     /**
-     * Returns the parent ID as an Optional.
-     * 
-     * @return an Optional containing the parent ID, or empty if no parent
+     * Converts to the new request type.
      */
-    public Optional<UUID> getParentId() {
-        return Optional.ofNullable(parentId);
+    public org.rinna.domain.model.WorkItemCreateRequest toNewRequest() {
+        return new org.rinna.domain.model.WorkItemCreateRequest.Builder()
+                .title(title)
+                .description(description)
+                .priority(priority.toNewPriority())
+                .type(type.toNewType())
+                .build();
     }
-    
-    /**
-     * Returns the project ID as an Optional.
-     * 
-     * @return an Optional containing the project ID, or empty if not associated with a project
-     */
-    public Optional<UUID> getProjectId() {
-        return Optional.ofNullable(projectId);
+
+    public String getTitle() {
+        return title;
     }
-    
-    /**
-     * Returns a defensive copy of the metadata.
-     * 
-     * @return the metadata as a map of key-value pairs
-     */
-    public Map<String, String> getMetadata() {
-        return new HashMap<>(metadata);
+
+    public String getDescription() {
+        return description;
     }
-    
-    /**
-     * Builder for creating WorkItemCreateRequest instances.
-     */
+
+    public Priority getPriority() {
+        return priority;
+    }
+
+    public WorkItemType getType() {
+        return type;
+    }
+
     public static class Builder {
         private String title;
         private String description;
+        private Priority priority;
         private WorkItemType type;
-        private Priority priority = Priority.MEDIUM; // Default
-        private String assignee;
-        private UUID parentId;
-        private UUID projectId;
-        private String visibility = "PUBLIC"; // Default
-        private boolean localOnly = false; // Default
-        private Map<String, String> metadata = new HashMap<>();
-        
+
         public Builder title(String title) {
             this.title = title;
             return this;
         }
-        
+
         public Builder description(String description) {
             this.description = description;
             return this;
         }
-        
-        public Builder type(WorkItemType type) {
-            this.type = type;
-            return this;
-        }
-        
+
         public Builder priority(Priority priority) {
             this.priority = priority;
             return this;
         }
-        
-        public Builder assignee(String assignee) {
-            this.assignee = assignee;
+
+        public Builder type(WorkItemType type) {
+            this.type = type;
             return this;
         }
-        
-        public Builder parentId(UUID parentId) {
-            this.parentId = parentId;
-            return this;
-        }
-        
-        public Builder projectId(UUID projectId) {
-            this.projectId = projectId;
-            return this;
-        }
-        
-        public Builder visibility(String visibility) {
-            this.visibility = visibility;
-            return this;
-        }
-        
-        public Builder localOnly(boolean localOnly) {
-            this.localOnly = localOnly;
-            return this;
-        }
-        
-        public Builder addMetadata(String key, String value) {
-            this.metadata.put(key, value);
-            return this;
-        }
-        
-        public Builder metadata(Map<String, String> metadata) {
-            this.metadata = new HashMap<>(metadata);
-            return this;
-        }
-        
+
         public WorkItemCreateRequest build() {
-            return new WorkItemCreateRequest(
-                title,
-                description,
-                type,
-                priority,
-                assignee,
-                parentId,
-                projectId,
-                visibility,
-                localOnly,
-                metadata
-            );
+            return new WorkItemCreateRequest(title, description, priority, type);
         }
     }
 }

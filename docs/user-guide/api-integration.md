@@ -1,6 +1,32 @@
-# API & Webhook Integration
+# Enterprise Integration
 
-Rinna provides REST API and webhook capabilities for external integrations.
+Rinna provides comprehensive integration capabilities for connecting with external systems, including issue trackers, version control systems, document management platforms, and CI/CD pipelines.
+
+![Enterprise Integration Diagram](../diagrams/enterprise_integration_diagram.svg)
+
+## Integration Capabilities
+
+Rinna offers integration with:
+
+### Issue Tracking Systems
+- **Jira**: Bidirectional sync of work items, comments, attachments, and workflow states
+- **GitHub Issues**: Integration with GitHub's issue tracking and project management
+- **Azure DevOps**: Work item synchronization with Azure DevOps boards
+
+### Version Control
+- **Git**: Commit hooks, branch naming conventions, and work item linking
+- **GitHub/GitLab**: Integration with pull/merge requests and code reviews
+
+### Document Systems
+- **Confluence**: Automatic documentation generation and syncing
+- **SharePoint**: Document storage and team collaboration
+
+### CI/CD Systems
+- **Jenkins**: Build pipeline integration and status tracking
+- **GitHub Actions**: Workflow automation and testing integration
+- **Azure DevOps Pipelines**: Deployment pipeline integration
+
+For detailed diagrams of these integration points, see the [Enterprise Integration Diagram](../diagrams/integration/enterprise_integration_diagram.md).
 
 ## RESTful API
 
@@ -47,7 +73,11 @@ POST   /api/v1/releases/{id}/workitems  # Add work item to release
 DELETE /api/v1/releases/{id}/workitems/{workItemId} # Remove from release
 ```
 
-### Examples
+### Example Usage
+
+> 📘 **Detailed Examples**
+>
+> For comprehensive examples of all API endpoints, including request/response examples in multiple formats, error handling, and client SDK usage, see the [Detailed API Examples Documentation](../../api/docs/api-examples.md).
 
 #### Creating a Work Item
 ```bash

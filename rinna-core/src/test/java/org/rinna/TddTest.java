@@ -16,9 +16,9 @@ import org.rinna.domain.model.Priority;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
-import org.rinna.domain.service.ItemService;
-import org.rinna.domain.service.ReleaseService;
-import org.rinna.domain.service.WorkflowService;
+import org.rinna.usecase.ItemService;
+import org.rinna.usecase.ReleaseService;
+import org.rinna.usecase.WorkflowService;
 
 import java.time.Duration;
 import java.util.logging.Level;

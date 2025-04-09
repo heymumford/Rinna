@@ -9,7 +9,7 @@
 package org.rinna.adapter.repository;
 
 import org.rinna.domain.model.WorkItemMetadata;
-import org.rinna.repository.MetadataRepository;
+import org.rinna.domain.repository.MetadataRepository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -104,5 +104,22 @@ public class InMemoryMetadataRepository implements MetadataRepository {
      */
     public void clear() {
         metadata.clear();
+    }
+    
+    @Override
+    public boolean updateMetadata(UUID workItemId, Map<String, String> updatedMetadata) {
+        if (updatedMetadata == null) {
+            return false;
+        }
+        
+        // Delete existing metadata for the work item
+        deleteByWorkItemId(workItemId);
+        
+        // Add new metadata entries
+        for (Map.Entry<String, String> entry : updatedMetadata.entrySet()) {
+            save(new WorkItemMetadata(workItemId, entry.getKey(), entry.getValue()));
+        }
+        
+        return true;
     }
 }

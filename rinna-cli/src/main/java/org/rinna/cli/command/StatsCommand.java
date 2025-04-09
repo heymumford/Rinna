@@ -13,6 +13,7 @@ import org.rinna.cli.stats.StatisticType;
 import org.rinna.cli.stats.StatisticValue;
 import org.rinna.cli.stats.StatisticsService;
 import org.rinna.cli.stats.StatisticsVisualizer;
+import org.rinna.cli.service.ConfigurationService;
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.util.OutputFormatter;
@@ -32,6 +33,16 @@ import java.util.stream.Collectors;
  * - Dashboard view: Shows a visual dashboard of metrics
  * - Distribution view: Shows item distributions with charts
  * - Detail view: Shows detailed stats for a specific area
+ * 
+ * Usage examples:
+ * - rin stats                    # Show summary statistics
+ * - rin stats dashboard          # Show statistics dashboard
+ * - rin stats all                # Show all available statistics
+ * - rin stats distribution       # Show distribution charts
+ * - rin stats detail workflow    # Show workflow details
+ * - rin stats --format=json      # Output in JSON format
+ * - rin stats --verbose          # Show verbose output with additional details
+ * - rin stats --limit=5          # Limit output to top 5 items per category
  */
 public class StatsCommand implements Callable<Integer> {
     
@@ -39,11 +50,12 @@ public class StatsCommand implements Callable<Integer> {
     private String format = "table"; // default to table format
     private int limit = 0; // 0 means no limit
     private String[] filterArgs = new String[0];
-    private boolean jsonOutput = false; // JSON output flag
     private boolean verbose = false; // Verbose output flag
     
     private final ServiceManager serviceManager;
     private final MetadataService metadataService;
+    private final ConfigurationService configService;
+    private final StatisticsService statsService;
     
     /**
      * Creates a new StatsCommand with default services.
@@ -60,6 +72,17 @@ public class StatsCommand implements Callable<Integer> {
     public StatsCommand(ServiceManager serviceManager) {
         this.serviceManager = serviceManager;
         this.metadataService = serviceManager.getMetadataService();
+        this.configService = serviceManager.getConfigurationService();
+        this.statsService = StatisticsService.getInstance();
+    }
+    
+    /**
+     * Gets the statistics command type.
+     *
+     * @return the statistics type
+     */
+    public String getType() {
+        return type;
     }
     
     /**
@@ -74,6 +97,15 @@ public class StatsCommand implements Callable<Integer> {
     }
     
     /**
+     * Gets the output format.
+     *
+     * @return the output format
+     */
+    public String getFormat() {
+        return format;
+    }
+    
+    /**
      * Sets the output format.
      * 
      * @param format the output format
@@ -85,12 +117,30 @@ public class StatsCommand implements Callable<Integer> {
     }
     
     /**
+     * Gets the maximum number of items to display.
+     *
+     * @return the limit
+     */
+    public int getLimit() {
+        return limit;
+    }
+    
+    /**
      * Sets the maximum number of items to display.
      * 
      * @param limit the limit
      */
     public void setLimit(int limit) {
         this.limit = limit;
+    }
+    
+    /**
+     * Gets the filter arguments.
+     *
+     * @return the filter arguments
+     */
+    public String[] getFilterArgs() {
+        return filterArgs;
     }
     
     /**
@@ -104,13 +154,34 @@ public class StatsCommand implements Callable<Integer> {
     
     /**
      * Sets the JSON output flag.
+     * This is a backwards compatibility method for the --json flag.
      * 
      * @param jsonOutput true to output in JSON format, false for text
      */
     public void setJsonOutput(boolean jsonOutput) {
-        this.jsonOutput = jsonOutput;
+        if (jsonOutput) {
+            this.format = "json";
+        }
+    }
+    
+    /**
+     * Gets whether JSON output is enabled.
+     *
+     * @return true if JSON output is enabled
+     */
+    public boolean isJsonOutput() {
+        return "json".equalsIgnoreCase(format);
     }
 
+    /**
+     * Gets whether verbose output is enabled.
+     *
+     * @return true if verbose output is enabled
+     */
+    public boolean isVerbose() {
+        return verbose;
+    }
+    
     /**
      * Sets the verbose output flag.
      * 
@@ -120,45 +191,24 @@ public class StatsCommand implements Callable<Integer> {
         this.verbose = verbose;
     }
     
+    /**
+     * Execute the statistics command.
+     */
     @Override
     public Integer call() {
-        // Operation tracking parameters
-        Map<String, Object> params = new HashMap<>();
-        params.put("type", type);
-        params.put("format", format);
-        params.put("limit", limit);
-        params.put("json_output", jsonOutput);
-        params.put("verbose", verbose);
-        if (filterArgs != null && filterArgs.length > 0) {
-            params.put("filter_args", String.join(",", filterArgs));
-        }
-        
-        // Start tracking the operation
-        String operationId = metadataService.startOperation("stats", "READ", params);
+        // Generate a unique operation ID for tracking this command execution
+        String operationId = generateOperationId();
         
         try {
-            // Use ServiceManager to get statistics service
-            StatisticsService statsService = StatisticsService.getInstance();
+            // Validate inputs
+            validateInputs(operationId);
             
-            // Handle refresh command
+            // Handle refresh command as a special case
             if ("refresh".equals(type)) {
-                statsService.refreshStatistics();
-                if (jsonOutput) {
-                    System.out.println("{ \"result\": \"success\", \"action\": \"refresh\", \"message\": \"Statistics refreshed\" }");
-                } else {
-                    System.out.println("Statistics refreshed.");
-                }
-                
-                // Record the successful operation
-                Map<String, Object> result = new HashMap<>();
-                result.put("action", "refresh");
-                result.put("status", "success");
-                metadataService.completeOperation(operationId, result);
-                
-                return 0;
+                return refreshStatistics(operationId);
             }
             
-            // Results container for operation tracking
+            // Process the specific statistics request
             Map<String, Object> resultData = new HashMap<>();
             resultData.put("type", type);
             resultData.put("format", format);
@@ -211,14 +261,9 @@ public class StatsCommand implements Callable<Integer> {
                         resultData.put("view", "specific_stat");
                         resultData.put("stat_type", statType.name());
                     } catch (IllegalArgumentException e) {
-                        if (jsonOutput) {
-                            System.out.println("{ \"result\": \"error\", \"message\": \"Unknown statistics type: " + type + "\" }");
-                        } else {
-                            System.err.println("Error: Unknown statistics type: " + type);
-                            displayHelp();
-                        }
-                        metadataService.failOperation(operationId, new IllegalArgumentException("Unknown statistics type: " + type));
-                        return 1;
+                        return handleError(operationId, 
+                            new IllegalArgumentException("Unknown statistics type: " + type), 
+                            "Unknown statistics type: " + type);
                     }
             }
             
@@ -227,22 +272,104 @@ public class StatsCommand implements Callable<Integer> {
             return 0;
             
         } catch (Exception e) {
-            // Enhanced error handling with context
-            String errorMessage = "Error displaying statistics: " + e.getMessage();
+            return handleError(operationId, e, "Error displaying statistics: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Generates an operation ID for tracking this command execution.
+     *
+     * @return the operation ID
+     */
+    private String generateOperationId() {
+        // Operation tracking parameters
+        Map<String, Object> params = new HashMap<>();
+        params.put("type", type);
+        params.put("format", format);
+        params.put("limit", limit);
+        params.put("json_output", isJsonOutput());
+        params.put("verbose", verbose);
+        if (filterArgs != null && filterArgs.length > 0) {
+            params.put("filter_args", String.join(",", filterArgs));
+        }
+        
+        // Start tracking the operation
+        return metadataService.startOperation("stats", "READ", params);
+    }
+    
+    /**
+     * Handles error reporting consistently.
+     *
+     * @param operationId the operation ID for tracking
+     * @param e the exception that occurred
+     * @param userMessage the message to display to the user
+     * @return 1 to indicate failure
+     */
+    private int handleError(String operationId, Exception e, String userMessage) {
+        if (isJsonOutput()) {
+            System.out.println(
+                OutputFormatter.formatJsonMessage(
+                    "error",
+                    e.getMessage(),
+                    null
+                )
+            );
+        } else {
+            System.err.println("Error: " + userMessage);
+            if (verbose) {
+                e.printStackTrace();
+            }
+        }
+        
+        // Record the failed operation with error details
+        metadataService.failOperation(operationId, e);
+        
+        return 1;
+    }
+    
+    /**
+     * Validates command inputs and throws exceptions for invalid values.
+     *
+     * @param operationId the operation ID for tracking
+     * @throws IllegalArgumentException if inputs are invalid
+     */
+    private void validateInputs(String operationId) throws IllegalArgumentException {
+        // For now, we don't have specific validation needs for stats command
+        // This method is included for consistency with the ViewCommand pattern
+    }
+    
+    /**
+     * Handles the refresh statistics operation.
+     *
+     * @param operationId the operation ID for tracking
+     * @return 0 for success, non-zero for failure
+     */
+    private int refreshStatistics(String operationId) {
+        try {
+            statsService.refreshStatistics();
             
-            if (jsonOutput) {
-                System.out.println("{ \"result\": \"error\", \"message\": \"" + e.getMessage().replace("\"", "\\\"") + "\" }");
+            // Format the output based on JSON or text
+            if (isJsonOutput()) {
+                System.out.println(
+                    OutputFormatter.formatJsonMessage(
+                        "success", 
+                        "Statistics refreshed", 
+                        Map.of("action", "refresh")
+                    )
+                );
             } else {
-                System.err.println("Error: " + e.getMessage());
-                if (verbose) {
-                    e.printStackTrace();
-                }
+                System.out.println("Statistics refreshed.");
             }
             
-            // Record the failed operation with error details
-            metadataService.failOperation(operationId, e);
+            // Record the successful operation
+            Map<String, Object> result = new HashMap<>();
+            result.put("action", "refresh");
+            result.put("status", "success");
+            metadataService.completeOperation(operationId, result);
             
-            return 1;
+            return 0;
+        } catch (Exception e) {
+            return handleError(operationId, e, "Failed to refresh statistics: " + e.getMessage());
         }
     }
     
@@ -251,19 +378,24 @@ public class StatsCommand implements Callable<Integer> {
      */
     private void displaySummary() {
         // Get the service from ServiceManager
-        StatisticsService statsService = StatisticsService.getInstance();
         List<StatisticValue> summaryStats = statsService.getSummaryStatistics();
         
         if (summaryStats.isEmpty()) {
-            if (jsonOutput) {
-                System.out.println("{ \"result\": \"warning\", \"message\": \"No statistics available\", \"action\": \"Run 'rin stats refresh' to update statistics\" }");
+            if (isJsonOutput()) {
+                System.out.println(
+                    OutputFormatter.formatJsonMessage(
+                        "warning", 
+                        "No statistics available", 
+                        Map.of("action", "Run 'rin stats refresh' to update statistics")
+                    )
+                );
             } else {
                 System.out.println("No statistics available. Run 'rin stats refresh' to update statistics.");
             }
             return;
         }
         
-        if (jsonOutput) {
+        if (isJsonOutput()) {
             // Generate JSON output
             StringBuilder json = new StringBuilder();
             json.append("{\n  \"result\": \"success\",\n  \"type\": \"summary\",\n  \"statistics\": [\n");
@@ -328,19 +460,24 @@ public class StatsCommand implements Callable<Integer> {
      * Displays all available statistics.
      */
     private void displayAllStats() {
-        StatisticsService statsService = StatisticsService.getInstance();
         List<StatisticValue> allStats = statsService.getAllStatistics();
         
         if (allStats.isEmpty()) {
-            if (jsonOutput) {
-                System.out.println("{ \"result\": \"warning\", \"message\": \"No statistics available\", \"action\": \"Run 'rin stats refresh' to update statistics\" }");
+            if (isJsonOutput()) {
+                System.out.println(
+                    OutputFormatter.formatJsonMessage(
+                        "warning", 
+                        "No statistics available", 
+                        Map.of("action", "Run 'rin stats refresh' to update statistics")
+                    )
+                );
             } else {
                 System.out.println("No statistics available. Run 'rin stats refresh' to update statistics.");
             }
             return;
         }
         
-        if (jsonOutput) {
+        if (isJsonOutput()) {
             // Generate JSON output
             StringBuilder json = new StringBuilder();
             json.append("{\n  \"result\": \"success\",\n  \"type\": \"all\",\n  \"statistics\": [\n");
@@ -419,8 +556,6 @@ public class StatsCommand implements Callable<Integer> {
      * Displays distribution statistics with bar charts.
      */
     private void displayDistribution() {
-        StatisticsService statsService = StatisticsService.getInstance();
-        
         // Get the distribution statistics
         List<StatisticValue> distributions = Arrays.asList(
             statsService.getStatistic(StatisticType.ITEMS_BY_TYPE),
@@ -435,15 +570,21 @@ public class StatsCommand implements Callable<Integer> {
             .collect(Collectors.toList());
         
         if (distributions.isEmpty()) {
-            if (jsonOutput) {
-                System.out.println("{ \"result\": \"warning\", \"message\": \"No distribution statistics available\" }");
+            if (isJsonOutput()) {
+                System.out.println(
+                    OutputFormatter.formatJsonMessage(
+                        "warning", 
+                        "No distribution statistics available", 
+                        null
+                    )
+                );
             } else {
                 System.out.println("No distribution statistics available.");
             }
             return;
         }
         
-        if (jsonOutput) {
+        if (isJsonOutput()) {
             // Generate JSON output
             StringBuilder json = new StringBuilder();
             json.append("{\n  \"result\": \"success\",\n  \"type\": \"distribution\",\n  \"distributions\": [\n");
@@ -673,19 +814,24 @@ public class StatsCommand implements Callable<Integer> {
      * @param type the statistic type
      */
     private void displaySpecificStat(StatisticType type) {
-        StatisticsService statsService = StatisticsService.getInstance();
         StatisticValue stat = statsService.getStatistic(type);
         
         if (stat == null) {
-            if (jsonOutput) {
-                System.out.println("{ \"result\": \"warning\", \"message\": \"No data available for statistic: " + type + "\" }");
+            if (isJsonOutput()) {
+                System.out.println(
+                    OutputFormatter.formatJsonMessage(
+                        "warning", 
+                        "No data available for statistic: " + type, 
+                        null
+                    )
+                );
             } else {
                 System.out.println("No data available for statistic: " + type);
             }
             return;
         }
         
-        if (jsonOutput) {
+        if (isJsonOutput()) {
             // Generate JSON output
             StringBuilder json = new StringBuilder();
             json.append("{\n")
@@ -752,7 +898,7 @@ public class StatsCommand implements Callable<Integer> {
      * Displays help information for the stats command.
      */
     private void displayHelp() {
-        if (jsonOutput) {
+        if (isJsonOutput()) {
             // Display help in JSON format
             StringBuilder json = new StringBuilder();
             json.append("{\n")

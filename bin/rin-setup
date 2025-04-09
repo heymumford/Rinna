@@ -419,7 +419,10 @@ install_go() {
         
         mkdir -p "$HOME/go_install"
         curl -L "$download_url" -o "$HOME/go_install/${go_tar}"
-        sudo rm -rf /usr/local/go
+        # Safely remove Go installation - don't use rm -rf directly on /usr paths
+        if [ -d "/usr/local/go" ]; then
+          sudo rm -rf "/usr/local/go"
+        fi
         sudo tar -C /usr/local -xzf "$HOME/go_install/${go_tar}"
         rm -rf "$HOME/go_install"
         
@@ -603,6 +606,8 @@ ensure_executables() {
     "$RINNA_DIR/bin/rin-diagrams"
     "$RINNA_DIR/bin/generate-c4-diagrams.py"
     "$RINNA_DIR/bin/rin-setup"
+    "$RINNA_DIR/bin/setup-python.sh"
+    "$RINNA_DIR/bin/install-rinna.sh"
   )
   
   for file in "${bin_files[@]}"; do
@@ -742,17 +747,33 @@ This script verifies, installs, and configures required dependencies for Rinna.
 Usage: rin-setup [options]
 
 Options:
-  install    Install missing dependencies without prompting
-  check      Check for missing dependencies without installing
-  config     Create or edit the configuration file
-  test       Test the development environment
-  help       Show this help message
+  install           Install missing dependencies without prompting
+  check             Check for missing dependencies without installing
+  config            Create or edit the configuration file
+  test              Test the development environment
+  python [options]  Set up Python virtual environment
+  graphics [opts]   Run the interactive graphical installer
+    -f, --fast      Use fast mode (no animations, text-only output)
+    --quick         Use quicker animation speed
+  help              Show this help message
+
+Python Environment Options:
+  When using 'rin-setup python', the following options are available:
+    -f, --force     Force recreation of virtual environment
+    -v, --verbose   Show detailed output
+    -y, --yes       Skip confirmations
+    -a, --all       Install optional dependencies
+    --help          Show Python setup help message
 
 Examples:
-  rin-setup             # Check and install missing dependencies with prompts
-  rin-setup install     # Install missing dependencies without prompting
-  rin-setup check       # Check dependencies only, don't install
-  rin-setup config      # Edit the configuration file
+  rin-setup                  # Check and install missing dependencies with prompts
+  rin-setup install          # Install missing dependencies without prompting
+  rin-setup check            # Check dependencies only, don't install
+  rin-setup config           # Edit the configuration file
+  rin-setup python           # Set up Python environment (basic)
+  rin-setup python --all -f  # Set up Python with all dependencies, force recreation
+  rin-setup graphics         # Run the interactive graphical installer
+  rin-setup graphics -f     # Run the fast text-only installer
 EOF
 }
 
@@ -799,6 +820,54 @@ main() {
     test)
       load_config
       test_environment
+      ;;
+    python)
+      # Execute setup-python.sh with all args passed through
+      shift # Remove 'python' from args
+      print_header "Setting up Python environment"
+      PYTHON_SETUP="$RINNA_DIR/bin/setup-python.sh"
+      if [[ -x "$PYTHON_SETUP" ]]; then
+        "$PYTHON_SETUP" "$@"
+      else
+        print_error "bin/setup-python.sh not found or not executable"
+        ls -la "$SCRIPT_DIR/setup-python.sh" 2>/dev/null || echo "File does not exist"
+      fi
+      ;;
+    graphics)
+      # Execute the graphical installer
+      print_header "Starting Graphical Installer"
+      GRAPHICS_INSTALLER="$RINNA_DIR/bin/install-rinna.sh"
+      
+      # Process arguments for graphics installer
+      
+      if [[ -x "$GRAPHICS_INSTALLER" ]]; then
+        # Process arguments
+        local fast_mode=false
+        local args=()
+        
+        while [[ $# -gt 0 ]]; do
+          case "$1" in
+            --fast|-f)
+              fast_mode=true
+              shift
+              ;;
+            *)
+              args+=("$1")
+              shift
+              ;;
+          esac
+        done
+        
+        # Run installer with appropriate options
+        if $fast_mode; then
+          "$GRAPHICS_INSTALLER" --fast
+        else
+          "$GRAPHICS_INSTALLER" "${args[@]}"
+        fi
+      else
+        print_error "bin/install-rinna.sh not found or not executable"
+        ls -la "$GRAPHICS_INSTALLER" 2>/dev/null || echo "File does not exist"
+      fi
       ;;
     help|--help|-h)
       show_help

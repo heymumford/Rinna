@@ -80,5 +80,17 @@ jobs:
       - name: Check build outputs
         run: |
           echo "Checking build artifacts..."
-          ls -la rinna-core/target/ || true
-          ls -la api/ || true
+          echo "rinna-core artifacts:"
+          ls -la rinna-core/target/ || echo "No rinna-core artifacts found"
+          
+          echo "rinna-cli artifacts:"
+          ls -la rinna-cli/target/ || echo "No rinna-cli artifacts found"
+          
+          echo "rinna-data-sqlite artifacts:"
+          ls -la rinna-data-sqlite/target/ || echo "No rinna-data-sqlite artifacts found"
+          
+          echo "API artifacts:"
+          ls -la api/bin/ || echo "No API artifacts found"
+          
+          echo "Python artifacts:"
+          ls -la python/build/ || echo "No Python build artifacts found"

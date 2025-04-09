@@ -1,106 +1,109 @@
-/*
- * Domain service interface for the Rinna workflow management system
- *
+/**
  * Copyright (c) 2025 Eric C. Mumford (@heymumford)
- * This file is subject to the terms and conditions defined in
- * the LICENSE file, which is part of this source code package.
+ * 
+ * Developed with analytical assistance from AI tools.
+ * All rights reserved.
+ * 
+ * This source code is licensed under the MIT License
+ * found in the LICENSE file in the root directory of this source tree.
  */
-
 package org.rinna.usecase;
 
 import org.rinna.domain.Project;
-import org.rinna.domain.WebhookConfig;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Service interface for project-related operations.
+ * Service interface for managing projects.
  */
 public interface ProjectService {
     
     /**
      * Creates a new project.
      *
-     * @param key the project key
      * @param name the project name
      * @param description the project description
-     * @return the created project
+     * @return the created project ID
      */
-    Project create(String key, String name, String description);
+    UUID createProject(String name, String description);
     
     /**
-     * Updates an existing project.
+     * Creates a new project with additional parameters.
      *
-     * @param id the project ID
-     * @param name the updated name
-     * @param description the updated description
-     * @param active the updated active status
-     * @return the updated project
+     * @param name the project name
+     * @param description the project description
+     * @param owner the project owner
+     * @return the created project ID
      */
-    Project update(UUID id, String name, String description, boolean active);
+    UUID createProject(String name, String description, String owner);
     
     /**
-     * Finds a project by ID.
+     * Creates a new category in a project.
      *
-     * @param id the project ID
-     * @return the project, if found
+     * @param projectName the parent project name
+     * @param categoryName the category name
+     * @param description the category description
+     * @return the created category ID
      */
-    Optional<Project> findById(UUID id);
+    UUID createCategory(String projectName, String categoryName, String description);
     
     /**
-     * Finds a project by key.
+     * Creates a new sub-project in a project.
      *
-     * @param key the project key
-     * @return the project, if found
+     * @param parentPath the parent project path
+     * @param subProjectName the sub-project name
+     * @param description the sub-project description
+     * @return the created sub-project ID
      */
-    Optional<Project> findByKey(String key);
+    UUID createSubProject(String parentPath, String subProjectName, String description);
     
     /**
-     * Returns all projects.
-     *
-     * @return a list of all projects
-     */
-    List<Project> findAll();
-    
-    /**
-     * Returns all active projects.
-     *
-     * @return a list of all active projects
-     */
-    List<Project> findAllActive();
-    
-    /**
-     * Deletes a project by ID.
-     *
-     * @param id the project ID
-     */
-    void deleteById(UUID id);
-    
-    /**
-     * Configures a webhook for a project.
+     * Gets a project by its ID.
      *
      * @param projectId the project ID
-     * @param source the webhook source
-     * @param secret the webhook secret
-     * @param description the webhook description
-     * @return the created webhook configuration
+     * @return the project, or null if not found
      */
-    WebhookConfig configureWebhook(UUID projectId, String source, String secret, String description);
+    Project getProject(UUID projectId);
     
     /**
-     * Returns all webhook configurations for a project.
+     * Gets a project by its name.
+     *
+     * @param projectName the project name
+     * @return the project, or null if not found
+     */
+    Project getProjectByName(String projectName);
+    
+    /**
+     * Gets all projects.
+     *
+     * @return the list of all projects
+     */
+    List<Project> getAllProjects();
+    
+    /**
+     * Checks if a project exists by name.
+     *
+     * @param projectName the project name
+     * @return true if the project exists, false otherwise
+     */
+    boolean projectExists(String projectName);
+    
+    /**
+     * Updates a project.
      *
      * @param projectId the project ID
-     * @return a list of webhook configurations
+     * @param name the new name
+     * @param description the new description
+     * @return true if the project was updated, false otherwise
      */
-    List<WebhookConfig> findWebhooksByProjectId(UUID projectId);
+    boolean updateProject(UUID projectId, String name, String description);
     
     /**
-     * Deletes a webhook configuration.
+     * Deletes a project.
      *
-     * @param id the webhook configuration ID
+     * @param projectId the project ID
+     * @return true if the project was deleted, false otherwise
      */
-    void deleteWebhook(UUID id);
+    boolean deleteProject(UUID projectId);
 }

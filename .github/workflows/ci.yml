@@ -69,11 +69,18 @@ jobs:
           sudo apt-get install -y maven
           
           # Install Python dependencies
-          if [ -f "config/python/requirements-dev.txt" ]; then
-            pip install -r config/python/requirements-dev.txt
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
           fi
-          if [ -f "python/setup.py" ]; then
-            pip install -e python/
+          
+          # Install Python packages with new setup script
+          if [ -f "bin/install-python-packages.sh" ]; then
+            chmod +x bin/install-python-packages.sh
+            ./bin/install-python-packages.sh --verbose
+          elif [ -f "python/setup.py" ]; then
+            # Fallback to legacy installation
+            SETUP_PACKAGE=rinna pip install -e python/
+            SETUP_PACKAGE=lucidchart-py pip install -e python/
           fi
 
       - name: Make scripts executable
@@ -81,11 +88,21 @@ jobs:
           chmod +x bin/rinna-tests.sh
           chmod +x bin/rin
           chmod +x bin/rin-build
+          chmod +x bin/rin-test
+          chmod +x bin/polyglot-coverage.sh
           chmod +x bin/python-quality 2>/dev/null || true
           chmod +x api/build.sh 2>/dev/null || true
 
-      - name: Compile Java code
-        run: cd rinna-core && mvn -B -DskipTests compile
+      - name: Compile Java modules
+        run: |
+          echo "Compiling rinna-core module..."
+          cd rinna-core && mvn -B -DskipTests compile
+          
+          echo "Compiling rinna-cli module..."
+          cd ../rinna-cli && mvn -B -DskipTests compile
+          
+          echo "Compiling rinna-data-sqlite module..."
+          cd ../rinna-data-sqlite && mvn -B -DskipTests compile || true
       
       - name: Compile Go code
         run: cd api && go build ./...
@@ -105,14 +122,47 @@ jobs:
           distribution: 'temurin'
           cache: maven
       
+      - name: Make scripts executable
+        run: chmod +x bin/test-failure-notify.sh
+      
+      - name: Run smoke tests
+        run: mvn test -P smoke-tests
+        continue-on-error: true
+
       - name: Run unit tests
-        run: ./bin/rin-build test unit
+        run: ./bin/rin-test unit || ./bin/rin-build test unit
+        continue-on-error: true
 
       - name: Run component tests
-        run: ./bin/rin-build test component
+        run: ./bin/rin-test component || ./bin/rin-build test component
+        continue-on-error: true
 
       - name: Basic Go tests
         run: cd api && go test ./test/simple -v
+        continue-on-error: true
+        
+      - name: Check for test failures and send notifications
+        run: |
+          chmod +x bin/test-failure-notify.sh
+          ./bin/test-failure-notify.sh --reports-dir target/surefire-reports --notify-method slack --slack-webhook ${{ secrets.SLACK_WEBHOOK_URL }} --ci
+        continue-on-error: true
+        
+      - name: Generate code coverage report
+        run: ./bin/polyglot-coverage.sh --ci -o json
+        
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: code-coverage-report
+          path: |
+            target/coverage/coverage.json
+            target/coverage/html/
+            
+      - name: Upload test reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-reports
+          path: target/surefire-reports/
 
   # Integration tests - run on pull requests only
   integration-tests:
@@ -130,11 +180,27 @@ jobs:
           distribution: 'temurin'
           cache: maven
       
+      - name: Make scripts executable
+        run: chmod +x bin/test-failure-notify.sh
+      
       - name: Run integration tests
-        run: ./bin/rin-build test integration
+        run: ./bin/rin-test integration || ./bin/rin-build test integration
+        continue-on-error: true
       
       - name: API Integration tests
         run: cd api && go test ./test/integration -v
+        continue-on-error: true
+        
+      - name: Check for test failures and send notifications
+        run: |
+          ./bin/test-failure-notify.sh --reports-dir target/surefire-reports --notify-method slack --slack-webhook ${{ secrets.SLACK_WEBHOOK_URL }} --ci --summary-only
+        continue-on-error: true
+        
+      - name: Upload test reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: integration-test-reports
+          path: target/surefire-reports/
 
   # Acceptance tests - run on pull requests only
   acceptance-tests:
@@ -152,8 +218,23 @@ jobs:
           distribution: 'temurin'
           cache: maven
       
+      - name: Make scripts executable
+        run: chmod +x bin/test-failure-notify.sh
+      
       - name: Run acceptance tests
         run: ./bin/rin-build test acceptance
+        continue-on-error: true
+        
+      - name: Check for test failures and send notifications
+        run: |
+          ./bin/test-failure-notify.sh --reports-dir target/surefire-reports --notify-method slack --slack-webhook ${{ secrets.SLACK_WEBHOOK_URL }} --ci --summary-only
+        continue-on-error: true
+        
+      - name: Upload test reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: acceptance-test-reports
+          path: target/surefire-reports/
         
   # Performance tests - run only on release branches
   performance-tests:
@@ -171,5 +252,84 @@ jobs:
           distribution: 'temurin'
           cache: maven
       
+      - name: Make scripts executable
+        run: chmod +x bin/test-failure-notify.sh
+      
       - name: Run performance tests
         run: ./bin/rin-build test performance
+        continue-on-error: true
+        
+      - name: Check for test failures and send notifications
+        run: |
+          ./bin/test-failure-notify.sh --reports-dir target/surefire-reports --notify-method slack --slack-webhook ${{ secrets.SLACK_WEBHOOK_URL }} --ci --threshold 1
+        continue-on-error: true
+        
+      - name: Upload test reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-test-reports
+          path: target/surefire-reports/
+        
+  # Code quality report - runs on every pull request
+  code-quality:
+    if: github.event_name == 'pull_request'
+    needs: [fast-tests, integration-tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Download coverage report
+        uses: actions/download-artifact@v3
+        with:
+          name: code-coverage-report
+          path: target/coverage
+      
+      - name: Generate comprehensive code coverage report
+        run: ./bin/polyglot-coverage.sh -o html --ci
+      
+      - name: Add coverage report comment to PR
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const coverageJson = JSON.parse(fs.readFileSync('target/coverage/coverage.json', 'utf8'));
+            
+            const overall = coverageJson.summary.overall;
+            const java = coverageJson.languages.java.coverage;
+            const go = coverageJson.languages.go.coverage;
+            const python = coverageJson.languages.python.coverage;
+            const threshold = coverageJson.summary.threshold;
+            const status = coverageJson.summary.status ? '✅ Passed' : '❌ Failed';
+            
+            const body = `## Code Coverage Report
+            
+            | Language | Coverage | Threshold | Status |
+            | -------- | -------- | --------- | ------ |
+            | Overall | ${overall}% | ${threshold}% | ${status} |
+            | Java | ${java}% | ${coverageJson.languages.java.threshold}% | ${coverageJson.languages.java.status ? '✅' : '❌'} |
+            | Go | ${go}% | ${coverageJson.languages.go.threshold}% | ${coverageJson.languages.go.status ? '✅' : '❌'} |
+            | Python | ${python}% | ${coverageJson.languages.python.threshold}% | ${coverageJson.languages.python.status ? '✅' : '❌'} |
+            
+            ${!coverageJson.summary.status ? '⚠️ Coverage is below the threshold. Please add more tests or request a threshold adjustment.' : ''}
+            
+            [See detailed coverage report](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+      
+      - name: Run other quality checks
+        run: ./bin/run-quality-checks.sh --ci

@@ -19,7 +19,7 @@ import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
 import org.rinna.repository.ItemRepository;
-import org.rinna.domain.service.InvalidTransitionException;
+import org.rinna.usecase.InvalidTransitionException;
 
 import java.time.Instant;
 import java.util.List;

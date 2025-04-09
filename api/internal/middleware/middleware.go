@@ -10,12 +10,12 @@ package middleware
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/heymumford/rinna/api/pkg/logger"
 )
 
 // RequestIDKey is the context key for the request ID
@@ -29,14 +29,19 @@ func Logging(next http.Handler) http.Handler {
 		// Call the next handler
 		next.ServeHTTP(w, r)
 		
-		// Log the request
-		log.Printf(
-			"%s %s %s %s",
-			r.Method,
-			r.RequestURI,
-			r.RemoteAddr,
-			time.Since(start),
-		)
+		// Log the request with structured fields
+		duration := time.Since(start)
+		requestID := GetRequestID(r.Context())
+		
+		log := logger.WithFields(map[string]interface{}{
+			"method":      r.Method,
+			"uri":         r.RequestURI,
+			"remote_addr": r.RemoteAddr,
+			"duration":    duration.String(),
+			"request_id":  requestID,
+		})
+		
+		log.Info("HTTP Request")
 	})
 }
 

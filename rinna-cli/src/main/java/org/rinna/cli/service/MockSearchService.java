@@ -9,114 +9,294 @@
  */
 package org.rinna.cli.service;
 
+import org.rinna.cli.model.SearchResult;
+import org.rinna.cli.model.Priority;
 import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.util.ModelMapper;
-import org.rinna.domain.SearchResult;
-import org.rinna.domain.service.SearchService;
+import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.model.WorkflowState;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
- * Mock implementation of the SearchService for testing.
+ * Mock implementation of search service functionality for CLI use.
  */
 public class MockSearchService implements SearchService {
 
-    private final MockItemService mockItemService;
+    // Not marked as final anymore to allow initialization later
+    private MockItemService mockItemService;
     
     /**
      * Creates a new MockSearchService.
      */
     public MockSearchService() {
-        // Get the mock item service from the service manager
-        this.mockItemService = (MockItemService) ServiceManager.getInstance().getItemService();
+        // Default constructor - used by test subclasses
+        this.mockItemService = null;
+    }
+    
+    /**
+     * Internal method to initialize the mockItemService.
+     * Not called by test subclasses to avoid infinite recursion.
+     */
+    public void initialize() {
+        if (this.mockItemService == null) {
+            this.mockItemService = (MockItemService) ServiceManager.getInstance().getItemService();
+        }
+    }
+    
+    /**
+     * Gets all items.
+     * 
+     * @return a list of all work items
+     */
+    public List<WorkItem> getAllItems() {
+        // In test context or when not fully initialized, just return sample items
+        List<WorkItem> results = new ArrayList<>();
+        
+        // Add some sample work items for demonstration
+        WorkItem item1 = createWorkItem("Implement authentication feature", "Create JWT-based authentication for API endpoints");
+        WorkItem item2 = createWorkItem("Fix bug in payment module", "Transaction history is not updating after payment completion");
+        WorkItem item3 = createWorkItem("Update documentation", "Add API reference documentation for new endpoints");
+        
+        results.add(item1);
+        results.add(item2);
+        results.add(item3);
+        
+        return results;
+    }
+    
+    /**
+     * Creates a simple work item for testing.
+     *
+     * @param title the title
+     * @param description the description
+     * @return a work item
+     */
+    private WorkItem createWorkItem(String title, String description) {
+        WorkItem item = new WorkItem();
+        item.setId(UUID.randomUUID().toString());
+        item.setTitle(title);
+        item.setDescription(description);
+        item.setType(WorkItemType.TASK);
+        item.setPriority(Priority.MEDIUM);
+        item.setState(WorkflowState.READY);
+        return item;
     }
     
     @Override
-    public List<SearchResult> searchWorkItems(String pattern, boolean caseSensitive, boolean exactMatch) {
-        List<SearchResult> results = new ArrayList<>();
+    public List<WorkItem> searchByText(String text) {
+        // Simple text search - checks if the text appears in title or description
+        String lowerText = text.toLowerCase();
+        return getAllItems().stream()
+            .filter(item -> {
+                String lowerTitle = item.getTitle().toLowerCase();
+                String lowerDesc = item.getDescription() != null ? 
+                    item.getDescription().toLowerCase() : "";
+                return lowerTitle.contains(lowerText) || lowerDesc.contains(lowerText);
+            })
+            .collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<WorkItem> searchByTextAndState(String text, WorkflowState state) {
+        return searchByText(text).stream()
+            .filter(item -> state.equals(item.getState()))
+            .collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<WorkItem> searchByTextAndType(String text, WorkItemType type) {
+        return searchByText(text).stream()
+            .filter(item -> type.equals(item.getType()))
+            .collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<WorkItem> searchByTextAndPriority(String text, Priority priority) {
+        return searchByText(text).stream()
+            .filter(item -> priority.equals(item.getPriority()))
+            .collect(Collectors.toList());
+    }
+    
+    @Override
+    public List<WorkItem> findText(String text) {
+        return findText(text, false);
+    }
+    
+    @Override
+    public List<WorkItem> findText(String text, boolean caseSensitive) {
+        List<WorkItem> results = new ArrayList<>();
         
-        // Prepare search pattern
-        Pattern regex = preparePattern(pattern, caseSensitive, exactMatch);
-        
-        // Get all work items from the CLI item service
-        List<WorkItem> workItems = mockItemService.getAllCliItems();
-        
-        // Search in each work item
-        for (WorkItem item : workItems) {
-            // Search in title
-            searchInField(results, UUID.fromString(item.getId()), "title", item.getTitle(), regex);
+        for (WorkItem item : getAllItems()) {
+            String title = item.getTitle();
+            String desc = item.getDescription();
+            boolean foundInTitle = false;
+            boolean foundInDesc = false;
             
-            // Search in description
-            searchInField(results, UUID.fromString(item.getId()), "description", item.getDescription(), regex);
+            if (caseSensitive) {
+                foundInTitle = title != null && title.contains(text);
+                foundInDesc = desc != null && desc.contains(text);
+            } else {
+                String lowerText = text.toLowerCase();
+                foundInTitle = title != null && title.toLowerCase().contains(lowerText);
+                foundInDesc = desc != null && desc.toLowerCase().contains(lowerText);
+            }
+            
+            if (foundInTitle || foundInDesc) {
+                results.add(item);
+            }
+        }
+        
+        return results;
+    }
+    
+    /**
+     * Find work items by searching the text content.
+     *
+     * @param text the text to search for
+     * @return a list of work items containing the text
+     */
+    @Override
+    public List<WorkItem> findItemsByText(String text) {
+        return findText(text);
+    }
+    
+    /**
+     * Find work items by metadata.
+     *
+     * @param metadata the metadata to search for
+     * @return a list of work items with matching metadata
+     */
+    @Override
+    public List<WorkItem> findItemsByMetadata(Map<String, String> metadata) {
+        List<WorkItem> results = new ArrayList<>();
+        
+        for (WorkItem item : getAllItems()) {
+            boolean matches = true;
+            
+            for (Map.Entry<String, String> entry : metadata.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                
+                // Check if this metadata matches the item
+                if ("project".equals(key)) {
+                    if (item.getProject() == null || !item.getProject().equals(value)) {
+                        matches = false;
+                        break;
+                    }
+                } else if ("assignee".equals(key)) {
+                    if (item.getAssignee() == null || !item.getAssignee().equals(value)) {
+                        matches = false;
+                        break;
+                    }
+                } else if ("reporter".equals(key)) {
+                    if (item.getReporter() == null || !item.getReporter().equals(value)) {
+                        matches = false;
+                        break;
+                    }
+                }
+                // Add other metadata fields as needed
+            }
+            
+            if (matches) {
+                results.add(item);
+            }
         }
         
         return results;
     }
     
     @Override
-    public List<SearchResult> searchWorkItemWithContext(String pattern, int contextLines, 
-                                                     boolean caseSensitive, boolean exactMatch) {
-        // For simplicity, the mock implementation treats this the same as regular search
-        // In a real implementation, this would include context lines around the matches
-        return searchWorkItems(pattern, caseSensitive, exactMatch);
+    public List<WorkItem> findPattern(String pattern) {
+        return findPattern(pattern, false);
     }
     
-    /**
-     * Prepares a regex pattern based on search settings.
-     *
-     * @param pattern the search pattern
-     * @param caseSensitive true for case-sensitive search
-     * @param exactMatch true for whole word matching
-     * @return the compiled pattern
-     */
-    private Pattern preparePattern(String pattern, boolean caseSensitive, boolean exactMatch) {
-        String regex;
+    @Override
+    public List<WorkItem> findPattern(String pattern, boolean caseSensitive) {
+        List<WorkItem> results = new ArrayList<>();
         
-        if (exactMatch) {
-            // Match whole words only
-            regex = "\\b" + Pattern.quote(pattern) + "\\b";
-        } else {
-            // Match anywhere in text
-            regex = Pattern.quote(pattern);
-        }
-        
-        // Set case sensitivity flag
         int flags = caseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
+        Pattern regex = Pattern.compile(pattern, flags);
         
-        return Pattern.compile(regex, flags);
+        for (WorkItem item : getAllItems()) {
+            String title = item.getTitle();
+            String desc = item.getDescription();
+            
+            boolean foundInTitle = title != null && regex.matcher(title).find();
+            boolean foundInDesc = desc != null && regex.matcher(desc).find();
+            
+            if (foundInTitle || foundInDesc) {
+                results.add(item);
+            }
+        }
+        
+        return results;
     }
     
-    /**
-     * Searches for a pattern in a field and adds results.
-     *
-     * @param results the list to add results to
-     * @param itemId the work item ID
-     * @param fieldName the field name
-     * @param text the text to search
-     * @param pattern the search pattern
-     */
-    private void searchInField(List<SearchResult> results, UUID itemId, String fieldName, 
-                              String text, Pattern pattern) {
-        if (text == null || text.isEmpty()) {
-            return;
+    @Override
+    public List<WorkItem> findWorkItems(Map<String, String> criteria, int limit) {
+        List<WorkItem> allItems = getAllItems();
+        List<WorkItem> filteredItems = new ArrayList<>(allItems);
+        
+        // Filter items based on criteria
+        for (Map.Entry<String, String> entry : criteria.entrySet()) {
+            String key = entry.getKey().toLowerCase();
+            String value = entry.getValue().toLowerCase();
+            
+            switch (key) {
+                case "type":
+                    filteredItems = filteredItems.stream()
+                        .filter(item -> item.getType() != null && 
+                            item.getType().toString().toLowerCase().equals(value))
+                        .collect(Collectors.toList());
+                    break;
+                case "status":
+                case "state":
+                    filteredItems = filteredItems.stream()
+                        .filter(item -> item.getState() != null && 
+                            item.getState().toString().toLowerCase().equals(value))
+                        .collect(Collectors.toList());
+                    break;
+                case "priority":
+                    filteredItems = filteredItems.stream()
+                        .filter(item -> item.getPriority() != null && 
+                            item.getPriority().toString().toLowerCase().equals(value))
+                        .collect(Collectors.toList());
+                    break;
+                case "assignee":
+                    filteredItems = filteredItems.stream()
+                        .filter(item -> item.getAssignee() != null && 
+                            item.getAssignee().toLowerCase().contains(value))
+                        .collect(Collectors.toList());
+                    break;
+                case "title":
+                    filteredItems = filteredItems.stream()
+                        .filter(item -> item.getTitle() != null && 
+                            item.getTitle().toLowerCase().contains(value))
+                        .collect(Collectors.toList());
+                    break;
+                case "description":
+                    filteredItems = filteredItems.stream()
+                        .filter(item -> item.getDescription() != null && 
+                            item.getDescription().toLowerCase().contains(value))
+                        .collect(Collectors.toList());
+                    break;
+                default:
+                    // Ignore unknown criteria
+            }
         }
         
-        Matcher matcher = pattern.matcher(text);
-        List<SearchResult.Match> matches = new ArrayList<>();
-        
-        while (matcher.find()) {
-            int start = matcher.start();
-            int end = matcher.end();
-            String matchedText = text.substring(start, end);
-            matches.add(new SearchResult.Match(start, end, matchedText));
+        // Limit results
+        if (limit > 0 && filteredItems.size() > limit) {
+            return filteredItems.subList(0, limit);
         }
         
-        if (!matches.isEmpty()) {
-            results.add(new SearchResult(itemId, fieldName, text, matches));
-        }
+        return filteredItems;
     }
 }

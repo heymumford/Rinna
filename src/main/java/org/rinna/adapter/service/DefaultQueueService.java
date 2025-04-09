@@ -18,9 +18,9 @@ import org.rinna.domain.model.WorkQueue;
 import org.rinna.domain.model.WorkflowState;
 import org.rinna.repository.QueueRepository;
 import org.rinna.repository.MetadataRepository;
-import org.rinna.domain.service.InvalidTransitionException;
-import org.rinna.domain.service.ItemService;
-import org.rinna.domain.service.QueueService;
+import org.rinna.usecase.InvalidTransitionException;
+import org.rinna.usecase.ItemService;
+import org.rinna.usecase.QueueService;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -78,10 +78,10 @@ public class DefaultQueueService implements QueueService {
     @Override
     public void addWorkItemToQueue(UUID queueId, UUID workItemId) {
         WorkQueue queue = queueRepository.findById(queueId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Queue not found: \{queueId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Queue not found: " + queueId));
         
         WorkItem workItem = itemService.findById(workItemId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Work item not found: \{workItemId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Work item not found: " + workItemId));
         
         queue.addItem(workItem);
         queueRepository.save(queue);
@@ -90,7 +90,7 @@ public class DefaultQueueService implements QueueService {
     @Override
     public boolean removeWorkItemFromQueue(UUID queueId, UUID workItemId) {
         WorkQueue queue = queueRepository.findById(queueId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Queue not found: \{queueId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Queue not found: " + queueId));
         
         boolean removed = queue.removeItem(workItemId);
         if (removed) {
@@ -103,7 +103,7 @@ public class DefaultQueueService implements QueueService {
     @Override
     public Optional<WorkItem> getNextWorkItem(UUID queueId) {
         WorkQueue queue = queueRepository.findById(queueId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Queue not found: \{queueId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Queue not found: " + queueId));
         
         return queue.getNextItem();
     }
@@ -111,7 +111,7 @@ public class DefaultQueueService implements QueueService {
     @Override
     public List<WorkItem> getQueueItems(UUID queueId) {
         WorkQueue queue = queueRepository.findById(queueId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Queue not found: \{queueId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Queue not found: " + queueId));
         
         return queue.getItems();
     }
@@ -119,7 +119,7 @@ public class DefaultQueueService implements QueueService {
     @Override
     public List<WorkItem> getQueueItemsByType(UUID queueId, WorkItemType type) {
         WorkQueue queue = queueRepository.findById(queueId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Queue not found: \{queueId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Queue not found: " + queueId));
         
         return queue.getItemsByType(type);
     }
@@ -127,7 +127,7 @@ public class DefaultQueueService implements QueueService {
     @Override
     public List<WorkItem> getQueueItemsByState(UUID queueId, WorkflowState state) {
         WorkQueue queue = queueRepository.findById(queueId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Queue not found: \{queueId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Queue not found: " + queueId));
         
         return queue.getItemsByState(state);
     }
@@ -135,7 +135,7 @@ public class DefaultQueueService implements QueueService {
     @Override
     public List<WorkItem> getQueueItemsByPriority(UUID queueId, Priority priority) {
         WorkQueue queue = queueRepository.findById(queueId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Queue not found: \{queueId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Queue not found: " + queueId));
         
         return queue.getItemsByPriority(priority);
     }
@@ -143,7 +143,7 @@ public class DefaultQueueService implements QueueService {
     @Override
     public List<WorkItem> getQueueItemsByAssignee(UUID queueId, String assignee) {
         WorkQueue queue = queueRepository.findById(queueId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Queue not found: \{queueId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Queue not found: " + queueId));
         
         return queue.getItemsByAssignee(assignee);
     }
@@ -151,7 +151,7 @@ public class DefaultQueueService implements QueueService {
     @Override
     public void reprioritizeQueue(UUID queueId) {
         WorkQueue queue = queueRepository.findById(queueId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Queue not found: \{queueId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Queue not found: " + queueId));
         
         queue.reprioritize();
         queueRepository.save(queue);
@@ -160,7 +160,7 @@ public class DefaultQueueService implements QueueService {
     @Override
     public void reprioritizeQueueWithWeights(UUID queueId, Map<String, Integer> weights) {
         WorkQueue queue = queueRepository.findById(queueId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Queue not found: \{queueId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Queue not found: " + queueId));
         
         // Get all items from the queue
         List<WorkItem> items = queue.getItems();
@@ -200,7 +200,7 @@ public class DefaultQueueService implements QueueService {
     @Override
     public void reprioritizeQueueByCapacity(UUID queueId, int teamCapacity) {
         WorkQueue queue = queueRepository.findById(queueId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Queue not found: \{queueId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Queue not found: " + queueId));
         
         // Get all items in priority order
         List<WorkItem> items = queue.getItems();
@@ -242,7 +242,7 @@ public class DefaultQueueService implements QueueService {
     @Override
     public void activateQueue(UUID queueId) {
         WorkQueue queue = queueRepository.findById(queueId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Queue not found: \{queueId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Queue not found: " + queueId));
         
         if (queue instanceof DefaultWorkQueue defaultQueue) {
             defaultQueue.setActive(true);
@@ -255,7 +255,7 @@ public class DefaultQueueService implements QueueService {
     @Override
     public void deactivateQueue(UUID queueId) {
         WorkQueue queue = queueRepository.findById(queueId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Queue not found: \{queueId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Queue not found: " + queueId));
         
         if (queue instanceof DefaultWorkQueue defaultQueue) {
             defaultQueue.setActive(false);
@@ -373,12 +373,12 @@ public class DefaultQueueService implements QueueService {
                                        String description, Priority priority) {
         // Check if parent exists
         WorkItem parent = itemService.findById(parentId)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Parent work item not found: \{parentId}"));
+                .orElseThrow(() -> new IllegalArgumentException("Parent work item not found: " + parentId));
         
         // Check if parent-child relationship is valid
         if (!parent.getType().canHaveChildOfType(type)) {
             throw new IllegalArgumentException(
-                    STR."Invalid parent-child relationship: \{parent.getType()} -> \{type}");
+                    "Invalid parent-child relationship: " + parent.getType() + " -> " + type);
         }
         
         // Inherit priority from parent if not specified
@@ -447,7 +447,7 @@ public class DefaultQueueService implements QueueService {
         }
         final UUID finalQueueId = queueId;
         return queueRepository.findById(finalQueueId)
-                .orElseThrow(() -> new IllegalStateException(STR."Default queue not found with ID: \{finalQueueId}"));
+                .orElseThrow(() -> new IllegalStateException("Default queue not found with ID: " + finalQueueId));
     }
     
     @Override

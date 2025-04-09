@@ -192,6 +192,7 @@ public class DefaultWorkItem implements WorkItem {
     
     @Override
     public String toString() {
-        return STR."DefaultWorkItem{id=\{id}, title='\{title}', type=\{type}, status=\{status}, priority=\{priority}}";
+        return "DefaultWorkItem{id=" + id + ", title='" + title + "', type=" + type + 
+               ", status=" + status + ", priority=" + priority + "}";
     }
 }

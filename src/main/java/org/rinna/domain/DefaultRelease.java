@@ -17,7 +17,7 @@ import java.util.UUID;
 /**
  * Default implementation of the Release interface.
  */
-public class DefaultRelease implements Release {
+public final class DefaultRelease implements Release {
     private final UUID id;
     private final String version;
     private final String description;

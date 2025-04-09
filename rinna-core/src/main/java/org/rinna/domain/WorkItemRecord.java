@@ -143,6 +143,7 @@ public record WorkItemRecord(
 
     @Override
     public String toString() {
-        return STR."WorkItemRecord{id=\{id}, title='\{title}', type=\{type}, status=\{status}, priority=\{priority}}";
+        return "WorkItemRecord{id=" + id + ", title='" + title + "', type=" + type + 
+               ", status=" + status + ", priority=" + priority + "}";
     }
 }

@@ -10,7 +10,7 @@ package org.rinna.adapter.repository;
 
 import org.rinna.domain.model.DefaultWorkQueue;
 import org.rinna.domain.model.WorkQueue;
-import org.rinna.repository.QueueRepository;
+import org.rinna.domain.repository.QueueRepository;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -1,31 +1,30 @@
 package org.rinna.cli.service;
 
 /**
- * Status values for Rinna services.
+ * Represents possible service statuses.
  */
 public enum ServiceStatus {
     RUNNING,
     STOPPED,
     STARTING,
     STOPPING,
+    ERROR,
     UNKNOWN;
     
     /**
-     * Checks if the service is available/functional.
-     * By default, only RUNNING status is considered available.
+     * Convert from string ignoring case.
      *
-     * @return true if the service is available, false otherwise
+     * @param value the string value to convert
+     * @return the corresponding ServiceStatus or UNKNOWN if not found
      */
-    public boolean isAvailable() {
-        return this == RUNNING;
-    }
-    
-    /**
-     * Gets the state name as a string.
-     *
-     * @return the name of the service state
-     */
-    public String getState() {
-        return this.name();
+    public static ServiceStatus fromString(String value) {
+        if (value == null) {
+            return UNKNOWN;
+        }
+        try {
+            return valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return UNKNOWN;
+        }
     }
 }

@@ -12,8 +12,8 @@ import org.rinna.domain.model.DefaultRelease;
 import org.rinna.domain.model.Release;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.repository.ReleaseRepository;
-import org.rinna.domain.service.ItemService;
-import org.rinna.domain.service.ReleaseService;
+import org.rinna.usecase.ItemService;
+import org.rinna.usecase.ReleaseService;
 
 import java.util.ArrayList;
 import java.util.List;

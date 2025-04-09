@@ -94,4 +94,13 @@ public interface MetadataRepository {
      * @return a list of all metadata
      */
     List<WorkItemMetadata> findAll();
+    
+    /**
+     * Updates metadata for a work item.
+     * 
+     * @param workItemId the ID of the work item
+     * @param metadata the metadata to update
+     * @return true if the update was successful
+     */
+    boolean updateMetadata(UUID workItemId, Map<String, String> metadata);
 }

@@ -32,7 +32,10 @@ public enum WorkflowState {
     IN_TEST,
     
     /** Work item is complete and verified. */
-    DONE;
+    DONE,
+    
+    /** Work item is released to production. */
+    RELEASED;
     
     // Static mapping of allowed transitions
     private static final Map<WorkflowState, List<WorkflowState>> VALID_TRANSITIONS = Map.of(
@@ -41,7 +44,8 @@ public enum WorkflowState {
         TO_DO, List.of(IN_PROGRESS, DONE),
         IN_PROGRESS, List.of(IN_TEST, TO_DO),
         IN_TEST, List.of(DONE, IN_PROGRESS),
-        DONE, List.of()
+        DONE, List.of(RELEASED),
+        RELEASED, List.of()
     );
     
     /**

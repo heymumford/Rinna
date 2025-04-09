@@ -14,7 +14,7 @@ import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
-import org.rinna.domain.service.InvalidTransitionException;
+import org.rinna.usecase.InvalidTransitionException;
 
 import java.util.UUID;
 

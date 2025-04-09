@@ -16,10 +16,10 @@ import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkQueue;
 import org.rinna.repository.MetadataRepository;
-import org.rinna.domain.service.ItemService;
-import org.rinna.domain.service.QueueService;
-import org.rinna.domain.service.ReleaseService;
-import org.rinna.domain.service.WorkflowService;
+import org.rinna.usecase.ItemService;
+import org.rinna.usecase.QueueService;
+import org.rinna.usecase.ReleaseService;
+import org.rinna.usecase.WorkflowService;
 
 import static org.junit.jupiter.api.Assertions.*;
 

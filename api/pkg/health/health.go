@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -72,11 +73,54 @@ func (c *JavaServiceChecker) CheckHealth() ServiceStatus {
 	}
 }
 
+// cacheEntry is a cached health check result
+type cacheEntry struct {
+	status      ServiceStatus
+	expiration  time.Time
+}
+
+// dependencyCache manages cached health check results
+type dependencyCache struct {
+	mutex    sync.RWMutex
+	entries  map[string]cacheEntry
+	ttl      time.Duration
+}
+
+// get retrieves a cached value if it exists and is not expired
+func (c *dependencyCache) get(key string) (ServiceStatus, bool) {
+	c.mutex.RLock()
+	defer c.mutex.RUnlock()
+	
+	entry, exists := c.entries[key]
+	if !exists {
+		return ServiceStatus{}, false
+	}
+	
+	// Check if entry has expired
+	if time.Now().After(entry.expiration) {
+		return ServiceStatus{}, false
+	}
+	
+	return entry.status, true
+}
+
+// set stores a value in the cache with an expiration time
+func (c *dependencyCache) set(key string, status ServiceStatus) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	
+	c.entries[key] = cacheEntry{
+		status:     status,
+		expiration: time.Now().Add(c.ttl),
+	}
+}
+
 // Handler handles health check requests
 type Handler struct {
 	javaChecker DependencyChecker
 	startTime   time.Time
 	environment string
+	cache       *dependencyCache
 }
 
 // NewHandler creates a new health check handler
@@ -87,10 +131,25 @@ func NewHandler(javaChecker DependencyChecker) *Handler {
 		env = "development"
 	}
 	
+	// Set default cache TTL to 30 seconds
+	// In a production environment, this would be configurable
+	cacheTTL := 30 * time.Second
+	
+	// Retrieve from environment if available
+	if ttlEnv := os.Getenv("HEALTH_CACHE_TTL"); ttlEnv != "" {
+		if parsed, err := time.ParseDuration(ttlEnv); err == nil {
+			cacheTTL = parsed
+		}
+	}
+	
 	return &Handler{
 		javaChecker: javaChecker,
 		startTime:   time.Now(),
 		environment: env,
+		cache: &dependencyCache{
+			entries: make(map[string]cacheEntry),
+			ttl:     cacheTTL,
+		},
 	}
 }
 
@@ -101,6 +160,22 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/health/ready", h.HandleReadiness).Methods(http.MethodGet)
 }
 
+// getOrUpdateDependencyStatus gets the dependency status from cache or updates it
+func (h *Handler) getOrUpdateDependencyStatus(name string, checker DependencyChecker) ServiceStatus {
+	// Try to get from cache first
+	if status, found := h.cache.get(name); found {
+		return status
+	}
+	
+	// Not in cache, make the actual check
+	status := checker.CheckHealth()
+	
+	// Store in cache for future requests
+	h.cache.set(name, status)
+	
+	return status
+}
+
 // HandleHealth handles health check requests with detailed information
 func (h *Handler) HandleHealth(w http.ResponseWriter, r *http.Request) {
 	// Get hostname for debugging
@@ -109,8 +184,8 @@ func (h *Handler) HandleHealth(w http.ResponseWriter, r *http.Request) {
 		hostname = "unknown"
 	}
 
-	// Check Java service connectivity
-	javaStatus := h.javaChecker.CheckHealth()
+	// Check Java service connectivity (using cache)
+	javaStatus := h.getOrUpdateDependencyStatus("java", h.javaChecker)
 
 	// Calculate uptime
 	uptime := time.Since(h.startTime).String()
@@ -155,6 +230,8 @@ func (h *Handler) HandleHealth(w http.ResponseWriter, r *http.Request) {
 
 // HandleLiveness handles liveness probe requests (is the service running)
 func (h *Handler) HandleLiveness(w http.ResponseWriter, r *http.Request) {
+	// Liveness check does not need to check dependencies
+	// It only verifies the API server is running
 	response := map[string]string{
 		"status":    "ok",
 		"timestamp": time.Now().Format(time.RFC3339),
@@ -167,8 +244,8 @@ func (h *Handler) HandleLiveness(w http.ResponseWriter, r *http.Request) {
 
 // HandleReadiness handles readiness probe requests (is the service ready to serve requests)
 func (h *Handler) HandleReadiness(w http.ResponseWriter, r *http.Request) {
-	// Check if Java service is available
-	javaStatus := h.javaChecker.CheckHealth()
+	// Check if Java service is available (using cache)
+	javaStatus := h.getOrUpdateDependencyStatus("java", h.javaChecker)
 	
 	// Determine overall status based on dependencies
 	status := "ok"

@@ -255,7 +255,7 @@ public final class AuthenticationService {
      * @return true if credentials are valid
      */
     private boolean isValidCredentials(String username, String password) {
-        if (username == null || password == null) {
+        if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
             return false;
         }
         
@@ -263,31 +263,363 @@ public final class AuthenticationService {
         String storedRole = authProperties.getProperty("user." + username + ".role");
         String storedHash = authProperties.getProperty("user." + username + ".passwordHash");
         
-        // If user doesn't exist in our properties but is one of our default users,
-        // create an entry for them with default credentials (for bootstrapping)
+        // First time setup: Check if this is the first login ever (no users in the system)
+        boolean isFirstSetup = isFirstTimeSetup();
+        
+        // If user doesn't exist in our properties but meets registration criteria, create the user
         if (storedRole == null) {
-            if ("admin".equals(username) && "admin123".equals(password)) {
-                // Create admin user if it doesn't exist
+            // First time setup case: Create the first user as admin
+            if (isFirstSetup) {
+                // When no users exist, the first user becomes an admin regardless of username
+                // This allows bootstrap of the system with a chosen username
                 authProperties.setProperty("user." + username + ".role", "admin");
-                // In a real system this would be a proper secure hash
                 authProperties.setProperty("user." + username + ".passwordHash", 
-                                        SecurityConfig.hashPassword(password));
+                                  SecurityConfig.hashPassword(password));
+                authProperties.setProperty("user." + username + ".created", 
+                                  java.time.Instant.now().toString());
+                authProperties.setProperty("system.setup.completed", "true");
                 saveProperties();
+                
+                // Log the admin creation
+                logSecurityEvent("ADMIN_CREATED", username, "First time system setup");
                 return true;
-            } else if ("user".equals(username) && "user123".equals(password)) {
-                // Create regular user if it doesn't exist
-                authProperties.setProperty("user." + username + ".role", "user");
-                // In a real system this would be a proper secure hash
-                authProperties.setProperty("user." + username + ".passwordHash", 
-                                        SecurityConfig.hashPassword(password));
-                saveProperties();
-                return true;
+            } 
+            // Special handling for built-in users (only for development/testing)
+            else if (isDevEnvironment()) {
+                if ("admin".equals(username) && "admin123".equals(password)) {
+                    // Create admin user if it doesn't exist in dev mode
+                    authProperties.setProperty("user." + username + ".role", "admin");
+                    authProperties.setProperty("user." + username + ".passwordHash", 
+                                      SecurityConfig.hashPassword(password));
+                    authProperties.setProperty("user." + username + ".created", 
+                                      java.time.Instant.now().toString());
+                    saveProperties();
+                    
+                    // Log the admin creation
+                    logSecurityEvent("DEV_ADMIN_CREATED", username, "Development environment user setup");
+                    return true;
+                } else if ("user".equals(username) && "user123".equals(password)) {
+                    // Create regular user if it doesn't exist in dev mode
+                    authProperties.setProperty("user." + username + ".role", "user");
+                    authProperties.setProperty("user." + username + ".passwordHash", 
+                                      SecurityConfig.hashPassword(password));
+                    authProperties.setProperty("user." + username + ".created", 
+                                      java.time.Instant.now().toString());
+                    saveProperties();
+                    
+                    // Log the regular user creation
+                    logSecurityEvent("DEV_USER_CREATED", username, "Development environment user setup");
+                    return true;
+                }
             }
+            
+            // Handle user creation through proper registration channels
+            if (authProperties.getProperty("registration." + username) != null) {
+                // This handles the case where a registration was started but not completed
+                // The registration property would have been set by the registerUser method
+                String pendingToken = authProperties.getProperty("registration." + username + ".token");
+                String expiryString = authProperties.getProperty("registration." + username + ".expiry");
+                
+                if (pendingToken != null && expiryString != null) {
+                    try {
+                        // Check if registration token is still valid
+                        java.time.Instant expiry = java.time.Instant.parse(expiryString);
+                        if (java.time.Instant.now().isBefore(expiry)) {
+                            // Create the user account with the provided password
+                            authProperties.setProperty("user." + username + ".role", "user");
+                            authProperties.setProperty("user." + username + ".passwordHash", 
+                                              SecurityConfig.hashPassword(password));
+                            authProperties.setProperty("user." + username + ".created", 
+                                              java.time.Instant.now().toString());
+                            
+                            // Clear registration data
+                            authProperties.remove("registration." + username + ".token");
+                            authProperties.remove("registration." + username + ".expiry");
+                            authProperties.remove("registration." + username);
+                            saveProperties();
+                            
+                            // Log user creation
+                            logSecurityEvent("USER_CREATED", username, "User registration completed");
+                            return true;
+                        }
+                    } catch (Exception e) {
+                        // Invalid expiry date format, registration is invalid
+                    }
+                }
+            }
+            
+            // User doesn't exist and no valid registration
+            logSecurityEvent("LOGIN_FAILED", username, "Invalid credentials - user does not exist");
             return false;
         }
         
-        // For existing users, verify hash
-        return storedHash != null && 
-               SecurityConfig.verifyPassword(password, storedHash);
+        // For existing users, verify hash and handle brute force protection
+        if (storedHash != null) {
+            String lockoutKey = "user." + username + ".lockout";
+            String failedAttemptsKey = "user." + username + ".failedAttempts";
+            String lastFailureKey = "user." + username + ".lastFailure";
+            
+            // Check for account lockout
+            String lockoutString = authProperties.getProperty(lockoutKey);
+            if (lockoutString != null) {
+                try {
+                    java.time.Instant lockoutExpiry = java.time.Instant.parse(lockoutString);
+                    if (java.time.Instant.now().isBefore(lockoutExpiry)) {
+                        // Account is locked
+                        logSecurityEvent("LOGIN_LOCKED", username, "Account is temporarily locked");
+                        return false;
+                    } else {
+                        // Lockout expired, clear lockout and reset failed attempts
+                        authProperties.remove(lockoutKey);
+                        authProperties.remove(failedAttemptsKey);
+                        saveProperties();
+                    }
+                } catch (Exception e) {
+                    // Invalid lockout timestamp format, proceed with validation
+                    authProperties.remove(lockoutKey);
+                }
+            }
+            
+            // Validate password
+            boolean isValid = SecurityConfig.verifyPassword(password, storedHash);
+            
+            if (isValid) {
+                // Successful login, reset failed attempts counter
+                authProperties.remove(failedAttemptsKey);
+                authProperties.remove(lastFailureKey);
+                
+                // Update last login timestamp
+                authProperties.setProperty("user." + username + ".lastLogin", 
+                                  java.time.Instant.now().toString());
+                saveProperties();
+                
+                // Log successful login
+                logSecurityEvent("LOGIN_SUCCESS", username, "User authenticated successfully");
+                return true;
+            } else {
+                // Failed login attempt
+                int failedAttempts = 1;
+                String failedAttemptsStr = authProperties.getProperty(failedAttemptsKey);
+                if (failedAttemptsStr != null) {
+                    try {
+                        failedAttempts = Integer.parseInt(failedAttemptsStr) + 1;
+                    } catch (NumberFormatException e) {
+                        // Invalid count, reset to 1
+                        failedAttempts = 1;
+                    }
+                }
+                
+                // Record failed attempt
+                authProperties.setProperty(failedAttemptsKey, String.valueOf(failedAttempts));
+                authProperties.setProperty(lastFailureKey, java.time.Instant.now().toString());
+                
+                // Implement account lockout after multiple failures
+                if (failedAttempts >= 5) {
+                    // Lock account for 30 minutes after 5 failed attempts
+                    java.time.Instant lockoutExpiry = java.time.Instant.now().plus(30, java.time.temporal.ChronoUnit.MINUTES);
+                    authProperties.setProperty(lockoutKey, lockoutExpiry.toString());
+                    logSecurityEvent("ACCOUNT_LOCKED", username, "Account locked after " + failedAttempts + " failed attempts");
+                } else {
+                    logSecurityEvent("LOGIN_FAILED", username, "Invalid credentials - attempt " + failedAttempts);
+                }
+                
+                saveProperties();
+                return false;
+            }
+        }
+        
+        // User exists but no password hash (corrupted account)
+        logSecurityEvent("LOGIN_ERROR", username, "Account data corrupted (missing password hash)");
+        return false;
+    }
+    
+    /**
+     * Register a new user in the system.
+     * This creates a pending registration that must be completed by the user.
+     * 
+     * @param username the username to register
+     * @param email the user's email address
+     * @param inviteCode optional invite code (required if invites are restricted)
+     * @return a registration token, or null if registration failed
+     */
+    public String registerUser(String username, String email, String inviteCode) {
+        initialize();
+        
+        // Validate inputs
+        if (username == null || username.isEmpty() || email == null || email.isEmpty()) {
+            return null;
+        }
+        
+        // Check if user already exists
+        if (userExists(username)) {
+            return null;
+        }
+        
+        // Check if registration is restricted to invite only
+        boolean inviteRequired = "true".equals(authProperties.getProperty("system.invite.required", "false"));
+        if (inviteRequired && (inviteCode == null || !isValidInviteCode(inviteCode))) {
+            return null;
+        }
+        
+        // Generate registration token
+        String token = generateToken();
+        String expiryStr = java.time.Instant.now()
+            .plus(24, java.time.temporal.ChronoUnit.HOURS).toString();
+        
+        // Store pending registration
+        authProperties.setProperty("registration." + username, token);
+        authProperties.setProperty("registration." + username + ".email", email);
+        authProperties.setProperty("registration." + username + ".token", token);
+        authProperties.setProperty("registration." + username + ".expiry", expiryStr);
+        if (inviteCode != null) {
+            authProperties.setProperty("registration." + username + ".invite", inviteCode);
+        }
+        saveProperties();
+        
+        // Log registration attempt
+        logSecurityEvent("REGISTRATION", username, "Registration initiated for " + email);
+        
+        return token;
+    }
+    
+    /**
+     * Checks if the given invite code is valid.
+     * 
+     * @param inviteCode the invite code to check
+     * @return true if the invite code is valid
+     */
+    private boolean isValidInviteCode(String inviteCode) {
+        if (inviteCode == null || inviteCode.isEmpty()) {
+            return false;
+        }
+        
+        // Check against stored invite codes
+        for (String key : authProperties.stringPropertyNames()) {
+            if (key.startsWith("invite.code.") && 
+                inviteCode.equals(authProperties.getProperty(key))) {
+                
+                // Check if the invite has been used
+                String usedKey = key + ".used";
+                if (!"true".equals(authProperties.getProperty(usedKey, "false"))) {
+                    // Mark the invite as used
+                    authProperties.setProperty(usedKey, "true");
+                    authProperties.setProperty(key + ".usedAt", 
+                                      java.time.Instant.now().toString());
+                    saveProperties();
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Generates a new invite code.
+     * This can only be done by an admin.
+     * 
+     * @param generatedBy the username of the admin generating the invite
+     * @return the generated invite code, or null if the user is not an admin
+     */
+    public String generateInviteCode(String generatedBy) {
+        initialize();
+        
+        // Verify the user is an admin
+        if (!isUserAdmin(generatedBy)) {
+            return null;
+        }
+        
+        // Generate a unique invite code
+        String inviteCode = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        
+        // Store the invite code
+        String key = "invite.code." + System.currentTimeMillis();
+        authProperties.setProperty(key, inviteCode);
+        authProperties.setProperty(key + ".createdBy", generatedBy);
+        authProperties.setProperty(key + ".createdAt", java.time.Instant.now().toString());
+        saveProperties();
+        
+        // Log invite code generation
+        logSecurityEvent("INVITE_GENERATED", generatedBy, "Generated invite code: " + inviteCode);
+        
+        return inviteCode;
+    }
+    
+    /**
+     * Check if a user has admin role.
+     * 
+     * @param username the username to check
+     * @return true if the user is an admin
+     */
+    public boolean isUserAdmin(String username) {
+        initialize();
+        
+        if (username == null || username.isEmpty()) {
+            return false;
+        }
+        
+        String role = authProperties.getProperty("user." + username + ".role");
+        return "admin".equals(role);
+    }
+    
+    /**
+     * Check if this is the first time setup of the system (no users exist).
+     * 
+     * @return true if this is the first time setup
+     */
+    private boolean isFirstTimeSetup() {
+        // If system.setup.completed property exists, this is not first time setup
+        if ("true".equals(authProperties.getProperty("system.setup.completed"))) {
+            return false;
+        }
+        
+        // Check if any users exist
+        for (String key : authProperties.stringPropertyNames()) {
+            if (key.endsWith(".role")) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Check if running in development environment.
+     * This is used to enable special handling for dev/test user accounts.
+     * 
+     * @return true if running in development environment
+     */
+    private boolean isDevEnvironment() {
+        // Check for development environment flag
+        return "true".equals(System.getProperty("rinna.dev", "false")) ||
+               "true".equals(authProperties.getProperty("system.dev.mode", "false"));
+    }
+    
+    /**
+     * Log a security event for auditing purposes.
+     * 
+     * @param eventType the type of security event
+     * @param username the username associated with the event
+     * @param details additional details about the event
+     */
+    private void logSecurityEvent(String eventType, String username, String details) {
+        String timestamp = java.time.Instant.now().toString();
+        String logEntry = timestamp + "|" + eventType + "|" + username + "|" + details;
+        
+        // Get security log file path
+        String logPath = CONFIG_DIR + "/security.log";
+        
+        // Append to log file
+        try {
+            java.nio.file.Files.createDirectories(java.nio.file.Paths.get(CONFIG_DIR));
+            java.nio.file.Files.write(
+                java.nio.file.Paths.get(logPath),
+                (logEntry + System.lineSeparator()).getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                java.nio.file.StandardOpenOption.CREATE,
+                java.nio.file.StandardOpenOption.APPEND
+            );
+        } catch (IOException e) {
+            System.err.println("Error writing to security log: " + e.getMessage());
+        }
     }
 }

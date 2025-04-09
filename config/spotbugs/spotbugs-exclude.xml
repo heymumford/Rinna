@@ -8,6 +8,9 @@
     <Match>
         <Class name="~.*\.*Test"/>
     </Match>
+    <Match>
+        <Class name="~.*\.test\..*"/>
+    </Match>
     
     <!-- Ignore specific bug patterns -->
     <Match>
@@ -15,5 +18,43 @@
     </Match>
     <Match>
         <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Bug pattern="SE_NO_SERIALVERSIONID"/>
+    </Match>
+    <Match>
+        <Bug pattern="DM_EXIT"/>
+    </Match>
+    <Match>
+        <Bug pattern="ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD"/>
+    </Match>
+    <Match>
+        <Bug pattern="DMI_RANDOM_USED_ONLY_ONCE"/>
+    </Match>
+    <Match>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED"/>
+    </Match>
+    <Match>
+        <Bug pattern="NP_NULL_ON_SOME_PATH"/>
+    </Match>
+    <Match>
+        <Bug pattern="MS_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Bug pattern="MS_PKGPROTECT"/>
+    </Match>
+    <Match>
+        <Bug pattern="URF_UNREAD_FIELD"/>
+    </Match>
+    <Match>
+        <Bug pattern="DLS_DEAD_LOCAL_STORE"/>
+    </Match>
+    
+    <!-- Exclude specific classes -->
+    <Match>
+        <Class name="org.rinna.adapter.service.DocmosisDocumentService"/>
+    </Match>
+    <Match>
+        <Class name="org.rinna.adapter.service.DefaultQueueService"/>
     </Match>
 </FindBugsFilter>

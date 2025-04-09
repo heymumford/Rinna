@@ -1,35 +1,46 @@
 # Makefile for Rinna project
 # -----------------------------
 
-.PHONY: all build clean test lint run-api
+.PHONY: all build clean test lint run-api test-pyramid help
 
 # Default target
 all: build test
 
 # Build targets
-build: build-java build-go
+build:
+	@echo "Building all components..."
+	./bin/build.sh
 
 build-java:
 	@echo "Building Java components..."
-	mvn compile
+	./bin/build.sh --components=java
 
 build-go:
 	@echo "Building Go API server..."
-	cd api && go build -o ../bin/rinnasrv ./cmd/rinnasrv
+	./bin/build.sh --components=go
 
 # Test targets
-test: test-java test-go
+test:
+	@echo "Running all tests..."
+	./bin/build.sh --phase=test
 
 test-java:
 	@echo "Running Java tests..."
-	mvn test
+	./bin/build.sh --components=java --phase=test
 
 test-go:
 	@echo "Running Go tests..."
-	cd api && go test ./...
+	./bin/build.sh --components=go --phase=test
+
+test-pyramid:
+	@echo "Generating test pyramid coverage report..."
+	./bin/test-pyramid-coverage.sh
 
 # Clean targets
-clean: clean-java clean-go
+clean:
+	@echo "Cleaning all build artifacts..."
+	./bin/build.sh --phase=initialize
+	mvn clean
 
 clean-java:
 	@echo "Cleaning Java build artifacts..."
@@ -40,20 +51,27 @@ clean-go:
 	rm -f bin/rinnasrv
 
 # Lint targets
-lint: lint-java lint-go
+lint:
+	@echo "Running all linters..."
+	./bin/build.sh --phase=validate
 
 lint-java:
 	@echo "Running Java linters..."
-	mvn checkstyle:check pmd:check spotbugs:check
+	./bin/build.sh --components=java --phase=validate
 
 lint-go:
 	@echo "Running Go linters..."
-	cd api && go vet ./...
+	./bin/build.sh --components=go --phase=validate
 
 # Run targets
 run-api:
 	@echo "Starting API server..."
 	./bin/rinnasrv
+
+# Quick build (minimal checks)
+quick:
+	@echo "Running quick build (skipping tests and quality checks)..."
+	./bin/build.sh --quick
 
 # Help
 help:
@@ -67,6 +85,7 @@ help:
 	@echo "  test        : Run all tests"
 	@echo "  test-java   : Run Java tests only"
 	@echo "  test-go     : Run Go tests only"
+	@echo "  test-pyramid: Generate test pyramid coverage report"
 	@echo "  clean       : Clean all build artifacts"
 	@echo "  clean-java  : Clean Java build artifacts only"
 	@echo "  clean-go    : Clean Go build artifacts only"
@@ -74,4 +93,7 @@ help:
 	@echo "  lint-java   : Run Java linters only"
 	@echo "  lint-go     : Run Go linters only"
 	@echo "  run-api     : Start the API server"
+	@echo "  quick       : Run quick build (skip tests and quality)"
 	@echo "  help        : Show this help message"
+	@echo ""
+	@echo "For more advanced options, run: ./bin/build.sh --help"

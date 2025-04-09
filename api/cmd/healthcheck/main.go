@@ -12,7 +12,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -21,13 +20,45 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/heymumford/rinna/api/pkg/health"
+	"github.com/heymumford/rinna/api/pkg/logger"
 )
 
 func main() {
 	// Parse command line flags
 	host := flag.String("host", "localhost", "Server host")
 	port := flag.Int("port", 8080, "Server port")
+	logLevel := flag.String("log-level", "INFO", "Log level (TRACE, DEBUG, INFO, WARN, ERROR)")
 	flag.Parse()
+	
+	// Configure logger
+	level := logger.InfoLevel
+	switch *logLevel {
+	case "TRACE":
+		level = logger.TraceLevel
+	case "DEBUG":
+		level = logger.DebugLevel
+	case "WARN":
+		level = logger.WarnLevel
+	case "ERROR":
+		level = logger.ErrorLevel
+	}
+	
+	// Setup logging
+	logDir := os.Getenv("RINNA_LOG_DIR")
+	if logDir == "" {
+		homeDir, _ := os.UserHomeDir()
+		logDir = homeDir + "/.rinna/logs"
+	}
+	
+	// Ensure log directory exists
+	os.MkdirAll(logDir, 0755)
+	
+	logger.Configure(logger.Config{
+		Level:      level,
+		TimeFormat: time.RFC3339,
+		LogFile:    logDir + "/rinna-healthcheck.log",
+		ShowCaller: true,
+	})
 
 	// Create router
 	router := mux.NewRouter()
@@ -56,9 +87,10 @@ func main() {
 
 	// Start server
 	go func() {
-		log.Printf("Starting health check server on %s", addr)
+		logger.Info("Starting health check server", logger.Field("address", addr))
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to start server: %v", err)
+			logger.Error("Failed to start server", logger.Field("error", err))
+			os.Exit(1)
 		}
 	}()
 
@@ -67,7 +99,7 @@ func main() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	<-stop
 
-	log.Println("Shutting down server...")
+	logger.Info("Shutting down server...")
 
 	// Create deadline for shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -75,10 +107,11 @@ func main() {
 
 	// Shutdown gracefully
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Server shutdown failed: %v", err)
+		logger.Error("Server shutdown failed", logger.Field("error", err))
+		os.Exit(1)
 	}
 
-	log.Println("Server stopped")
+	logger.Info("Server stopped")
 }
 
 // loggingMiddleware logs HTTP requests
@@ -86,6 +119,13 @@ func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		next.ServeHTTP(w, r)
-		log.Printf("%s %s %s %s", r.Method, r.RequestURI, r.RemoteAddr, time.Since(start))
+		duration := time.Since(start)
+		
+		logger.Info("HTTP Request",
+			logger.Field("method", r.Method),
+			logger.Field("uri", r.RequestURI),
+			logger.Field("remote", r.RemoteAddr),
+			logger.Field("duration", duration.String()),
+		)
 	})
 }

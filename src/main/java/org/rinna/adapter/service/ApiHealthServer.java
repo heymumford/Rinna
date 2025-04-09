@@ -18,7 +18,7 @@ import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
-import org.rinna.domain.service.ItemService;
+import org.rinna.usecase.ItemService;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -262,11 +262,11 @@ public class ApiHealthServer {
             String status = params.get("status");
             int page = parseInt(params.get("page"), 1);
             int pageSize = parseInt(params.get("pageSize"), 10);
+            String assignee = params.get("assignee");
+            String projectId = params.get("project");
+            String priority = params.get("priority");
             
-            // Mock response
-            Map<String, Object> response = new HashMap<>();
-            
-            // Get all work items
+            // Get all work items and apply filters
             List<WorkItem> items;
             if (status != null && !status.isEmpty()) {
                 // Get items filtered by status if provided
@@ -276,8 +276,43 @@ public class ApiHealthServer {
                 items = itemService.findAll();
             }
             
-            response.put("items", items);
-            response.put("totalCount", items.size());
+            // Apply additional filters if provided
+            if (assignee != null && !assignee.isEmpty()) {
+                items = items.stream()
+                    .filter(item -> assignee.equals(item.assignee()))
+                    .collect(Collectors.toList());
+            }
+            
+            if (projectId != null && !projectId.isEmpty()) {
+                items = items.stream()
+                    .filter(item -> projectId.equals(item.project()))
+                    .collect(Collectors.toList());
+            }
+            
+            if (priority != null && !priority.isEmpty()) {
+                try {
+                    Priority priorityEnum = Priority.valueOf(priority.toUpperCase());
+                    items = items.stream()
+                        .filter(item -> priorityEnum.equals(item.priority()))
+                        .collect(Collectors.toList());
+                } catch (IllegalArgumentException e) {
+                    // Invalid priority, ignore this filter
+                }
+            }
+            
+            // Calculate pagination
+            int totalCount = items.size();
+            int startIndex = (page - 1) * pageSize;
+            int endIndex = Math.min(startIndex + pageSize, totalCount);
+            
+            // Create sublist for pagination (if valid indices)
+            List<WorkItem> pagedItems = startIndex < totalCount ? 
+                items.subList(startIndex, endIndex) : new ArrayList<>();
+                
+            // Prepare response
+            Map<String, Object> response = new HashMap<>();
+            response.put("items", pagedItems);
+            response.put("totalCount", totalCount);
             response.put("page", page);
             response.put("pageSize", pageSize);
             

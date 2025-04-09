@@ -1,4 +1,6 @@
-# Rinna Project Commands for Claude
+# Rinna SUSBS (Standardized Utility Shell-Based Solution) Commands for Claude
+
+> **IMPORTANT**: For all XML manipulation (especially POM files), ALWAYS use the XMLStarlet-based tools in `bin/xml-tools.sh`. NEVER use grep, sed, or other text-based tools for XML files. The project has dedicated XML manipulation utilities for safety and consistency.
 
 ## Environment Setup
 ```bash
@@ -48,6 +50,38 @@ source activate-java.sh
 ```
 
 ## Build Commands
+
+### Unified Build System
+```bash
+# Run the complete build with all phases
+./bin/build.sh
+
+# Run specific build phase only
+./bin/build.sh --phase=compile
+./bin/build.sh --phase=test
+./bin/build.sh --phase=package
+
+# Quick build (skip tests and quality checks)
+./bin/build.sh --quick
+
+# Skip tests only
+./bin/build.sh --skip-tests
+
+# Skip quality checks only
+./bin/build.sh --skip-quality
+
+# Build specific components only
+./bin/build.sh --components=java
+./bin/build.sh --components=go,python
+
+# Set specific Maven profile
+./bin/build.sh --profile=ci
+
+# Show verbose output
+./bin/build.sh --verbose
+```
+
+### Maven Commands
 ```bash
 mvn clean install     # Clean and build the entire project
 mvn compile           # Compile the source code
@@ -60,6 +94,20 @@ mvn verify -P cross-language-tests   # Run Java tests and Go/Python/CLI tests an
 
 # Architecture validation
 mvn validate -P validate-architecture  # Run architecture validation checks
+```
+
+### Makefile Targets
+```bash
+make                  # Build and test everything (default)
+make build            # Build all components
+make build-java       # Build Java components only
+make build-go         # Build Go API server only
+make test             # Run all tests
+make test-java        # Run Java tests only
+make test-go          # Run Go tests only
+make clean            # Clean all build artifacts
+make lint             # Run all linters
+make quick            # Quick build (skip tests and quality checks)
 ```
 
 ## Code Quality
@@ -160,6 +208,12 @@ mvn package                               # Normal build includes async diagram 
 ./bin/c4_diagrams.py --type all           # Generate all diagram types
 ./bin/c4_diagrams.py --output svg         # Generate in SVG format
 ./bin/c4_diagrams.py --upload             # Upload to LucidChart
+
+# Swagger/OpenAPI Documentation
+./bin/generate-swagger.sh                  # Generate API documentation in YAML format
+./bin/generate-swagger.sh --validate-only  # Only validate the swagger.yaml file
+./bin/generate-swagger.sh --format=json    # Generate documentation in JSON format
+./bin/generate-swagger.sh --format=html    # Generate documentation in HTML format
 ```
 
 ## Project-Specific CLI Commands
@@ -267,13 +321,23 @@ Use the `rin` CLI utility located in the bin directory:
 ./bin/rin test --verbose     # Show detailed output
 ./bin/rin test --workers N   # Set maximum number of parallel workers
 
-# Legacy domain-specific test commands
+# Domain-specific BDD test commands
 ./bin/rin test workflow      # Run workflow BDD tests only 
 ./bin/rin test release       # Run release BDD tests only
 ./bin/rin test input         # Run input interface BDD tests only
 ./bin/rin test admin         # Run admin functionality tests only
 ./bin/rin test api           # Run API integration tests only
+./bin/rin test messaging     # Run messaging command tests only
+./bin/rin test grep          # Run grep command tests only
+./bin/rin test linux         # Run Linux-style command tests only
 ./bin/rin test tag:<name>    # Run tests with a specific tag (e.g., tag:client)
+
+# Feature-specific Maven test profiles
+mvn verify -P bdd-only       # Run all BDD tests
+mvn verify -P messaging-tests # Run messaging command tests only
+mvn verify -P grep-tests     # Run grep command tests only
+mvn verify -P linux-tests    # Run Linux-style command tests only
+mvn verify -P smoke-tests    # Run only smoke tests (critical paths)
 
 # Admin testing commands
 ./bin/run-admin-tests.sh                # Run all admin tests
@@ -362,10 +426,13 @@ The Rinna project uses a collection of well-organized utility scripts:
 - Common utilities in `bin/common/`
   - Shared functions in `bin/common/rinna_utils.sh`
   - Cross-language logging in `bin/common/rinna_logger.sh`
+- Output formatting in `bin/formatters/`
+  - Build output formatter in `bin/formatters/build_formatter.sh`
+- Unified build orchestration in `bin/build.sh`
 - Setup and environment configuration in `bin/rin-setup-unified`
 - Configuration management in `bin/rin-config`
-- Build system in `bin/rin-build`
 - Test framework in `bin/rin-test`
+- Cross-language testing in `bin/run-polyglot-tests.sh`
 - Version management in `bin/rin-version`
 - Server management in `bin/rin-server`
 
@@ -380,3 +447,37 @@ The unified setup system can configure the following components:
 - `ui`: User interface components and CLI tools
 - `api`: Go API server for Rinna
 - `samples`: Java sample projects demonstrating Clean Architecture
+
+## Build Process
+
+### Build Phases
+The Rinna unified build system implements Maven-like build phases:
+
+1. **Initialize** - Prepare the build environment and check prerequisites
+2. **Validate** - Validate project code and configurations
+3. **Compile** - Compile all components (Java, Go, Python)
+4. **Test** - Run all tests (unit, component, integration, polyglot)
+5. **Package** - Create distributable packages
+6. **Verify** - Run additional checks and validations
+7. **Install** - Install artifacts locally
+
+### Cross-Language Integration
+The build system ensures consistent coordination between components written in different languages:
+
+- **Java Components**: Compiled with Maven and tested with JUnit/Cucumber
+- **Go Components**: Built and tested with Go tools
+- **Python Components**: Installed as packages and tested with pytest
+- **Cross-Language Tests**: Validate integration between all components
+
+The unified build script (`./bin/build.sh`) handles all components with consistent formatting and progress reporting. 
+
+### Consistent Output Format
+All build scripts use a standardized output format with consistent status indicators:
+
+- 🔄 Task in progress
+- ✅ Task completed successfully
+- ❌ Task failed
+- ⏭️ Task skipped
+- ⚠️ Warning message
+
+This provides clear visibility into the build process with "going to do / doing / done" updates.

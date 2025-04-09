@@ -2,27 +2,24 @@
 
 # Rinna Architecture
 
+## Clean Architecture Overview
+
+Rinna follows the Clean Architecture approach as defined by Robert C. Martin, organizing the system into concentric layers with dependencies pointing inward. This design ensures separation of concerns, testability, and flexibility.
+
+![Rinna Clean Architecture Diagram](../diagrams/clean_architecture_layers.svg)
+
+Each layer in the Clean Architecture has a specific role:
+
+1. **Domain Layer (Core)**: Contains business entities and enterprise business rules with no external dependencies
+2. **Use Case Layer**: Contains application-specific business rules that orchestrate the flow of data and entities
+3. **Interface Adapters Layer**: Converts data between the formats used by use cases and external frameworks
+4. **Frameworks & Drivers Layer**: Contains frameworks, tools, and external systems
+
+For a detailed breakdown of components and relationships, see the [Clean Architecture Diagrams](../diagrams/architecture/clean_architecture_diagram.md).
+
 ## Polyglot Clean Architecture
 
-Rinna implements a polyglot approach to Clean Architecture, using Java for the core domain layer and Go for the API layer. This combines the strengths of both languages while maintaining the principles of Clean Architecture:
-
-```
-┌───────────────────────────────────────────────┐
-│ Framework & Drivers (Go CLI, Java CLI)        │
-│ ┌───────────────────────────────────────────┐ │
-│ │ Interface Adapters (Go API, Java Adapters)│ │
-│ │ ┌───────────────────────────────────────┐ │ │
-│ │ │ Application Use Cases (Java)          │ │ │
-│ │ │ ┌───────────────────────────────────┐ │ │ │
-│ │ │ │ Enterprise Business Rules (Java)  │ │ │ │
-│ │ │ │ (Entities)                        │ │ │ │
-│ │ │ └───────────────────────────────────┘ │ │ │
-│ │ └───────────────────────────────────────┘ │ │
-│ └───────────────────────────────────────────┘ │
-└───────────────────────────────────────────────┘
-```
-
-Each layer follows Clean Architecture principles, with dependencies pointing inward, while the integration between languages happens at well-defined API boundaries.
+Rinna implements a polyglot approach to Clean Architecture, using Java for the core domain layer, Go for the API layer, and Python for CLI components. This combines the strengths of each language while maintaining the principles of Clean Architecture:
 
 ## New Package Structure
 
@@ -106,6 +103,21 @@ The architecture maintains clear extension points:
 * **Repository interfaces** defined in the domain layer, implemented in the adapter layer
 * **Controllers** in the adapter layer that handle external input
 * **Framework integration** through the framework layer
+
+## Enterprise Integration
+
+Rinna integrates with various external systems through a flexible adapter-based architecture that maintains the principles of Clean Architecture.
+
+![Enterprise Integration Diagram](../diagrams/enterprise_integration_diagram.svg)
+
+Key integration points include:
+
+* **Issue Tracking Systems**: Bidirectional integration with Jira, GitHub Issues, and Azure DevOps
+* **Version Control**: Git hooks for commit validation and workflow automation
+* **Document Systems**: Integration with Confluence and SharePoint for document generation and storage
+* **CI/CD Systems**: Integration with Jenkins, GitHub Actions, and Azure Pipelines for build events
+
+For a detailed view of the integration architecture, including data flows, adapter implementations, and security considerations, see the [Enterprise Integration Diagram](../diagrams/integration/enterprise_integration_diagram.md).
 
 ## Implementation Philosophy
 

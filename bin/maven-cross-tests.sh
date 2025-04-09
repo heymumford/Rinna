@@ -1,109 +1,93 @@
 #!/bin/bash
-# Script to run cross-language tests (Go, Python, CLI) from Maven
-# This script is called by the Maven exec-maven-plugin
+#
+# maven-cross-tests.sh - Run cross-language tests from Maven
+#
+# This script uses standardized formatting and reporting for consistent output
+# across all build and test scripts.
+#
+# Copyright (c) 2025 Eric C. Mumford (@heymumford)
+# This file is subject to the terms and conditions defined in
+# the LICENSE file, which is part of this source code package.
+# (MIT License)
 
-set -e
+set -eo pipefail
 
-echo "================================================================="
-echo "Running cross-language tests (Go API, Python, CLI integration)"
-echo "================================================================="
-
-# Determine the project root directory
-PROJECT_ROOT=$(cd "$(dirname "$0")/.." && pwd)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 
+# Source common utilities
+source "$SCRIPT_DIR/common/rinna_utils.sh"
+source "$SCRIPT_DIR/formatters/build_formatter.sh"
+
 # Set up the environment
-if [ -f "./activate-java.sh" ]; then
-  source ./activate-java.sh
+section_header "Cross-Language Test Environment"
+
+# Load environment if available
+if [ -f "./activate-rinna.sh" ]; then
+  run_formatted "source ./activate-rinna.sh" "Loading Rinna environment"
 fi
 
 # Print environment information
 echo "Environment Information:"
-echo "========================"
-echo "Using Java: $(java -version 2>&1 | head -1)"
-echo "Using Go: $(go version 2>&1 || echo "Go not found")"
-echo "Using Python: $(python --version 2>&1 || echo "Python not found")"
-echo "Working directory: $(pwd)"
-echo "========================"
+echo "- Using Java: $(java -version 2>&1 | head -1)"
+echo "- Using Go: $(go version 2>&1 || echo "Go not found")"
+echo "- Using Python: $(python --version 2>&1 || echo "Python not found")"
+echo "- Working directory: $(pwd)"
 
-# Run Go API tests
-echo "Running Go API tests..."
-if [ -d "./api" ]; then
-  cd api
-  go test ./... || echo "Go API tests failed"
-  cd "$PROJECT_ROOT"
+# Show test execution plan
+TEST_STEPS=(
+  "Run polyglot tests using the cross-language test harness"
+  "Run C4 diagram tests"
+  "Generate C4 diagrams for documentation"
+  "Verify CLI commands"
+)
+show_execution_plan "Cross-Language Test Steps" "${TEST_STEPS[@]}"
+
+# Check if in CI environment
+CI_MODE=false
+if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ] || [ -n "$JENKINS_URL" ]; then
+  CI_MODE=true
+fi
+
+# Run the polyglot tests
+section_header "Running Polyglot Tests"
+if [ "$CI_MODE" = true ]; then
+  run_formatted "./bin/run-polyglot-tests.sh --verbose --build" "Running polyglot tests in CI environment"
 else
-  echo "API directory not found, skipping Go tests"
+  run_formatted "./bin/run-polyglot-tests.sh" "Running polyglot tests in standard environment"
 fi
 
-# Run Python tests
-echo "Running Python tests..."
-if [ -d "./python" ]; then
-  python -m pytest python/tests -v || echo "Python tests failed"
-fi
-
-# Always run C4 diagram tests if they exist
-echo "Running C4 diagram tests..."
+# Run C4 diagram tests
+section_header "Running C4 Diagram Tests"
 if [ -f "./bin/test_c4_diagrams.py" ]; then
-  python -m unittest bin/test_c4_diagrams.py || echo "Python diagram tests failed"
+  run_formatted "python -m unittest bin/test_c4_diagrams.py" "Running C4 diagram tests"
 else
-  echo "C4 diagram tests not found, skipping"
+  skip_task "C4 diagram tests not found, skipping"
 fi
 
-# Generate C4 diagrams for documentation
-echo "Generating C4 model diagrams..."
+# Generate C4 diagrams
+section_header "Generating Documentation Diagrams"
 if [ -f "./bin/generate-diagrams.sh" ]; then
   # Use async mode in CI environment, synchronous otherwise
-  if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ] || [ -n "$JENKINS_URL" ]; then
-    echo "CI environment detected, using asynchronous diagram generation..."
-    ./bin/generate-diagrams.sh --async --clean || echo "Asynchronous C4 diagram generation started"
+  if [ "$CI_MODE" = true ]; then
+    run_formatted "./bin/generate-diagrams.sh --async --clean" "Generating diagrams asynchronously (CI mode)"
   else
-    ./bin/generate-diagrams.sh || echo "C4 diagram generation failed"
+    run_formatted "./bin/generate-diagrams.sh" "Generating diagrams"
   fi
-  echo "Diagrams generated in ./docs/diagrams"
 else
-  echo "C4 diagram generator not found, skipping diagram generation"
+  skip_task "C4 diagram generator not found"
 fi
 
-# Run CLI integration tests
-echo "Running CLI integration tests..."
-cd "$PROJECT_ROOT"
-
-if [ -f "./bin/run-tests.sh" ]; then
-  ./bin/run-tests.sh cli || echo "CLI integration tests failed"
-fi
-
-# Run work item CLI tests
-echo "Running work item CLI tests..."
+# Verify CLI commands
+section_header "Verifying CLI Commands"
 
 # Test 'add' command
-echo "Testing 'add' command..."
-./bin/rin add "Test work item from CLI integration test" -t TASK -p HIGH -P test-project -a test-user || echo "Add command failed"
+run_formatted "./bin/rin-add --title 'Test work item from cross-language test' --type TASK --priority HIGH --project test-project" "Testing 'add' command"
 
 # Test 'list' command
-echo "Testing 'list' command..."
-./bin/rin list --limit=5 || echo "List command failed"
+run_formatted "./bin/rin-list --limit 5" "Testing 'list' command"
 
-# Test 'view' command - use the first ID from list
-echo "Testing 'view' command..."
-VIEW_ID=$(./bin/rin list --limit=1 | grep "WI-" | awk '{print $1}')
-if [ -n "$VIEW_ID" ]; then
-  ./bin/rin view "$VIEW_ID" || echo "View command failed"
-else
-  echo "No work items found for view command"
-fi
-
-# Test 'update' command - use the first ID from list
-echo "Testing 'update' command..."
-UPDATE_ID=$(./bin/rin list --limit=1 | grep "WI-" | awk '{print $1}')
-if [ -n "$UPDATE_ID" ]; then
-  ./bin/rin update "$UPDATE_ID" --assignee test-update-user --status IN_PROGRESS || echo "Update command failed"
-else
-  echo "No work items found for update command"
-fi
-
-echo "CLI work item tests completed"
-
-echo "================================================================="
-echo "Cross-language tests completed"
-echo "================================================================="
+# Summarize results
+section_header "Cross-Language Test Summary"
+complete_task "Cross-language tests completed successfully"

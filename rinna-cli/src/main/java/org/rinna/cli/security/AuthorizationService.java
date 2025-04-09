@@ -308,4 +308,15 @@ public final class AuthorizationService {
     private String formatPermissions(Set<String> permissions) {
         return String.join(",", permissions);
     }
+    
+    /**
+     * Get the permissions properties.
+     * This method is used by the SecurityManager to access permissions.
+     * 
+     * @return the permissions properties
+     */
+    public Properties getPermissionsProperties() {
+        initialize();
+        return permissionsProperties;
+    }
 }

@@ -6,9 +6,9 @@
  * the LICENSE file, which is part of this source code package.
  */
 
-package org.rinna.repository;
+package org.rinna.domain.repository;
 
-import org.rinna.domain.WorkItemMetadata;
+import org.rinna.domain.model.WorkItemMetadata;
 
 import java.util.List;
 import java.util.Map;

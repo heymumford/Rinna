@@ -13,7 +13,7 @@ import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.model.WorkItemRecord;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
-import org.rinna.repository.ItemRepository;
+import org.rinna.domain.repository.ItemRepository;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -94,5 +94,10 @@ public class InMemoryItemRepository implements ItemRepository {
      */
     public void clear() {
         items.clear();
+    }
+    
+    @Override
+    public boolean existsById(UUID id) {
+        return items.containsKey(id);
     }
 }

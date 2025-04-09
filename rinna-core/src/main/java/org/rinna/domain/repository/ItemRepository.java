@@ -82,4 +82,12 @@ public interface ItemRepository {
      * @param id the ID of the work item to delete
      */
     void deleteById(UUID id);
+    
+    /**
+     * Checks if a work item exists by its ID.
+     *
+     * @param id the ID of the work item
+     * @return true if the work item exists
+     */
+    boolean existsById(UUID id);
 }

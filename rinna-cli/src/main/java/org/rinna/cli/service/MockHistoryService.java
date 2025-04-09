@@ -9,11 +9,7 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.domain.model.HistoryEntry;
-import org.rinna.domain.model.HistoryEntryRecord;
-import org.rinna.domain.model.HistoryEntryType;
-import org.rinna.domain.model.WorkflowState;
-import org.rinna.domain.service.HistoryService;
+import org.rinna.cli.model.WorkflowState;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -22,11 +18,157 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * A mock implementation of the HistoryService interface for testing.
+ * A mock implementation of history service functionality for CLI use.
  */
-public class MockHistoryService implements HistoryService {
+public class MockHistoryService {
     
-    private final Map<UUID, List<HistoryEntry>> historyStore = new ConcurrentHashMap<>();
+    /**
+     * History entry type enumeration.
+     */
+    public enum HistoryEntryType {
+        CREATION,
+        STATE_CHANGE,
+        FIELD_CHANGE,
+        COMMENT,
+        ASSIGNMENT,
+        LINK
+    }
+    
+    /**
+     * History entry record.
+     */
+    public static class HistoryEntryRecord {
+        private final UUID workItemId;
+        private final HistoryEntryType type;
+        private final String user;
+        private final String content;
+        private final String additionalData;
+        private final Instant timestamp;
+        
+        /**
+         * Creates a new history entry record.
+         *
+         * @param workItemId the work item ID
+         * @param type the entry type
+         * @param user the user who created the entry
+         * @param content the entry content
+         * @param additionalData additional data
+         * @param timestamp the timestamp
+         */
+        public HistoryEntryRecord(UUID workItemId, HistoryEntryType type, String user, String content, 
+                                  String additionalData, Instant timestamp) {
+            this.workItemId = workItemId;
+            this.type = type;
+            this.user = user;
+            this.content = content;
+            this.additionalData = additionalData;
+            this.timestamp = timestamp;
+        }
+        
+        /**
+         * Creates a standard history entry.
+         *
+         * @param workItemId the work item ID
+         * @param type the entry type
+         * @param user the user who created the entry
+         * @param content the entry content
+         * @param additionalData additional data
+         * @return the created entry
+         */
+        public static HistoryEntryRecord create(UUID workItemId, HistoryEntryType type, String user, 
+                                               String content, String additionalData) {
+            return new HistoryEntryRecord(workItemId, type, user, content, additionalData, Instant.now());
+        }
+        
+        /**
+         * Creates a state change history entry.
+         *
+         * @param workItemId the work item ID
+         * @param user the user who made the change
+         * @param oldState the previous state
+         * @param newState the new state
+         * @param comment an optional comment
+         * @return the created entry
+         */
+        public static HistoryEntryRecord createStateChange(UUID workItemId, String user, 
+                                                          WorkflowState oldState, WorkflowState newState, 
+                                                          String comment) {
+            String content = "State changed from " + oldState + " to " + newState;
+            return new HistoryEntryRecord(workItemId, HistoryEntryType.STATE_CHANGE, user, content, comment, Instant.now());
+        }
+        
+        /**
+         * Creates a field change history entry.
+         *
+         * @param workItemId the work item ID
+         * @param user the user who made the change
+         * @param field the field that was changed
+         * @param oldValue the previous value
+         * @param newValue the new value
+         * @return the created entry
+         */
+        public static HistoryEntryRecord createFieldChange(UUID workItemId, String user, String field, 
+                                                          String oldValue, String newValue) {
+            String content = "Field '" + field + "' changed from '" + oldValue + "' to '" + newValue + "'";
+            return new HistoryEntryRecord(workItemId, HistoryEntryType.FIELD_CHANGE, user, content, null, Instant.now());
+        }
+        
+        /**
+         * Gets the work item ID.
+         *
+         * @return the work item ID
+         */
+        public UUID getWorkItemId() {
+            return workItemId;
+        }
+        
+        /**
+         * Gets the entry type.
+         *
+         * @return the entry type
+         */
+        public HistoryEntryType getType() {
+            return type;
+        }
+        
+        /**
+         * Gets the user who created the entry.
+         *
+         * @return the user
+         */
+        public String getUser() {
+            return user;
+        }
+        
+        /**
+         * Gets the entry content.
+         *
+         * @return the content
+         */
+        public String getContent() {
+            return content;
+        }
+        
+        /**
+         * Gets the additional data.
+         *
+         * @return the additional data
+         */
+        public String getAdditionalData() {
+            return additionalData;
+        }
+        
+        /**
+         * Gets the timestamp.
+         *
+         * @return the timestamp
+         */
+        public Instant getTimestamp() {
+            return timestamp;
+        }
+    }
+    
+    private final Map<UUID, List<HistoryEntryRecord>> historyStore = new ConcurrentHashMap<>();
     
     /**
      * Records a history entry for a work item.
@@ -38,10 +180,9 @@ public class MockHistoryService implements HistoryService {
      * @param additionalData additional data for the entry (optional)
      * @return the created history entry
      */
-    @Override
-    public HistoryEntry recordHistoryEntry(UUID workItemId, HistoryEntryType type, String user, 
+    public HistoryEntryRecord recordHistoryEntry(UUID workItemId, HistoryEntryType type, String user, 
                                            String content, String additionalData) {
-        HistoryEntry entry = HistoryEntryRecord.create(workItemId, type, user, content, additionalData);
+        HistoryEntryRecord entry = HistoryEntryRecord.create(workItemId, type, user, content, additionalData);
         addEntry(workItemId, entry);
         return entry;
     }
@@ -56,13 +197,12 @@ public class MockHistoryService implements HistoryService {
      * @param comment an optional comment about the change
      * @return the created history entry
      */
-    @Override
-    public HistoryEntry recordStateChange(UUID workItemId, String user, String oldState, 
+    public HistoryEntryRecord recordStateChange(UUID workItemId, String user, String oldState, 
                                           String newState, String comment) {
         WorkflowState oldWorkflowState = WorkflowState.valueOf(oldState);
         WorkflowState newWorkflowState = WorkflowState.valueOf(newState);
         
-        HistoryEntry entry = HistoryEntryRecord.createStateChange(
+        HistoryEntryRecord entry = HistoryEntryRecord.createStateChange(
             workItemId, user, oldWorkflowState, newWorkflowState, comment);
         
         addEntry(workItemId, entry);
@@ -79,12 +219,80 @@ public class MockHistoryService implements HistoryService {
      * @param newValue the new value
      * @return the created history entry
      */
-    @Override
-    public HistoryEntry recordFieldChange(UUID workItemId, String user, String field, 
+    public HistoryEntryRecord recordFieldChange(UUID workItemId, String user, String field, 
                                           String oldValue, String newValue) {
-        HistoryEntry entry = HistoryEntryRecord.createFieldChange(
+        HistoryEntryRecord entry = HistoryEntryRecord.createFieldChange(
             workItemId, user, field, oldValue, newValue);
         
+        addEntry(workItemId, entry);
+        return entry;
+    }
+    
+    /**
+     * Records an assignment change for a work item.
+     *
+     * @param workItemId the ID of the work item
+     * @param user the user who made the change
+     * @param previousAssignee the previous assignee
+     * @param newAssignee the new assignee
+     * @return the created history entry
+     */
+    public HistoryEntryRecord recordAssignment(UUID workItemId, String user, 
+                                        String previousAssignee, String newAssignee) {
+        String content = "Assignment changed from '" + previousAssignee + "' to '" + newAssignee + "'";
+        HistoryEntryRecord entry = new HistoryEntryRecord(workItemId, HistoryEntryType.ASSIGNMENT, 
+                                                       user, content, null, Instant.now());
+        addEntry(workItemId, entry);
+        return entry;
+    }
+    
+    /**
+     * Records a priority change for a work item.
+     *
+     * @param workItemId the ID of the work item
+     * @param user the user who made the change
+     * @param previousPriority the previous priority
+     * @param newPriority the new priority
+     * @return the created history entry
+     */
+    public HistoryEntryRecord recordPriorityChange(UUID workItemId, String user, 
+                                            String previousPriority, String newPriority) {
+        String content = "Priority changed from '" + previousPriority + "' to '" + newPriority + "'";
+        HistoryEntryRecord entry = new HistoryEntryRecord(workItemId, HistoryEntryType.FIELD_CHANGE, 
+                                                       user, content, "Priority", Instant.now());
+        addEntry(workItemId, entry);
+        return entry;
+    }
+    
+    /**
+     * Adds a comment to a work item.
+     *
+     * @param workItemId the ID of the work item
+     * @param user the user who made the comment
+     * @param comment the comment text
+     * @return the created history entry
+     */
+    public HistoryEntryRecord addComment(UUID workItemId, String user, String comment) {
+        HistoryEntryRecord entry = new HistoryEntryRecord(workItemId, HistoryEntryType.COMMENT, 
+                                                       user, comment, null, Instant.now());
+        addEntry(workItemId, entry);
+        return entry;
+    }
+    
+    /**
+     * Records a link change for a work item.
+     *
+     * @param workItemId the ID of the work item
+     * @param user the user who made the change
+     * @param changeType the type of change (added, removed)
+     * @param relatedItemId the related item ID
+     * @return the created history entry
+     */
+    public HistoryEntryRecord recordLink(UUID workItemId, String user, 
+                                   String changeType, String relatedItemId) {
+        String content = changeType + " link to item " + relatedItemId;
+        HistoryEntryRecord entry = new HistoryEntryRecord(workItemId, HistoryEntryType.LINK, 
+                                                       user, content, relatedItemId, Instant.now());
         addEntry(workItemId, entry);
         return entry;
     }
@@ -95,9 +303,8 @@ public class MockHistoryService implements HistoryService {
      * @param workItemId the work item ID
      * @return the list of history entries for the work item
      */
-    @Override
-    public List<HistoryEntry> getHistory(UUID workItemId) {
-        List<HistoryEntry> history = historyStore.getOrDefault(workItemId, new ArrayList<>());
+    public List<HistoryEntryRecord> getHistory(UUID workItemId) {
+        List<HistoryEntryRecord> history = historyStore.getOrDefault(workItemId, new ArrayList<>());
         return new ArrayList<>(history);
     }
     
@@ -108,11 +315,10 @@ public class MockHistoryService implements HistoryService {
      * @param type the entry type
      * @return the list of history entries of the specified type
      */
-    @Override
-    public List<HistoryEntry> getHistoryByType(UUID workItemId, HistoryEntryType type) {
-        List<HistoryEntry> history = historyStore.getOrDefault(workItemId, new ArrayList<>());
+    public List<HistoryEntryRecord> getHistoryByType(UUID workItemId, HistoryEntryType type) {
+        List<HistoryEntryRecord> history = historyStore.getOrDefault(workItemId, new ArrayList<>());
         return history.stream()
-                .filter(entry -> entry.type() == type)
+                .filter(entry -> entry.getType() == type)
                 .collect(Collectors.toList());
     }
     
@@ -124,12 +330,23 @@ public class MockHistoryService implements HistoryService {
      * @param to the end timestamp (inclusive)
      * @return the list of history entries within the time range
      */
-    @Override
-    public List<HistoryEntry> getHistoryInTimeRange(UUID workItemId, Instant from, Instant to) {
-        List<HistoryEntry> history = historyStore.getOrDefault(workItemId, new ArrayList<>());
+    public List<HistoryEntryRecord> getHistoryInTimeRange(UUID workItemId, Instant from, Instant to) {
+        List<HistoryEntryRecord> history = historyStore.getOrDefault(workItemId, new ArrayList<>());
         return history.stream()
-                .filter(entry -> !entry.timestamp().isBefore(from) && !entry.timestamp().isAfter(to))
+                .filter(entry -> !entry.getTimestamp().isBefore(from) && !entry.getTimestamp().isAfter(to))
                 .collect(Collectors.toList());
+    }
+    
+    /**
+     * Gets history entries for a work item within a specific time range (alias for getHistoryInTimeRange).
+     *
+     * @param workItemId the work item ID
+     * @param from the start timestamp (inclusive)
+     * @param to the end timestamp (inclusive)
+     * @return the list of history entries within the time range
+     */
+    public List<HistoryEntryRecord> getHistoryByTimeRange(UUID workItemId, Instant from, Instant to) {
+        return getHistoryInTimeRange(workItemId, from, to);
     }
     
     /**
@@ -139,8 +356,7 @@ public class MockHistoryService implements HistoryService {
      * @param hours the number of hours to look back
      * @return the list of history entries from the specified time period
      */
-    @Override
-    public List<HistoryEntry> getHistoryFromLastHours(UUID workItemId, int hours) {
+    public List<HistoryEntryRecord> getHistoryFromLastHours(UUID workItemId, int hours) {
         Instant now = Instant.now();
         Instant from = now.minus(hours, ChronoUnit.HOURS);
         return getHistoryInTimeRange(workItemId, from, now);
@@ -153,8 +369,7 @@ public class MockHistoryService implements HistoryService {
      * @param days the number of days to look back
      * @return the list of history entries from the specified time period
      */
-    @Override
-    public List<HistoryEntry> getHistoryFromLastDays(UUID workItemId, int days) {
+    public List<HistoryEntryRecord> getHistoryFromLastDays(UUID workItemId, int days) {
         Instant now = Instant.now();
         Instant from = now.minus(days, ChronoUnit.DAYS);
         return getHistoryInTimeRange(workItemId, from, now);
@@ -167,8 +382,7 @@ public class MockHistoryService implements HistoryService {
      * @param weeks the number of weeks to look back
      * @return the list of history entries from the specified time period
      */
-    @Override
-    public List<HistoryEntry> getHistoryFromLastWeeks(UUID workItemId, int weeks) {
+    public List<HistoryEntryRecord> getHistoryFromLastWeeks(UUID workItemId, int weeks) {
         Instant now = Instant.now();
         Instant from = now.minus(weeks * 7, ChronoUnit.DAYS);
         return getHistoryInTimeRange(workItemId, from, now);
@@ -180,7 +394,7 @@ public class MockHistoryService implements HistoryService {
      * @param workItemId the work item ID
      * @param entry the history entry
      */
-    private void addEntry(UUID workItemId, HistoryEntry entry) {
+    private void addEntry(UUID workItemId, HistoryEntryRecord entry) {
         historyStore.computeIfAbsent(workItemId, k -> new ArrayList<>()).add(0, entry);
     }
     
@@ -189,7 +403,7 @@ public class MockHistoryService implements HistoryService {
      *
      * @param entry the entry to add
      */
-    public void addMockEntry(HistoryEntry entry) {
-        addEntry(entry.workItemId(), entry);
+    public void addMockEntry(HistoryEntryRecord entry) {
+        addEntry(entry.getWorkItemId(), entry);
     }
 }

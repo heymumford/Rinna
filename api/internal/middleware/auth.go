@@ -20,7 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/heymumford/rinna/api/internal/client"
 	"github.com/heymumford/rinna/api/pkg/config"
 )
 
@@ -30,9 +29,15 @@ type tokenKey struct{}
 // projectKey is the context key for the project
 type projectKey struct{}
 
+// JavaClientInterface defines the methods required from the Java client
+type JavaClientInterface interface {
+	ValidateToken(ctx context.Context, token string) (string, error)
+	GetWebhookSecret(ctx context.Context, projectKey, source string) (string, error)
+}
+
 // AuthService handles authentication-related operations
 type AuthService struct {
-	javaClient  *client.JavaClient
+	javaClient  JavaClientInterface
 	config      *config.AuthConfig
 	tokenCache  map[string]tokenCacheEntry
 	secretCache map[string]secretCacheEntry
@@ -49,7 +54,7 @@ type secretCacheEntry struct {
 }
 
 // NewAuthService creates a new authentication service
-func NewAuthService(javaClient *client.JavaClient, config *config.AuthConfig) *AuthService {
+func NewAuthService(javaClient JavaClientInterface, config *config.AuthConfig) *AuthService {
 	return &AuthService{
 		javaClient:  javaClient,
 		config:      config,
@@ -311,15 +316,38 @@ func WebhookAuthentication(authService *AuthService) func(http.Handler) http.Han
 				}
 				
 				// Special validation for GitLab which uses a plain token match
-				// Instead of passing to ValidateWebhookSignature, we'll do a direct comparison
-				err := authService.ValidateWebhookSignature(r.Context(), projectKey, source, signature, []byte(""))
-				if err != nil {
-					http.Error(w, "Invalid webhook signature: "+err.Error(), http.StatusUnauthorized)
+				// Instead of passing to ValidateWebhookSignature, we'll get the secret directly
+				var secret string
+				var err error
+				
+				if authService.javaClient != nil {
+					secret, err = authService.javaClient.GetWebhookSecret(r.Context(), projectKey, source)
+					if err != nil {
+						if authService.config.DevMode {
+							secret = "gh-webhook-secret-1234" // Default dev secret
+						} else {
+							http.Error(w, "Failed to retrieve webhook secret: "+err.Error(), http.StatusUnauthorized)
+							return
+						}
+					}
+				} else if authService.config.DevMode {
+					secret = "gh-webhook-secret-1234" // Default dev secret
+				} else {
+					http.Error(w, "Cannot validate webhook: Java client not available", http.StatusUnauthorized)
 					return
 				}
 				
+				// For GitLab we do a direct token comparison
+				if signature != secret {
+					http.Error(w, "Invalid webhook token", http.StatusUnauthorized)
+					return
+				}
+				
+				// Add source to context for handlers
+				ctx := context.WithValue(r.Context(), webhookSourceKey{}, source)
+					
 				// Skip further validation since we already validated
-				next.ServeHTTP(w, r)
+				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 				
 			case strings.HasSuffix(r.URL.Path, "/bitbucket"):

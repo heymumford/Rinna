@@ -13,7 +13,7 @@ import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.model.WorkItemRecord;
 import org.rinna.repository.ItemRepository;
-import org.rinna.domain.service.ItemService;
+import org.rinna.usecase.ItemService;
 
 import java.util.List;
 import java.util.Objects;
@@ -67,7 +67,7 @@ public class DefaultItemService implements ItemService {
     @Override
     public WorkItem updateAssignee(UUID id, String assignee) {
         WorkItem item = findById(id)
-                .orElseThrow(() -> new IllegalArgumentException(STR."Work item not found: \{id}"));
+                .orElseThrow(() -> new IllegalArgumentException("Work item not found: " + id));
         
         // Handle both implementations for backward compatibility
         WorkItem updatedItem = switch (item) {

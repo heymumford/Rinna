@@ -8,11 +8,11 @@
 
 package org.rinna.usecase;
 
-import org.rinna.domain.Priority;
-import org.rinna.domain.WorkItem;
-import org.rinna.domain.WorkItemType;
-import org.rinna.domain.WorkQueue;
-import org.rinna.domain.WorkflowState;
+import org.rinna.domain.model.Priority;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.domain.model.WorkQueue;
+import org.rinna.domain.model.WorkflowState;
 
 import java.util.List;
 import java.util.Map;

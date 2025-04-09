@@ -10,6 +10,8 @@ package org.rinna.cli.command;
 import org.rinna.cli.report.ReportConfig;
 import org.rinna.cli.report.ReportFormat;
 import org.rinna.cli.report.ReportType;
+import org.rinna.cli.service.ContextManager;
+import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.MockReportService;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.util.OutputFormatter;
@@ -26,11 +28,13 @@ import java.util.logging.Logger;
 
 /**
  * Command to generate reports about work items.
+ * Follows the ViewCommand pattern with operation tracking.
  */
 public class ReportCommand implements Callable<Integer> {
     private static final Logger LOGGER = Logger.getLogger(ReportCommand.class.getName());
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     
+    // Command parameters
     private String type;
     private String format;
     private String output;
@@ -50,98 +54,163 @@ public class ReportCommand implements Callable<Integer> {
     private String emailSubject;
     private String templateName;
     private boolean noTemplate;
-    private boolean jsonOutput = false;
     private boolean verbose = false;
+    private String username = System.getProperty("user.name");
     
-    private final ServiceManager serviceManager = ServiceManager.getInstance();
+    // Service dependencies
+    private final ServiceManager serviceManager;
     private final MockReportService reportService;
+    private final MetadataService metadataService;
+    private final ContextManager contextManager;
     
     /**
-     * Constructs a new report command.
+     * Constructs a new report command with default service manager.
      */
     public ReportCommand() {
+        this(ServiceManager.getInstance());
+    }
+    
+    /**
+     * Constructs a new report command with the provided service manager.
+     * This constructor allows for dependency injection, making the command more testable.
+     * 
+     * @param serviceManager the service manager to use
+     */
+    public ReportCommand(ServiceManager serviceManager) {
         // Default values
         this.type = "summary";
         this.format = "text";
         this.limit = 0; // No limit
+        this.serviceManager = serviceManager;
         this.reportService = serviceManager.getMockReportService();
+        this.metadataService = serviceManager.getMetadataService();
+        this.contextManager = ContextManager.getInstance();
     }
     
     /**
-     * Executes the command.
+     * Executes the command with proper operation tracking.
      */
     @Override
     public Integer call() {
+        // Create operation parameters for tracking
+        Map<String, Object> params = new HashMap<>();
+        params.put("type", type);
+        params.put("format", format);
+        params.put("username", username);
+        params.put("verbose", verbose);
+        
+        // Add optional parameters when present
+        if (output != null) params.put("output", output);
+        if (title != null) params.put("title", title);
+        if (startDate != null) params.put("startDate", startDate);
+        if (endDate != null) params.put("endDate", endDate);
+        if (projectId != null) params.put("projectId", projectId);
+        if (sortField != null) params.put("sortField", sortField);
+        if (groupBy != null) params.put("groupBy", groupBy);
+        if (limit > 0) params.put("limit", limit);
+        if (!filters.isEmpty()) params.put("filters", new HashMap<>(filters));
+        if (emailEnabled) params.put("emailEnabled", true);
+        
+        // Start tracking main operation
+        String operationId = metadataService.startOperation("report", "READ", params);
+        
         try {
-            // Track operation metadata
-            Map<String, Object> operationParams = new HashMap<>();
-            operationParams.put("type", type);
-            operationParams.put("format", format);
-            if (output != null) operationParams.put("output", output);
-            if (title != null) operationParams.put("title", title);
-            if (startDate != null) operationParams.put("startDate", startDate);
-            if (endDate != null) operationParams.put("endDate", endDate);
-            if (projectId != null) operationParams.put("projectId", projectId);
-            if (sortField != null) operationParams.put("sortField", sortField);
-            if (groupBy != null) operationParams.put("groupBy", groupBy);
-            if (limit > 0) operationParams.put("limit", limit);
-            if (!filters.isEmpty()) operationParams.put("filters", new HashMap<>(filters));
-            if (emailEnabled) operationParams.put("emailEnabled", true);
-            
-            serviceManager.getMetadataService().trackOperation("report", operationParams);
+            // Log details in verbose mode
+            if (verbose) {
+                LOGGER.info("Generating " + type + " report in " + format + " format");
+            }
             
             // Parse report type and format
             ReportType reportType = reportService.parseReportType(type);
             ReportFormat reportFormat = reportService.parseReportFormat(format);
             
-            if (verbose) {
-                LOGGER.info("Generating " + reportType + " report in " + reportFormat + " format");
+            // Track report configuration creation
+            String configOpId = metadataService.startOperation("report-config", "CREATE", params);
+            
+            try {
+                // Create a configuration
+                ReportConfig config = createReportConfig(reportType, reportFormat);
+                
+                // Record success of config creation
+                Map<String, Object> configResult = new HashMap<>();
+                configResult.put("reportType", reportType.name());
+                configResult.put("reportFormat", reportFormat.name());
+                metadataService.completeOperation(configOpId, configResult);
+                
+                // Start tracking report generation
+                Map<String, Object> genParams = new HashMap<>();
+                genParams.put("reportType", reportType.name());
+                genParams.put("reportFormat", reportFormat.name());
+                String genOpId = metadataService.startOperation("report-generate", "EXECUTE", genParams);
+                
+                try {
+                    // Generate the report
+                    boolean success = reportService.generateReport(config);
+                    
+                    // Record success or failure of generation
+                    Map<String, Object> genResult = new HashMap<>();
+                    genResult.put("success", success);
+                    if (config.getOutputPath() != null) {
+                        genResult.put("outputPath", config.getOutputPath());
+                    }
+                    metadataService.completeOperation(genOpId, genResult);
+                    
+                    // Format and display the output
+                    boolean isJsonOutput = "json".equalsIgnoreCase(format);
+                    int resultCode = displayReportResult(success, config, isJsonOutput);
+                    
+                    // Record final result
+                    Map<String, Object> finalResult = new HashMap<>();
+                    finalResult.put("success", success);
+                    finalResult.put("resultCode", resultCode);
+                    metadataService.completeOperation(operationId, finalResult);
+                    
+                    return resultCode;
+                } catch (Exception e) {
+                    // Record failure of generation
+                    metadataService.failOperation(genOpId, e);
+                    throw e;
+                }
+            } catch (Exception e) {
+                // Record failure of config creation
+                metadataService.failOperation(configOpId, e);
+                throw e;
             }
-            
-            // Create a configuration
-            ReportConfig config = createReportConfig(reportType, reportFormat);
-            
-            // Generate the report
-            boolean success = reportService.generateReport(config);
-            
-            // Format the output
-            return formatOutput(success, config);
-            
         } catch (Exception e) {
-            // Error handling with verbose option
-            if (verbose) {
-                System.err.println("Error executing report command: " + e.getMessage());
-                e.printStackTrace();
-            } else {
-                System.err.println("Error: " + e.getMessage());
-            }
-            return 1;
+            // Record failure of main operation
+            metadataService.failOperation(operationId, e);
+            
+            // Handle errors based on format and verbosity
+            return handleError(e);
         }
     }
     
     /**
-     * Formats the command output based on the execution result.
+     * Displays the report generation result with proper formatting.
      * 
      * @param success whether the report generation was successful
      * @param config the report configuration
+     * @param isJsonOutput whether to output in JSON format
      * @return the exit code (0 for success, 1 for failure)
      */
-    private Integer formatOutput(boolean success, ReportConfig config) {
-        if (jsonOutput) {
-            return formatJsonOutput(success, config);
+    private int displayReportResult(boolean success, ReportConfig config, boolean isJsonOutput) {
+        if (isJsonOutput) {
+            displayReportResultAsJson(success, config);
         } else {
-            return formatTextOutput(success, config);
+            displayReportResultAsText(success, config);
         }
+        
+        return success ? 0 : 1;
     }
     
     /**
-     * Formats the command output as JSON.
+     * Displays the report generation result in JSON format.
      * 
      * @param success whether the report generation was successful
      * @param config the report configuration
-     * @return the exit code (0 for success, 1 for failure)
      */
-    private Integer formatJsonOutput(boolean success, ReportConfig config) {
+    private void displayReportResultAsJson(boolean success, ReportConfig config) {
+        OutputFormatter formatter = new OutputFormatter(true);
         Map<String, Object> result = new HashMap<>();
         result.put("success", success);
         result.put("type", config.getType().name());
@@ -184,18 +253,16 @@ public class ReportCommand implements Callable<Integer> {
             }
         }
         
-        System.out.println(OutputFormatter.toJson(result));
-        return success ? 0 : 1;
+        formatter.outputObject("report", result);
     }
     
     /**
-     * Formats the command output as text.
+     * Displays the report generation result in text format.
      * 
      * @param success whether the report generation was successful
      * @param config the report configuration
-     * @return the exit code (0 for success, 1 for failure)
      */
-    private Integer formatTextOutput(boolean success, ReportConfig config) {
+    private void displayReportResultAsText(boolean success, ReportConfig config) {
         if (success) {
             if (config.getOutputPath() != null) {
                 System.out.println("Report generated successfully: " + config.getOutputPath());
@@ -209,8 +276,33 @@ public class ReportCommand implements Callable<Integer> {
         } else {
             System.err.println("Failed to generate report.");
         }
+    }
+    
+    /**
+     * Handles an error during report generation.
+     * 
+     * @param exception the exception that occurred
+     * @return the exit code (always 1 for error)
+     */
+    private int handleError(Exception exception) {
+        boolean isJsonOutput = "json".equalsIgnoreCase(format);
         
-        return success ? 0 : 1;
+        if (isJsonOutput) {
+            OutputFormatter formatter = new OutputFormatter(true);
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Error executing report command");
+            error.put("message", exception.getMessage());
+            formatter.outputObject("error", error);
+        } else {
+            if (verbose) {
+                System.err.println("Error executing report command: " + exception.getMessage());
+                exception.printStackTrace();
+            } else {
+                System.err.println("Error: " + exception.getMessage());
+            }
+        }
+        
+        return 1;
     }
     
     /**
@@ -602,12 +694,26 @@ public class ReportCommand implements Callable<Integer> {
     
     /**
      * Sets whether to output JSON.
+     * This is a legacy setter that maps to the format parameter.
      *
      * @param jsonOutput true to output JSON
      * @return this command for chaining
      */
     public ReportCommand setJsonOutput(boolean jsonOutput) {
-        this.jsonOutput = jsonOutput;
+        if (jsonOutput) {
+            this.format = "json";
+        }
+        return this;
+    }
+    
+    /**
+     * Sets the username for operation tracking.
+     *
+     * @param username the username
+     * @return this command for chaining
+     */
+    public ReportCommand setUsername(String username) {
+        this.username = username;
         return this;
     }
     
@@ -660,7 +766,7 @@ public class ReportCommand implements Callable<Integer> {
         System.out.println("  --email-subject=<s>  Set email subject line");
         System.out.println("  --template=<n>       Use specific template name");
         System.out.println("  --no-template        Disable template usage");
-        System.out.println("  --json               Output results in JSON format");
+        System.out.println("  --json               Output results in JSON format (legacy, same as --format=json)");
         System.out.println("  --verbose            Enable verbose output");
         System.out.println();
         System.out.println("Examples:");

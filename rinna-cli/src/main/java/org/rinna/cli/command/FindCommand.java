@@ -9,13 +9,15 @@
  */
 package org.rinna.cli.command;
 
-import org.rinna.cli.service.ContextManager;
-import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.service.ItemService;
 import org.rinna.cli.model.Priority;
 import org.rinna.cli.model.WorkItem;
 import org.rinna.cli.model.WorkItemType;
 import org.rinna.cli.model.WorkflowState;
-import org.rinna.cli.service.MockItemService;
+import org.rinna.cli.service.ContextManager;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.OutputFormatter;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -41,6 +43,7 @@ import java.util.function.Predicate;
  * - "rin find -reporter username" - Find work items reported by username
  * - "rin find -newer 2023-05-20" - Find work items created after date
  * - "rin find -mtime -7" - Find work items modified in the last 7 days
+ * - "rin find --format=json" - Output results in JSON format
  */
 public class FindCommand implements Callable<Integer> {
     
@@ -56,6 +59,30 @@ public class FindCommand implements Callable<Integer> {
     private Instant updatedBefore;
     private boolean printDetails = false;
     private boolean countOnly = false;
+    private String format = "text";
+    private boolean verbose = false;
+    
+    private final ServiceManager serviceManager;
+    private final ContextManager contextManager;
+    private final MetadataService metadataService;
+    
+    /**
+     * Creates a new FindCommand with default services.
+     */
+    public FindCommand() {
+        this(ServiceManager.getInstance());
+    }
+    
+    /**
+     * Creates a new FindCommand with the specified service manager.
+     * 
+     * @param serviceManager the service manager to use
+     */
+    public FindCommand(ServiceManager serviceManager) {
+        this.serviceManager = serviceManager;
+        this.contextManager = ContextManager.getInstance();
+        this.metadataService = serviceManager.getMetadataService();
+    }
     
     /**
      * Sets the name pattern to search for.
@@ -165,24 +192,77 @@ public class FindCommand implements Callable<Integer> {
         this.countOnly = countOnly;
     }
     
+    /**
+     * Sets the output format (text or json).
+     *
+     * @param format the output format
+     */
+    public void setFormat(String format) {
+        this.format = format;
+    }
+    
+    /**
+     * Sets whether verbose output is enabled.
+     *
+     * @param verbose true to enable verbose output
+     */
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
+    }
+    
     @Override
     public Integer call() {
+        // Operation tracking parameters
+        Map<String, Object> params = new HashMap<>();
+        if (namePattern != null) params.put("name_pattern", namePattern);
+        if (type != null) params.put("type", type.toString());
+        if (state != null) params.put("state", state.toString());
+        if (priority != null) params.put("priority", priority.toString());
+        if (assignee != null) params.put("assignee", assignee);
+        if (reporter != null) params.put("reporter", reporter);
+        if (createdAfter != null) params.put("created_after", createdAfter.toString());
+        if (createdBefore != null) params.put("created_before", createdBefore.toString());
+        if (updatedAfter != null) params.put("updated_after", updatedAfter.toString());
+        if (updatedBefore != null) params.put("updated_before", updatedBefore.toString());
+        params.put("print_details", printDetails);
+        params.put("count_only", countOnly);
+        params.put("format", format);
+        params.put("verbose", verbose);
+        
+        // Start tracking the operation
+        String operationId = metadataService.startOperation("find", "SEARCH", params);
+        
         try {
-            ServiceManager serviceManager = ServiceManager.getInstance();
-            MockItemService itemService = (MockItemService) serviceManager.getItemService();
+            // Get service via service interface
+            ItemService itemService = serviceManager.getItemService();
             
             // Get all work items
-            List<WorkItem> allWorkItems = itemService.getAllWorkItems();
+            List<WorkItem> allWorkItems = itemService.getAllItems();
             
             // Apply filters
             List<WorkItem> filteredItems = filterWorkItems(allWorkItems);
             
             // Display results
-            displayResults(filteredItems);
+            if ("json".equalsIgnoreCase(format)) {
+                displayResultsJson(filteredItems, operationId);
+            } else {
+                displayResults(filteredItems, operationId);
+            }
             
             return 0;
         } catch (Exception e) {
-            System.err.println("Error: " + e.getMessage());
+            // Enhanced error handling with context
+            String errorMessage = "Error executing find command: " + e.getMessage();
+            System.err.println("Error: " + errorMessage);
+            
+            // Record detailed error information if verbose mode is enabled
+            if (verbose) {
+                e.printStackTrace();
+            }
+            
+            // Record the failed operation with error details
+            metadataService.failOperation(operationId, e);
+            
             return 1;
         }
     }
@@ -268,26 +348,44 @@ public class FindCommand implements Callable<Integer> {
     }
     
     /**
-     * Displays the search results.
+     * Displays the search results in text format.
      *
      * @param workItems the work items to display
+     * @param operationId the operation tracking ID
      */
-    private void displayResults(List<WorkItem> workItems) {
+    private void displayResults(List<WorkItem> workItems, String operationId) {
         // Update the last viewed item to the first result (if any)
         if (!workItems.isEmpty()) {
-            // Converting UUID to String if needed
-            ContextManager.getInstance().setLastViewedWorkItem(workItems.get(0).getId().toString());
+            UUID firstItemId = parseItemId(workItems.get(0).getId());
+            if (firstItemId != null) {
+                contextManager.setLastViewedWorkItem(firstItemId);
+            }
         }
         
         // Count only mode
         if (countOnly) {
             System.out.println("Found " + workItems.size() + " work items");
+            
+            // Record the successful operation
+            Map<String, Object> result = new HashMap<>();
+            result.put("count", workItems.size());
+            result.put("format", "text");
+            result.put("count_only", true);
+            metadataService.completeOperation(operationId, result);
+            
             return;
         }
         
         // No results
         if (workItems.isEmpty()) {
             System.out.println("No matching work items found");
+            
+            // Record the successful operation
+            Map<String, Object> result = new HashMap<>();
+            result.put("count", 0);
+            result.put("format", "text");
+            metadataService.completeOperation(operationId, result);
+            
             return;
         }
         
@@ -319,6 +417,107 @@ public class FindCommand implements Callable<Integer> {
                         item.getAssignee());
             }
         }
+        
+        // Record the successful operation
+        Map<String, Object> result = new HashMap<>();
+        result.put("count", workItems.size());
+        result.put("format", "text");
+        result.put("detailed", printDetails);
+        if (!workItems.isEmpty()) {
+            result.put("first_item_id", workItems.get(0).getId());
+        }
+        metadataService.completeOperation(operationId, result);
+    }
+    
+    /**
+     * Displays the search results in JSON format.
+     *
+     * @param workItems the work items to display
+     * @param operationId the operation tracking ID
+     */
+    private void displayResultsJson(List<WorkItem> workItems, String operationId) {
+        // Update the last viewed item to the first result (if any)
+        if (!workItems.isEmpty()) {
+            UUID firstItemId = parseItemId(workItems.get(0).getId());
+            if (firstItemId != null) {
+                contextManager.setLastViewedWorkItem(firstItemId);
+            }
+        }
+        
+        // Create JSON data
+        Map<String, Object> jsonData = new HashMap<>();
+        jsonData.put("count", workItems.size());
+        
+        // Add search criteria
+        Map<String, Object> criteria = new HashMap<>();
+        if (namePattern != null) criteria.put("name_pattern", namePattern);
+        if (type != null) criteria.put("type", type.toString());
+        if (state != null) criteria.put("state", state.toString());
+        if (priority != null) criteria.put("priority", priority.toString());
+        if (assignee != null) criteria.put("assignee", assignee);
+        if (reporter != null) criteria.put("reporter", reporter);
+        if (createdAfter != null) criteria.put("created_after", createdAfter.toString());
+        if (createdBefore != null) criteria.put("created_before", createdBefore.toString());
+        if (updatedAfter != null) criteria.put("updated_after", updatedAfter.toString());
+        if (updatedBefore != null) criteria.put("updated_before", updatedBefore.toString());
+        jsonData.put("criteria", criteria);
+        
+        // Add work items
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (WorkItem item : workItems) {
+            Map<String, Object> itemMap = new HashMap<>();
+            itemMap.put("id", item.getId());
+            itemMap.put("title", item.getTitle());
+            itemMap.put("type", item.getType() != null ? item.getType().toString() : null);
+            itemMap.put("priority", item.getPriority() != null ? item.getPriority().toString() : null);
+            itemMap.put("state", item.getStatus() != null ? item.getStatus().toString() : null);
+            itemMap.put("assignee", item.getAssignee());
+            
+            // Add detailed information if requested
+            if (printDetails) {
+                itemMap.put("description", item.getDescription());
+                itemMap.put("created", item.getCreated() != null ? item.getCreated().toString() : null);
+                itemMap.put("updated", item.getUpdated() != null ? item.getUpdated().toString() : null);
+                // Add any other available fields
+                itemMap.put("project", item.getProject());
+            }
+            
+            items.add(itemMap);
+        }
+        jsonData.put("items", items);
+        
+        // Display as JSON
+        String json = OutputFormatter.toJson(jsonData, verbose);
+        System.out.println(json);
+        
+        // Record the successful operation
+        Map<String, Object> result = new HashMap<>();
+        result.put("count", workItems.size());
+        result.put("format", "json");
+        result.put("detailed", printDetails);
+        if (!workItems.isEmpty()) {
+            result.put("first_item_id", workItems.get(0).getId());
+        }
+        metadataService.completeOperation(operationId, result);
+    }
+    
+    /**
+     * Safely parses a WorkItem ID to a UUID.
+     *
+     * @param id the ID to parse, which could be a string or UUID
+     * @return the parsed UUID, or null if parsing fails
+     */
+    private UUID parseItemId(Object id) {
+        try {
+            if (id instanceof UUID) {
+                return (UUID) id;
+            } else if (id instanceof String) {
+                return UUID.fromString((String) id);
+            }
+        } catch (Exception e) {
+            // Ignore parsing errors
+        }
+        return null;
     }
     
     /**

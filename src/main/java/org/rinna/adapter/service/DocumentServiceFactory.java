@@ -9,7 +9,7 @@
 package org.rinna.adapter.service;
 
 import org.rinna.domain.model.DocumentConfig;
-import org.rinna.domain.service.DocumentService;
+import org.rinna.usecase.DocumentService;
 
 import java.util.logging.Logger;
 

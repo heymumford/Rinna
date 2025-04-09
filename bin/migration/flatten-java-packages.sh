@@ -13,8 +13,8 @@ TEST_SRC="${RINNA_DIR}/rinna-core/src/test/java/org/rinna"
 MAIN_TARGET="${RINNA_DIR}/rinna-core/src/main/java/org/rinna"
 TEST_TARGET="${RINNA_DIR}/rinna-core/src/test/java/org/rinna"
 
-# Temporary directory for processing files
-TEMP_DIR="${RINNA_DIR}/bin/migration/temp"
+# Temporary directory for processing files - use target directory to ensure cleanup on build
+TEMP_DIR="${RINNA_DIR}/target/migration-temp"
 mkdir -p "${TEMP_DIR}"
 
 # Log file

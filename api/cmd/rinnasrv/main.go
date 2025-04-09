@@ -22,6 +22,7 @@ import (
 	"github.com/heymumford/rinna/api/internal/client"
 	"github.com/heymumford/rinna/api/internal/handlers"
 	"github.com/heymumford/rinna/api/internal/middleware"
+	"github.com/heymumford/rinna/api/internal/server"
 	"github.com/heymumford/rinna/api/pkg/config"
 	"github.com/heymumford/rinna/api/pkg/health"
 	"github.com/heymumford/rinna/api/pkg/logger"
@@ -62,6 +63,7 @@ func main() {
 	configPath := flag.String("config", "", "Path to configuration file")
 	serverPort := flag.Int("port", 0, "Server port (overrides config)")
 	serverHost := flag.String("host", "", "Server host (overrides config)")
+	skipAutoStart := flag.Bool("no-autostart", false, "Disable automatic Java server startup")
 	flag.Parse()
 
 	// Configure the logger
@@ -102,6 +104,22 @@ func main() {
 		cfg.Server.Host = *serverHost
 	}
 
+	// Set up server launcher to manage the Java backend
+	launcher := server.NewServerLauncher(cfg)
+	
+	// Handle server auto-starting
+	if !*skipAutoStart && !launcher.IsExternalServerConfigured() {
+		// Start local server if no external server is configured
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		
+		err := launcher.StartLocalServer(ctx)
+		if err != nil {
+			logger.Error("Failed to start local Rinna server", logger.Field("error", err))
+			// Continue anyway, the client will handle the connection failure
+		}
+	}
+	
 	// Create Java client
 	javaClient := client.NewJavaClient(&cfg.Java)
 
@@ -172,11 +190,19 @@ func main() {
 	defer cancel()
 
 	// Shut down server gracefully
-	logger.Info("Shutting down server...")
+	logger.Info("Shutting down API server...")
 	if err := server.Shutdown(ctx); err != nil {
-		logger.Fatal("Server shutdown failed", logger.Field("error", err))
+		logger.Fatal("API server shutdown failed", logger.Field("error", err))
 	}
-	logger.Info("Server stopped gracefully")
+	logger.Info("API server stopped gracefully")
+	
+	// If we started the Java server, stop it too
+	if !*skipAutoStart && !launcher.IsExternalServerConfigured() {
+		err := launcher.StopLocalServer()
+		if err != nil {
+			logger.Error("Error stopping local Rinna server", logger.Field("error", err))
+		}
+	}
 	
 	// Close the logger to flush any buffered logs
 	logger.Close()

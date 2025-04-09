@@ -20,6 +20,10 @@ Rinna focuses on providing a streamlined, developer-centric approach to workflow
 - [Admin Guide](admin-guide.md) - Comprehensive guide for administrators to set up and configure Rinna
 - [Admin CLI Quick Start](admin-cli-quickstart.md) - Essential commands for rapid project setup
 - [Admin POM Sample](admin-pom-sample.xml) - Sample Maven POM file for adding Rinna to your project
+- [Migration Guide](migration/README.md) - Comprehensive strategies for migrating from other tools
+  - [Jira Migration](migration/jira-migration.md) - Detailed steps for migrating from Jira
+  - [Azure DevOps Migration](migration/azure-devops-migration.md) - Detailed steps for migrating from Azure DevOps
+  - [GitHub Issues Migration](migration/github-issues-migration.md) - Detailed steps for migrating from GitHub Issues
 
 ## Metrics and Business Value
 
@@ -34,6 +38,13 @@ Rinna focuses on providing a streamlined, developer-centric approach to workflow
 - **Feature**: Incremental functionality that delivers user value
 - **Bug**: Software issues requiring correction
 - **Chore**: Non-functional maintenance tasks to keep the system healthy
+
+### Work Item Relationships
+
+- [Dependencies and Relationships](work-item-relationships.md) - Understanding how work items relate to each other and affect workflow
+- [Complex Dependency Management](complex-dependency-management.md) - Advanced techniques for managing dependencies
+- [Multi-Team Workflows](multi-team-workflows.md) - Coordinating work across multiple teams
+- [Advanced Workflow Scenarios](advanced-workflow-scenarios.md) - Special workflow patterns for complex situations
 
 ### Developer Workflow Stages
 

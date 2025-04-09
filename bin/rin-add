@@ -26,7 +26,8 @@ else
     function echo_info() { echo -e "\033[0;34m$1\033[0m"; }
     function echo_success() { echo -e "\033[0;32m$1\033[0m"; }
     function echo_warning() { echo -e "\033[0;33m$1\033[0m"; }
-    function echo_error() { echo -e "\033[0;31m$1\033[0m"; }
+    function echo_error() { echo -e "\033[0;31m$1\033[0m" >&2; }
+    function print_error() { echo -e "\033[0;31m✗ $1\033[0m" >&2; }
     
     # Default functions for work item types and statuses
     function get_work_item_types() { echo "BUG FEATURE TASK"; }
@@ -133,7 +134,7 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         *)
-            echo_error "Error: Unknown option: $1"
+            print_error "Error: Unknown option: $1"
             show_usage
             exit 1
             ;;
@@ -142,7 +143,7 @@ done
 
 # Validate required arguments
 if [ -z "$TITLE" ]; then
-    echo_error "Error: --title is required"
+    print_error "Error: --title is required"
     show_usage
     exit 1
 fi
@@ -150,21 +151,21 @@ fi
 # Validate TYPE
 VALID_TYPES=$(get_work_item_types)
 if [[ ! " $VALID_TYPES " =~ " $TYPE " ]]; then
-    echo_error "Error: Invalid type: $TYPE. Must be one of: $VALID_TYPES"
+    print_error "Error: Invalid type: $TYPE. Must be one of: $VALID_TYPES"
     exit 1
 fi
 
 # Validate STATUS
 VALID_STATUSES=$(get_work_item_statuses)
 if [[ ! " $VALID_STATUSES " =~ " $STATUS " ]]; then
-    echo_error "Error: Invalid status: $STATUS. Must be one of: $VALID_STATUSES"
+    print_error "Error: Invalid status: $STATUS. Must be one of: $VALID_STATUSES"
     exit 1
 fi
 
 # Validate PRIORITY
 VALID_PRIORITIES=$(get_work_item_priorities)
 if [[ ! " $VALID_PRIORITIES " =~ " $PRIORITY " ]]; then
-    echo_error "Error: Invalid priority: $PRIORITY. Must be one of: $VALID_PRIORITIES"
+    print_error "Error: Invalid priority: $PRIORITY. Must be one of: $VALID_PRIORITIES"
     exit 1
 fi
 
@@ -180,7 +181,7 @@ ITEM_FILE=$(store_work_item "$RINNA_DIR" "$ITEM_ID" "$TITLE" "$DESCRIPTION" "$TY
 
 # Check result (set -e would exit on failure, but we want to handle it gracefully)
 if [ -n "$ITEM_FILE" ] && [ -f "$ITEM_FILE" ]; then
-    echo_success "Work item created successfully!"
+    echo -e "\033[0;32m✓ Work item created successfully!\033[0m"
     echo
     echo "ID: $ITEM_ID"
     echo "Title: $TITLE"
@@ -196,6 +197,6 @@ if [ -n "$ITEM_FILE" ] && [ -f "$ITEM_FILE" ]; then
     echo "Use 'rin list' to see all work items"
     exit 0
 else
-    echo_error "Error: Failed to create work item"
+    print_error "Error: Failed to create work item"
     exit 1
 fi

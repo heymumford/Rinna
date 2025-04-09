@@ -1,5 +1,5 @@
 /*
- * Domain entity for the Rinna workflow management system
+ * Model class for the Rinna workflow management system
  *
  * Copyright (c) 2025 Eric C. Mumford (@heymumford)
  * This file is subject to the terms and conditions defined in
@@ -14,7 +14,6 @@ import java.util.UUID;
 
 /**
  * Represents a work item in the Rinna system.
- * This is a core entity in the domain model.
  */
 public interface WorkItem {
     /**
@@ -86,27 +85,4 @@ public interface WorkItem {
      * @return an Optional containing the parent ID, or empty if no parent
      */
     Optional<UUID> getParentId();
-    
-    /**
-     * Returns the project ID of this work item.
-     * 
-     * @return an Optional containing the project ID, or empty if not associated with a project
-     */
-    Optional<UUID> getProjectId();
-    
-    /**
-     * Returns the visibility status of this work item.
-     * Visibility can be PUBLIC, TEAM, or PRIVATE.
-     * 
-     * @return the visibility status
-     */
-    String getVisibility();
-    
-    /**
-     * Returns whether this work item is local only.
-     * Local-only items are created by the local client and not yet synchronized.
-     * 
-     * @return true if the item is local only, false otherwise
-     */
-    boolean isLocalOnly();
 }

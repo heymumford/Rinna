@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * Service for managing and delivering notifications to users.
  */
-public class NotificationService {
+public final class NotificationService {
     private static NotificationService instance;
     
     private static final String NOTIFICATIONS_DIR = System.getProperty("user.home") + "/.rinna/notifications";
@@ -293,7 +293,8 @@ public class NotificationService {
             return;
         }
         
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(userNotificationsFile))) {
+        try (ObjectInputStream ois = new ObjectInputStream(
+                java.nio.file.Files.newInputStream(userNotificationsFile.toPath()))) {
             @SuppressWarnings("unchecked")
             List<Notification> notifications = (List<Notification>) ois.readObject();
             userNotifications.put(currentUser, notifications);
@@ -312,7 +313,8 @@ public class NotificationService {
     private void saveNotifications(String username) {
         File userNotificationsFile = getUserNotificationsFile(username);
         
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(userNotificationsFile))) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(
+                java.nio.file.Files.newOutputStream(userNotificationsFile.toPath()))) {
             oos.writeObject(userNotifications.getOrDefault(username, Collections.emptyList()));
         } catch (IOException e) {
             System.err.println("Error saving notifications: " + e.getMessage());

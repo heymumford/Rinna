@@ -148,6 +148,15 @@ Commands:
     update        Update an existing work item
     path          Show critical path of work items and blockers
     
+  Administration:
+    admin         Administrative operations
+      audit       - Audit log management and reporting
+      compliance  - Regulatory compliance management
+      monitor     - System health monitoring
+      diagnostics - System diagnostics and troubleshooting
+      backup      - Data backup configuration and execution
+      recovery    - System recovery from backups
+    
   doc       Document generation:
     license <key> Set Docmosis license key
     config        Show document configuration
@@ -336,8 +345,8 @@ case "$CATEGORY" in
       error "bin/rin-path not found or not executable"
     fi
     ;;
-  view|update)
-    # Other work item commands - handled by rin-cli
+  view|update|admin)
+    # Other work item and admin commands - handled by rin-cli
     if [[ -x "$SCRIPT_DIR/rin-cli" ]]; then
       exec "$SCRIPT_DIR/rin-cli" "$CATEGORY" "$@"
     else

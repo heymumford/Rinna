@@ -6,9 +6,9 @@
  * the LICENSE file, which is part of this source code package.
  */
 
-package org.rinna.repository;
+package org.rinna.domain.repository;
 
-import org.rinna.domain.WorkQueue;
+import org.rinna.domain.model.WorkQueue;
 
 import java.util.List;
 import java.util.Optional;

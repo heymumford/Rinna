@@ -12,8 +12,17 @@ Rinna manages work through the following explicit stages optimized for developer
 4. **In Progress**: Currently being worked on by a developer
 5. **In Test**: Under verification with automated or manual testing
 6. **Done**: Completed and ready for deployment
+7. **Released**: Deployed to production and available to users
 
 Can you customize the workflow? No, you can't. [That's the point](workflow-philosophy.md).
+
+## Workflow State Diagram
+
+The following diagram illustrates the standard workflow states and transitions in Rinna:
+
+![Rinna Workflow State Diagram](../diagrams/workflow_state_diagram.svg)
+
+For a detailed explanation of the state transitions, see the [Workflow State Diagram documentation](../diagrams/workflow/workflow_state_diagram.md).
 
 ## Developer-Optimized Stage Transitions
 
@@ -24,6 +33,14 @@ Items progress through stages in sequential order, matching developer workflow:
 - To Do → In Progress (Development phase)
 - In Progress → In Test (Verification phase)
 - In Test → Done (Completion phase)
+- Done → Released (Deployment phase)
+
+**The only permitted loop** in this workflow is between In Progress and In Test. This intentional design allows for test-driven development and quality verification while maintaining a clean, forward-moving workflow.
+
+### Special Transitions
+
+- **Skipping Stages**: Some items may skip stages (e.g., Triaged → Done for items that won't be implemented)
+- **Returning to Backlog**: Items can move from In Progress back to To Do if they need to be deferred
 
 ## Developer Workflow Commands
 

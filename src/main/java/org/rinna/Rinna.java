@@ -11,10 +11,10 @@ package org.rinna;
 import org.rinna.adapter.service.ApiHealthServer;
 import org.rinna.config.RinnaConfig;
 import org.rinna.repository.MetadataRepository;
-import org.rinna.domain.service.ItemService;
-import org.rinna.domain.service.QueueService;
-import org.rinna.domain.service.ReleaseService;
-import org.rinna.domain.service.WorkflowService;
+import org.rinna.usecase.ItemService;
+import org.rinna.usecase.QueueService;
+import org.rinna.usecase.ReleaseService;
+import org.rinna.usecase.WorkflowService;
 
 import java.io.IOException;
 

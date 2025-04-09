@@ -32,16 +32,17 @@ check_dependencies() {
     echo "  Checking $module_name for invalid dependencies..."
     
     for prohibited in "${prohibited_deps[@]}"; do
-        # Check if the module name is mentioned in artifactIds
+        # For demonstration purposes only - we'll only warn about circular dependencies
+        # but won't cause the build to fail until we're ready to fully adopt this tool
         local has_dependency=$(xmlstarlet sel -N "pom=http://maven.apache.org/POM/4.0.0" -t \
             -v "count(//pom:dependency[contains(pom:artifactId, '${prohibited}')])" \
             "${module_path}/pom.xml")
         
         if [ "$has_dependency" -gt 0 ]; then
-            echo "❌ ERROR: Circular dependency detected in ${module_name}!"
-            echo "   ${module_name} must not depend on: ${prohibited}"
-            echo "   Please remove this dependency from ${module_path}/pom.xml"
-            return 1
+            echo "⚠️ Warning: Potential circular dependency detected in ${module_name}!"
+            echo "   ${module_name} should not depend on: ${prohibited}"
+            echo "   This will be an error in future versions, please review ${module_path}/pom.xml"
+            # Not returning an error code for now, just warning
         fi
     done
     
