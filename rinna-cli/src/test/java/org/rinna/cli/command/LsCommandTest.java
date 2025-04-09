@@ -32,6 +32,7 @@ import org.rinna.cli.service.ServiceManager;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -192,7 +193,7 @@ class LsCommandTest {
     void shouldTrackSingleItemLookupOperation() {
         // Setup
         UUID itemId = UUID.fromString(TEST_ITEM_ID);
-        WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
+        WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.CREATED);
         when(mockItemService.getItem(itemId.toString())).thenReturn(mockItem);
         command.setItemId(itemId.toString());
         
@@ -338,7 +339,7 @@ class LsCommandTest {
             // Setup
             UUID itemId = UUID.fromString(TEST_ITEM_ID);
             UUID parentId = UUID.randomUUID();
-            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
+            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.CREATED);
             
             when(mockItemService.getItem(itemId.toString())).thenReturn(mockItem);
             when(mockRelationshipService.getParentWorkItem(itemId)).thenReturn(parentId);
@@ -365,7 +366,7 @@ class LsCommandTest {
             UUID childId1 = UUID.randomUUID();
             UUID childId2 = UUID.randomUUID();
             List<UUID> children = List.of(childId1, childId2);
-            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
+            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.CREATED);
             
             when(mockItemService.getItem(itemId.toString())).thenReturn(mockItem);
             when(mockRelationshipService.getParentWorkItem(itemId)).thenReturn(null);
@@ -392,7 +393,7 @@ class LsCommandTest {
         void shouldIncludeHistoryInOperationTrackingWhenAllFormatIsEnabled() {
             // Setup
             UUID itemId = UUID.fromString(TEST_ITEM_ID);
-            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
+            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.CREATED);
             List<HistoryEntryRecord> mockHistory = createMockHistory(itemId);
             
             when(mockItemService.getItem(itemId.toString())).thenReturn(mockItem);
@@ -419,7 +420,7 @@ class LsCommandTest {
         void shouldExcludeHistoryInOperationTrackingWhenAllFormatIsDisabled() {
             // Setup
             UUID itemId = UUID.fromString(TEST_ITEM_ID);
-            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
+            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.CREATED);
             
             when(mockItemService.getItem(itemId.toString())).thenReturn(mockItem);
             when(mockRelationshipService.getParentWorkItem(itemId)).thenReturn(null);
@@ -486,7 +487,7 @@ class LsCommandTest {
         void shouldIncludeHistoryInJsonWhenUsingAllFormat() {
             // Setup
             UUID itemId = UUID.fromString(TEST_ITEM_ID);
-            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
+            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.CREATED);
             List<HistoryEntryRecord> mockHistory = createMockHistory(itemId);
             
             when(mockItemService.getItem(itemId.toString())).thenReturn(mockItem);
@@ -518,7 +519,7 @@ class LsCommandTest {
         List<WorkItem> items = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             String id = UUID.randomUUID().toString();
-            items.add(createMockWorkItem(id, "Test Item " + (i + 1), WorkflowState.OPEN));
+            items.add(createMockWorkItem(id, "Test Item " + (i + 1), WorkflowState.CREATED));
         }
         return items;
     }
@@ -562,7 +563,7 @@ class LsCommandTest {
             "testuser", 
             "State changed from NEW to OPEN", 
             null, 
-            Instant.now().minusDays(3)
+            Instant.now().minus(3, ChronoUnit.DAYS)
         ));
         
         // Add field change history entry
@@ -572,7 +573,7 @@ class LsCommandTest {
             "testuser", 
             "Field 'priority' changed from 'LOW' to 'MEDIUM'", 
             "Priority", 
-            Instant.now().minusDays(2)
+            Instant.now().minus(2, ChronoUnit.DAYS)
         ));
         
         // Add assignment history entry
@@ -582,7 +583,7 @@ class LsCommandTest {
             "admin", 
             "Assignment changed from 'unassigned' to 'testuser'", 
             null, 
-            Instant.now().minusDays(1)
+            Instant.now().minus(1, ChronoUnit.DAYS)
         ));
         
         return history;

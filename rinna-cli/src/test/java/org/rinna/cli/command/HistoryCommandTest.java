@@ -136,7 +136,7 @@ class HistoryCommandTest {
     void shouldTrackMainOperationParametersWhenViewingHistoryForSpecificItem() {
         // Setup
         UUID itemId = UUID.fromString(TEST_ITEM_ID);
-        WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
+        WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.CREATED);
         List<HistoryEntryRecord> mockHistory = createMockHistory(itemId);
         List<CommentImpl> mockComments = createMockComments(itemId);
         
@@ -171,7 +171,7 @@ class HistoryCommandTest {
     void shouldTrackOperationCompletionWithResultMetadata() {
         // Setup
         UUID itemId = UUID.fromString(TEST_ITEM_ID);
-        WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
+        WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.CREATED);
         List<HistoryEntryRecord> mockHistory = createMockHistory(itemId);
         List<CommentImpl> mockComments = createMockComments(itemId);
         
@@ -303,8 +303,12 @@ class HistoryCommandTest {
     void shouldTrackOperationFailureWhenUserLacksPermissions() {
         // Setup
         UUID itemId = UUID.fromString(TEST_ITEM_ID);
-        WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
-        mockItem.setVisible(false); // User can't see this item
+        WorkItem mockItem = mock(WorkItem.class);
+        when(mockItem.getId()).thenReturn(itemId.toString());
+        when(mockItem.getTitle()).thenReturn("Test Item");
+        when(mockItem.getType()).thenReturn(WorkItemType.TASK);
+        when(mockItem.getState()).thenReturn(WorkflowState.CREATED);
+        when(mockItem.isVisible(anyString())).thenReturn(false); // User can't see this item
         
         when(mockItemService.getItem(itemId.toString())).thenReturn(mockItem);
         command.setItemId(itemId.toString());
@@ -332,7 +336,7 @@ class HistoryCommandTest {
         void shouldTrackFilterOptionsInOperationParameters() {
             // Setup
             UUID itemId = UUID.fromString(TEST_ITEM_ID);
-            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
+            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.CREATED);
             List<HistoryEntryRecord> mockHistory = createMockHistory(itemId);
             List<CommentImpl> mockComments = createMockComments(itemId);
             
@@ -378,7 +382,7 @@ class HistoryCommandTest {
         void shouldTrackTimeRangeParametersForHours() {
             // Setup
             UUID itemId = UUID.fromString(TEST_ITEM_ID);
-            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
+            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.CREATED);
             List<HistoryEntryRecord> mockHistory = createMockHistory(itemId);
             List<CommentImpl> mockComments = createMockComments(itemId);
             
@@ -414,7 +418,7 @@ class HistoryCommandTest {
         void shouldTrackTimeRangeParametersForDays() {
             // Setup
             UUID itemId = UUID.fromString(TEST_ITEM_ID);
-            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
+            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.CREATED);
             List<HistoryEntryRecord> mockHistory = createMockHistory(itemId);
             List<CommentImpl> mockComments = createMockComments(itemId);
             
@@ -444,7 +448,7 @@ class HistoryCommandTest {
         void shouldTrackTimeRangeParametersForWeeks() {
             // Setup
             UUID itemId = UUID.fromString(TEST_ITEM_ID);
-            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
+            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.CREATED);
             List<HistoryEntryRecord> mockHistory = createMockHistory(itemId);
             List<CommentImpl> mockComments = createMockComments(itemId);
             
@@ -474,7 +478,7 @@ class HistoryCommandTest {
         void shouldTrackOperationFailureForInvalidTimeRangeFormat() {
             // Setup
             UUID itemId = UUID.fromString(TEST_ITEM_ID);
-            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
+            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.CREATED);
             when(mockItemService.getItem(itemId.toString())).thenReturn(mockItem);
             
             command.setItemId(itemId.toString());
@@ -504,7 +508,7 @@ class HistoryCommandTest {
         void shouldTrackJsonFormatInOperationParameters() {
             // Setup
             UUID itemId = UUID.fromString(TEST_ITEM_ID);
-            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
+            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.CREATED);
             List<HistoryEntryRecord> mockHistory = createMockHistory(itemId);
             List<CommentImpl> mockComments = createMockComments(itemId);
             
@@ -535,7 +539,7 @@ class HistoryCommandTest {
         void shouldIncludeVerboseDetailsInJsonWhenVerboseIsEnabled() {
             // Setup
             UUID itemId = UUID.fromString(TEST_ITEM_ID);
-            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.OPEN);
+            WorkItem mockItem = createMockWorkItem(itemId.toString(), "Test Item", WorkflowState.CREATED);
             List<HistoryEntryRecord> mockHistory = createMockHistory(itemId);
             List<CommentImpl> mockComments = createMockComments(itemId);
             
@@ -583,7 +587,6 @@ class HistoryCommandTest {
         item.setDescription("Test description");
         item.setCreated(LocalDateTime.now().minusDays(5));
         item.setUpdated(LocalDateTime.now());
-        item.setVisible(true);
         return item;
     }
     
