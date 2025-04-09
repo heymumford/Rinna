@@ -292,59 +292,43 @@ Use the `rin` CLI utility located in the bin directory:
 ./bin/rin admin backup start --type=full                    # Start system backup
 ./bin/rin admin recovery plan --from=latest                 # Create recovery plan
 
-# Advanced test commands (testing pyramid)
-./bin/rin test unit          # Run unit tests only
-./bin/rin test component     # Run component tests only
-./bin/rin test integration   # Run integration tests only
-./bin/rin test acceptance    # Run acceptance tests only
-./bin/rin test performance   # Run performance tests only
-./bin/rin test bdd           # Run all BDD tests (alias for acceptance)
-./bin/rin test fast          # Run unit and component tests only (quick feedback)
-./bin/rin test essential     # Run unit, component, and integration tests (no UI)
+# Simplified Unified Test Runner
+./bin/rin-test                    # Run all tests
+./bin/rin-test unit               # Run only unit tests
+./bin/rin-test component          # Run only component tests
+./bin/rin-test integration        # Run only integration tests
+./bin/rin-test acceptance         # Run only acceptance tests
+./bin/rin-test performance        # Run only performance tests
 
-# Standardized test runner
-./bin/rin-test unit         # Run unit tests with standard directory structure
-./bin/rin-test component    # Run component tests with standard directory structure
-./bin/rin-test integration  # Run integration tests with standard directory structure
-./bin/rin-test acceptance   # Run acceptance tests with standard directory structure
-./bin/rin-test performance  # Run performance tests with standard directory structure
-./bin/rin-test fast         # Run unit and component tests with standard directory structure
-./bin/rin-test all          # Run all tests with standard directory structure
-./bin/rin-test --parallel   # Run tests in parallel mode
-./bin/rin-test --tag=unit   # Run tests with specific tag
+# Language-Specific Test Commands
+./bin/rin-test --java unit        # Run only Java unit tests
+./bin/rin-test --go component     # Run only Go component tests
+./bin/rin-test --python integration # Run only Python integration tests
+./bin/rin-test --java --go integration # Run Java and Go integration tests
 
-# Test configuration options
-./bin/rin test --coverage    # Generate code coverage report
-./bin/rin test --watch       # Monitor files and run tests on changes
-./bin/rin test --fail-fast   # Stop on first failure
-./bin/rin test --no-parallel # Disable parallel execution
-./bin/rin test --verbose     # Show detailed output
-./bin/rin test --workers N   # Set maximum number of parallel workers
+# Mode Options
+./bin/rin-test --fast             # Run only fast tests (unit + component)
+./bin/rin-test --ci               # Run tests optimized for CI environment
 
-# Domain-specific BDD test commands
-./bin/rin test workflow      # Run workflow BDD tests only 
-./bin/rin test release       # Run release BDD tests only
-./bin/rin test input         # Run input interface BDD tests only
-./bin/rin test admin         # Run admin functionality tests only
-./bin/rin test api           # Run API integration tests only
-./bin/rin test messaging     # Run messaging command tests only
-./bin/rin test grep          # Run grep command tests only
-./bin/rin test linux         # Run Linux-style command tests only
-./bin/rin test tag:<name>    # Run tests with a specific tag (e.g., tag:client)
+# Execution Options
+./bin/rin-test --no-parallel      # Disable parallel test execution
+./bin/rin-test --fail-fast        # Stop on first test failure
+./bin/rin-test --coverage         # Generate code coverage report
+./bin/rin-test --verbose          # Show verbose output
+./bin/rin-test -v                 # Short form for verbose output
 
-# Feature-specific Maven test profiles
-mvn verify -P bdd-only       # Run all BDD tests
-mvn verify -P messaging-tests # Run messaging command tests only
-mvn verify -P grep-tests     # Run grep command tests only
-mvn verify -P linux-tests    # Run Linux-style command tests only
-mvn verify -P smoke-tests    # Run only smoke tests (critical paths)
+# Coverage Reports
+./bin/rin-test --coverage         # Generate full coverage report
+./bin/rin-test --coverage unit    # Generate coverage for unit tests only
+./bin/rin-test --coverage --java  # Generate coverage for Java only
 
-# Admin testing commands
-./bin/run-admin-tests.sh                # Run all admin tests
-./bin/run-admin-tests.sh --config       # Run admin configuration tests only
-./bin/run-admin-tests.sh --integration  # Run admin integration tests only
-./bin/run-admin-tests.sh --project      # Run admin project management tests only
-./bin/run-admin-tests.sh --specific=AdminUserManagementRunner  # Run a specific admin runner
+# Maven Test Profiles
+mvn test -P unit-tests            # Run unit tests only
+mvn test -P component-tests       # Run component tests only
+mvn verify -P integration-tests   # Run integration tests only
+mvn verify -P acceptance-tests    # Run acceptance tests only
+mvn verify -P performance-tests   # Run performance tests only
+mvn verify -P jacoco              # Generate Java code coverage with JaCoCo
 
 # Critical path analysis
 ./bin/rin path               # Show critical path for the current project

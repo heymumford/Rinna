@@ -6,51 +6,29 @@ This directory contains comprehensive documentation for the Rinna testing strate
 
 | Document | Description |
 |----------|-------------|
-| [Test Automation Guide](TEST_AUTOMATION_GUIDE.md) | Complete guide to implementing automated tests at all levels across all languages |
 | [Test Pyramid Strategy](TEST_PYRAMID.md) | Overview of our five-layer test pyramid approach and philosophy |
-| [Unified Test Approach](UNIFIED_TEST_APPROACH.md) | Standardized approach to test organization, naming, and execution |
-| [Testing Strategy](TESTING_STRATEGY.md) | Overall testing strategy and guiding principles |
-
-## Practical Guidelines
-
-| Document | Description |
-|----------|-------------|
-| [Test Templates](TEST_TEMPLATES.md) | Ready-to-use templates for all test types across all languages |
-| [Test Automation Checklist](TEST_AUTOMATION_CHECKLIST.md) | Practical checklist for ensuring adequate test coverage |
-| [Test Troubleshooting Guide](TEST_TROUBLESHOOTING.md) | Solutions for common test automation issues |
-| [Test Compatibility Matrix](TEST_COMPATIBILITY_MATRIX.md) | Framework for ensuring cross-language test coverage |
+| [Cross-Language Testing](CROSS_LANGUAGE_TESTING.md) | Guide to cross-language testing between Java, Go, and Python |
 | [TDD Practical Guide](TDD_PRACTICAL_GUIDE.md) | Step-by-step guide to Test-Driven Development in a multi-language environment |
-| [Test Command Reference](TEST_COMMAND_REFERENCE.md) | Quick reference for test commands across all languages |
 
-## Specialized Topics
+## Streamlined Test Structure
 
-| Document | Description |
-|----------|-------------|
-| [Admin Testing](ADMIN_TESTING.md) | Guidelines for testing administrative functionality |
-| [Cross-Language Testing](CROSS_LANGUAGE_TESTING.md) | Guide to cross-language testing with the test harness |
-| [Quality Standards](QUALITY_STANDARDS.md) | Quality standards for test implementation |
-| [TDD Features](TDD_FEATURES.md) | Test-Driven Development approach for feature implementation |
-| [Test Coverage Improvement Plan](TEST_COVERAGE_IMPROVEMENT_PLAN.md) | Plan for improving test coverage across the codebase |
-| [Model Mapper Testing](MODEL_MAPPER_TESTING.md) | Detailed testing of the ModelMapper component |
-
-## Migration and Implementation
-
-| Document | Description |
-|----------|-------------|
-| [Test Migration Summary](TEST_MIGRATION_SUMMARY.md) | Summary of test migration efforts |
-| [Test Implementation Plan](TEST_IMPLEMENTATION_PLAN.md) | Plan for implementing comprehensive test coverage |
-| [Test Cleanup Summary](TEST_CLEANUP_SUMMARY.md) | Summary of test cleanup efforts |
-
-## Standardized Test Structure
-
-We have implemented a standardized test approach with the following components:
+We have simplified our test organization to follow a consistent structure across all languages:
 
 1. **Unified Directory Structure**:
-   - `src/test/java/org/rinna/unit/` - Unit tests
-   - `src/test/java/org/rinna/component/` - Component tests
-   - `src/test/java/org/rinna/integration/` - Integration tests
-   - `src/test/java/org/rinna/acceptance/` - Acceptance tests
-   - `src/test/java/org/rinna/performance/` - Performance tests
+   - `src/test/java/org/rinna/unit/` - Java unit tests
+   - `src/test/java/org/rinna/component/` - Java component tests
+   - `src/test/java/org/rinna/integration/` - Java integration tests
+   - `src/test/java/org/rinna/acceptance/` - Java acceptance tests
+   - `src/test/java/org/rinna/performance/` - Java performance tests
+   - `api/test/unit/` - Go unit tests
+   - `api/test/component/` - Go component tests
+   - `api/test/integration/` - Go integration tests
+   - `api/test/performance/` - Go performance tests
+   - `python/tests/unit/` - Python unit tests
+   - `python/tests/component/` - Python component tests
+   - `python/tests/integration/` - Python integration tests
+   - `python/tests/acceptance/` - Python acceptance tests
+   - `python/tests/performance/` - Python performance tests
 
 2. **Standardized Test Tagging**:
    - `@Tag("unit")` for unit tests
@@ -58,206 +36,133 @@ We have implemented a standardized test approach with the following components:
    - `@Tag("integration")` for integration tests
    - `@Tag("acceptance")` for acceptance tests
    - `@Tag("performance")` for performance tests
-   - `@Tag("admin")` for admin functionality tests
 
 3. **Standardized File Naming**:
-   - Unit tests: `*Test.java`
-   - Component tests: `*ComponentTest.java`
-   - Integration tests: `*IntegrationTest.java`
-   - Acceptance tests: `*AcceptanceTest.java`
-   - Performance tests: `*PerformanceTest.java`
+   - Unit tests: `*Test.java`, `*_test.go`, `test_*_unit.py`
+   - Component tests: `*ComponentTest.java`, `*_component_test.go`, `test_*_component.py`
+   - Integration tests: `*IntegrationTest.java`, `*_integration_test.go`, `test_*_integration.py`
+   - Acceptance tests: `*AcceptanceTest.java`, `*_acceptance_test.go`, `test_*_acceptance.py`
+   - Performance tests: `*PerformanceTest.java`, `*_performance_test.go`, `test_*_performance.py`
 
-## Test Framework Resources
+## Unified Test Command
 
-### Command-Line Tools
-
-The Rinna project provides several command-line tools for test execution and analysis:
+We've streamlined our test execution with a single, unified command:
 
 ```bash
-# Run tests with the unified test framework
-./bin/rin-test                       # Run all tests
-./bin/rin-test unit                  # Run unit tests only
-./bin/rin-test component             # Run component tests only
-./bin/rin-test integration           # Run integration tests only
-./bin/rin-test acceptance            # Run acceptance tests only
-./bin/rin-test performance           # Run performance tests only
-./bin/rin-test admin                 # Run admin functionality tests
+# Run all tests
+bin/rin-test
 
-# Run tests with additional options
-./bin/rin-test --parallel unit       # Run tests in parallel
-./bin/rin-test fast                  # Run fast tests (unit + component)
-./bin/rin-test tag:workflow          # Run tests with specific tag
+# Run specific test categories
+bin/rin-test unit
+bin/rin-test component
+bin/rin-test integration
+bin/rin-test acceptance
+bin/rin-test performance
 
-# Run admin tests using the dedicated script
-./bin/run-admin-tests.sh             # All admin tests
-./bin/run-admin-tests.sh --config    # Configuration tests only
-./bin/run-admin-tests.sh --integration # Maven & server tests only
-./bin/run-admin-tests.sh --project   # Project management tests only
+# Run tests for specific languages
+bin/rin-test --java unit
+bin/rin-test --go component
+bin/rin-test --python integration
 
-# Analyze test distribution
-./bin/test-discovery.sh              # Discover and categorize tests
-./bin/test-pyramid-coverage.sh       # Analyze test pyramid coverage
+# Run fast tests only (unit and component)
+bin/rin-test --fast
 
-# Generate code coverage reports
-./bin/polyglot-coverage.sh           # Generate unified code coverage report
-```
-
-### Maven Profiles
-
-Java tests can be run using Maven profiles:
-
-```bash
-# Run tests with specific profile
-mvn test -P unit-tests               # Run unit tests only
-mvn test -P component-tests          # Run component tests only
-mvn verify -P integration-tests      # Run integration tests only
-mvn verify -P acceptance-tests       # Run acceptance tests only
-mvn verify -P performance-tests      # Run performance tests only
-```
-
-### Go Test Commands
-
-Go tests can be run using the standard Go test command:
-
-```bash
-# Run all Go tests
-cd api && go test ./...
-
-# Run specific test package
-cd api && go test ./pkg/health
+# Generate coverage reports
+bin/rin-test --coverage
 
 # Run tests with verbose output
-cd api && go test -v ./...
+bin/rin-test -v
 
-# Run benchmarks
-cd api && go test -bench=. ./...
+# Stop on first test failure
+bin/rin-test --fail-fast
 ```
 
-### Python Test Commands
+## Language-Specific Testing
 
-Python tests can be run using pytest:
+### Java Testing
 
-```bash
-# Run all Python tests
-cd python && python -m pytest
+Java tests use JUnit 5 with the following key features:
 
-# Run specific test module
-cd python && python -m pytest tests/unit/test_version.py
+- `@Tag` annotations for test categorization
+- Parameterized tests for data-driven testing
+- Extension model for test lifecycle hooks
+- Assertions for verification
 
-# Run tests with coverage
-cd python && python -m pytest --cov=rinna
-```
-
-## Cross-Language Test Structure
-
-The Rinna project follows a standardized test directory structure across languages:
-
-```
-# Java tests
-src/test/java/org/rinna/
-├── unit/           # Unit tests 
-├── component/      # Component tests
-├── integration/    # Integration tests
-├── acceptance/     # Acceptance tests
-│   └── steps/      # Step definitions for BDD tests
-└── performance/    # Performance tests
-
-src/test/resources/
-├── features/       # BDD feature files
-└── testdata/       # Test data files
-
-# Go tests
-api/test/
-├── unit/           # Unit tests
-├── component/      # Component tests
-├── integration/    # Integration tests
-├── acceptance/     # Acceptance tests
-└── performance/    # Performance tests
-
-# Python tests
-python/tests/
-├── unit/           # Unit tests
-├── component/      # Component tests
-├── integration/    # Integration tests
-├── acceptance/     # Acceptance tests
-└── performance/    # Performance tests
-```
-
-## Test Implementation Examples
-
-### Java Unit Test Example
-
+Example unit test:
 ```java
-package org.rinna.unit.service;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
-import static org.junit.jupiter.api.Assertions.*;
-
 @Tag("unit")
-@DisplayName("Service Unit Tests")
-public class ServiceTest {
+class WorkItemTest {
     @Test
-    @DisplayName("Should perform operation correctly")
-    void shouldPerformOperationCorrectly() {
-        // Test implementation
+    void shouldCreateWorkItem() {
+        WorkItem item = new WorkItem("Test item");
+        assertEquals("Test item", item.getTitle());
+        assertEquals(WorkflowState.CREATED, item.getState());
     }
 }
 ```
 
-### BDD Testing Example
+### Go Testing
 
-BDD tests follow a standard structure:
+Go tests use the standard testing package:
 
-1. Feature files define scenarios in Gherkin syntax:
+```go
+// +build unit
 
-```gherkin
-Feature: Work Item Management
-  As a user
-  I want to create and manage work items
-  So that I can track my project tasks
+package model
 
-  Scenario: Create a new work item
-    Given I am logged in
-    When I create a work item with title "Test Task"
-    Then the work item should be created successfully
-    And the work item should have the status "FOUND"
-```
+import "testing"
 
-2. Step definitions implement the scenario steps:
-
-```java
-@Given("I am logged in")
-public void iAmLoggedIn() {
-    // Authentication implementation
-}
-
-@When("I create a work item with title {string}")
-public void iCreateWorkItem(String title) {
-    workItem = workItemService.create(new WorkItemCreateRequest(title));
-}
-
-@Then("the work item should be created successfully")
-public void workItemShouldBeCreated() {
-    assertNotNull(workItem.getId());
+func TestWorkItem_Create(t *testing.T) {
+    item := NewWorkItem("Test item")
+    if item.Title != "Test item" {
+        t.Errorf("Expected title 'Test item', got '%s'", item.Title)
+    }
+    if item.State != StateCREATED {
+        t.Errorf("Expected state 'CREATED', got '%s'", item.State)
+    }
 }
 ```
 
-For more detailed examples and patterns, see the [Test Templates](TEST_TEMPLATES.md) document.
+### Python Testing
 
-## Contributing to Test Documentation
+Python tests use pytest with markers:
 
-When contributing to test documentation:
+```python
+import pytest
+from rinna.model import WorkItem
 
-1. Follow the established document structure
-2. Update relevant documentation when adding new test approaches
-3. Ensure examples cover all supported languages (Java, Go, Python)
-4. Keep test documentation aligned with code practices
-5. Include practical examples whenever possible
+@pytest.mark.unit
+def test_work_item_creation():
+    item = WorkItem("Test item")
+    assert item.title == "Test item"
+    assert item.state == "CREATED"
+```
 
-## Related Documentation
+## Cross-Language Integration
 
-- [User Guide - Testing](../user-guide/testing.md) - Test documentation for users
-- [Development - Testing Strategy](../development/testing.md) - Testing information for developers
-- [Project CI/CD Pipeline](../development/ci-workflow.md) - CI/CD pipeline documentation
+All our tests are organized to ensure seamless integration between components written in different languages:
+
+- Java-Go integration through REST API
+- Java-Python integration through process and file-based communication
+- Go-Python integration through REST API and WebSockets
+
+See [Cross-Language Testing](CROSS_LANGUAGE_TESTING.md) for more details.
+
+## Code Coverage
+
+We use a unified approach to code coverage across all languages:
+
+```bash
+# Generate coverage report for all languages
+bin/rin-test --coverage
+
+# Generate coverage for specific tests
+bin/rin-test --coverage unit
+```
+
+This integrates:
+- JaCoCo for Java
+- Go's built-in coverage tools
+- pytest-cov for Python
+
+Coverage reports are consolidated in `target/coverage/`.

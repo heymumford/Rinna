@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Rinna project follows a comprehensive testing strategy across multiple languages (Java, Go, and Python) based on the Test Pyramid model. This document outlines our approach to ensuring test coverage across all layers of the application architecture.
+The Rinna project follows a streamlined testing strategy based on the Test Pyramid model, applying consistent principles across all languages (Java, Go, and Python).
 
 ```
         ▲ Fewer
@@ -34,9 +34,6 @@ The Rinna project follows a comprehensive testing strategy across multiple langu
 - **Scope**: Single class or method with dependencies mocked
 - **Execution Speed**: Very fast (milliseconds)
 - **Count**: Highest number of tests
-- **Java Example**: `ViewCommandTest.java`
-- **Go Example**: `version_test.go`
-- **Python Example**: `test_version.py`
 
 ### Component Tests
 
@@ -44,9 +41,6 @@ The Rinna project follows a comprehensive testing strategy across multiple langu
 - **Scope**: Multiple classes within a module without external dependencies
 - **Execution Speed**: Fast (tens to hundreds of milliseconds)
 - **Count**: Moderate number of tests
-- **Java Example**: `CommandExecutionTest.java`
-- **Go Example**: `config_component_test.go`
-- **Python Example**: `test_component_config.py`
 
 ### Integration Tests
 
@@ -54,9 +48,6 @@ The Rinna project follows a comprehensive testing strategy across multiple langu
 - **Scope**: Multiple modules with real (non-mocked) dependencies
 - **Execution Speed**: Moderate (hundreds of milliseconds)
 - **Count**: Fewer than component tests
-- **Java Example**: `CliServiceIntegrationTest.java`
-- **Go Example**: `cli_api_integration_test.go`
-- **Python Example**: `test_integration_cli.py`
 
 ### Acceptance Tests
 
@@ -64,9 +55,6 @@ The Rinna project follows a comprehensive testing strategy across multiple langu
 - **Scope**: Complete workflows from user input to expected output
 - **Execution Speed**: Slow (seconds)
 - **Count**: Fewer than integration tests
-- **Java Example**: `WorkflowAcceptanceTest.java`
-- **Go Example**: `workflow_acceptance_test.go`
-- **Python Example**: `test_acceptance_workflow.py`
 
 ### Performance Tests
 
@@ -74,83 +62,143 @@ The Rinna project follows a comprehensive testing strategy across multiple langu
 - **Scope**: Response times, throughput, and resource utilization
 - **Execution Speed**: Varies widely based on test
 - **Count**: Fewest number of tests
-- **Java Example**: `CliPerformanceTest.java`
-- **Go Example**: `api_performance_test.go`
-- **Python Example**: `test_perf_operations.py`
 
-## Cross-Language Test Coverage
+## Streamlined Test Directory Structure
 
-Our polyglot architecture requires tests that span multiple languages. For example:
+All tests follow a consistent directory structure:
 
-1. **CLI-API Integration**: Tests that verify the Java CLI can correctly communicate with the Go API server
-2. **Data Validation**: Tests that ensure consistent data validation rules across all languages
-3. **Cross-Service Communication**: Tests that verify services implemented in different languages can interact correctly
+```
+src/test/java/org/rinna/
+├── unit/           # Unit tests
+├── component/      # Component tests
+├── integration/    # Integration tests
+├── acceptance/     # Acceptance tests
+└── performance/    # Performance tests
 
-## Test Coverage Monitoring
+api/test/
+├── unit/           # Unit tests
+├── component/      # Component tests
+├── integration/    # Integration tests
+└── performance/    # Performance tests
 
-We use a custom `test-pyramid-coverage.sh` tool to monitor test coverage across all languages and test categories. This tool:
-
-1. Scans the codebase for tests in each category and language
-2. Generates a visual representation of our test pyramid
-3. Provides recommendations for improving test coverage
-4. Can be integrated into CI/CD pipelines
-
-To run the tool:
-
-```bash
-./bin/test-pyramid-coverage.sh
+python/tests/
+├── unit/           # Unit tests
+├── component/      # Component tests
+├── integration/    # Integration tests
+├── acceptance/     # Acceptance tests
+└── performance/    # Performance tests
 ```
 
-## Test Conventions
+## Unified Testing Approach
 
-### Java Tests
+We've simplified our testing approach with a unified test script that works consistently across all languages.
 
-- Use JUnit 5 (Jupiter) for all tests
-- Apply `@Tag` annotations to categorize tests (e.g., `@Tag("unit")`)
-- Place tests in appropriate package structure (e.g., `unit`, `component`, etc.)
-- Extend base test classes for common functionality
+### Running Tests
 
-### Go Tests
-
-- Use the standard Go testing package
-- Place tests in appropriate directories based on category
-- Use naming conventions to indicate test type (e.g., `_integration_test.go`)
-- Use benchmarks for performance tests
-
-### Python Tests
-
-- Use pytest for all tests
-- Place tests in category-specific directories
-- Use naming conventions for test modules (e.g., `test_integration_*.py`)
-- Apply pytest markers to categorize tests when needed
-
-## CI/CD Integration
-
-Test pyramid coverage is monitored in our CI/CD pipelines:
-
-1. The `test-pyramid` target in our Makefile runs the coverage tool
-2. CI builds generate test pyramid reports as artifacts
-3. Pull requests are automatically checked for proper test pyramid balance
-4. Code coverage metrics are combined with pyramid metrics for comprehensive quality assessment
-
-## Getting Started with Tests
-
-When adding new functionality:
-
-1. Start with unit tests that cover the core logic
-2. Add component tests to verify interactions within modules
-3. Add integration tests for cross-module or cross-language interactions
-4. Add acceptance tests for complete user workflows
-5. Add performance tests for performance-critical paths
-
-To run all tests:
+The `bin/rin-test` script provides a unified interface for all tests:
 
 ```bash
-make test
+# Run all tests
+bin/rin-test
+
+# Run specific test categories
+bin/rin-test unit
+bin/rin-test component
+bin/rin-test integration
+bin/rin-test acceptance
+bin/rin-test performance
+
+# Run tests for specific languages
+bin/rin-test --java unit
+bin/rin-test --go component
+bin/rin-test --python integration
+
+# Run fast tests only (unit and component)
+bin/rin-test --fast
+
+# Generate coverage reports
+bin/rin-test --coverage
+
+# Run tests with verbose output
+bin/rin-test -v
+
+# Stop on first test failure
+bin/rin-test --fail-fast
 ```
 
-To run just the test pyramid analysis:
+## Test Naming Conventions
+
+To maintain consistency, we use standard naming conventions across all languages:
+
+| Test Type   | Java                   | Go                       | Python                |
+|-------------|------------------------|--------------------------|------------------------|
+| Unit        | `*Test.java`           | `*_test.go`              | `test_*_unit.py`      |
+| Component   | `*ComponentTest.java`  | `*_component_test.go`    | `test_*_component.py` |
+| Integration | `*IntegrationTest.java`| `*_integration_test.go`  | `test_*_integration.py` |
+| Acceptance  | `*AcceptanceTest.java` | `*_acceptance_test.go`   | `test_*_acceptance.py` |
+| Performance | `*PerformanceTest.java`| `*_performance_test.go`  | `test_*_performance.py` |
+
+## Tagging Tests
+
+We use consistent tagging across languages:
+
+```java
+// Java (JUnit 5)
+@Tag("unit")
+@Tag("component")
+@Tag("integration")
+@Tag("acceptance")
+@Tag("performance")
+```
+
+```go
+// Go (build tags)
+// +build unit
+// +build component
+// +build integration
+// +build performance
+```
+
+```python
+# Python (pytest)
+@pytest.mark.unit
+@pytest.mark.component
+@pytest.mark.integration
+@pytest.mark.acceptance
+@pytest.mark.performance
+```
+
+## Fast Test Mode
+
+For rapid feedback during development, use:
 
 ```bash
-make test-pyramid
+bin/rin-test --fast
 ```
+
+This runs only the unit and component tests, which should complete in seconds rather than minutes.
+
+## Cross-Language Testing
+
+Cross-language tests ensure seamless integration between components written in different languages:
+
+```bash
+# Run cross-language integration tests
+bin/rin-test integration
+
+# Run cross-language tests for specific language combinations
+bin/rin-test --java --go integration
+```
+
+## Code Coverage
+
+Generate unified code coverage reports across all languages:
+
+```bash
+bin/rin-test --coverage
+```
+
+This produces:
+- Line coverage metrics for each language
+- Unified HTML reports
+- Consolidated summary report
