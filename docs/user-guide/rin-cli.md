@@ -25,18 +25,46 @@ For convenience, you can add the Rinna `bin` directory to your PATH or create a 
 | `view <id>` | View details of a work item |
 | `list [filters]` | List work items with optional filters |
 | `update <id> [options]` | Update a work item's properties |
+| `done <id>` | Mark a work item as complete |
+| `edit <id>` | Interactively edit a work item |
+| `history <id>` | Show history of a work item |
+| `comment <id> <text>` | Add a comment to a work item |
+| **Search and Filtering Commands** |
+| `grep <pattern> [options]` | Search work items for text patterns |
+| `find [options]` | Find work items matching specific criteria |
+| `backlog [options]` | Show items in the backlog |
+| `cat <id>` | Display work item content (similar to view) |
+| `ls [options]` | Show work items in directory-like format |
+| **Workflow Commands** |
+| `workflow [options]` | Manage and view workflow states |
+| `path [options]` | Show critical path for the project |
+| `import [source]` | Import work items from external source |
+| `undo [operation]` | Undo previous operations |
 | **Service Commands** |
 | `server status` | Check status of Rinna services |
 | `server start` | Start Rinna services |
 | `server stop` | Stop Rinna services |
 | `server restart` | Restart Rinna services |
+| **Communication Commands** |
+| `msg <user> <message>` | Send a message to another user |
+| `notify [options]` | Manage notifications |
+| **Report Commands** |
+| `stats [options]` | Show project statistics |
+| `report [options]` | Generate various reports |
+| `schedule [options]` | Manage scheduled reports |
+| **System Commands** |
+| `test [options]` | Run tests for the system |
+| `admin [subcommand]` | Administrative commands |
+| `access [options]` | Manage user access and permissions |
 | **Build Commands** |
 | `build` | Build the Rinna project |
 | `clean` | Clean build artifacts |
-| `test`  | Run tests |
 | `all`   | Run clean, build, and test (default if no command specified) |
 | **Version Commands** |
 | `version` | Version management (see below) |
+| **Authentication Commands** |
+| `login [username]` | Log in to the system |
+| `logout` | Log out from the system |
 
 ### Version Management Commands
 
@@ -58,6 +86,20 @@ The `version` command provides a set of subcommands for managing versions across
 |--------|-------------|
 | `-m, --message <msg>` | Specify a custom message for commits, tags, or releases |
 | `-d, --dry-run` | Show what would happen without making changes |
+
+### Admin Commands
+
+The `admin` command provides administrative functions for managing Rinna:
+
+| Subcommand | Description |
+|------------|-------------|
+| `audit [options]` | Manage audit logs and compliance |
+| `backup [options]` | Backup and recovery management |
+| `compliance [options]` | View and configure compliance settings |
+| `diagnostics [options]` | Run system diagnostics |
+| `monitor [options]` | System monitoring tools |
+| `recovery [options]` | Restore from backups |
+| `operations [options]` | View and manage system operations |
 
 ## Global Options
 
@@ -167,6 +209,65 @@ rin list --type=BUG --priority=HIGH
 
 # Update a work item's status
 rin update WI-123 --status=IN_PROGRESS --assignee=johndoe
+
+# Mark a work item as complete
+rin done WI-123
+
+# Add a comment to a work item
+rin comment WI-123 "Fixed the issue with payment processing"
+
+# View work item history
+rin history WI-123
+```
+
+### Search and Filtering Examples
+
+```bash
+# Search for text in work items (like grep)
+rin grep "payment gateway"
+
+# Case-sensitive search
+rin grep -s "API"
+
+# Search with context
+rin grep -c 3 "error"
+
+# Format search results as JSON
+rin grep "database" --format=json
+
+# Find work items by criteria
+rin find --type=BUG --status=IN_PROGRESS --assigned=me
+
+# View backlog items
+rin backlog
+
+# List items in directory-like format
+rin ls --sort=priority
+```
+
+### Workflow Examples
+
+```bash
+# Show workflow states
+rin workflow states
+
+# Show critical path for the project
+rin path
+
+# Show only blocking items on the critical path
+rin path --blockers
+
+# Show dependencies for a specific item
+rin path --item=WI-123
+
+# Critical path JSON output
+rin path --format=json
+
+# Import work items from JIRA
+rin import jira --project=PROJ
+
+# Undo the last operation
+rin undo
 ```
 
 ### Service Management Examples
@@ -191,6 +292,81 @@ rin server restart
 rin --no-auto-start list
 ```
 
+### Communication Examples
+
+```bash
+# Send a message to a user
+rin msg johndoe "Meeting at 3pm to discuss the release"
+
+# List all notifications
+rin notify list
+
+# Show only unread notifications
+rin notify unread
+
+# Mark a notification as read
+rin notify read 123
+
+# Mark all notifications as read
+rin notify markall
+```
+
+### Reporting Examples
+
+```bash
+# Show summary statistics
+rin stats
+
+# Show statistics dashboard with visualizations
+rin stats dashboard
+
+# Show all available statistics
+rin stats all
+
+# Show item distributions with charts
+rin stats distribution
+
+# Show detailed completion metrics
+rin stats detail completion
+
+# Show detailed workflow metrics
+rin stats detail workflow
+
+# Generate a full report
+rin report generate
+
+# Generate a specific report type
+rin report generate --type=burndown
+
+# Schedule a recurring report
+rin schedule report --type=weekly --day=friday
+```
+
+### Admin Examples
+
+```bash
+# List audit logs
+rin admin audit list
+
+# Configure audit retention
+rin admin audit configure --retention=90
+
+# Generate compliance report
+rin admin compliance report financial
+
+# Run system diagnostics
+rin admin diagnostics run
+
+# Show system metrics
+rin admin monitor metrics --type=system
+
+# Perform a system backup
+rin admin backup start --type=full
+
+# Create a recovery plan
+rin admin recovery plan --from=latest
+```
+
 ### Build Examples
 
 ```bash
@@ -205,6 +381,19 @@ rin -e all
 
 # Run tests in a specific module
 cd rinna-core && ../bin/rin test
+```
+
+### Authentication Examples
+
+```bash
+# Login with interactive prompt
+rin login
+
+# Login as specific user
+rin login johndoe
+
+# Logout of current session
+rin logout
 ```
 
 ### Version Management Examples
@@ -232,6 +421,12 @@ To see the help text and available commands, use:
 
 ```bash
 rin --help
+```
+
+For help on a specific command:
+
+```bash
+rin <command> --help
 ```
 
 ## Configuration

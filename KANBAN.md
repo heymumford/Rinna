@@ -284,9 +284,7 @@ This document provides a consolidated view of all tasks across the Rinna project
   - ✅ Create run script for command mirror demo
 
 ### Documentation
-- **Other Documentation Tasks**
-  - Update CLI documentation with newly implemented commands
-  - Create detailed user guide for advanced command usage
+- **API Documentation**
   - Expand API documentation with more examples
 
 ## ✅ Done
@@ -440,6 +438,9 @@ This document provides a consolidated view of all tasks across the Rinna project
   - ✅ Created document for enterprise system integration
   - ✅ Added mapping guidelines for Jira, Azure DevOps, GitHub Issues
   - ✅ Included example scripts and API usage examples
+- **CLI Documentation**
+  - ✅ Updated CLI documentation with newly implemented commands
+  - ✅ Created detailed user guide for advanced command usage
 
 - **Documentation Cleanup**
   - Archived redundant documentation files
