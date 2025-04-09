@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# check-versions.sh - Wrapper script to validate version consistency across project components
+# sync-versions.sh - Wrapper script to synchronize versions across project components
 #
 # Copyright (c) 2025 Eric C. Mumford (@heymumford)
 # This file is subject to the terms and conditions defined in
@@ -18,5 +18,5 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 chmod +x "${SCRIPT_DIR}/version-tools/version-validator.sh"
 chmod +x "${SCRIPT_DIR}/version-tools/version-sync.sh"
 
-# Run the version validator with all arguments passed to this script
-"${SCRIPT_DIR}/version-tools/version-validator.sh" "$@"
+# Run the version synchronizer with all arguments passed to this script
+"${SCRIPT_DIR}/version-tools/version-sync.sh" "$@"
