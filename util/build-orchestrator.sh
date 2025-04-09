@@ -363,7 +363,7 @@ increment_build_number() {
   if [[ "$SKIP_VERSION_INCREMENT" == "true" ]]; then
     log_info "Skipping build number increment (--skip-version-increment flag is set)"
     return 0
-  }
+  fi
   
   section_header "Incrementing Build Number"
   
