@@ -1,0 +1,108 @@
+version: '3.8'
+
+# Named volumes for persistent data
+volumes:
+  test-output:
+  coverage-data:
+  python-cache:
+
+services:
+  # Base test service - builds and runs tests
+  python-tests:
+    build:
+      context: ..
+      dockerfile: python/Dockerfile
+      target: test
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+    volumes:
+      # Mount test output directories to host
+      - test-output:/app/test-output
+      - coverage-data:/app/coverage
+      - python-cache:/app/.cache
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - PYTHONPATH=/app:/app/python
+      - PYTHONDONTWRITEBYTECODE=1
+      - TESTOPTS=${TESTOPTS:-}
+    image: rinna-python-tests:latest
+    profiles: ["testing"]
+    command: ${TEST_LEVEL:-all}
+
+  # Development container with tools for debugging
+  python-dev:
+    build:
+      context: ..
+      dockerfile: python/Dockerfile
+      target: development
+      args:
+        USER_ID: ${USER_ID:-1000}
+        GROUP_ID: ${GROUP_ID:-1000}
+    volumes:
+      - ../python:/app/python
+      - test-output:/app/test-output
+      - coverage-data:/app/coverage
+      - python-cache:/app/.cache
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - PYTHONPATH=/app:/app/python
+      - PYTHONDONTWRITEBYTECODE=1
+      - DEV_MODE=true
+    image: rinna-python-dev:latest
+    profiles: ["dev"]
+    entrypoint: ["/bin/bash"]
+    command: ["-c", "echo 'Python development container ready. Type exit to quit.' && /bin/bash"]
+
+  # Production service container
+  python-service:
+    build:
+      context: ..
+      dockerfile: python/Dockerfile.prod
+      target: production
+    environment:
+      - PYTHONPATH=/app
+      - API_URL=${API_URL:-http://localhost:8080}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    image: rinna-python:latest
+    profiles: ["service", "prod"]
+    ports:
+      - "${PORT:-5000}:5000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # Specific test pyramid levels
+  unit-tests:
+    extends: python-tests
+    command: ["--verbose", "unit"]
+    profiles: ["unit", "testing"]
+
+  component-tests:
+    extends: python-tests
+    command: ["--verbose", "component"]
+    profiles: ["component", "testing"]
+
+  integration-tests:
+    extends: python-tests
+    command: ["--verbose", "integration"]
+    profiles: ["integration", "testing"]
+
+  acceptance-tests:
+    extends: python-tests
+    command: ["--verbose", "acceptance"]
+    profiles: ["acceptance", "testing"]
+
+  performance-tests:
+    extends: python-tests
+    command: ["--verbose", "performance"]
+    profiles: ["performance", "testing"]
+
+  # Quality checks only
+  quality:
+    extends: python-tests
+    command: ["--no-install", "--skip-quality=false", "--no-coverage"]
+    profiles: ["quality", "testing"]
