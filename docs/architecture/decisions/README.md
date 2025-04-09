@@ -42,6 +42,7 @@ Here's a chronological list of all ADRs:
 | [ADR-0005](0005-adopt-multi-language-approach-for-system-components.md) | Adopt Multi-Language Approach for System Components | Accepted |
 | [ADR-0006](0006-implement-comprehensive-testing-pyramid-strategy.md) | Implement Comprehensive Testing Pyramid Strategy | Accepted |
 | [ADR-0007](0007-establish-security-compliance-framework.md) | Establish Security Compliance Framework | Accepted |
+| [ADR-0008](0008-establish-task-prioritization-framework-with-tdd-first-approach.md) | Establish Task Prioritization Framework with TDD-First Approach | Proposed |
 
 ## Statuses
 
