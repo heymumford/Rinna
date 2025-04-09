@@ -1,0 +1,155 @@
+name: CLI Module Build Verification
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'rinna-cli/**'
+      - '.github/workflows/cli-module-build-verification.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'rinna-cli/**'
+      - '.github/workflows/cli-module-build-verification.yml'
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip running tests'
+        required: false
+        default: false
+        type: boolean
+      fast_mode:
+        description: 'Run in fast mode (minimal tests)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  verify-cli-module:
+    name: Verify CLI Module
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+      
+      # Validate basic structure and package names
+      - name: Enforce package structure
+        run: |
+          echo "Running package structure validation for CLI module..."
+          if [ -f "bin/checks/enforce-package-structure.sh" ]; then
+            bin/checks/enforce-package-structure.sh rinna-cli
+          fi
+      
+      # Compile CLI module to verify build
+      - name: Compile CLI module
+        run: |
+          echo "Compiling rinna-cli module..."
+          cd rinna-cli
+          mvn -B compile
+          
+          echo "Verifying dependencies..."
+          mvn -B dependency:analyze
+      
+      # Check for MetadataService integration in all commands
+      - name: Validate MetadataService integration
+        run: |
+          echo "Checking for MetadataService integration in command classes..."
+          cd rinna-cli
+          find src/main/java/org/rinna/cli/command -name "*.java" -type f -exec grep -l "metadataService" {} \; | wc -l
+
+      # Run fast tests for verification
+      - name: Run CLI unit tests
+        if: ${{ github.event.inputs.skip_tests != 'true' }}
+        run: |
+          echo "Running CLI unit tests..."
+          cd rinna-cli
+          mvn -B test
+      
+      # Run component tests for comprehensive verification
+      - name: Run CLI component tests
+        if: ${{ github.event.inputs.skip_tests != 'true' && github.event.inputs.fast_mode != 'true' }}
+        run: |
+          echo "Running CLI component tests..."
+          cd rinna-cli
+          mvn -B test -Dtest=*ComponentTest
+      
+      # Generate report of command status
+      - name: Generate command status report
+        run: |
+          echo "# CLI Command MetadataService Integration Status" > cli-command-status.md
+          echo "Generated on $(date)" >> cli-command-status.md
+          echo "" >> cli-command-status.md
+          echo "| Command | MetadataService Integration | OutputFormatter | Hierarchical Operations |" >> cli-command-status.md
+          echo "|---------|---------------------------|-----------------|--------------------------|" >> cli-command-status.md
+          
+          cd rinna-cli/src/main/java/org/rinna/cli/command
+          for file in $(find . -name "*.java" | sort); do
+            COMMAND=$(basename "$file" .java)
+            METADATA=$(grep -c "metadataService" "$file" || echo "0")
+            OUTPUT_FORMATTER=$(grep -c "OutputFormatter" "$file" || echo "0")
+            HIERARCHICAL=$(grep -c "trackOperation" "$file" || echo "0")
+            
+            if [ "$METADATA" -gt 0 ]; then
+              METADATA_STATUS="✅"
+            else
+              METADATA_STATUS="❌"
+            fi
+            
+            if [ "$OUTPUT_FORMATTER" -gt 0 ]; then
+              FORMATTER_STATUS="✅"
+            else
+              FORMATTER_STATUS="❌"
+            fi
+            
+            if [ "$HIERARCHICAL" -gt 0 ]; then
+              HIERARCHICAL_STATUS="✅"
+            else
+              HIERARCHICAL_STATUS="❌"
+            fi
+            
+            echo "| $COMMAND | $METADATA_STATUS | $FORMATTER_STATUS | $HIERARCHICAL_STATUS |" >> ../../../../../../../../cli-command-status.md
+          done
+      
+      # Upload command status report
+      - name: Upload command status report
+        uses: actions/upload-artifact@v3
+        with:
+          name: cli-command-status-report
+          path: cli-command-status.md
+      
+      # Post summary to job
+      - name: Post command status summary
+        run: |
+          if [ -f "cli-command-status.md" ]; then
+            echo "::group::CLI Command Status Summary"
+            cat cli-command-status.md
+            echo "::endgroup::"
+            
+            # Add to job summary
+            cat cli-command-status.md >> $GITHUB_STEP_SUMMARY
+            
+            # Calculate completion percentage
+            TOTAL_COMMANDS=$(grep -c "^|" cli-command-status.md)
+            METADATA_INTEGRATED=$(grep -c "✅.*|.*|" cli-command-status.md)
+            
+            # Adjust for header row
+            TOTAL_COMMANDS=$((TOTAL_COMMANDS - 1))
+            
+            if [ "$TOTAL_COMMANDS" -gt 0 ]; then
+              PERCENT=$((METADATA_INTEGRATED * 100 / TOTAL_COMMANDS))
+              echo "MetadataService Integration: $METADATA_INTEGRATED / $TOTAL_COMMANDS commands ($PERCENT%)" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "No command status report generated"
+          fi
