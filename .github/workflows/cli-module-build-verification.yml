@@ -6,11 +6,13 @@ on:
     paths:
       - 'rinna-cli/**'
       - '.github/workflows/cli-module-build-verification.yml'
+      - 'config/quality-gate.xml'
   pull_request:
     branches: [ main, develop ]
     paths:
       - 'rinna-cli/**'
       - '.github/workflows/cli-module-build-verification.yml'
+      - 'config/quality-gate.xml'
   workflow_dispatch:
     inputs:
       skip_tests:
@@ -23,6 +25,16 @@ on:
         required: false
         default: false
         type: boolean
+      quality_mode:
+        description: 'Quality check mode (dev, ci, strict)'
+        required: false
+        default: 'ci'
+        type: string
+      coverage_threshold:
+        description: 'Code coverage threshold percentage'
+        required: false
+        default: '80'
+        type: string
 
 jobs:
   verify-cli-module:
@@ -83,6 +95,23 @@ jobs:
           echo "Running CLI component tests..."
           cd rinna-cli
           mvn -B test -Dtest=*ComponentTest
+          
+      # Run quality checks with defined thresholds
+      - name: Check code quality
+        run: |
+          echo "Running code quality checks..."
+          chmod +x bin/quality-thresholds.sh
+          
+          # Use workflow input or default to CI mode
+          QUALITY_MODE="${{ github.event.inputs.quality_mode || 'ci' }}"
+          COVERAGE_THRESHOLD="${{ github.event.inputs.coverage_threshold || '80' }}"
+          
+          # Run quality checks
+          ./bin/quality-thresholds.sh --mode=$QUALITY_MODE --coverage=$COVERAGE_THRESHOLD --check
+          
+          # Also run PMD directly on CLI module
+          cd rinna-cli
+          mvn pmd:check
       
       # Generate report of command status
       - name: Generate command status report
@@ -153,3 +182,38 @@ jobs:
           else
             echo "No command status report generated"
           fi
+          
+      # Generate quality report
+      - name: Generate quality report
+        run: |
+          echo "Generating quality report..."
+          chmod +x bin/quality-thresholds.sh
+          ./bin/quality-thresholds.sh --report
+          
+      # Upload quality report
+      - name: Upload quality report
+        uses: actions/upload-artifact@v3
+        with:
+          name: code-quality-report
+          path: target/quality-report/
+          
+      # Report quality status on PR
+      - name: Report quality status
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('target/quality-report/summary.md')) {
+              const summary = fs.readFileSync('target/quality-report/summary.md', 'utf8');
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: summary
+              });
+            } else {
+              console.log("Quality report not found");
+            }
