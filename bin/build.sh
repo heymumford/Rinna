@@ -20,6 +20,7 @@ mkdir -p "$PROJECT_ROOT/logs"
 
 # Define variables
 VERSION_FILE="$PROJECT_ROOT/version.properties"
+WARNING_COUNT=0
 
 # Set color variables
 RED='\033[0;31m'
@@ -200,6 +201,8 @@ skip_task() {
 warn_task() {
   local message="$1"
   echo -e "${STATUS_WARNING} ${message}"
+  echo -e "${YELLOW}> WARNING:${NC} ${message}"
+  ((WARNING_COUNT++))
 }
 
 section_header() {
@@ -243,27 +246,41 @@ run_formatted() {
     return 0
   fi
   
+  # Announce what we're about to do
+  echo -e "${BLUE}> STEP:${NC} About to $description"
   start_task "$description"
   
   # Run the command and capture output
   local temp_file=$(mktemp)
   if eval "$cmd" > "$temp_file" 2>&1; then
+    # Report success and outcome
     complete_task "$description"
+    echo -e "${GREEN}> COMPLETED:${NC} Successfully finished $description"
+    
+    # Show verbose output if requested
     if [[ "${VERBOSE:-false}" == "true" ]]; then
       echo ""
       cat "$temp_file"
       echo ""
     fi
+    
     rm -f "$temp_file"
     return 0
   else
+    # Capture error information
     local exit_code=$?
     fail_task "$description" "Command failed with exit code $exit_code"
+    
+    # Show error output
+    echo -e "${RED}> ERROR:${NC} Failed while $description"
     echo ""
     cat "$temp_file"
     echo ""
+    
+    # Clean up and exit immediately on error
     rm -f "$temp_file"
-    return $exit_code
+    echo -e "${RED}> BUILD STOPPED:${NC} Halting build process due to error"
+    exit $exit_code
   fi
 }
 
@@ -297,15 +314,28 @@ main() {
     log_info "Quick build enabled - skipping tests and quality checks"
   fi
   
-  # Run all phases or specific phase
+  # Announce build plan
   if [[ -n "$SPECIFIC_PHASE" ]]; then
     if [[ " ${BUILD_PHASES[*]} " == *" $SPECIFIC_PHASE "* ]]; then
-      run_phase "$SPECIFIC_PHASE"
+      echo -e "${BLUE}> BUILD PLAN:${NC} Running 1 phase: $SPECIFIC_PHASE"
     else
       log_error "Unknown build phase: $SPECIFIC_PHASE"
       log_info "Available phases: ${BUILD_PHASES[*]}"
       exit 1
     fi
+  else
+    echo -e "${BLUE}> BUILD PLAN:${NC} Running all ${#BUILD_PHASES[@]} phases: ${BUILD_PHASES[*]}"
+  fi
+  
+  echo ""
+  
+  # Track warnings
+  WARNING_COUNT=0
+  BUILD_START_TIME=$(date +%s)
+  
+  # Run phases
+  if [[ -n "$SPECIFIC_PHASE" ]]; then
+    run_phase "$SPECIFIC_PHASE"
   else
     # Run all phases in sequence
     for phase in "${BUILD_PHASES[@]}"; do
@@ -313,12 +343,29 @@ main() {
     done
   fi
   
-  log_info "✅ Build process completed successfully"
+  # Calculate total build time
+  BUILD_END_TIME=$(date +%s)
+  BUILD_DURATION=$((BUILD_END_TIME - BUILD_START_TIME))
+  
+  # Build summary section
+  section_header "Build Summary"
+  
+  echo -e "${GREEN}> BUILD SUCCESSFUL:${NC} All build phases completed without errors"
+  echo -e "${BLUE}> BUILD TIME:${NC} Total build time: ${BUILD_DURATION}s"
+  
+  if [[ $WARNING_COUNT -gt 0 ]]; then
+    echo -e "${YELLOW}> WARNINGS:${NC} Build completed with $WARNING_COUNT warnings"
+  else
+    echo -e "${GREEN}> WARNINGS:${NC} No warnings were reported during the build"
+  fi
   
   # Run XML cleanup scheduler if it exists
   if [[ -f "$PROJECT_ROOT/bin/xml-tools/xml-cleanup-scheduler.sh" ]]; then
+    echo -e "${BLUE}> CLEANUP:${NC} Running XML cleanup scheduler"
     "$PROJECT_ROOT/bin/xml-tools/xml-cleanup-scheduler.sh" || true
   fi
+  
+  section_footer
 }
 
 # Run a specific build phase
@@ -326,8 +373,62 @@ run_phase() {
   local phase="$1"
   local start_time=$(date +%s)
   
+  # Get the number of steps for the phase
+  local total_steps=0
+  local phase_steps=()
+  
+  case "$phase" in
+    initialize)
+      phase_steps=("Checking build requirements" "Creating build directories" "Loading Rinna environment" "Reading version information")
+      ;;
+    validate)
+      phase_steps=("Validating architecture" "Running Maven validation" "Checking Go code" "Checking Python code")
+      ;;
+    compile)
+      if is_component_enabled "java"; then phase_steps+=("Compiling Java components"); fi
+      if is_component_enabled "go"; then phase_steps+=("Compiling Go API server"); fi
+      if is_component_enabled "python"; then phase_steps+=("Installing Python modules"); fi
+      ;;
+    test)
+      if [[ "$SKIP_TESTS" != "true" ]]; then
+        if is_component_enabled "java"; then phase_steps+=("Running Java tests"); fi
+        if is_component_enabled "go"; then phase_steps+=("Running Go API tests"); fi
+        if is_component_enabled "python"; then phase_steps+=("Running Python tests"); fi
+        if [[ "$RUN_POLYGLOT" == "true" ]]; then phase_steps+=("Running cross-language integration tests"); fi
+      fi
+      ;;
+    package)
+      if is_component_enabled "java"; then phase_steps+=("Packaging Java components"); fi
+      phase_steps+=("Creating distribution package")
+      ;;
+    verify)
+      if [[ "$SKIP_QUALITY" != "true" ]]; then
+        phase_steps=("Running quality verification" "Generating coverage reports" "Generating architecture diagrams")
+      fi
+      ;;
+    install)
+      if is_component_enabled "java"; then phase_steps+=("Installing Maven artifacts"); fi
+      phase_steps+=("Creating CLI tool symlinks")
+      ;;
+    *)
+      log_error "Unknown phase: $phase"
+      return 1
+      ;;
+  esac
+  
+  total_steps=${#phase_steps[@]}
+  
   section_header "Phase: $phase"
   
+  # Announce phase information
+  echo -e "${BLUE}> PHASE START:${NC} Beginning $phase phase with $total_steps steps"
+  echo ""
+  for i in "${!phase_steps[@]}"; do
+    echo -e "  ${GRAY}$(($i + 1))/${total_steps}:${NC} ${phase_steps[$i]}"
+  done
+  echo ""
+  
+  # Run the actual phase
   case "$phase" in
     initialize)
       run_initialize_phase
@@ -350,10 +451,6 @@ run_phase() {
     install)
       run_install_phase
       ;;
-    *)
-      log_error "Unknown phase: $phase"
-      return 1
-      ;;
   esac
   
   local result=$?
@@ -362,8 +459,10 @@ run_phase() {
   
   if [[ $result -eq 0 ]]; then
     log_info "✅ Phase $phase completed successfully (${duration}s)"
+    echo -e "${GREEN}> PHASE COMPLETE:${NC} All $total_steps steps of $phase phase completed successfully"
   else
     log_error "❌ Phase $phase failed after ${duration}s"
+    echo -e "${RED}> PHASE FAILED:${NC} Phase $phase did not complete successfully"
     exit $result
   fi
   

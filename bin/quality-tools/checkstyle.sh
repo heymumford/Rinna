@@ -77,9 +77,36 @@ done
 
 cd "$RINNA_DIR" || error "Failed to change to the Rinna directory."
 
+# Define the steps in this script
+STEPS=()
+
+# Step 1: Configure Checkstyle settings
+STEPS+=("Configuring Checkstyle settings")
+
+# Step 2: Run Checkstyle analysis
+STEPS+=("Running Checkstyle analysis")
+
+# Step 3: Process and display results
+STEPS+=("Processing Checkstyle results")
+
+# Show script header with steps count
 echo -e "${BLUE}=====================================================${NC}"
 echo -e "${BLUE}               Running Checkstyle                     ${NC}"
 echo -e "${BLUE}=====================================================${NC}"
+echo -e "${BLUE}> STARTING:${NC} About to run Checkstyle with ${#STEPS[@]} steps"
+
+for i in "${!STEPS[@]}"; do
+  echo -e "  ${GRAY}$(($i + 1))/${#STEPS[@]}:${NC} ${STEPS[$i]}"
+done
+echo ""
+
+# Set up variables to track warnings and errors
+WARNING_COUNT=0
+ERROR_COUNT=0
+
+# Step 1: Configure Checkstyle settings
+echo -e "${BLUE}> STEP 1/${#STEPS[@]}:${NC} ${STEPS[0]}"
+echo -e "${YELLOW}> IN PROGRESS:${NC} Setting up Checkstyle configuration"
 
 # Set up command
 MVN_CMD="mvn checkstyle:check"
@@ -88,31 +115,57 @@ MVN_CMD="mvn checkstyle:check"
 if [[ -n "$RUN_MODULE" ]]; then
   # Verify module exists
   if [[ ! -d "$RINNA_DIR/$RUN_MODULE" ]]; then
-    error "Module '$RUN_MODULE' not found. Valid modules: rinna-cli, rinna-core, rinna-data-sqlite"
+    echo -e "${RED}> ERROR:${NC} Module '$RUN_MODULE' not found. Valid modules: rinna-cli, rinna-core, rinna-data-sqlite"
+    exit 1
   fi
   MVN_CMD="mvn -pl $RUN_MODULE checkstyle:check"
-  echo -e "${BLUE}Running Checkstyle on module: ${YELLOW}$RUN_MODULE${NC}"
+  echo -e "${BLUE}> CONFIGURED:${NC} Running Checkstyle on module: ${YELLOW}$RUN_MODULE${NC}"
 fi
 
 # If specific file is provided
 if [[ -n "$TARGET_FILE" ]]; then
   if [[ -z "$RUN_MODULE" ]]; then
-    error "When specifying a file, you must also specify a module with --module"
+    echo -e "${RED}> ERROR:${NC} When specifying a file, you must also specify a module with --module"
+    exit 1
   fi
   
   # Verify file exists
   FULL_PATH="$RINNA_DIR/$RUN_MODULE/$TARGET_FILE"
   if [[ ! -f "$FULL_PATH" ]]; then
-    error "File not found: $FULL_PATH"
+    echo -e "${RED}> ERROR:${NC} File not found: $FULL_PATH"
+    exit 1
   fi
   
   # Run checkstyle on specific file
   MVN_CMD="mvn -pl $RUN_MODULE checkstyle:check -Dcheckstyle.includes=$TARGET_FILE"
-  echo -e "${BLUE}Running Checkstyle on file: ${YELLOW}$TARGET_FILE${NC}"
+  echo -e "${BLUE}> CONFIGURED:${NC} Running Checkstyle on file: ${YELLOW}$TARGET_FILE${NC}"
 fi
 
-# Execute the command
-$MVN_CMD
+echo -e "${GREEN}> COMPLETED:${NC} Successfully configured Checkstyle settings"
+echo ""
+
+# Step 2: Run Checkstyle analysis
+echo -e "${BLUE}> STEP 2/${#STEPS[@]}:${NC} ${STEPS[1]}"
+echo -e "${YELLOW}> IN PROGRESS:${NC} Executing Checkstyle analysis - this may take a moment"
+
+# Execute the command and save output to a temp file
+TEMP_OUTPUT=$(mktemp)
+if $MVN_CMD > "$TEMP_OUTPUT" 2>&1; then
+  CHECKSTYLE_STATUS=0
+  echo -e "${GREEN}> COMPLETED:${NC} Checkstyle analysis finished successfully"
+else
+  CHECKSTYLE_STATUS=$?
+  echo -e "${RED}> ERROR:${NC} Checkstyle analysis failed with exit code $CHECKSTYLE_STATUS"
+fi
+echo ""
+
+# Step 3: Process and display results
+echo -e "${BLUE}> STEP 3/${#STEPS[@]}:${NC} ${STEPS[2]}"
+echo -e "${YELLOW}> IN PROGRESS:${NC} Processing Checkstyle results"
+
+# Count warnings and errors
+WARNING_COUNT=$(grep -c '\[WARN\]' "$TEMP_OUTPUT" || echo "0")
+ERROR_COUNT=$(grep -c '\[ERROR\]' "$TEMP_OUTPUT" || echo "0")
 
 # Display common fixes if requested
 if [[ "$SHOW_FIXES" == "true" ]]; then
@@ -124,4 +177,35 @@ if [[ "$SHOW_FIXES" == "true" ]]; then
   echo -e "${YELLOW}5. Naming:${NC} Use proper naming conventions for variables and methods"
 fi
 
-echo -e "${GREEN}Checkstyle check completed!${NC}"
+echo -e "${GREEN}> COMPLETED:${NC} Finished processing Checkstyle results"
+echo ""
+
+# Summary
+echo -e "${BLUE}=====================================================${NC}"
+echo -e "${BLUE}               Checkstyle Summary                     ${NC}"
+echo -e "${BLUE}=====================================================${NC}"
+
+if [[ $CHECKSTYLE_STATUS -eq 0 ]]; then
+  echo -e "${GREEN}> SUCCESS:${NC} Checkstyle check completed successfully"
+else
+  echo -e "${RED}> FAILED:${NC} Checkstyle check failed with exit code $CHECKSTYLE_STATUS"
+fi
+
+echo -e "${BLUE}> STATISTICS:${NC} Found $WARNING_COUNT warnings and $ERROR_COUNT errors"
+
+# Show the most common issues if there are any
+if [[ $WARNING_COUNT -gt 0 || $ERROR_COUNT -gt 0 ]]; then
+  echo -e "${YELLOW}> ISSUES:${NC} Most common issues:"
+  grep '\[WARN\]' "$TEMP_OUTPUT" | sort | uniq -c | sort -nr | head -5 | while read -r line; do
+    echo -e "  ${YELLOW}●${NC} $line"
+  done
+fi
+
+# Clean up
+rm -f "$TEMP_OUTPUT"
+
+# Exit with the original status
+if [[ $CHECKSTYLE_STATUS -ne 0 ]]; then
+  echo -e "${RED}> BUILD STOPPED:${NC} Halting due to Checkstyle errors"
+  exit $CHECKSTYLE_STATUS
+fi
