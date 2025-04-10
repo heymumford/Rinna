@@ -1,20 +1,30 @@
 # Rinna: Developer-Centric Workflow Management
 
-Rinna liberates engineers from the tyranny of bloated workflow tools by bringing task management directly into the terminal where code flows. Born from the frustration of context-switching and interrupted flow states, this elegant system speaks the language of developers—terminal commands, git workflows, and clean architecture. Rinna doesn't just track work; it becomes an invisible extension of your development environment, letting you focus on creation rather than documentation, all while maintaining the clarity teams need without the ceremony managers demand.
-
-> **⚠️ DEVELOPMENT STANDARD**: For all XML manipulation (especially POM files), ALWAYS use the XMLStarlet-based tools in `bin/xml-tools.sh`. NEVER use grep, sed, or other text-based tools for XML files.
+Rinna liberates engineers from the tyranny of bloated workflow tools by bringing task management directly into the terminal where code flows. Born from the frustration of context-switching and interrupted flow states, this elegant system speaks the language of developers—terminal commands, git workflows, and clean architecture.
 
 <div align="center">
 
-*A terminal-based task management tool for developers who code, not managers who report.*
+*A clean, compact solution for product, project, development, and quality management!*
 
 [![Rinna CI](https://github.com/heymumford/Rinna/actions/workflows/rin-ci.yml/badge.svg)](https://github.com/heymumford/Rinna/actions/workflows/rin-ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Java Version](https://img.shields.io/badge/java-21-orange.svg)](https://openjdk.java.net/projects/jdk/21/)
 [![Go Version](https://img.shields.io/badge/go-1.21-blue.svg)](https://golang.org/doc/go1.21)
-[![Version](https://img.shields.io/badge/version-1.6.3-blue.svg)](https://github.com/heymumford/Rinna/releases)
+[![Version](https://img.shields.io/badge/version-1.6.6-blue.svg)](https://github.com/heymumford/Rinna/releases)
 [![Build](https://img.shields.io/badge/build-502-green.svg)](https://github.com/heymumford/Rinna/actions)
 [![GitHub Stars](https://img.shields.io/github/stars/heymumford/Rinna?style=social)](https://github.com/heymumford/Rinna/stargazers)
+
+</div>
+
+## Beta Release Progress
+
+<div align="center">
+
+```
+[██████████████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒] 63.4% Complete
+```
+
+*Actively developed and on track for beta release. Join us!*
 
 [📥 Download](https://github.com/heymumford/Rinna/releases) • 
 [📚 User Guide](docs/user-guide/README.md) • 
@@ -26,11 +36,13 @@ Rinna liberates engineers from the tyranny of bloated workflow tools by bringing
 
 </div>
 
+> **⚠️ DEVELOPMENT STANDARD**: For all XML manipulation (especially POM files), ALWAYS use the XMLStarlet-based tools in `bin/xml-tools.sh`. NEVER use grep, sed, or other text-based tools for XML files.
+
 ## What Is Rinna?
 
 Rinna is a unified workflow management system built for software engineers that treats all types of work—business, product, engineering, and test—as part of a single coherent system. It minimizes process overhead and integrates directly into your development environment, providing clear visibility without excessive ceremony.
 
-**Rinna isn't replacing enterprise tools – it exists to make workflow management work _for_ developers, not the other way around.**
+**Rinna doesn't replace enterprise tools – it makes workflow management work _for_ developers, not against them.**
 
 ### The Problem
 
@@ -48,20 +60,11 @@ Traditional workflow tools:
 - **Zero-friction workflow** adds only what's necessary
 - **Developer-owned process** puts control in the right hands
 - **Clean architecture** with Go API and Java core
-- **Unified work management** treats all work types (business, product, engineering, test) consistently
+- **Unified work management** treats all work types consistently
 - **Cross-platform containers** for simple deployment on Windows, WSL, and Linux
 - **Standardized logging** with SLF4J and clearly defined log levels
 - **OAuth integration** for secure third-party API access
-
-## Unified Work Model
-
-- **Work Items**: Business → Product → Engineering → Test
-- **Work Types**: Goals → Epics → Features → User Stories → Tasks → Bugs → Tests
-- **Workflow**: Found → Triaged → To Do → In Progress → In Test → Done → Released
-- **No customization needed**: We've built what works based on experience
-- **POC Status**: Currently ~20% complete with unified work management implementation
-
-For details, see [Unified Work Management](docs/user-guide/unified-work-management.md) and [Cross-Platform Container Setup](docs/user-guide/cross-platform-container-setup.md).
+- **API documentation** with OpenAPI/Swagger for easy integration
 
 ## Example Usage
 
@@ -90,52 +93,9 @@ curl -X POST "http://localhost:8080/api/v1/workitems" \
     "type": "FEATURE",
     "priority": "HIGH"
   }'
-
-# OAuth integration examples
-# Get authorization URL for GitHub
-curl -X GET "http://localhost:8080/api/v1/oauth/authorize/github?project=PROJECT_ID&user_id=USER_ID" \
-  -H "Authorization: Bearer ri-dev-token"
-
-# List OAuth tokens
-curl -X GET "http://localhost:8080/api/v1/oauth/tokens?project=PROJECT_ID" \
-  -H "Authorization: Bearer ri-dev-token"
-
-# Revoke an OAuth token
-curl -X DELETE "http://localhost:8080/api/v1/oauth/tokens/github?project=PROJECT_ID&user_id=USER_ID" \
-  -H "Authorization: Bearer ri-dev-token"
 ```
 
-### Administrative Operations
-
-```bash
-# Audit log management
-bin/rin admin audit list                                  # List recent audit events
-bin/rin admin audit configure --retention=90              # Configure audit log retention (days)
-bin/rin admin audit export --format=csv                   # Export audit logs to file
-
-# Compliance management
-bin/rin admin compliance report financial                 # Generate financial compliance report
-bin/rin admin compliance validate --project=demo          # Validate project compliance
-bin/rin admin compliance configure --framework=iso27001   # Set compliance framework
-
-# System monitoring
-bin/rin admin monitor dashboard                           # Display system dashboard
-bin/rin admin monitor metrics --type=system               # Show system metrics
-bin/rin admin monitor alerts                              # Display active alerts
-
-# System diagnostics
-bin/rin admin diagnostics run                             # Run comprehensive diagnostics
-bin/rin admin diagnostics schedule --interval=daily       # Schedule daily diagnostics
-
-# Backup and recovery
-bin/rin admin backup configure --location=/backup         # Configure backup location
-bin/rin admin backup start --type=full                    # Start full system backup
-bin/rin admin recovery plan --from=latest                 # Create recovery plan
-```
-
-## Installation
-
-### Standard Installation
+## Quick Installation
 
 ```bash
 # Clone and build
@@ -143,141 +103,25 @@ git clone https://github.com/heymumford/Rinna.git
 cd Rinna
 chmod +x bin/rin bin/rin-version bin/rin-build bin/run-tests.sh
 bin/rin build
-```
 
-### Container-Based Zero-Install Option
-
-```bash
-# Run with Docker (no build required)
+# OR use containers (no build required)
 docker-compose up -d
-
-# Or with Podman
-podman-compose up -d
-
-# Access CLI through container
 docker exec -it rinna-cli-1 /bin/bash
 rin list
 ```
 
-See [Cross-Platform Container Setup](docs/user-guide/cross-platform-container-setup.md) for detailed instructions for Windows, WSL, and Linux.
+See [Cross-Platform Container Setup](docs/user-guide/cross-platform-container-setup.md) for detailed instructions.
 
-### Build System
+## Core Features
 
-The Rinna build system supports multiple development workflows with a mode-based architecture:
+### Unified Work Model
 
-```bash
-# Quick iterations during development
-bin/rin build fast
+- **Work Items**: Business → Product → Engineering → Test
+- **Work Types**: Goals → Epics → Features → User Stories → Tasks → Bugs → Tests
+- **Workflow**: Found → Triaged → To Do → In Progress → In Test → Done → Released
+- **No customization needed**: We've built what works based on experience
 
-# Build with tests
-bin/rin build test
-
-# Full verification with coverage
-bin/rin build verify
-
-# Test categories
-bin/rin build test unit        # Run unit tests
-bin/rin build test component   # Run component tests
-bin/rin build test integration # Run integration tests
-bin/rin build test acceptance  # Run acceptance tests
-bin/rin build test performance # Run performance tests
-
-# Prepare for release
-bin/rin build prepare-release
-```
-
-Advanced options include:
-
-```bash
-# Run parallel tests with coverage
-bin/rin build test --parallel --coverage
-
-# Monitor file changes and run tests automatically
-bin/rin build test --watch
-
-# Stop tests at first failure
-bin/rin build test --fail-fast
-```
-
-See [Build System](docs/development/build-system.md) for detailed documentation.
-
-### Maven Integration
-
-```xml
-<dependency>
-    <groupId>org.rinna</groupId>
-    <artifactId>rinna-core</artifactId>
-    <version>1.8.1</version>
-</dependency>
-```
-
-### Version Management
-
-The project uses a centralized version management approach with `version.properties` as the single source of truth for all components (Java, Go, Python):
-
-```bash
-bin/rin version current   # View version information
-bin/rin version patch     # Bump patch version
-bin/rin version minor     # Bump minor version
-bin/rin version verify    # Check consistency
-bin/rin version update    # Sync all files with version.properties
-bin/rin version release   # Create a release with git tag
-```
-
-Key features of our versioning system:
-- **Single Source of Truth**: All components read from `version.properties`
-- **Cross-Language Support**: Java, Go, and Python use the same version
-- **Consistency Verification**: Checks all components have the same version
-- **Automated Updates**: Updates all components when version changes
-- **Build Number Tracking**: Automatically increments with every push
-
-#### Build Number Management
-
-The build number is automatically incremented on every push to the repository:
-
-```bash
-# View current build number
-bin/rin version current
-
-# Set a specific build number
-bin/increment-build.sh set 500
-
-# Increment build number manually
-bin/increment-build.sh
-
-# Use the git pushbuild alias to automatically increment on push
-git pushbuild
-```
-
-Setup the automatic build number incrementation:
-
-```bash
-# Install git hooks and configure the pushbuild alias
-bin/install-git-hooks.sh --configure
-```
-
-For more details, see [Build Number Management](docs/implementation/BUILD_NUMBER_MANAGEMENT.md).
-
-Integration with the build system enables streamlined release workflows:
-
-```bash
-bin/rin build prepare-release  # Run tests, package, update version
-```
-
-See [Version Management](docs/development/version-management.md) for details on our centralized approach.
-
-## Requirements
-
-- Java 21+
-- Go 1.21+ (for API server)
-- Maven 3.8+
-- `jq` for CLI client
-
-## Testing as a First-Class Citizen
-
-At Rinna, testing is not an afterthought but a core part of our development philosophy. We believe that quality and testing are essential components of modern application delivery, embedded in every stage of development.
-
-### Testing Pyramid Architecture
+### Testing as a First-Class Citizen
 
 ```
         ▲ Fewer
@@ -301,117 +145,43 @@ At Rinna, testing is not an afterthought but a core part of our development phil
         ▼ More
 ```
 
-### Why This Approach is Timeless
-
-We believe the testing pyramid represents a foundational approach to quality that transcends technological shifts:
-
-- **Aligned with System Complexity**: Maps to how all complex systems are composed of simpler components
-- **Technology-Agnostic**: Remains valid across programming languages, architecture styles, and infrastructure models
-- **Mirrors Human Cognition**: Matches how people naturally think about and decompose problems
-- **Economically Sound**: The cost/benefit ratio of each test level remains consistent regardless of technology
-- **Empirically Validated**: Proven effective across multiple technology eras from mainframes to AI
-
-These principles make our testing approach not just a current best practice, but a future-proof foundation for quality engineering in any era. [Read more about our testing philosophy](docs/testing/PHILOSOPHY.md).
-
-### Implementation Across Languages
-
-Our testing strategy spans multiple languages (Java, Go, Python, and Bash) and provides:
+Our testing strategy spans multiple languages (Java, Go, Python, and Bash) with:
 
 - **Base Test Classes** - Standardized parent classes for all test types
 - **Layered Discovery** - Intelligent categorization of tests by purpose
 - **Smart Test Runner** - Optimized execution based on the testing pyramid
-- **Advanced CLI** - Seamless integration with our build system
-- **Test Pyramid Analysis** - Automated monitoring of test pyramid balance across languages
+- **Test Pyramid Analysis** - Automated monitoring of test pyramid balance
+
+### Version Management
+
+The project uses a centralized version management approach with `version.properties` as the single source of truth:
 
 ```bash
-# Generate a test pyramid coverage report
-make test-pyramid
-
-# Or directly use the analysis tool
-./bin/test-pyramid-coverage.sh
+bin/rin version current   # View version information
+bin/rin version patch     # Bump patch version
+bin/rin version verify    # Check consistency
+bin/rin version update    # Sync all files
 ```
 
-See our [Test Pyramid Strategy](docs/testing/TEST_PYRAMID.md) for details on our polyglot testing approach.
-
-### Test-Driven Development
-
-Rinna provides comprehensive support for Test-Driven Development (TDD) workflows with specific features for both general TDD practices and engineering-specific scenarios:
-
-```bash
-# Run TDD tests
-bin/rin test --tag=tdd
-
-# Run positive TDD scenarios
-bin/rin test --tag=tdd --tag=positive
-
-# Run negative TDD scenarios
-bin/rin test --tag=tdd --tag=negative
-
-# Run specific engineering TDD scenarios
-bin/rin test --tag=tdd --include="*API*"
-```
-
-See our [TDD Features](docs/testing/TDD_FEATURES.md) documentation for details on how to use Rinna for effective Test-Driven Development across your entire engineering workflow.
-
-### Running Tests
-
-```bash
-# Run tests by pyramid layer
-bin/rin test unit          # Run unit tests only
-bin/rin test component     # Run component tests only 
-bin/rin test integration   # Run integration tests only
-bin/rin test acceptance    # Run acceptance tests only
-bin/rin test performance   # Run performance tests only
-
-# Run test combinations
-bin/rin test fast          # Run unit and component tests (quick feedback)
-bin/rin test essential     # Run unit, component, and integration tests (no UI)
-
-# Configure execution
-bin/rin test --coverage    # Generate code coverage report
-bin/rin test --watch       # Monitor files and run tests on changes
-bin/rin test --fail-fast   # Stop on first failure
-bin/rin test --no-parallel # Disable parallel execution
-```
-
-- [Test-Driven Development Features](docs/testing/TDD_FEATURES.md)
-
-See our [Testing Strategy](docs/testing/TESTING_STRATEGY.md) for implementation details and our [Testing Philosophy](docs/testing/PHILOSOPHY.md) for our philosophical approach to quality in the age of AI.
-
-## Comparison
+## Why Developers Choose Rinna
 
 | Feature | Rinna | Jira | GitHub Issues | Linear |
 |---------|-------|------|--------------|--------|
-| Focus | Developer experience | Management reporting | Issue tracking | Project management |
-| Workflow | Fixed, streamlined | Highly customizable | Basic | Customizable |
-| Git integration | Native | Plugin | Native | Plugin |
-| Terminal-based | Yes | No | No | No |
-| CLI | Full-featured | No | Limited | No |
-| API | Go-powered | Yes | Yes | Yes |
-| Test pyramid | First-class citizen | Limited | Limited | Limited |
-| Cross-language testing | Comprehensive | No | No | No |
-| Test discovery | Intelligent | Manual | Basic | Manual |
-| Test automation | Advanced | Plugin-dependent | Basic | Limited |
-| Quality gate integration | Built-in | Plugin | Limited | Plugin |
-| Learning curve | Low | High | Medium | Medium |
+| **Focus** | Developer experience | Management reporting | Issue tracking | Project management |
+| **Workflow** | Fixed, streamlined | Highly customizable | Basic | Customizable |
+| **Git integration** | Native | Plugin | Native | Plugin |
+| **Terminal-based** | Yes | No | No | No |
+| **CLI** | Full-featured | No | Limited | No |
+| **Cross-language testing** | Comprehensive | No | No | No |
+| **Test automation** | Advanced | Plugin-dependent | Basic | Limited |
+| **Learning curve** | Low | High | Medium | Medium |
 
-## FAQ
+## Requirements
 
-### Why no workflow customization?
-
-Most customization adds complexity without value. Our workflow represents the essential states needed for effective development.
-
-### Enterprise tool integration?
-
-Rinna provides mapping capabilities to synchronize with tools like Jira while maintaining its clean workflow.
-
-### Suitable for large teams?
-
-Yes. The streamlined model works for teams of all sizes while maintaining consistency.
-
-### Extensibility?
-
-Rinna follows clean architecture principles with well-defined interfaces for extending functionality.
+- Java 21+
+- Go 1.21+ (for API server)
+- Maven 3.8+
+- `jq` for CLI client
 
 ## Documentation
 
@@ -419,7 +189,6 @@ Rinna follows clean architecture principles with well-defined interfaces for ext
 - [📚 User Guide](docs/user-guide/README.md) - Complete guide for using Rinna
 - [🚀 Getting Started](docs/getting-started/README.md) - Quick start guide
 - [📄 Documentation Generation](docs/user-guide/documents.md) - Generate documentation
-- [📋 Changelog](CHANGELOG.md) - Release history
 
 ### For Developers
 - [👩‍💻 Developer Guide](docs/development/DEVELOPER.md) - Complete guide for developing Rinna
@@ -427,71 +196,35 @@ Rinna follows clean architecture principles with well-defined interfaces for ext
 - [🧪 Testing Strategy](docs/testing/TESTING_STRATEGY.md) - Comprehensive testing approach
 - [🏗️ Architecture](docs/development/architecture.md) - System architecture
 - [🔧 Build System](docs/development/build-system.md) - Build and development workflow
-- [📊 Version Management](docs/development/version-management.md) - Version control approach
+- [📘 API Reference](api/docs/swagger.json) - OpenAPI/Swagger documentation
 
-For complete developer documentation, see the [Developer Guide](docs/development/DEVELOPER.md).
+### API Documentation
+The API is documented using OpenAPI/Swagger. You can:
+- View the [API Reference](api/docs/swagger.json) in any Swagger UI compatible viewer
+- Run `python3 api/bin/sync-swagger.py` to synchronize YAML and JSON formats
+- Access the documentation at `http://localhost:8080/api/docs` when the server is running
 
-## Project Structure
+#### API Documentation Server
+For exploring the API documentation without running the full API server:
 
-### Directory Structure
+```bash
+# Start the documentation server
+cd api && ./bin/start-docs-server.sh
+```
 
-The project follows a clean and organized directory structure:
+This starts a lightweight server that serves a comprehensive API documentation portal, including:
 
-- `/api` - Go-based API server for Rinna
-- `/bin` - Executable scripts and utilities
-  - `/bin/checks` - Architecture validation scripts
-  - `/bin/scripts` - Utility scripts for build, test, and demos
-- `/config` - Configuration files for all components
-  - `/config/checkstyle` - Java style checking rules
-  - `/config/docker` - Docker and podman configurations
-  - `/config/git` - Git-related configurations
-  - `/config/hooks` - Git hooks configurations
-  - `/config/maven` - Maven test configurations
-  - `/config/owasp` - Security scanning configurations
-  - `/config/pmd` - Code quality rules
-  - `/config/python` - Python tooling configurations
-  - `/config/sonar` - Code analysis configurations
-  - `/config/spotbugs` - Bug detection configurations
-  - `/config/version` - Version tracking files
-- `/docs` - Comprehensive documentation
-  - `/docs/architecture` - Architecture decisions and diagrams
-  - `/docs/development` - Developer guides and reference
-  - `/docs/implementation` - Implementation details and summaries
-  - `/docs/project-docs` - Project-specific documentation (like CHANGELOG.md, CLAUDE.md)
-  - `/docs/project-status` - Project tracking and status reports
-  - `/docs/standards` - Coding standards and guidelines
-  - `/docs/testing` - Testing strategies and guides
-  - `/docs/user-guide` - End-user documentation
-- `/logs` - Log files and build artifacts
-  - `/logs/coverage` - Test coverage reports
-  - `/logs/dependency-check` - Dependency scan reports
-  - `/logs/cache` - Cache directories for build tools
-  - `/logs/temp` - Temporary files
-  - `/logs/test-bin` - Test binaries
-  - `/logs/test-output` - Test output files
-- `/python` - Python modules and components
-- `/rinna-cli` - Java CLI implementation
-- `/rinna-core` - Core domain model and business logic
-- `/rinna-data-sqlite` - SQLite persistence implementation
-- `/src` - Main application code
-- `/utils` - Environment activation scripts and utilities
+- **Interactive API Explorer**: Browse and test API endpoints with the Swagger UI
+- **Code Examples**: Implementation examples in JavaScript, Python, Go, and curl
+- **Security Guide**: Best practices for secure API integration 
+- **API Specifications**: Download OpenAPI specifications in YAML or JSON format
+- **Themed Interface**: Custom-designed documentation portal for better readability
 
-### Code Organization
-
-- Core domain model is in `rinna-core/src/main/java/org/rinna/domain/entity`
-- Service interfaces are in `rinna-core/src/main/java/org/rinna/domain/usecase`
-- Service implementations are in `rinna-core/src/main/java/org/rinna/adapter/service`
-- In-memory repositories are in `rinna-core/src/main/java/org/rinna/adapter/persistence`
-- API server is in `api/cmd/rinnasrv`
-- API health package is in `api/pkg/health`
-- Python modules are in `python/rinna/`
-- Python tests are in `python/tests/`
-- Python quality configurations are in `config/python/` and `pyproject.toml`
-- Architecture validation scripts are in `bin/checks/`
+Access the documentation at `http://localhost:8080/api/docs` to explore all the available resources.
 
 ## License and Acknowledgments
 
-This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the [MIT License](LICENSE).
 
 ### Development Tools
 
@@ -500,21 +233,8 @@ This project was developed with analytical assistance from:
 - Claude Code executable
 - Google Gemini Deep Research LLM
 
-These AI tools were used as paid analytical services to assist in development.
-All intellectual property rights remain with Eric C. Mumford (@heymumford).
-
 <div align="center">
 
-*Built for developers who want to get things done, not fiddle with process.*
+*A clean, compact solution for product, project, development, and quality management!*
 
 </div>
-
-## Clean Architecture Testing
-
-Rinna follows a comprehensive testing strategy with a strong emphasis on Clean Architecture principles:
-
-- **Standardized Configuration**: Maven and Cucumber configurations follow industry best practices
-- **Relative Path References**: All documentation uses relative paths for portability and clarity
-- **BDD with Cucumber**: Feature-driven development with Gherkin syntax in `rinna-cli/src/test/resources/features/`
-- **Testing Pyramid**: Comprehensive test coverage at all levels from unit to acceptance
-- **Test-Driven Development (TDD)**: Complete guide available at [TDD Guide](rinna-cli/TDD_GUIDE.md)
