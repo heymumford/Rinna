@@ -13,31 +13,67 @@ No other software, runtime, or development environment is needed to run Rinna.
 
 ## Quick Start
 
-### Step 1: Clone the Repository
+### Option 1: Universal Container Script (Recommended)
+
+We've created a universal script that works across all platforms and handles environment detection automatically:
 
 ```bash
+# Clone the repository
 git clone https://github.com/heymumford/Rinna.git
 cd Rinna
+
+# Make script executable
+chmod +x bin/rinna-container.sh
+
+# Start all containers
+./bin/rinna-container.sh start
+
+# Check status
+./bin/rinna-container.sh status
+
+# Access shell in development container
+./bin/rinna-container.sh shell
 ```
 
-### Step 2: Start the Containers
+### Option 2: Manual Container Setup
 
-With Docker:
+If you prefer to manage containers directly:
+
 ```bash
+# Clone the repository
+git clone https://github.com/heymumford/Rinna.git
+cd Rinna
+
+# With Docker
 docker-compose up -d
-```
 
-With Podman:
-```bash
+# Or with Podman
 podman-compose up -d
 ```
 
-### Step 3: Access Rinna
+### Option 3: Zero-Install Mode
+
+For the fastest setup with minimal requirements:
+
+```bash
+# No repository cloning needed, just run this command:
+docker run -d --name rinna-all-in-one \
+  -p 8080:8080 -p 8081:8081 -p 5000:5000 \
+  -v rinna-data:/shared \
+  heymumford/rinna:latest
+```
+
+See the [Zero-Install Container Guide](zero-install-container.md) for more details.
+
+## Accessing Rinna
 
 CLI access:
 ```bash
-# Connect to Rinna CLI container
-docker exec -it rinna-cli-1 /bin/bash
+# Using the universal script
+./bin/rinna-container.sh shell
+
+# Manual access to CLI container
+docker exec -it rinna-dev-environment-1 /bin/bash
 
 # Run Rinna commands
 rin list
@@ -46,54 +82,92 @@ rin list
 Web access:
 - API documentation: http://localhost:8080/docs
 - Web interface: http://localhost:8080/ui
+- Metrics dashboard: http://localhost:8080/metrics
+
+## Universal Container Script Features
+
+The `rinna-container.sh` script provides a consistent interface across all platforms:
+
+```bash
+# Start specific services only
+./bin/rinna-container.sh --type=api start    # Start API server only
+./bin/rinna-container.sh --type=java start   # Start Java service only 
+./bin/rinna-container.sh --type=python start # Start Python service only
+./bin/rinna-container.sh --type=dev start    # Start development environment
+
+# Container management
+./bin/rinna-container.sh status              # Check container status
+./bin/rinna-container.sh logs                # View logs from all containers
+./bin/rinna-container.sh health              # Check container health
+./bin/rinna-container.sh restart             # Restart all containers
+./bin/rinna-container.sh stop                # Stop all containers
+./bin/rinna-container.sh clean               # Remove containers and optionally data
+
+# Force specific container engine
+./bin/rinna-container.sh --docker start      # Use Docker explicitly
+./bin/rinna-container.sh --podman start      # Use Podman explicitly
+
+# Platform-specific configuration
+./bin/rinna-container.sh --windows start     # Configure for Windows Git Bash
+./bin/rinna-container.sh --wsl start         # Configure for WSL
+./bin/rinna-container.sh --linux start       # Configure for native Linux
+
+# Zero-install mode
+./bin/rinna-container.sh --zero-install start # Use prebuilt all-in-one image
+```
 
 ## Platform-Specific Setup
 
 ### Windows
 
-1. Install Docker Desktop for Windows
-2. Enable WSL 2 integration (recommended)
-3. Clone the repository
-4. Run Docker Compose
+The universal container script automatically detects Windows and configures the environment appropriately:
 
-```powershell
-# PowerShell
+```bash
+# Git Bash or PowerShell
 git clone https://github.com/heymumford/Rinna.git
 cd Rinna
-docker-compose up -d
+chmod +x bin/rinna-container.sh
+./bin/rinna-container.sh start
 ```
+
+For optimal Windows performance:
+1. Enable WSL 2 integration in Docker Desktop
+2. Allocate sufficient resources in Docker Desktop settings
+3. Use volume mapping instead of bind mounts for faster filesystem access
 
 ### Windows Subsystem for Linux (WSL)
 
-1. Install and set up WSL 2
-2. Install Docker inside WSL or enable Docker Desktop WSL integration
-3. Clone the repository in your WSL environment
-4. Run Docker Compose or Podman Compose
+The script automatically detects WSL and configures Docker/Podman accordingly:
 
 ```bash
 # Inside WSL
 git clone https://github.com/heymumford/Rinna.git
 cd Rinna
-docker-compose up -d  # or podman-compose up -d
+chmod +x bin/rinna-container.sh
+./bin/rinna-container.sh start
 ```
+
+The script handles WSL-specific requirements:
+- Detecting Docker socket location
+- Setting appropriate path mappings
+- Configuring permissions for mounted volumes
 
 ### Native Linux
 
-1. Install Docker Engine or Podman
-2. Clone the repository
-3. Run Docker Compose or Podman Compose
+On Linux systems, the script prioritizes Podman in rootless mode if available:
 
 ```bash
 # Native Linux
 git clone https://github.com/heymumford/Rinna.git
 cd Rinna
-
-# With Podman (preferred)
-podman-compose up -d
-
-# With Docker
-docker-compose up -d
+chmod +x bin/rinna-container.sh
+./bin/rinna-container.sh start
 ```
+
+The script automatically:
+- Sets up proper volume permissions for rootless Podman
+- Creates consistent mount points regardless of container engine
+- Configures network settings for secure operation
 
 ## Container Architecture
 
@@ -125,7 +199,7 @@ All containers:
 
 ## Volume Management
 
-Rinna containers use named volumes for persistent data:
+The universal script automatically creates and configures consistent volumes:
 
 ```yaml
 volumes:
@@ -133,23 +207,15 @@ volumes:
   java-data:        # Java service data
   python-data:      # Python service data
   shared-storage:   # Cross-service shared data
+  test-output:      # Test results
+  coverage-data:    # Code coverage reports
 ```
 
-These volumes work consistently across platforms with proper permission handling.
-
-## Development Environment
-
-For development, use the included dev container:
-
-```bash
-# Start development environment
-docker-compose --profile dev up -d
-
-# Connect to development container
-docker exec -it rinna-dev-environment-1 /bin/bash
-```
-
-The development container includes all necessary dependencies for working on any part of Rinna.
+Benefits of this approach:
+- Consistent path structure across platforms
+- Automatic permission handling
+- Persistence between container restarts
+- Optimized for each platform's filesystem performance
 
 ## Container Profiles
 
@@ -162,40 +228,15 @@ Rinna uses container profiles for different use cases:
 
 ```bash
 # Start with testing profile
-docker-compose --profile testing up -d
+./bin/rinna-container.sh --type=test start
 
 # Run tests
-docker exec rinna-python-tests-1 python -m pytest
+./bin/rinna-container.sh logs
 ```
-
-## Troubleshooting
-
-### Windows-Specific Issues
-
-- **Line Ending Problems**: Set Git to use LF on checkout:
-  ```
-  git config --global core.autocrlf input
-  ```
-
-- **Volume Permission Issues**: Use Docker Desktop WSL integration or set appropriate permissions in volume mounts
-
-### WSL Issues
-
-- **Docker Socket Connection**: If using Docker Desktop from WSL, ensure the socket is properly exposed:
-  ```
-  echo 'export DOCKER_HOST=tcp://localhost:2375' >> ~/.bashrc
-  ```
-
-### Linux Issues
-
-- **Podman Rootless Mode**: If using rootless Podman, you may need to adjust permissions:
-  ```
-  podman unshare chown -R 1000:1000 ./shared-data
-  ```
 
 ## Health Checking and Self-Healing
 
-Rinna containers include health checks to ensure services are running properly:
+All Rinna containers include health checks and self-healing capabilities:
 
 ```yaml
 healthcheck:
@@ -206,7 +247,21 @@ healthcheck:
   start_period: 5s
 ```
 
-The containers are configured to restart automatically if they fail, providing self-healing capabilities.
+The universal script provides additional health monitoring:
+
+```bash
+# Check container health status
+./bin/rinna-container.sh health
+
+# Health monitoring runs in the background and automatically restarts
+# unhealthy containers
+```
+
+Health monitoring features:
+- Background health check process
+- Automatic unhealthy container detection
+- Self-healing with automatic restarts
+- Health status logging and history
 
 ## Zero-Install Option
 
@@ -214,26 +269,87 @@ For teams that want to avoid even cloning the repository, we provide a zero-inst
 
 ```bash
 # Pull and run Rinna without cloning the repository
-docker run -d --name rinna-all-in-one heymumford/rinna:latest
+docker run -d --name rinna-all-in-one \
+  -p 8080:8080 -p 8081:8081 -p 5000:5000 \
+  -v rinna-data:/shared \
+  heymumford/rinna:latest
 ```
 
-This single command downloads and runs a pre-configured Rinna environment with all necessary components.
+The zero-install mode:
+- Packages all services in a single container
+- Includes all dependencies and configurations
+- Provides the same functionality with simplified setup
+- Supports health monitoring and self-healing
 
-## Monitoring Container Status
+For more details, see the [Zero-Install Container Guide](zero-install-container.md).
+
+## Troubleshooting
+
+### Common Issues
+
+- **Permission problems**: Fixed by the universal script's automatic permission handling
+- **Volume mapping issues**: Resolved with consistent bind mount configurations
+- **Network conflicts**: Avoided with dedicated container network
+- **Resource constraints**: Check Docker/Podman resource allocation
+
+### Platform-Specific Troubleshooting
+
+#### Windows
+
+- **Line ending issues**: The script automatically handles line ending conversion
+- **Path mapping problems**: Fixed with proper path normalization
+- **Performance issues**: Use WSL 2 integration and volume mapping instead of bind mounts
+
+#### WSL
+
+- **Docker socket connection**: The script checks and warns about socket availability
+- **Path inconsistencies**: Automatically resolved with consistent path handling
+- **Resource limitations**: Configure WSL 2 memory and CPU allocation in `.wslconfig`
+
+#### Linux
+
+- **Podman rootless mode**: The script handles rootless configuration automatically
+- **SELinux constraints**: Apply appropriate labels to mounted volumes
+- **User namespace mapping**: Configured for consistent user/group IDs
+
+## Advanced Container Management
+
+### Custom Configuration
+
+Create a `.rinna-containers/user-config.env` file to customize defaults:
 
 ```bash
-# Check status of all Rinna containers
-docker ps --filter "name=rinna"
-
-# View container logs
-docker logs rinna-api-server-1
-
-# Check container health
-docker inspect --format "{{.Name}} {{.State.Health.Status}}" $(docker ps -q --filter "name=rinna")
+# Example user configuration
+CONTAINER_ENGINE=podman
+PLATFORM=linux
+COMPOSE_FILE=custom-compose.yml
+STORAGE_PATH=/data/rinna
+ZERO_INSTALL_IMAGE=myorg/rinna:custom
+HEALTH_CHECK_INTERVAL=60
 ```
+
+### Build Custom Container Images
+
+```bash
+# Build all container images
+./bin/rinna-container.sh build
+
+# Build specific container types
+./bin/rinna-container.sh --type=python build
+```
+
+### Container Performance Optimization
+
+For improved performance:
+
+1. Use volume mounts instead of bind mounts
+2. Configure appropriate resource limits
+3. Use health monitoring to detect and fix issues
+4. Consider the zero-install option for simpler deployments
 
 ## Related Resources
 
+- [Zero-Install Container Guide](zero-install-container.md)
 - [Admin Server Setup Guide](admin-server-setup.md)
 - [Container Strategy](../testing/CONTAINER_STRATEGY.md)
 - [Docker Image Caching](../testing/DOCKER_IMAGE_CACHING.md)

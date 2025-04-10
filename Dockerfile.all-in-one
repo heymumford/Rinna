@@ -1,0 +1,183 @@
+# Multi-stage build for Rinna All-in-One container
+# Combines API server, Java service, and Python services into a single container
+
+# -----------------------------------------------------------------------------
+# BASE STAGE - Common dependencies and setup
+# -----------------------------------------------------------------------------
+FROM eclipse-temurin:21-jdk-jammy AS base
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    JAVA_HOME=/opt/java/openjdk \
+    PATH="/opt/java/openjdk/bin:${PATH}" \
+    DEBIAN_FRONTEND=noninteractive \
+    TZ=UTC
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    golang \
+    jq \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libpangocairo-1.0-0 \
+    libcairo2 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
+    openssh-client \
+    poppler-utils \
+    python3-dev \
+    python3-pip \
+    python3-setuptools \
+    python3-wheel \
+    sqlite3 \
+    unzip \
+    wget \
+    # Clean up
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up Python
+RUN ln -sf /usr/bin/python3 /usr/bin/python && \
+    python -m pip install --upgrade pip
+
+# Set up non-root user
+RUN groupadd -g 1000 rinna && \
+    useradd -u 1000 -g rinna -m -s /bin/bash rinna
+
+# -----------------------------------------------------------------------------
+# JAVA BUILD STAGE - Build Java components
+# -----------------------------------------------------------------------------
+FROM base AS java-builder
+
+# Copy Maven wrapper and POM
+COPY mvnw mvnw.cmd ./
+COPY .mvn ./.mvn/
+COPY pom.xml ./
+
+# Make Maven wrapper executable
+RUN chmod +x ./mvnw
+
+# Download dependencies
+RUN ./mvnw dependency:go-offline -B
+
+# Copy source code
+COPY src ./src/
+COPY rinna-core ./rinna-core/
+COPY rinna-cli ./rinna-cli/
+COPY rinna-data-sqlite ./rinna-data-sqlite/
+
+# Build Java components
+RUN ./mvnw package -DskipTests
+
+# -----------------------------------------------------------------------------
+# GO BUILD STAGE - Build Go components
+# -----------------------------------------------------------------------------
+FROM base AS go-builder
+
+# Set up Go environment
+ENV GOPATH=/go \
+    PATH=$PATH:/go/bin
+
+# Install Go dependencies
+RUN mkdir -p /go/src/app
+WORKDIR /go/src/app
+
+# Copy Go source code
+COPY api/go.mod api/go.sum ./
+RUN go mod download
+
+# Copy API source code
+COPY api/ ./
+
+# Build Go components
+RUN go build -o /go/bin/rinna-api ./cmd/rinnasrv
+
+# -----------------------------------------------------------------------------
+# PYTHON BUILD STAGE - Build Python components
+# -----------------------------------------------------------------------------
+FROM base AS python-builder
+
+# Set up Python environment
+WORKDIR /app
+
+# Copy requirements
+COPY requirements.txt requirements-core.txt ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy Python source code
+COPY python/ ./python/
+
+# Build Python packages
+RUN cd ./python && pip install --no-cache-dir -e .
+
+# -----------------------------------------------------------------------------
+# FINAL STAGE - Combine all components
+# -----------------------------------------------------------------------------
+FROM base AS final
+
+# Create application directories
+RUN mkdir -p /app/bin /app/lib /app/data /app/logs /app/shared /app/config
+
+# Copy binaries and libraries from build stages
+COPY --from=java-builder /app/rinna-cli/target/rinna-cli-*.jar /app/lib/rinna-cli.jar
+COPY --from=java-builder /app/rinna-core/target/rinna-core-*.jar /app/lib/rinna-core.jar
+COPY --from=go-builder /go/bin/rinna-api /app/bin/rinna-api
+COPY --from=python-builder /usr/local/lib/python3.10/dist-packages /usr/local/lib/python3.10/dist-packages
+COPY --from=python-builder /app/python /app/python
+
+# Copy configuration files
+COPY api/configs /app/config/api
+COPY config/ /app/config/
+
+# Create directories with proper permissions
+RUN mkdir -p /app/data/db /app/shared/templates /app/logs/api /app/logs/java /app/logs/python && \
+    chown -R rinna:rinna /app
+
+# Create startup script
+RUN echo '#!/bin/bash' > /app/bin/startup.sh && \
+    echo 'echo "Starting Rinna All-in-One Container"' >> /app/bin/startup.sh && \
+    echo 'mkdir -p /app/logs/api /app/logs/java /app/logs/python /app/data/db' >> /app/bin/startup.sh && \
+    echo 'echo "Starting API Server..."' >> /app/bin/startup.sh && \
+    echo '/app/bin/rinna-api -config /app/config/api/config.yaml > /app/logs/api/api.log 2>&1 &' >> /app/bin/startup.sh && \
+    echo 'echo "Starting Java Service..."' >> /app/bin/startup.sh && \
+    echo 'java -jar /app/lib/rinna-cli.jar server start > /app/logs/java/java.log 2>&1 &' >> /app/bin/startup.sh && \
+    echo 'echo "Starting Python Service..."' >> /app/bin/startup.sh && \
+    echo 'cd /app && python -m uvicorn python.rinna.api.main:app --host 0.0.0.0 --port 5000 > /app/logs/python/python.log 2>&1 &' >> /app/bin/startup.sh && \
+    echo 'echo "All services started. Use these commands to check logs:"' >> /app/bin/startup.sh && \
+    echo 'echo "  tail -f /app/logs/api/api.log - API server logs"' >> /app/bin/startup.sh && \
+    echo 'echo "  tail -f /app/logs/java/java.log - Java service logs"' >> /app/bin/startup.sh && \
+    echo 'echo "  tail -f /app/logs/python/python.log - Python service logs"' >> /app/bin/startup.sh && \
+    echo 'echo "Rinna is now running at http://localhost:8080"' >> /app/bin/startup.sh && \
+    echo 'tail -f /app/logs/api/api.log /app/logs/java/java.log /app/logs/python/python.log' >> /app/bin/startup.sh && \
+    chmod +x /app/bin/startup.sh
+
+# Create CLI wrapper script
+RUN echo '#!/bin/bash' > /app/bin/rin && \
+    echo 'java -jar /app/lib/rinna-cli.jar "$@"' >> /app/bin/rin && \
+    chmod +x /app/bin/rin && \
+    ln -s /app/bin/rin /usr/local/bin/rin
+
+# Switch to non-root user
+USER rinna
+
+# Expose service ports
+EXPOSE 8080 8081 5000
+
+# Mount points for persistent data
+VOLUME ["/app/data", "/app/shared"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Set entrypoint
+ENTRYPOINT ["/app/bin/startup.sh"]
