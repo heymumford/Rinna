@@ -8,6 +8,7 @@ This guide provides detailed examples for using the Rinna API effectively. Each 
 - [Projects](#projects)
 - [Work Items](#work-items)
 - [Releases](#releases)
+- [Security Features](#security-features)
 - [Webhooks](#webhooks)
 - [Error Handling](#error-handling)
 - [Advanced Usage Patterns](#advanced-usage-patterns)
@@ -134,110 +135,6 @@ Response:
 }
 ```
 
-### Get Project
-
-```bash
-# Get project by key
-curl -X GET "https://your-rinna-instance/api/v1/projects/INFRA" \
-  -H "Authorization: Bearer ri-dev-f72a159e4bdc"
-```
-
-Response:
-
-```json
-{
-  "id": "7d8f3ab4-c2e5-47d6-9a1b-8fc7e41fea23",
-  "key": "INFRA",
-  "name": "Infrastructure Team",
-  "description": "Cloud infrastructure management",
-  "active": true,
-  "metadata": {
-    "department": "IT",
-    "costCenter": "CC-123"
-  },
-  "createdAt": "2025-04-08T13:45:22Z",
-  "updatedAt": "2025-04-08T13:45:22Z"
-}
-```
-
-### Update Project
-
-```bash
-# Update a project
-curl -X PUT "https://your-rinna-instance/api/v1/projects/INFRA" \
-  -H "Authorization: Bearer ri-dev-f72a159e4bdc" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Infrastructure & Cloud Team",
-    "description": "Cloud infrastructure and platform management",
-    "metadata": {
-      "department": "IT",
-      "costCenter": "CC-456"
-    }
-  }'
-```
-
-Response:
-
-```json
-{
-  "id": "7d8f3ab4-c2e5-47d6-9a1b-8fc7e41fea23",
-  "key": "INFRA",
-  "name": "Infrastructure & Cloud Team",
-  "description": "Cloud infrastructure and platform management",
-  "active": true,
-  "metadata": {
-    "department": "IT",
-    "costCenter": "CC-456"
-  },
-  "createdAt": "2025-04-08T13:45:22Z",
-  "updatedAt": "2025-04-08T14:22:45Z"
-}
-```
-
-### Get Project Work Items
-
-```bash
-# Get work items for a project
-curl -X GET "https://your-rinna-instance/api/v1/projects/INFRA/workitems" \
-  -H "Authorization: Bearer ri-dev-f72a159e4bdc"
-```
-
-Response:
-
-```json
-{
-  "items": [
-    {
-      "id": "9c4f98e2-1a2b-3c4d-5e6f-7a8b9c0d1e2f",
-      "title": "Set up AWS account structure",
-      "description": "Create organization and sub-accounts for dev/test/prod",
-      "type": "FEATURE",
-      "priority": "HIGH",
-      "status": "IN_DEV",
-      "assignee": "john.smith",
-      "projectId": "7d8f3ab4-c2e5-47d6-9a1b-8fc7e41fea23",
-      "metadata": {
-        "estimatedHours": "24"
-      },
-      "createdAt": "2025-04-08T14:30:00Z",
-      "updatedAt": "2025-04-08T15:45:30Z"
-    }
-  ],
-  "totalCount": 1,
-  "page": 1,
-  "pageSize": 10
-}
-```
-
-#### With Filtering
-
-```bash
-# Get in-progress work items for a project
-curl -X GET "https://your-rinna-instance/api/v1/projects/INFRA/workitems?status=IN_DEV" \
-  -H "Authorization: Bearer ri-dev-f72a159e4bdc"
-```
-
 ## Work Items
 
 ### List Work Items
@@ -298,122 +195,6 @@ Response:
 # List high priority bugs assigned to specific user
 curl -X GET "https://your-rinna-instance/api/v1/workitems?type=BUG&priority=HIGH&assignee=john.smith" \
   -H "Authorization: Bearer ri-dev-f72a159e4bdc"
-```
-
-#### With Project Filter
-
-```bash
-# List work items for a specific project
-curl -X GET "https://your-rinna-instance/api/v1/workitems?project=INFRA" \
-  -H "Authorization: Bearer ri-dev-f72a159e4bdc"
-```
-
-### Create Work Item
-
-```bash
-# Create a new work item
-curl -X POST "https://your-rinna-instance/api/v1/workitems" \
-  -H "Authorization: Bearer ri-dev-f72a159e4bdc" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Implement SSO for admin portal",
-    "description": "Add support for Azure AD single sign-on",
-    "type": "FEATURE",
-    "priority": "HIGH",
-    "projectId": "INFRA",
-    "metadata": {
-      "requestedBy": "security-team",
-      "estimatedHours": "12"
-    }
-  }'
-```
-
-Response:
-
-```json
-{
-  "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
-  "title": "Implement SSO for admin portal",
-  "description": "Add support for Azure AD single sign-on",
-  "type": "FEATURE",
-  "priority": "HIGH",
-  "status": "FOUND",
-  "projectId": "7d8f3ab4-c2e5-47d6-9a1b-8fc7e41fea23",
-  "metadata": {
-    "requestedBy": "security-team",
-    "estimatedHours": "12"
-  },
-  "createdAt": "2025-04-08T16:10:45Z",
-  "updatedAt": "2025-04-08T16:10:45Z"
-}
-```
-
-### Get Work Item
-
-```bash
-# Get work item by ID
-curl -X GET "https://your-rinna-instance/api/v1/workitems/a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d" \
-  -H "Authorization: Bearer ri-dev-f72a159e4bdc"
-```
-
-Response:
-
-```json
-{
-  "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
-  "title": "Implement SSO for admin portal",
-  "description": "Add support for Azure AD single sign-on",
-  "type": "FEATURE",
-  "priority": "HIGH",
-  "status": "FOUND",
-  "projectId": "7d8f3ab4-c2e5-47d6-9a1b-8fc7e41fea23",
-  "metadata": {
-    "requestedBy": "security-team",
-    "estimatedHours": "12"
-  },
-  "createdAt": "2025-04-08T16:10:45Z",
-  "updatedAt": "2025-04-08T16:10:45Z"
-}
-```
-
-### Update Work Item
-
-```bash
-# Update a work item
-curl -X PUT "https://your-rinna-instance/api/v1/workitems/a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d" \
-  -H "Authorization: Bearer ri-dev-f72a159e4bdc" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Implement SSO for admin portal with MFA",
-    "assignee": "jane.doe",
-    "metadata": {
-      "requestedBy": "security-team",
-      "estimatedHours": "16",
-      "complexity": "medium"
-    }
-  }'
-```
-
-Response:
-
-```json
-{
-  "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
-  "title": "Implement SSO for admin portal with MFA",
-  "description": "Add support for Azure AD single sign-on",
-  "type": "FEATURE",
-  "priority": "HIGH",
-  "status": "FOUND",
-  "assignee": "jane.doe",
-  "projectId": "7d8f3ab4-c2e5-47d6-9a1b-8fc7e41fea23",
-  "metadata": {
-    "requestedBy": "security-team",
-    "estimatedHours": "16",
-    "complexity": "medium"
-  },
-  "createdAt": "2025-04-08T16:10:45Z",
-  "updatedAt": "2025-04-08T16:30:22Z"
-}
 ```
 
 ### Transition Work Item
@@ -489,33 +270,90 @@ Response:
 }
 ```
 
-#### With Filtering
+## Security Features
+
+### OAuth Authorization
 
 ```bash
-# List in-progress releases for a specific project
-curl -X GET "https://your-rinna-instance/api/v1/releases?status=IN_PROGRESS&project=RINNA" \
+# Request an OAuth authorization URL for GitHub
+curl -X GET "https://your-rinna-instance/api/v1/oauth/authorize/github?project_id=INFRA&user_id=john.smith" \
   -H "Authorization: Bearer ri-dev-f72a159e4bdc"
 ```
 
-### Create Release
+Response:
+
+```json
+{
+  "authorization_url": "https://github.com/login/oauth/authorize?client_id=abc123&state=def456&scope=repo,user&redirect_uri=https://your-rinna-instance/api/v1/oauth/callback",
+  "state": "def456"
+}
+```
+
+### OAuth Callback Handling
 
 ```bash
-# Create a new release
-curl -X POST "https://your-rinna-instance/api/v1/releases" \
+# OAuth callback from GitHub
+curl -X GET "https://your-rinna-instance/api/v1/oauth/callback?code=abc123&state=def456"
+```
+
+Response:
+
+```json
+{
+  "access_token": "gho_abc123def456",
+  "token_type": "Bearer",
+  "refresh_token": "ghr_789xyz",
+  "expiry": "2025-05-10T14:30:00Z",
+  "scopes": ["repo", "user"],
+  "provider": "github",
+  "user_id": "john.smith",
+  "project_id": "INFRA",
+  "created_at": "2025-04-10T14:30:00Z",
+  "updated_at": "2025-04-10T14:30:00Z"
+}
+```
+
+### Rate Limit Information
+
+```bash
+# Get rate limit information
+curl -X GET "https://your-rinna-instance/api/v1/rate-limits" \
+  -H "Authorization: Bearer ri-dev-f72a159e4bdc"
+```
+
+Response:
+
+```json
+{
+  "limit": 300,
+  "remaining": 297,
+  "reset": 1692203400,
+  "endpoint_limits": {
+    "/api/v1/projects": {
+      "limit": 300,
+      "remaining": 297
+    },
+    "/api/v1/workitems": {
+      "limit": 300,
+      "remaining": 299
+    }
+  }
+}
+```
+
+### Webhook Configuration
+
+```bash
+# Configure a GitHub webhook
+curl -X POST "https://your-rinna-instance/api/v1/webhooks/configure/github" \
   -H "Authorization: Bearer ri-dev-f72a159e4bdc" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Infrastructure Platform 1.0",
-    "version": "1.0.0",
-    "description": "Initial platform release",
-    "status": "PLANNED",
-    "startDate": "2025-05-01",
-    "endDate": "2025-05-15",
-    "projectKey": "INFRA",
-    "metadata": {
-      "releaseManager": "john.smith",
-      "riskLevel": "medium"
-    }
+    "project_key": "INFRA",
+    "secret": "your-webhook-secret",
+    "enabled": true,
+    "security_mode": "strict",
+    "rate_limit": 60
   }'
 ```
 
@@ -523,127 +361,40 @@ Response:
 
 ```json
 {
-  "id": "abcdef12-3456-7890-abcd-ef1234567890",
-  "name": "Infrastructure Platform 1.0",
-  "version": "1.0.0",
-  "description": "Initial platform release",
-  "status": "PLANNED",
-  "startDate": "2025-05-01",
-  "endDate": "2025-05-15",
-  "projectKey": "INFRA",
+  "source": "github",
+  "project_key": "INFRA",
+  "secret": "your-webhook-secret",
+  "enabled": true,
+  "security_mode": "strict",
+  "rate_limit": 60,
   "metadata": {
-    "releaseManager": "john.smith",
-    "riskLevel": "medium"
-  },
-  "createdAt": "2025-04-08T17:10:30Z",
-  "updatedAt": "2025-04-08T17:10:30Z"
+    "created_at": "2025-04-10T16:00:00Z"
+  }
 }
 ```
 
-### Get Release
+### Security Context
 
 ```bash
-# Get release by ID
-curl -X GET "https://your-rinna-instance/api/v1/releases/abcdef12-3456-7890-abcd-ef1234567890" \
-  -H "Authorization: Bearer ri-dev-f72a159e4bdc"
-```
-
-Response:
-
-```json
-{
-  "id": "abcdef12-3456-7890-abcd-ef1234567890",
-  "name": "Infrastructure Platform 1.0",
-  "version": "1.0.0",
-  "description": "Initial platform release",
-  "status": "PLANNED",
-  "startDate": "2025-05-01",
-  "endDate": "2025-05-15",
-  "projectKey": "INFRA",
-  "metadata": {
-    "releaseManager": "john.smith",
-    "riskLevel": "medium"
-  },
-  "createdAt": "2025-04-08T17:10:30Z",
-  "updatedAt": "2025-04-08T17:10:30Z"
-}
-```
-
-### Update Release
-
-```bash
-# Update a release
-curl -X PUT "https://your-rinna-instance/api/v1/releases/abcdef12-3456-7890-abcd-ef1234567890" \
+# Get security context information
+curl -X GET "https://your-rinna-instance/api/v1/security/context" \
   -H "Authorization: Bearer ri-dev-f72a159e4bdc" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "status": "IN_PROGRESS",
-    "endDate": "2025-05-30",
-    "metadata": {
-      "releaseManager": "john.smith",
-      "riskLevel": "high",
-      "changeApprovalID": "CAB-2025-042"
-    }
-  }'
+  -H "X-Request-ID": "custom-request-id-12345"
 ```
 
 Response:
 
 ```json
 {
-  "id": "abcdef12-3456-7890-abcd-ef1234567890",
-  "name": "Infrastructure Platform 1.0",
-  "version": "1.0.0",
-  "description": "Initial platform release",
-  "status": "IN_PROGRESS",
-  "startDate": "2025-05-01",
-  "endDate": "2025-05-30",
-  "projectKey": "INFRA",
-  "metadata": {
-    "releaseManager": "john.smith",
-    "riskLevel": "high",
-    "changeApprovalID": "CAB-2025-042"
-  },
-  "createdAt": "2025-04-08T17:10:30Z",
-  "updatedAt": "2025-04-08T17:25:15Z"
-}
-```
-
-### Get Release Work Items
-
-```bash
-# Get work items in a release
-curl -X GET "https://your-rinna-instance/api/v1/releases/abcdef12-3456-7890-abcd-ef1234567890/workitems" \
-  -H "Authorization: Bearer ri-dev-f72a159e4bdc"
-```
-
-Response:
-
-```json
-{
-  "items": [
-    {
-      "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
-      "title": "Implement SSO for admin portal with MFA",
-      "description": "Add support for Azure AD single sign-on",
-      "type": "FEATURE",
-      "priority": "HIGH",
-      "status": "IN_DEV",
-      "assignee": "jane.doe",
-      "projectId": "7d8f3ab4-c2e5-47d6-9a1b-8fc7e41fea23",
-      "releaseId": "abcdef12-3456-7890-abcd-ef1234567890",
-      "metadata": {
-        "requestedBy": "security-team",
-        "estimatedHours": "16",
-        "complexity": "medium"
-      },
-      "createdAt": "2025-04-08T16:10:45Z",
-      "updatedAt": "2025-04-08T16:45:10Z"
-    }
-  ],
-  "totalCount": 1,
-  "page": 1,
-  "pageSize": 10
+  "request_id": "custom-request-id-12345",
+  "ip": "192.168.1.100",
+  "user_agent": "curl/7.68.0",
+  "method": "GET",
+  "path": "/api/v1/security/context",
+  "user_id": "john.smith",
+  "project_id": "INFRA",
+  "token_type": "API_KEY",
+  "duration": "11ms"
 }
 ```
 
@@ -652,28 +403,24 @@ Response:
 ### GitHub Webhook
 
 ```bash
-# GitHub webhook payload example (sent by GitHub to your webhook URL)
+# GitHub webhook payload (sent by GitHub to your webhook URL)
 curl -X POST "https://your-rinna-instance/api/v1/webhooks/github?project=INFRA" \
   -H "Content-Type: application/json" \
   -H "X-GitHub-Event: pull_request" \
-  -H "X-Hub-Signature-256: sha256=..." \
+  -H "X-GitHub-Delivery": "72d3162e-cc78-11e3-81ab-4c9367dc0958" \
+  -H "X-Hub-Signature-256: sha256=hash-of-payload-using-webhook-secret" \
   -d '{
     "action": "opened",
     "pull_request": {
       "title": "Implement SSO feature",
-      "body": "This PR implements the Single Sign-On feature for the admin portal.\n\nReferences: INFRA-42",
+      "body": "References: INFRA-42",
       "user": {
         "login": "jane.doe"
       },
-      "state": "open",
       "html_url": "https://github.com/org/repo/pull/123"
     },
     "repository": {
-      "name": "repo",
-      "full_name": "org/repo",
-      "owner": {
-        "login": "org"
-      }
+      "full_name": "org/repo"
     }
   }'
 ```
@@ -689,100 +436,43 @@ Response:
 }
 ```
 
-### Custom Webhook
-
-```bash
-# Custom webhook for external integrations
-curl -X POST "https://your-rinna-instance/api/v1/webhooks/custom?project=INFRA" \
-  -H "Authorization: Bearer ri-dev-f72a159e4bdc" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Update network security groups",
-    "description": "Update NSGs to comply with new security policies",
-    "type": "CHORE",
-    "priority": "MEDIUM",
-    "metadata": {
-      "source": "security_scanner",
-      "compliance": "required",
-      "deadline": "2025-06-01"
-    }
-  }'
-```
-
-Response:
-
-```json
-{
-  "success": true,
-  "message": "Work item created successfully",
-  "workItemId": "fedcba98-7654-3210-fedc-ba9876543210"
-}
-```
-
 ## Error Handling
 
 The API uses standard HTTP status codes and returns error details in a consistent format:
 
-### Not Found Example
-
-```bash
-# Request a non-existent work item
-curl -X GET "https://your-rinna-instance/api/v1/workitems/non-existent-id" \
-  -H "Authorization: Bearer ri-dev-f72a159e4bdc"
-```
-
-Response (404):
+### Not Found Example (404)
 
 ```json
 {
   "code": 404,
   "message": "Work item not found",
-  "details": ["Item with id 'non-existent-id' does not exist"]
+  "details": ["Item with id 'non-existent-id' does not exist"],
+  "request_id": "custom-request-id-12345",
+  "timestamp": "2025-04-10T16:30:00Z"
 }
 ```
 
-### Validation Error Example
-
-```bash
-# Attempt to create a work item with missing required fields
-curl -X POST "https://your-rinna-instance/api/v1/workitems" \
-  -H "Authorization: Bearer ri-dev-f72a159e4bdc" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "description": "This work item has no title"
-  }'
-```
-
-Response (400):
+### Validation Error Example (400)
 
 ```json
 {
   "code": 400,
   "message": "Invalid request",
-  "details": ["Field 'title' is required"]
+  "details": ["Field 'title' is required", "Field 'projectId' is required"],
+  "request_id": "custom-request-id-67890",
+  "timestamp": "2025-04-10T16:35:00Z"
 }
 ```
 
-### Invalid Transition Example
-
-```bash
-# Attempt an invalid workflow transition
-curl -X POST "https://your-rinna-instance/api/v1/workitems/a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d/transitions" \
-  -H "Authorization: Bearer ri-dev-f72a159e4bdc" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "targetStatus": "DONE",
-    "comment": "Skipping testing phase"
-  }'
-```
-
-Response (422):
+### Rate Limit Exceeded Example (429)
 
 ```json
 {
-  "code": 422,
-  "message": "Invalid transition",
-  "details": ["Cannot transition from 'IN_DEV' to 'DONE'. Valid transitions are: 'TESTING'"]
+  "code": 429,
+  "message": "Rate limit exceeded",
+  "details": ["Request limit reached. Please try again later."],
+  "request_id": "custom-request-id-abcde",
+  "timestamp": "2025-04-10T16:40:00Z"
 }
 ```
 
@@ -808,202 +498,41 @@ curl -X POST "https://your-rinna-instance/api/v1/workitems/bulk" \
         "type": "CHORE",
         "priority": "MEDIUM",
         "projectId": "INFRA"
-      },
-      {
-        "title": "Update IAM policies",
-        "type": "CHORE",
-        "priority": "HIGH",
-        "projectId": "INFRA"
       }
     ]
   }'
 ```
 
-Response:
-
-```json
-{
-  "success": true,
-  "created": 3,
-  "failed": 0,
-  "items": [
-    {
-      "id": "11111111-1111-1111-1111-111111111111",
-      "title": "Set up CI/CD pipeline"
-    },
-    {
-      "id": "22222222-2222-2222-2222-222222222222",
-      "title": "Configure monitoring alerts"
-    },
-    {
-      "id": "33333333-3333-3333-3333-333333333333",
-      "title": "Update IAM policies"
-    }
-  ]
-}
-```
-
-### Advanced Filtering
-
-```bash
-# Complex filtering for work items
-curl -X GET "https://your-rinna-instance/api/v1/workitems/search" \
-  -H "Authorization: Bearer ri-dev-f72a159e4bdc" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "project": "INFRA",
-    "filters": [
-      {
-        "field": "status",
-        "operator": "in",
-        "value": ["IN_DEV", "TESTING"]
-      },
-      {
-        "field": "priority",
-        "operator": "eq",
-        "value": "HIGH"
-      },
-      {
-        "field": "metadata.estimatedHours",
-        "operator": "gt",
-        "value": "8"
-      }
-    ],
-    "sort": [
-      {"field": "priority", "direction": "desc"},
-      {"field": "createdAt", "direction": "asc"}
-    ],
-    "page": 1,
-    "pageSize": 20
-  }'
-```
-
-Response:
-
-```json
-{
-  "items": [
-    {
-      "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
-      "title": "Implement SSO for admin portal with MFA",
-      "description": "Add support for Azure AD single sign-on",
-      "type": "FEATURE",
-      "priority": "HIGH",
-      "status": "IN_DEV",
-      "assignee": "jane.doe",
-      "projectId": "7d8f3ab4-c2e5-47d6-9a1b-8fc7e41fea23",
-      "metadata": {
-        "requestedBy": "security-team",
-        "estimatedHours": "16",
-        "complexity": "medium"
-      },
-      "createdAt": "2025-04-08T16:10:45Z",
-      "updatedAt": "2025-04-08T16:45:10Z"
-    }
-  ],
-  "totalCount": 1,
-  "page": 1,
-  "pageSize": 20
-}
-```
-
-### Client SDK Usage (Java)
-
-```java
-// Initialize the client
-RinnaClient client = RinnaClient.builder()
-    .apiUrl("https://your-rinna-instance/api/v1")
-    .apiToken("ri-dev-f72a159e4bdc")
-    .build();
-
-// Create a work item
-WorkItemCreateRequest workItem = new WorkItemCreateRequest.Builder()
-    .title("Implement database migration script")
-    .description("Create script to migrate data from MySQL to PostgreSQL")
-    .type(WorkItemType.FEATURE)
-    .priority(Priority.MEDIUM)
-    .projectId("INFRA")
-    .addMetadata("estimatedHours", "8")
-    .build();
-
-// Submit the request
-try {
-    WorkItem created = client.workItems().create(workItem);
-    System.out.println("Created work item: " + created.getId());
-    
-    // Transition the work item
-    client.workItems()
-        .transition(created.getId(), WorkflowState.IN_DEV, "Starting implementation");
-    
-    // Fetch and print work items for project
-    WorkItemListResponse projectItems = client.projects()
-        .getWorkItems("INFRA", null, 1, 10);
-    
-    System.out.println("Project has " + projectItems.getTotalCount() + " work items");
-    projectItems.getItems().forEach(item -> 
-        System.out.println(" - " + item.getTitle() + " (" + item.getStatus() + ")"));
-        
-} catch (RinnaApiException e) {
-    System.err.println("API Error: " + e.getMessage());
-    e.getDetails().forEach(detail -> System.err.println(" - " + detail));
-}
-```
-
 ### Client SDK Usage (Go)
 
 ```go
-package main
+// Initialize the client
+client := rinna.NewClient("https://your-rinna-instance/api/v1", "ri-dev-f72a159e4bdc")
 
-import (
-    "context"
-    "fmt"
-    "log"
-    
-    "github.com/heymumford/rinna/client"
-)
+// Create a work item
+workItem, err := client.CreateWorkItem(context.Background(), rinna.WorkItemCreateRequest{
+    Title:       "Update Docker containers",
+    Description: "Security update for all Docker containers",
+    Type:        rinna.WorkItemTypeChore,
+    Priority:    rinna.PriorityHigh,
+    ProjectID:   "INFRA",
+})
 
-func main() {
-    // Initialize the client
-    c := client.NewClient("https://your-rinna-instance/api/v1", "ri-dev-f72a159e4bdc")
-    
-    // Create a work item
-    workItem, err := c.CreateWorkItem(context.Background(), client.WorkItemCreateRequest{
-        Title:       "Update Docker containers to latest base images",
-        Description: "Security update for all Docker containers",
-        Type:        client.WorkItemTypeChore,
-        Priority:    client.PriorityHigh,
-        ProjectID:   "INFRA",
-        Metadata: map[string]string{
-            "estimatedHours": "4",
-            "securityImpact": "high",
-        },
-    })
-    
-    if err != nil {
-        log.Fatalf("Failed to create work item: %v", err)
-    }
-    
-    fmt.Printf("Created work item: %s (%s)\n", workItem.Title, workItem.ID)
-    
-    // Transition the work item
-    err = c.TransitionWorkItem(context.Background(), workItem.ID, client.WorkItemTransitionRequest{
-        ToState: client.WorkflowStateInDev,
-        Comment: "Starting the security update process",
-    })
-    
-    if err != nil {
-        log.Fatalf("Failed to transition work item: %v", err)
-    }
-    
-    // List work items for project
-    items, err := c.GetProjectWorkItems(context.Background(), "INFRA", "", 1, 10)
-    if err != nil {
-        log.Fatalf("Failed to get project work items: %v", err)
-    }
-    
-    fmt.Printf("Project has %d work items:\n", items.TotalCount)
-    for _, item := range items.Items {
-        fmt.Printf(" - %s (%s): %s\n", item.ID, item.Status, item.Title)
+// Handle rate limiting with exponential backoff
+if err != nil {
+    if apiErr, ok := err.(*rinna.APIError); ok && apiErr.StatusCode == 429 {
+        retryAfter, _ := strconv.Atoi(apiErr.Headers.Get("Retry-After"))
+        time.Sleep(time.Duration(retryAfter) * time.Second)
+        // Retry the request
     }
 }
 ```
+
+## Additional Resources
+
+For detailed examples of specific security features, see:
+
+- [Security Integration Examples](./examples/security-examples.md)
+- [OAuth Integration Examples](./examples/oauth-examples.md)
+- [Rate Limiting Examples](./examples/rate-limiting-examples.md)
+- [Webhook Security Examples](./examples/webhook-security-examples.md)
