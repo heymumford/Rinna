@@ -12,7 +12,11 @@ import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.service.ComplianceService;
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.util.OutputFormatter;
+import org.rinna.cli.util.ErrorHandler;
+import org.rinna.cli.util.OperationTracker;
+import org.rinna.cli.util.ErrorHandler.Severity;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +36,8 @@ public class AdminComplianceCommand implements Callable<Integer> {
     private final ServiceManager serviceManager;
     private final MetadataService metadataService;
     private final Scanner scanner;
+    private final ErrorHandler errorHandler;
+    private final OperationTracker operationTracker;
     private String format = "text";
     private boolean verbose = false;
     
@@ -44,6 +50,10 @@ public class AdminComplianceCommand implements Callable<Integer> {
         this.serviceManager = serviceManager;
         this.metadataService = serviceManager.getMetadataService();
         this.scanner = new Scanner(System.in, java.nio.charset.StandardCharsets.UTF_8.name());
+        
+        // Initialize utility instances
+        this.operationTracker = new OperationTracker(metadataService);
+        this.errorHandler = new ErrorHandler(metadataService);
     }
     
     /**
@@ -80,6 +90,7 @@ public class AdminComplianceCommand implements Callable<Integer> {
      */
     public void setFormat(String format) {
         this.format = format;
+        this.errorHandler.outputFormat(format);
     }
     
     /**
@@ -89,88 +100,102 @@ public class AdminComplianceCommand implements Callable<Integer> {
      */
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
+        this.errorHandler.verbose(verbose);
     }
     
     @Override
     public Integer call() {
-        // Create operation parameters for tracking
-        Map<String, Object> params = new HashMap<>();
-        params.put("operation", operation != null ? operation : "help");
-        params.put("argsCount", args.length);
-        if (args.length > 0) {
-            params.put("arg0", args[0]);
-        }
-        params.put("format", format);
-        params.put("verbose", verbose);
+        // Configure the operation tracker with command details
+        operationTracker
+            .command("admin-compliance")
+            .operationType("COMPLIANCE")
+            .param("operation", operation != null ? operation : "help")
+            .param("argsCount", args.length)
+            .param("format", format)
+            .param("verbose", verbose);
         
-        // Start tracking operation
-        String operationId = metadataService.startOperation("admin-compliance", "COMPLIANCE", params);
+        // Add first argument if available
+        if (args.length > 0) {
+            operationTracker.param("arg0", args[0]);
+        }
         
         try {
-            if (operation == null || operation.isEmpty()) {
-                displayHelp(operationId);
-                return 1;
-            }
-            
-            // Get the compliance service
-            ComplianceService complianceService = serviceManager.getComplianceService();
-            if (complianceService == null) {
-                String errorMessage = "Compliance service is not available.";
-                outputError(errorMessage);
-                metadataService.failOperation(operationId, new IllegalStateException(errorMessage));
-                return 1;
-            }
-            
-            // Delegate to the appropriate operation
-            int result;
-            switch (operation) {
-                case "report":
-                    result = handleReportOperation(complianceService, operationId);
-                    break;
+            // Execute the main operation with tracking
+            return operationTracker.execute(() -> {
+                // Handle missing operation
+                if (operation == null || operation.isEmpty()) {
+                    displayHelp(operationTracker.start());
+                    return 1;
+                }
                 
-                case "configure":
-                    result = handleConfigureOperation(complianceService, operationId);
-                    break;
+                // Get the compliance service
+                ComplianceService complianceService = serviceManager.getComplianceService();
+                if (complianceService == null) {
+                    String errorMessage = "Compliance service is not available.";
+                    return errorHandler.handleError(
+                        operationTracker.start(),
+                        "admin-compliance", 
+                        errorMessage,
+                        new IllegalStateException(errorMessage),
+                        ErrorHandler.Severity.SYSTEM
+                    );
+                }
                 
-                case "validate":
-                    result = handleValidateOperation(complianceService, operationId);
-                    break;
+                // Delegate to the appropriate operation
+                String parentOperationId = operationTracker.start();
+                int result;
                 
-                case "status":
-                    result = handleStatusOperation(complianceService, operationId);
-                    break;
+                switch (operation) {
+                    case "report":
+                        result = handleReportOperation(complianceService, parentOperationId);
+                        break;
+                    
+                    case "configure":
+                        result = handleConfigureOperation(complianceService, parentOperationId);
+                        break;
+                    
+                    case "validate":
+                        result = handleValidateOperation(complianceService, parentOperationId);
+                        break;
+                    
+                    case "status":
+                        result = handleStatusOperation(complianceService, parentOperationId);
+                        break;
+                    
+                    case "help":
+                        displayHelp(parentOperationId);
+                        result = 0;
+                        break;
+                    
+                    default:
+                        String errorMessage = "Unknown compliance operation: " + operation;
+                        displayHelp(parentOperationId);
+                        return errorHandler.handleError(
+                            parentOperationId,
+                            "admin-compliance",
+                            errorMessage,
+                            new IllegalArgumentException(errorMessage),
+                            ErrorHandler.Severity.VALIDATION
+                        );
+                }
                 
-                case "help":
-                    displayHelp(operationId);
-                    result = 0;
-                    break;
+                // If operation was successful, record the result
+                if (result == 0) {
+                    Map<String, Object> resultData = new HashMap<>();
+                    resultData.put("success", true);
+                    resultData.put("operation", operation);
+                    operationTracker.complete(parentOperationId, resultData);
+                }
                 
-                default:
-                    String errorMessage = "Unknown compliance operation: " + operation;
-                    System.err.println("Error: " + errorMessage);
-                    displayHelp(operationId);
-                    metadataService.failOperation(operationId, new IllegalArgumentException(errorMessage));
-                    result = 1;
-                    break;
-            }
-            
-            // Complete operation if successful
-            if (result == 0) {
-                Map<String, Object> resultData = new HashMap<>();
-                resultData.put("success", true);
-                resultData.put("operation", operation);
-                metadataService.completeOperation(operationId, resultData);
-            }
-            
-            return result;
+                return result;
+            });
         } catch (Exception e) {
-            String errorMessage = e.getMessage();
-            outputError(errorMessage);
-            if (verbose) {
-                e.printStackTrace();
-            }
-            metadataService.failOperation(operationId, e);
-            return 1;
+            // Handle any unexpected errors using the error handler
+            return errorHandler.handleUnexpectedError(
+                operationTracker.start(),
+                "admin-compliance", 
+                e
+            );
         }
     }
     
@@ -182,58 +207,70 @@ public class AdminComplianceCommand implements Callable<Integer> {
      * @return the exit code
      */
     private int handleReportOperation(ComplianceService complianceService, String parentOperationId) {
-        // Create operation parameters for tracking
-        Map<String, Object> params = new HashMap<>();
-        params.put("operation", "report");
-        
         // Parse options from arguments
         Map<String, String> options = parseOptions(args);
         
         String type = options.getOrDefault("type", "GDPR");
         String period = options.getOrDefault("period", "current");
         
-        params.put("type", type);
-        params.put("period", period);
-        
-        // Start tracking sub-operation
-        String reportOperationId = metadataService.trackOperation("admin-compliance-report", params);
+        // Create a sub-tracker for this operation
+        OperationTracker reportTracker = operationTracker
+            .command("admin-compliance-report")
+            .param("operation", "report")
+            .param("type", type)
+            .param("period", period)
+            .param("format", format)
+            .parent(parentOperationId);
         
         try {
-            String report = complianceService.generateComplianceReport(type, period);
-            
-            if ("json".equalsIgnoreCase(format)) {
-                Map<String, Object> resultData = new HashMap<>();
-                resultData.put("result", "success");
-                resultData.put("operation", "report");
-                
-                Map<String, Object> reportData = new HashMap<>();
-                reportData.put("type", type);
-                reportData.put("period", period);
-                reportData.put("report", report);
-                
-                resultData.put("data", reportData);
-                
-                System.out.println(OutputFormatter.toJson(resultData, verbose));
-            } else {
-                System.out.println(report);
-            }
-            
-            // Track operation success
-            Map<String, Object> resultData = new HashMap<>();
-            resultData.put("success", true);
-            resultData.put("type", type);
-            resultData.put("period", period);
-            metadataService.completeOperation(reportOperationId, resultData);
-            
-            return 0;
+            // Execute the operation and return the result
+            return reportTracker.execute(() -> {
+                try {
+                    String report = complianceService.generateComplianceReport(type, period);
+                    
+                    if ("json".equalsIgnoreCase(format)) {
+                        Map<String, Object> resultData = new HashMap<>();
+                        resultData.put("result", "success");
+                        resultData.put("operation", "report");
+                        
+                        Map<String, Object> reportData = new HashMap<>();
+                        reportData.put("type", type);
+                        reportData.put("period", period);
+                        reportData.put("report", report);
+                        
+                        resultData.put("data", reportData);
+                        
+                        System.out.println(OutputFormatter.toJson(resultData, verbose));
+                    } else {
+                        System.out.println(report);
+                    }
+                    
+                    // Return success with result data
+                    Map<String, Object> resultData = new HashMap<>();
+                    resultData.put("type", type);
+                    resultData.put("period", period);
+                    
+                    return errorHandler.handleSuccess(reportTracker.start(), resultData);
+                } catch (Exception e) {
+                    // Handle expected errors with error context
+                    String errorMessage = "Error generating compliance report: " + e.getMessage();
+                    return errorHandler.handleError(
+                        reportTracker.start(),
+                        "admin-compliance-report",
+                        errorMessage,
+                        e,
+                        ErrorHandler.Severity.ERROR
+                    );
+                }
+            });
         } catch (Exception e) {
-            String errorMessage = "Error generating compliance report: " + e.getMessage();
-            outputError(errorMessage);
-            if (verbose) {
-                e.printStackTrace();
-            }
-            metadataService.failOperation(reportOperationId, e);
-            return 1;
+            // Handle unexpected errors
+            return errorHandler.handleUnexpectedError(
+                reportTracker.start(),
+                "admin-compliance-report",
+                e,
+                ErrorHandler.Severity.SYSTEM
+            );
         }
     }
     
@@ -625,16 +662,20 @@ public class AdminComplianceCommand implements Callable<Integer> {
      * Outputs an error message in either JSON or text format.
      *
      * @param message the error message
+     * @param severity the error severity
+     */
+    private void outputError(String message, ErrorHandler.Severity severity) {
+        errorHandler.outputError(message, null, severity);
+    }
+    
+    /**
+     * Outputs an error message in either JSON or text format.
+     * Uses ERROR severity by default.
+     *
+     * @param message the error message
      */
     private void outputError(String message) {
-        if ("json".equalsIgnoreCase(format)) {
-            Map<String, Object> errorData = new HashMap<>();
-            errorData.put("result", "error");
-            errorData.put("message", message);
-            System.out.println(OutputFormatter.toJson(errorData, verbose));
-        } else {
-            System.err.println("Error: " + message);
-        }
+        errorHandler.outputError(message, null);
     }
     
     /**
@@ -644,9 +685,7 @@ public class AdminComplianceCommand implements Callable<Integer> {
      */
     private void outputSuccess(String message) {
         if ("json".equalsIgnoreCase(format)) {
-            Map<String, Object> successData = new HashMap<>();
-            successData.put("result", "success");
-            successData.put("message", message);
+            Map<String, Object> successData = errorHandler.createSuccessResult("admin-compliance", Map.of("message", message));
             System.out.println(OutputFormatter.toJson(successData, verbose));
         } else {
             System.out.println(message);

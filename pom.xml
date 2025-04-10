@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.rinna</groupId>
   <artifactId>Rinna</artifactId>
-  <version>1.6.2</version>
+  <version>1.6.6</version>
   <name>Rinna</name>
   <packaging>pom</packaging>
   <description>Workflow management system for developers</description>

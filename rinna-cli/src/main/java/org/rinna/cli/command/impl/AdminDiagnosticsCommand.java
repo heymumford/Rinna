@@ -11,7 +11,11 @@ package org.rinna.cli.command.impl;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.service.DiagnosticsService;
 import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.util.MapConverter;
 import org.rinna.cli.util.OutputFormatter;
+import org.rinna.cli.util.ErrorHandler;
+import org.rinna.cli.util.OperationTracker;
+import org.rinna.cli.util.ErrorHandler.Severity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +37,8 @@ public class AdminDiagnosticsCommand implements Callable<Integer> {
     private final ServiceManager serviceManager;
     private final Scanner scanner;
     private final MetadataService metadataService;
+    private final OperationTracker operationTracker;
+    private final ErrorHandler errorHandler;
     private String format = "text";
     private boolean verbose = false;
     
@@ -45,6 +51,10 @@ public class AdminDiagnosticsCommand implements Callable<Integer> {
         this.serviceManager = serviceManager;
         this.metadataService = serviceManager.getMetadataService();
         this.scanner = new Scanner(System.in, java.nio.charset.StandardCharsets.UTF_8.name());
+        
+        // Initialize utility instances
+        this.operationTracker = new OperationTracker(metadataService);
+        this.errorHandler = new ErrorHandler(metadataService);
     }
     
     /**
@@ -81,6 +91,7 @@ public class AdminDiagnosticsCommand implements Callable<Integer> {
      */
     public void setFormat(String format) {
         this.format = format;
+        this.errorHandler.outputFormat(format);
     }
     
     /**
@@ -90,92 +101,107 @@ public class AdminDiagnosticsCommand implements Callable<Integer> {
      */
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
+        this.errorHandler.verbose(verbose);
     }
     
     @Override
     public Integer call() {
-        // Create operation parameters for tracking
-        Map<String, Object> params = new HashMap<>();
-        params.put("operation", operation != null ? operation : "help");
-        params.put("argsCount", args.length);
-        if (args.length > 0) {
-            params.put("arg0", args[0]);
-        }
-        params.put("format", format);
-        params.put("verbose", verbose);
+        // Configure the operation tracker with command details
+        operationTracker
+            .command("admin-diagnostics")
+            .operationType("DIAGNOSTICS")
+            .param("operation", operation != null ? operation : "help")
+            .param("argsCount", args.length)
+            .param("format", format)
+            .param("verbose", verbose);
         
-        // Start tracking operation
-        String operationId = metadataService.startOperation("admin-diagnostics", "DIAGNOSTICS", params);
+        // Add first argument if available
+        if (args.length > 0) {
+            operationTracker.param("arg0", args[0]);
+        }
         
         try {
-            if (operation == null || operation.isEmpty()) {
-                displayHelp(operationId);
-                return 1;
-            }
-            
-            // Get the diagnostics service
-            DiagnosticsService diagnosticsService = serviceManager.getDiagnosticsService();
-            if (diagnosticsService == null) {
-                String errorMessage = "Diagnostics service is not available.";
-                outputError(errorMessage);
-                metadataService.failOperation(operationId, new IllegalStateException(errorMessage));
-                return 1;
-            }
-            
-            // Delegate to the appropriate operation
-            int result;
-            switch (operation) {
-                case "run":
-                    result = handleRunOperation(diagnosticsService, operationId);
-                    break;
+            // Execute the main operation with tracking
+            return operationTracker.execute(() -> {
+                // Handle missing operation
+                if (operation == null || operation.isEmpty()) {
+                    displayHelp(operationTracker.start());
+                    return 1;
+                }
                 
-                case "schedule":
-                    result = handleScheduleOperation(diagnosticsService, operationId);
-                    break;
+                // Get the diagnostics service
+                DiagnosticsService diagnosticsService = serviceManager.getDiagnosticsService();
+                if (diagnosticsService == null) {
+                    String errorMessage = "Diagnostics service is not available.";
+                    return errorHandler.handleError(
+                        operationTracker.start(),
+                        "admin-diagnostics", 
+                        errorMessage,
+                        new IllegalStateException(errorMessage),
+                        ErrorHandler.Severity.SYSTEM
+                    );
+                }
                 
-                case "database":
-                    result = handleDatabaseOperation(diagnosticsService, operationId);
-                    break;
+                // Delegate to the appropriate operation
+                String parentOperationId = operationTracker.start();
+                int result;
                 
-                case "warning":
-                    result = handleWarningOperation(diagnosticsService, operationId);
-                    break;
+                switch (operation) {
+                    case "run":
+                        result = handleRunOperation(diagnosticsService, parentOperationId);
+                        break;
+                    
+                    case "schedule":
+                        result = handleScheduleOperation(diagnosticsService, parentOperationId);
+                        break;
+                    
+                    case "database":
+                        result = handleDatabaseOperation(diagnosticsService, parentOperationId);
+                        break;
+                    
+                    case "warning":
+                        result = handleWarningOperation(diagnosticsService, parentOperationId);
+                        break;
+                    
+                    case "action":
+                        result = handleActionOperation(diagnosticsService, parentOperationId);
+                        break;
+                    
+                    case "help":
+                        displayHelp(parentOperationId);
+                        result = 0;
+                        break;
+                    
+                    default:
+                        String errorMessage = "Unknown diagnostics operation: " + operation;
+                        displayHelp(parentOperationId);
+                        return errorHandler.handleError(
+                            parentOperationId,
+                            "admin-diagnostics",
+                            errorMessage,
+                            new IllegalArgumentException(errorMessage),
+                            ErrorHandler.Severity.VALIDATION
+                        );
+                }
                 
-                case "action":
-                    result = handleActionOperation(diagnosticsService, operationId);
-                    break;
+                // If operation was successful, record the result
+                if (result == 0) {
+                    Map<String, Object> resultData = new HashMap<>();
+                    resultData.put("success", true);
+                    resultData.put("operation", operation);
+                    operationTracker.complete(parentOperationId, resultData);
+                }
                 
-                case "help":
-                    displayHelp(operationId);
-                    result = 0;
-                    break;
-                
-                default:
-                    String errorMessage = "Unknown diagnostics operation: " + operation;
-                    outputError(errorMessage);
-                    displayHelp(operationId);
-                    metadataService.failOperation(operationId, new IllegalArgumentException(errorMessage));
-                    result = 1;
-                    break;
-            }
-            
-            // Complete operation if successful
-            if (result == 0) {
-                Map<String, Object> resultData = new HashMap<>();
-                resultData.put("success", true);
-                resultData.put("operation", operation);
-                metadataService.completeOperation(operationId, resultData);
-            }
-            
-            return result;
+                return result;
+            });
         } catch (Exception e) {
-            String errorMessage = e.getMessage();
-            outputError(errorMessage);
-            if (verbose) {
-                e.printStackTrace();
-            }
-            metadataService.failOperation(operationId, e);
-            return 1;
+            // Handle any unexpected errors using the error handler
+            return errorHandler.handleUnexpectedError(
+                operationTracker.start(),
+                "admin-diagnostics", 
+                e,
+                ErrorHandler.Severity.SYSTEM
+            );
         }
     }
     
@@ -190,45 +216,60 @@ public class AdminDiagnosticsCommand implements Callable<Integer> {
         Map<String, String> options = parseOptions(args);
         boolean full = options.containsKey("full");
         
-        // Create operation parameters for tracking
-        Map<String, Object> params = new HashMap<>();
-        params.put("operation", "run");
-        params.put("full", full);
-        params.put("format", format);
-        
-        // Start tracking sub-operation
-        String runOperationId = metadataService.trackOperation("admin-diagnostics-run", params);
+        // Create a sub-tracker for this operation
+        OperationTracker runTracker = operationTracker
+            .command("admin-diagnostics-run")
+            .param("operation", "run")
+            .param("full", full)
+            .param("format", format)
+            .parent(parentOperationId);
         
         try {
-            String results = diagnosticsService.runDiagnostics(full);
-            
-            if ("json".equalsIgnoreCase(format)) {
-                Map<String, Object> resultData = new HashMap<>();
-                resultData.put("result", "success");
-                resultData.put("operation", "run");
-                resultData.put("full", full);
-                resultData.put("diagnostics", results);
-                
-                System.out.println(OutputFormatter.toJson(resultData, verbose));
-            } else {
-                System.out.println(results);
-            }
-            
-            // Track operation success
-            Map<String, Object> resultData = new HashMap<>();
-            resultData.put("success", true);
-            resultData.put("full", full);
-            metadataService.completeOperation(runOperationId, resultData);
-            
-            return 0;
+            // Execute the operation with proper tracking
+            return runTracker.execute(() -> {
+                try {
+                    // Run diagnostics
+                    String results = diagnosticsService.runDiagnostics(full);
+                    
+                    // Display the results in the appropriate format
+                    if ("json".equalsIgnoreCase(format)) {
+                        Map<String, Object> resultData = new HashMap<>();
+                        resultData.put("result", "success");
+                        resultData.put("operation", "run");
+                        resultData.put("full", full);
+                        resultData.put("diagnostics", results);
+                        
+                        System.out.println(OutputFormatter.toJson(resultData, verbose));
+                    } else {
+                        System.out.println(results);
+                    }
+                    
+                    // Build success result data
+                    Map<String, Object> resultData = new HashMap<>();
+                    resultData.put("full", full);
+                    
+                    // Return success with tracked operation
+                    return errorHandler.handleSuccess(runTracker.start(), resultData);
+                } catch (Exception e) {
+                    // Handle expected errors with proper context
+                    String errorMessage = "Error running diagnostics: " + e.getMessage();
+                    return errorHandler.handleError(
+                        runTracker.start(),
+                        "admin-diagnostics-run",
+                        errorMessage,
+                        e,
+                        ErrorHandler.Severity.ERROR
+                    );
+                }
+            });
         } catch (Exception e) {
-            String errorMessage = "Error running diagnostics: " + e.getMessage();
-            outputError(errorMessage);
-            if (verbose) {
-                e.printStackTrace();
-            }
-            metadataService.failOperation(runOperationId, e);
-            return 1;
+            // Handle unexpected errors
+            return errorHandler.handleUnexpectedError(
+                runTracker.start(),
+                "admin-diagnostics-run",
+                e,
+                ErrorHandler.Severity.SYSTEM
+            );
         }
     }
     
@@ -311,7 +352,7 @@ public class AdminDiagnosticsCommand implements Callable<Integer> {
             // Track check types selection
             Map<String, Object> checkParams = new HashMap<>();
             checkParams.put("checks", checks);
-            metadataService.trackOperationWithData("admin-diagnostics-schedule-checks", checkParams);
+            metadataService.trackOperation("admin-diagnostics-schedule-checks", checkParams);
             
             System.out.println("Select schedule frequency:");
             System.out.println("1. hourly - Run every hour");
@@ -351,7 +392,7 @@ public class AdminDiagnosticsCommand implements Callable<Integer> {
             // Track frequency selection
             Map<String, Object> frequencyParams = new HashMap<>();
             frequencyParams.put("frequency", frequency);
-            metadataService.trackOperationWithData("admin-diagnostics-schedule-frequency", frequencyParams);
+            metadataService.trackOperation("admin-diagnostics-schedule-frequency", frequencyParams);
             
             String timePrompt = "hourly".equals(frequency) 
                 ? "Enter schedule minute (0-59) [0]: " 
@@ -369,7 +410,7 @@ public class AdminDiagnosticsCommand implements Callable<Integer> {
             // Track time selection
             Map<String, Object> timeParams = new HashMap<>();
             timeParams.put("time", time);
-            metadataService.trackOperationWithData("admin-diagnostics-schedule-time", timeParams);
+            metadataService.trackOperation("admin-diagnostics-schedule-time", timeParams);
             
             System.out.print("Enter notification recipients (comma-separated email addresses): ");
             String recipientsInput = scanner.nextLine().trim();
@@ -379,7 +420,7 @@ public class AdminDiagnosticsCommand implements Callable<Integer> {
             // Track recipients selection
             Map<String, Object> recipientsParams = new HashMap<>();
             recipientsParams.put("recipients", recipients);
-            metadataService.trackOperationWithData("admin-diagnostics-schedule-recipients", recipientsParams);
+            metadataService.trackOperation("admin-diagnostics-schedule-recipients", recipientsParams);
             
             // Execute schedule creation with tracking
             Map<String, Object> createParams = new HashMap<>();
@@ -575,7 +616,7 @@ public class AdminDiagnosticsCommand implements Callable<Integer> {
         // Update operation parameters with warning ID
         Map<String, Object> idParams = new HashMap<>();
         idParams.put("warningId", warningId);
-        metadataService.trackOperationWithData("admin-diagnostics-warning-id", idParams);
+        metadataService.trackOperation("admin-diagnostics-warning-id", idParams);
         
         try {
             // Get warning details with tracking
@@ -710,7 +751,7 @@ public class AdminDiagnosticsCommand implements Callable<Integer> {
             selectionParams.put("warningId", warningId);
             selectionParams.put("selectedAction", selectedAction);
             selectionParams.put("actionIndex", actionIndex);
-            metadataService.trackOperationWithData("admin-diagnostics-warning-select-action", selectionParams);
+            metadataService.trackOperation("admin-diagnostics-warning-select-action", selectionParams);
             
             System.out.println();
             System.out.println("Performing action: " + selectedAction);
@@ -975,16 +1016,20 @@ public class AdminDiagnosticsCommand implements Callable<Integer> {
      * Outputs an error message in either JSON or text format.
      *
      * @param message the error message
+     * @param severity the error severity
+     */
+    private void outputError(String message, ErrorHandler.Severity severity) {
+        errorHandler.outputError(message, null, severity);
+    }
+    
+    /**
+     * Outputs an error message in either JSON or text format.
+     * Uses ERROR severity by default.
+     *
+     * @param message the error message
      */
     private void outputError(String message) {
-        if ("json".equalsIgnoreCase(format)) {
-            Map<String, Object> errorData = new HashMap<>();
-            errorData.put("result", "error");
-            errorData.put("message", message);
-            System.out.println(OutputFormatter.toJson(errorData, verbose));
-        } else {
-            System.err.println("Error: " + message);
-        }
+        errorHandler.outputError(message, null);
     }
     
     /**
@@ -994,9 +1039,7 @@ public class AdminDiagnosticsCommand implements Callable<Integer> {
      */
     private void outputSuccess(String message) {
         if ("json".equalsIgnoreCase(format)) {
-            Map<String, Object> successData = new HashMap<>();
-            successData.put("result", "success");
-            successData.put("message", message);
+            Map<String, Object> successData = errorHandler.createSuccessResult("admin-diagnostics", Map.of("message", message));
             System.out.println(OutputFormatter.toJson(successData, verbose));
         } else {
             System.out.println(message);

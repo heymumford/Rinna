@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.rinna</groupId>
     <artifactId>Rinna</artifactId>
-    <version>1.6.2</version>
+    <version>1.6.6</version>
   </parent>
   <artifactId>rinna-data-sqlite</artifactId>
   <name>Rinna SQLite Persistence</name>

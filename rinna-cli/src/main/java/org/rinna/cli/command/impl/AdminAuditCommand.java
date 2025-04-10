@@ -12,6 +12,9 @@ import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.service.AuditService;
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.util.OutputFormatter;
+import org.rinna.cli.util.ErrorHandler;
+import org.rinna.cli.util.OperationTracker;
+import org.rinna.cli.util.ErrorHandler.Severity;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -36,6 +39,8 @@ public class AdminAuditCommand implements Callable<Integer> {
     private final ServiceManager serviceManager;
     private final Scanner scanner;
     private final MetadataService metadataService;
+    private final OperationTracker operationTracker;
+    private final ErrorHandler errorHandler;
     
     /**
      * Creates a new AdminAuditCommand with the specified ServiceManager.
@@ -46,6 +51,10 @@ public class AdminAuditCommand implements Callable<Integer> {
         this.serviceManager = serviceManager;
         this.metadataService = serviceManager.getMetadataService();
         this.scanner = new Scanner(System.in, java.nio.charset.StandardCharsets.UTF_8.name());
+        
+        // Initialize utility instances
+        this.operationTracker = new OperationTracker(metadataService);
+        this.errorHandler = new ErrorHandler(metadataService);
     }
     
     /**
@@ -85,6 +94,7 @@ public class AdminAuditCommand implements Callable<Integer> {
      */
     public void setFormat(String format) {
         this.format = format;
+        this.errorHandler.outputFormat(format);
     }
     
     /**
@@ -94,100 +104,115 @@ public class AdminAuditCommand implements Callable<Integer> {
      */
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
+        this.errorHandler.verbose(verbose);
     }
     
     @Override
     public Integer call() {
-        // Create operation parameters for tracking
-        Map<String, Object> params = new HashMap<>();
-        params.put("operation", operation != null ? operation : "help");
-        params.put("argsCount", args.length);
-        if (args.length > 0) {
-            params.put("arg0", args[0]);
-        }
-        params.put("format", format);
-        params.put("verbose", verbose);
+        // Configure the operation tracker with command details
+        operationTracker
+            .command("admin-audit")
+            .operationType("AUDIT")
+            .param("operation", operation != null ? operation : "help")
+            .param("argsCount", args.length)
+            .param("format", format)
+            .param("verbose", verbose);
         
-        // Start tracking operation
-        String operationId = metadataService.startOperation("admin-audit", "AUDIT", params);
+        // Add first argument if available
+        if (args.length > 0) {
+            operationTracker.param("arg0", args[0]);
+        }
         
         try {
-            if (operation == null || operation.isEmpty()) {
-                displayHelp(operationId);
-                return 1;
-            }
-            
-            // Get the audit service
-            AuditService auditService = serviceManager.getAuditService();
-            if (auditService == null) {
-                String errorMessage = "Audit service is not available.";
-                outputError(errorMessage);
-                metadataService.failOperation(operationId, new IllegalStateException(errorMessage));
-                return 1;
-            }
-            
-            // Delegate to the appropriate operation
-            int result;
-            switch (operation) {
-                case "list":
-                    result = handleListOperation(auditService, operationId);
-                    break;
+            // Execute the main operation with tracking
+            return operationTracker.execute(() -> {
+                // Handle missing operation
+                if (operation == null || operation.isEmpty()) {
+                    displayHelp(operationTracker.start());
+                    return 1;
+                }
                 
-                case "configure":
-                    result = handleConfigureOperation(auditService, operationId);
-                    break;
+                // Get the audit service
+                AuditService auditService = serviceManager.getAuditService();
+                if (auditService == null) {
+                    String errorMessage = "Audit service is not available.";
+                    return errorHandler.handleError(
+                        operationTracker.start(),
+                        "admin-audit", 
+                        errorMessage,
+                        new IllegalStateException(errorMessage),
+                        ErrorHandler.Severity.SYSTEM
+                    );
+                }
                 
-                case "status":
-                    result = handleStatusOperation(auditService, operationId);
-                    break;
+                // Delegate to the appropriate operation
+                String parentOperationId = operationTracker.start();
+                int result;
                 
-                case "export":
-                    result = handleExportOperation(auditService, operationId);
-                    break;
+                switch (operation) {
+                    case "list":
+                        result = handleListOperation(auditService, parentOperationId);
+                        break;
+                    
+                    case "configure":
+                        result = handleConfigureOperation(auditService, parentOperationId);
+                        break;
+                    
+                    case "status":
+                        result = handleStatusOperation(auditService, parentOperationId);
+                        break;
+                    
+                    case "export":
+                        result = handleExportOperation(auditService, parentOperationId);
+                        break;
+                    
+                    case "mask":
+                        result = handleMaskOperation(auditService, parentOperationId);
+                        break;
+                    
+                    case "alert":
+                        result = handleAlertOperation(auditService, parentOperationId);
+                        break;
+                    
+                    case "investigation":
+                        result = handleInvestigationOperation(auditService, parentOperationId);
+                        break;
+                    
+                    case "help":
+                        displayHelp(parentOperationId);
+                        result = 0;
+                        break;
+                    
+                    default:
+                        String errorMessage = "Unknown audit operation: " + operation;
+                        displayHelp(parentOperationId);
+                        return errorHandler.handleError(
+                            parentOperationId,
+                            "admin-audit",
+                            errorMessage,
+                            new IllegalArgumentException(errorMessage),
+                            ErrorHandler.Severity.VALIDATION
+                        );
+                }
                 
-                case "mask":
-                    result = handleMaskOperation(auditService, operationId);
-                    break;
+                // If operation was successful, record the result
+                if (result == 0) {
+                    Map<String, Object> resultData = new HashMap<>();
+                    resultData.put("success", true);
+                    resultData.put("operation", operation);
+                    operationTracker.complete(parentOperationId, resultData);
+                }
                 
-                case "alert":
-                    result = handleAlertOperation(auditService, operationId);
-                    break;
-                
-                case "investigation":
-                    result = handleInvestigationOperation(auditService, operationId);
-                    break;
-                
-                case "help":
-                    displayHelp(operationId);
-                    result = 0;
-                    break;
-                
-                default:
-                    String errorMessage = "Unknown audit operation: " + operation;
-                    System.err.println("Error: " + errorMessage);
-                    displayHelp(operationId);
-                    metadataService.failOperation(operationId, new IllegalArgumentException(errorMessage));
-                    result = 1;
-                    break;
-            }
-            
-            // Complete operation if successful
-            if (result == 0) {
-                Map<String, Object> resultData = new HashMap<>();
-                resultData.put("success", true);
-                resultData.put("operation", operation);
-                metadataService.completeOperation(operationId, resultData);
-            }
-            
-            return result;
+                return result;
+            });
         } catch (Exception e) {
-            String errorMessage = e.getMessage();
-            outputError(errorMessage);
-            if (verbose) {
-                e.printStackTrace();
-            }
-            metadataService.failOperation(operationId, e);
-            return 1;
+            // Handle any unexpected errors using the error handler
+            return errorHandler.handleUnexpectedError(
+                operationTracker.start(),
+                "admin-audit", 
+                e,
+                ErrorHandler.Severity.SYSTEM
+            );
         }
     }
     
@@ -199,10 +224,6 @@ public class AdminAuditCommand implements Callable<Integer> {
      * @return the exit code
      */
     private int handleListOperation(AuditService auditService, String parentOperationId) {
-        // Create operation parameters for tracking
-        Map<String, Object> params = new HashMap<>();
-        params.put("operation", "list");
-        
         // Parse options from arguments
         Map<String, String> options = parseOptions(args);
         
@@ -210,73 +231,106 @@ public class AdminAuditCommand implements Callable<Integer> {
         Integer days = null;
         Integer limit = null;
         
-        params.put("user", user);
+        // Create a sub-tracker for this operation
+        OperationTracker listTracker = operationTracker
+            .command("admin-audit-list")
+            .param("operation", "list")
+            .param("user", user)
+            .param("format", format)
+            .parent(parentOperationId);
         
+        // Validate and parse the days parameter
         if (options.containsKey("days")) {
             try {
                 days = Integer.parseInt(options.get("days"));
-                params.put("days", days);
+                listTracker.param("days", days);
             } catch (NumberFormatException e) {
-                String errorMessage = "Invalid value for --days. Must be a number.";
-                outputError(errorMessage);
-                metadataService.trackOperationError(parentOperationId, "list", errorMessage, e);
-                return 1;
+                // Handle validation error with appropriate severity
+                Map<String, String> validationErrors = new HashMap<>();
+                validationErrors.put("days", "Invalid value for --days. Must be a number.");
+                return errorHandler.handleValidationError(
+                    listTracker.start(),
+                    "admin-audit-list",
+                    validationErrors
+                );
             }
         }
         
+        // Validate and parse the limit parameter
         if (options.containsKey("limit")) {
             try {
                 limit = Integer.parseInt(options.get("limit"));
-                params.put("limit", limit);
+                listTracker.param("limit", limit);
             } catch (NumberFormatException e) {
-                String errorMessage = "Invalid value for --limit. Must be a number.";
-                outputError(errorMessage);
-                metadataService.trackOperationError(parentOperationId, "list", errorMessage, e);
-                return 1;
+                // Handle validation error with appropriate severity
+                Map<String, String> validationErrors = new HashMap<>();
+                validationErrors.put("limit", "Invalid value for --limit. Must be a number.");
+                return errorHandler.handleValidationError(
+                    listTracker.start(),
+                    "admin-audit-list",
+                    validationErrors
+                );
             }
         }
         
-        // Start tracking sub-operation
-        String listOperationId = metadataService.trackOperation("admin-audit-list", params);
+        // Store final values for use in the lambda
+        final Integer finalDays = days;
+        final Integer finalLimit = limit;
         
         try {
-            String result = auditService.listAuditLogs(user, days, limit);
-            
-            if ("json".equalsIgnoreCase(format)) {
-                Map<String, Object> resultData = new HashMap<>();
-                resultData.put("result", "success");
-                resultData.put("operation", "list");
-                
-                Map<String, Object> auditData = new HashMap<>();
-                auditData.put("user", user);
-                auditData.put("days", days);
-                auditData.put("limit", limit);
-                auditData.put("logs", result);
-                
-                resultData.put("data", auditData);
-                
-                System.out.println(OutputFormatter.toJson(resultData, verbose));
-            } else {
-                System.out.println(result);
-            }
-            
-            // Track operation success
-            Map<String, Object> resultData = new HashMap<>();
-            resultData.put("success", true);
-            resultData.put("user", user);
-            resultData.put("days", days);
-            resultData.put("limit", limit);
-            metadataService.completeOperation(listOperationId, resultData);
-            
-            return 0;
+            // Execute the operation with proper tracking
+            return listTracker.execute(() -> {
+                try {
+                    // Get the audit logs
+                    String result = auditService.listAuditLogs(user, finalDays, finalLimit);
+                    
+                    // Display the results in the appropriate format
+                    if ("json".equalsIgnoreCase(format)) {
+                        Map<String, Object> resultData = new HashMap<>();
+                        resultData.put("result", "success");
+                        resultData.put("operation", "list");
+                        
+                        Map<String, Object> auditData = new HashMap<>();
+                        auditData.put("user", user);
+                        auditData.put("days", finalDays);
+                        auditData.put("limit", finalLimit);
+                        auditData.put("logs", result);
+                        
+                        resultData.put("data", auditData);
+                        
+                        System.out.println(OutputFormatter.toJson(resultData, verbose));
+                    } else {
+                        System.out.println(result);
+                    }
+                    
+                    // Build success result data
+                    Map<String, Object> resultData = new HashMap<>();
+                    resultData.put("user", user);
+                    resultData.put("days", finalDays);
+                    resultData.put("limit", finalLimit);
+                    
+                    // Return success with tracked operation
+                    return errorHandler.handleSuccess(listTracker.start(), resultData);
+                } catch (Exception e) {
+                    // Handle expected errors with proper context
+                    String errorMessage = "Error listing audit logs: " + e.getMessage();
+                    return errorHandler.handleError(
+                        listTracker.start(),
+                        "admin-audit-list",
+                        errorMessage,
+                        e,
+                        ErrorHandler.Severity.ERROR
+                    );
+                }
+            });
         } catch (Exception e) {
-            String errorMessage = "Error listing audit logs: " + e.getMessage();
-            outputError(errorMessage);
-            if (verbose) {
-                e.printStackTrace();
-            }
-            metadataService.failOperation(listOperationId, e);
-            return 1;
+            // Handle unexpected errors
+            return errorHandler.handleUnexpectedError(
+                listTracker.start(),
+                "admin-audit-list",
+                e,
+                ErrorHandler.Severity.SYSTEM
+            );
         }
     }
     
@@ -284,67 +338,118 @@ public class AdminAuditCommand implements Callable<Integer> {
      * Handles the 'configure' operation to set up audit logging.
      * 
      * @param auditService the audit service
+     * @param operationId the parent operation ID for tracking
      * @return the exit code
      */
-    private int handleConfigureOperation(AuditService auditService) {
+    private int handleConfigureOperation(AuditService auditService, String parentOperationId) {
+        // Create operation parameters for tracking
+        Map<String, Object> params = new HashMap<>();
+        params.put("operation", "configure");
+        
         Map<String, String> options = parseOptions(args);
         
         Integer retention = null;
         
         if (options.containsKey("retention")) {
-            try {
-                retention = Integer.parseInt(options.get("retention"));
-                
-                if (retention <= 0) {
-                    System.err.println("Error: Retention period must be greater than 0.");
+            params.put("retention", options.get("retention"));
+        }
+        
+        // Start tracking sub-operation
+        String configOperationId = metadataService.trackOperation("admin-audit-configure", params);
+        
+        try {
+            if (options.containsKey("retention")) {
+                try {
+                    retention = Integer.parseInt(options.get("retention"));
+                    
+                    if (retention <= 0) {
+                        String errorMessage = "Retention period must be greater than 0.";
+                        outputError(errorMessage);
+                        metadataService.trackOperationError(parentOperationId, "configure", errorMessage, 
+                                                           new IllegalArgumentException(errorMessage));
+                        return 1;
+                    }
+                    
+                    boolean success = auditService.configureRetention(retention);
+                    if (success) {
+                        System.out.println("Audit log retention period updated to " + retention + " days");
+                        System.out.println("Configuration changes have been saved successfully.");
+                        
+                        // Track operation success
+                        Map<String, Object> resultData = new HashMap<>();
+                        resultData.put("success", true);
+                        resultData.put("retention", retention);
+                        metadataService.completeOperation(configOperationId, resultData);
+                        
+                        return 0;
+                    } else {
+                        String errorMessage = "Failed to update audit retention period.";
+                        outputError(errorMessage);
+                        metadataService.failOperation(configOperationId, new RuntimeException(errorMessage));
+                        return 1;
+                    }
+                } catch (NumberFormatException e) {
+                    String errorMessage = "Invalid value for --retention. Must be a number.";
+                    outputError(errorMessage);
+                    metadataService.failOperation(configOperationId, e);
                     return 1;
+                }
+            } else {
+                // Interactive configuration
+                System.out.println("Audit Configuration");
+                System.out.println("==================");
+                
+                System.out.print("Enter retention period in days [30]: ");
+                String input = scanner.nextLine().trim();
+                
+                if (!input.isEmpty()) {
+                    try {
+                        retention = Integer.parseInt(input);
+                        if (retention <= 0) {
+                            String errorMessage = "Retention period must be greater than 0.";
+                            outputError(errorMessage);
+                            metadataService.failOperation(configOperationId, 
+                                                         new IllegalArgumentException(errorMessage));
+                            return 1;
+                        }
+                    } catch (NumberFormatException e) {
+                        String errorMessage = "Invalid value for retention period. Must be a number.";
+                        outputError(errorMessage);
+                        metadataService.failOperation(configOperationId, e);
+                        return 1;
+                    }
+                } else {
+                    retention = 30; // Default
                 }
                 
                 boolean success = auditService.configureRetention(retention);
                 if (success) {
                     System.out.println("Audit log retention period updated to " + retention + " days");
                     System.out.println("Configuration changes have been saved successfully.");
+                    
+                    // Track operation success
+                    Map<String, Object> resultData = new HashMap<>();
+                    resultData.put("success", true);
+                    resultData.put("retention", retention);
+                    resultData.put("interactive", true);
+                    metadataService.completeOperation(configOperationId, resultData);
+                    
                     return 0;
                 } else {
-                    System.err.println("Error: Failed to update audit retention period.");
+                    String errorMessage = "Failed to update audit retention period.";
+                    outputError(errorMessage);
+                    metadataService.failOperation(configOperationId, new RuntimeException(errorMessage));
                     return 1;
                 }
-            } catch (NumberFormatException e) {
-                System.err.println("Error: Invalid value for --retention. Must be a number.");
-                return 1;
             }
-        } else {
-            // Interactive configuration
-            System.out.println("Audit Configuration");
-            System.out.println("==================");
-            
-            System.out.print("Enter retention period in days [30]: ");
-            String input = scanner.nextLine().trim();
-            
-            if (!input.isEmpty()) {
-                try {
-                    retention = Integer.parseInt(input);
-                    if (retention <= 0) {
-                        System.err.println("Error: Retention period must be greater than 0.");
-                        return 1;
-                    }
-                } catch (NumberFormatException e) {
-                    System.err.println("Error: Invalid value for retention period. Must be a number.");
-                    return 1;
-                }
-            } else {
-                retention = 30; // Default
+        } catch (Exception e) {
+            String errorMessage = "Error configuring audit retention: " + e.getMessage();
+            outputError(errorMessage);
+            if (verbose) {
+                e.printStackTrace();
             }
-            
-            boolean success = auditService.configureRetention(retention);
-            if (success) {
-                System.out.println("Audit log retention period updated to " + retention + " days");
-                System.out.println("Configuration changes have been saved successfully.");
-                return 0;
-            } else {
-                System.err.println("Error: Failed to update audit retention period.");
-                return 1;
-            }
+            metadataService.failOperation(configOperationId, e);
+            return 1;
         }
     }
     
@@ -352,9 +457,18 @@ public class AdminAuditCommand implements Callable<Integer> {
      * Handles the 'status' operation to display audit system status.
      * 
      * @param auditService the audit service
+     * @param operationId the parent operation ID for tracking
      * @return the exit code
      */
-    private int handleStatusOperation(AuditService auditService) {
+    private int handleStatusOperation(AuditService auditService, String parentOperationId) {
+        // Create operation parameters for tracking
+        Map<String, Object> params = new HashMap<>();
+        params.put("operation", "status");
+        params.put("format", format);
+        
+        // Start tracking sub-operation
+        String statusOperationId = metadataService.trackOperation("admin-audit-status", params);
+        
         try {
             String status = auditService.getAuditStatus();
             
@@ -364,17 +478,25 @@ public class AdminAuditCommand implements Callable<Integer> {
                 resultData.put("operation", "status");
                 resultData.put("status", status);
                 
-                System.out.println(toJson(resultData));
+                System.out.println(OutputFormatter.toJson(resultData, verbose));
             } else {
                 System.out.println(status);
             }
             
+            // Track operation success
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("success", true);
+            resultData.put("format", format);
+            metadataService.completeOperation(statusOperationId, resultData);
+            
             return 0;
         } catch (Exception e) {
-            outputError("Error getting audit status: " + e.getMessage());
+            String errorMessage = "Error getting audit status: " + e.getMessage();
+            outputError(errorMessage);
             if (verbose) {
                 e.printStackTrace();
             }
+            metadataService.failOperation(statusOperationId, e);
             return 1;
         }
     }
@@ -383,41 +505,68 @@ public class AdminAuditCommand implements Callable<Integer> {
      * Handles the 'export' operation to export audit logs.
      * 
      * @param auditService the audit service
+     * @param operationId the parent operation ID for tracking
      * @return the exit code
      */
-    private int handleExportOperation(AuditService auditService) {
+    private int handleExportOperation(AuditService auditService, String parentOperationId) {
+        // Create operation parameters for tracking
+        Map<String, Object> params = new HashMap<>();
+        params.put("operation", "export");
+        
         Map<String, String> options = parseOptions(args);
         
         LocalDate fromDate = null;
         LocalDate toDate = null;
         String exportFormat = options.getOrDefault("format", "csv");
         
+        params.put("exportFormat", exportFormat);
+        
+        // Start tracking sub-operation
+        String exportOperationId = metadataService.trackOperation("admin-audit-export", params);
+        
         if (options.containsKey("from")) {
             try {
                 fromDate = LocalDate.parse(options.get("from"), DateTimeFormatter.ISO_LOCAL_DATE);
+                params.put("fromDate", fromDate.toString());
+                metadataService.trackOperationDetail(exportOperationId, "fromDate", fromDate.toString());
             } catch (DateTimeParseException e) {
-                outputError("Invalid date format for --from. Use YYYY-MM-DD.");
+                String errorMessage = "Invalid date format for --from. Use YYYY-MM-DD.";
+                outputError(errorMessage);
+                metadataService.failOperation(exportOperationId, e);
                 return 1;
             }
         } else {
             // Default to 30 days ago
             fromDate = LocalDate.now().minusDays(30);
+            params.put("fromDate", fromDate.toString());
+            metadataService.trackOperationDetail(exportOperationId, "fromDate", fromDate.toString());
+            metadataService.trackOperationDetail(exportOperationId, "fromDateDefault", true);
         }
         
         if (options.containsKey("to")) {
             try {
                 toDate = LocalDate.parse(options.get("to"), DateTimeFormatter.ISO_LOCAL_DATE);
+                params.put("toDate", toDate.toString());
+                metadataService.trackOperationDetail(exportOperationId, "toDate", toDate.toString());
             } catch (DateTimeParseException e) {
-                outputError("Invalid date format for --to. Use YYYY-MM-DD.");
+                String errorMessage = "Invalid date format for --to. Use YYYY-MM-DD.";
+                outputError(errorMessage);
+                metadataService.failOperation(exportOperationId, e);
                 return 1;
             }
         } else {
             // Default to today
             toDate = LocalDate.now();
+            params.put("toDate", toDate.toString());
+            metadataService.trackOperationDetail(exportOperationId, "toDate", toDate.toString());
+            metadataService.trackOperationDetail(exportOperationId, "toDateDefault", true);
         }
         
         if (!fromDate.isBefore(toDate)) {
-            outputError("From date must be before to date.");
+            String errorMessage = "From date must be before to date.";
+            outputError(errorMessage);
+            metadataService.failOperation(exportOperationId, 
+                                         new IllegalArgumentException(errorMessage));
             return 1;
         }
         
@@ -437,17 +586,28 @@ public class AdminAuditCommand implements Callable<Integer> {
                 
                 resultData.put("data", exportData);
                 
-                System.out.println(toJson(resultData));
+                System.out.println(OutputFormatter.toJson(resultData, verbose));
             } else {
                 System.out.println("Exported audit logs to " + exportPath);
             }
             
+            // Track operation success
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("success", true);
+            resultData.put("exportPath", exportPath);
+            resultData.put("fromDate", fromDate.toString());
+            resultData.put("toDate", toDate.toString());
+            resultData.put("exportFormat", exportFormat);
+            metadataService.completeOperation(exportOperationId, resultData);
+            
             return 0;
         } catch (Exception e) {
-            outputError("Error exporting audit logs: " + e.getMessage());
+            String errorMessage = "Error exporting audit logs: " + e.getMessage();
+            outputError(errorMessage);
             if (verbose) {
                 e.printStackTrace();
             }
+            metadataService.failOperation(exportOperationId, e);
             return 1;
         }
     }
@@ -456,16 +616,29 @@ public class AdminAuditCommand implements Callable<Integer> {
      * Handles the 'mask' operation to configure data masking.
      * 
      * @param auditService the audit service
+     * @param operationId the parent operation ID for tracking
      * @return the exit code
      */
-    private int handleMaskOperation(AuditService auditService) {
+    private int handleMaskOperation(AuditService auditService, String parentOperationId) {
+        // Create operation parameters for tracking
+        Map<String, Object> params = new HashMap<>();
+        params.put("operation", "mask");
+        
         if (args.length == 0) {
-            System.err.println("Error: Missing mask subcommand. Use 'configure' or 'status'.");
+            String errorMessage = "Missing mask subcommand. Use 'configure' or 'status'.";
+            outputError(errorMessage);
+            metadataService.trackOperationError(parentOperationId, "mask", errorMessage,
+                                               new IllegalArgumentException(errorMessage));
             return 1;
         }
         
         String maskOperation = args[0];
         String[] maskArgs = Arrays.copyOfRange(args, 1, args.length);
+        
+        params.put("maskOperation", maskOperation);
+        
+        // Start tracking sub-operation
+        String maskOperationId = metadataService.trackOperation("admin-audit-mask", params);
         
         if ("configure".equals(maskOperation)) {
             System.out.println("Data Masking Configuration");
@@ -477,31 +650,57 @@ public class AdminAuditCommand implements Callable<Integer> {
             String fieldsInput = scanner.nextLine().trim();
             List<String> fields = Arrays.asList(fieldsInput.split("\\s*,\\s*"));
             
+            // Track fields selected
+            metadataService.trackOperationDetail(maskOperationId, "fields", fields);
+            
             try {
                 boolean success = auditService.configureMasking(fields);
                 if (success) {
                     System.out.println("Data masking configuration updated successfully.");
+                    
+                    // Track operation success
+                    Map<String, Object> resultData = new HashMap<>();
+                    resultData.put("success", true);
+                    resultData.put("fields", fields);
+                    metadataService.completeOperation(maskOperationId, resultData);
+                    
                     return 0;
                 } else {
-                    System.err.println("Error: Failed to update data masking configuration.");
+                    String errorMessage = "Failed to update data masking configuration.";
+                    outputError(errorMessage);
+                    metadataService.failOperation(maskOperationId, new RuntimeException(errorMessage));
                     return 1;
                 }
             } catch (Exception e) {
-                System.err.println("Error configuring data masking: " + e.getMessage());
+                String errorMessage = "Error configuring data masking: " + e.getMessage();
+                outputError(errorMessage);
+                metadataService.failOperation(maskOperationId, e);
                 return 1;
             }
         } else if ("status".equals(maskOperation)) {
             try {
                 String status = auditService.getMaskingStatus();
                 System.out.println(status);
+                
+                // Track operation success
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("success", true);
+                resultData.put("statusReceived", true);
+                metadataService.completeOperation(maskOperationId, resultData);
+                
                 return 0;
             } catch (Exception e) {
-                System.err.println("Error getting masking status: " + e.getMessage());
+                String errorMessage = "Error getting masking status: " + e.getMessage();
+                outputError(errorMessage);
+                metadataService.failOperation(maskOperationId, e);
                 return 1;
             }
         } else {
-            System.err.println("Error: Unknown mask operation: " + maskOperation);
+            String errorMessage = "Unknown mask operation: " + maskOperation;
+            outputError(errorMessage);
             System.out.println("Valid operations: configure, status");
+            metadataService.failOperation(maskOperationId, 
+                                         new IllegalArgumentException(errorMessage));
             return 1;
         }
     }
@@ -510,16 +709,29 @@ public class AdminAuditCommand implements Callable<Integer> {
      * Handles the 'alert' operation to manage audit alerts.
      * 
      * @param auditService the audit service
+     * @param operationId the parent operation ID for tracking
      * @return the exit code
      */
-    private int handleAlertOperation(AuditService auditService) {
+    private int handleAlertOperation(AuditService auditService, String parentOperationId) {
+        // Create operation parameters for tracking
+        Map<String, Object> params = new HashMap<>();
+        params.put("operation", "alert");
+        
         if (args.length == 0) {
-            System.err.println("Error: Missing alert subcommand. Use 'add', 'list', or 'remove'.");
+            String errorMessage = "Missing alert subcommand. Use 'add', 'list', or 'remove'.";
+            outputError(errorMessage);
+            metadataService.trackOperationError(parentOperationId, "alert", errorMessage,
+                                               new IllegalArgumentException(errorMessage));
             return 1;
         }
         
         String alertOperation = args[0];
         String[] alertArgs = Arrays.copyOfRange(args, 1, args.length);
+        
+        params.put("alertOperation", alertOperation);
+        
+        // Start tracking sub-operation
+        String alertOperationId = metadataService.trackOperation("admin-audit-alert", params);
         
         if ("add".equals(alertOperation)) {
             System.out.println("Create Audit Alert");
@@ -529,9 +741,14 @@ public class AdminAuditCommand implements Callable<Integer> {
             String name = scanner.nextLine().trim();
             
             if (name.isEmpty()) {
-                System.err.println("Error: Alert name cannot be empty.");
+                String errorMessage = "Alert name cannot be empty.";
+                outputError(errorMessage);
+                metadataService.failOperation(alertOperationId, 
+                                             new IllegalArgumentException(errorMessage));
                 return 1;
             }
+            
+            metadataService.trackOperationDetail(alertOperationId, "alertName", name);
             
             System.out.println("Select event types (comma-separated):");
             System.out.println("- FAILED_LOGIN: Failed login attempts");
@@ -544,6 +761,8 @@ public class AdminAuditCommand implements Callable<Integer> {
             String eventsInput = scanner.nextLine().trim();
             List<String> events = Arrays.asList(eventsInput.split("\\s*,\\s*"));
             
+            metadataService.trackOperationDetail(alertOperationId, "events", events);
+            
             System.out.print("Enter threshold count: ");
             String thresholdInput = scanner.nextLine().trim();
             int threshold;
@@ -551,11 +770,17 @@ public class AdminAuditCommand implements Callable<Integer> {
             try {
                 threshold = Integer.parseInt(thresholdInput);
                 if (threshold <= 0) {
-                    System.err.println("Error: Threshold must be greater than 0.");
+                    String errorMessage = "Threshold must be greater than 0.";
+                    outputError(errorMessage);
+                    metadataService.failOperation(alertOperationId, 
+                                                 new IllegalArgumentException(errorMessage));
                     return 1;
                 }
+                metadataService.trackOperationDetail(alertOperationId, "threshold", threshold);
             } catch (NumberFormatException e) {
-                System.err.println("Error: Invalid threshold value. Must be a number.");
+                String errorMessage = "Invalid threshold value. Must be a number.";
+                outputError(errorMessage);
+                metadataService.failOperation(alertOperationId, e);
                 return 1;
             }
             
@@ -566,11 +791,17 @@ public class AdminAuditCommand implements Callable<Integer> {
             try {
                 window = Integer.parseInt(windowInput);
                 if (window <= 0) {
-                    System.err.println("Error: Time window must be greater than 0.");
+                    String errorMessage = "Time window must be greater than 0.";
+                    outputError(errorMessage);
+                    metadataService.failOperation(alertOperationId, 
+                                                 new IllegalArgumentException(errorMessage));
                     return 1;
                 }
+                metadataService.trackOperationDetail(alertOperationId, "window", window);
             } catch (NumberFormatException e) {
-                System.err.println("Error: Invalid time window value. Must be a number.");
+                String errorMessage = "Invalid time window value. Must be a number.";
+                outputError(errorMessage);
+                metadataService.failOperation(alertOperationId, e);
                 return 1;
             }
             
@@ -578,52 +809,97 @@ public class AdminAuditCommand implements Callable<Integer> {
             String recipientsInput = scanner.nextLine().trim();
             List<String> recipients = Arrays.asList(recipientsInput.split("\\s*,\\s*"));
             
+            metadataService.trackOperationDetail(alertOperationId, "recipients", recipients);
+            
             try {
                 boolean success = auditService.addAlert(name, events, threshold, window, recipients);
                 if (success) {
                     System.out.println("Audit alert '" + name + "' created successfully.");
+                    
+                    // Track operation success
+                    Map<String, Object> resultData = new HashMap<>();
+                    resultData.put("success", true);
+                    resultData.put("alertName", name);
+                    resultData.put("events", events);
+                    resultData.put("threshold", threshold);
+                    resultData.put("window", window);
+                    resultData.put("recipients", recipients);
+                    metadataService.completeOperation(alertOperationId, resultData);
+                    
                     return 0;
                 } else {
-                    System.err.println("Error: Failed to create audit alert.");
+                    String errorMessage = "Failed to create audit alert.";
+                    outputError(errorMessage);
+                    metadataService.failOperation(alertOperationId, new RuntimeException(errorMessage));
                     return 1;
                 }
             } catch (Exception e) {
-                System.err.println("Error creating audit alert: " + e.getMessage());
+                String errorMessage = "Error creating audit alert: " + e.getMessage();
+                outputError(errorMessage);
+                metadataService.failOperation(alertOperationId, e);
                 return 1;
             }
         } else if ("list".equals(alertOperation)) {
             try {
                 String result = auditService.listAlerts();
                 System.out.println(result);
+                
+                // Track operation success
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("success", true);
+                resultData.put("alertsListed", true);
+                metadataService.completeOperation(alertOperationId, resultData);
+                
                 return 0;
             } catch (Exception e) {
-                System.err.println("Error listing audit alerts: " + e.getMessage());
+                String errorMessage = "Error listing audit alerts: " + e.getMessage();
+                outputError(errorMessage);
+                metadataService.failOperation(alertOperationId, e);
                 return 1;
             }
         } else if ("remove".equals(alertOperation) || "delete".equals(alertOperation)) {
             if (alertArgs.length == 0) {
-                System.err.println("Error: Missing alert name to remove.");
+                String errorMessage = "Missing alert name to remove.";
+                outputError(errorMessage);
+                metadataService.failOperation(alertOperationId, 
+                                             new IllegalArgumentException(errorMessage));
                 return 1;
             }
             
             String alertName = alertArgs[0];
+            metadataService.trackOperationDetail(alertOperationId, "alertName", alertName);
             
             try {
                 boolean success = auditService.removeAlert(alertName);
                 if (success) {
                     System.out.println("Audit alert '" + alertName + "' removed successfully.");
+                    
+                    // Track operation success
+                    Map<String, Object> resultData = new HashMap<>();
+                    resultData.put("success", true);
+                    resultData.put("alertName", alertName);
+                    resultData.put("removed", true);
+                    metadataService.completeOperation(alertOperationId, resultData);
+                    
                     return 0;
                 } else {
-                    System.err.println("Error: Failed to remove audit alert. Does it exist?");
+                    String errorMessage = "Failed to remove audit alert. Does it exist?";
+                    outputError(errorMessage);
+                    metadataService.failOperation(alertOperationId, new RuntimeException(errorMessage));
                     return 1;
                 }
             } catch (Exception e) {
-                System.err.println("Error removing audit alert: " + e.getMessage());
+                String errorMessage = "Error removing audit alert: " + e.getMessage();
+                outputError(errorMessage);
+                metadataService.failOperation(alertOperationId, e);
                 return 1;
             }
         } else {
-            System.err.println("Error: Unknown alert operation: " + alertOperation);
+            String errorMessage = "Unknown alert operation: " + alertOperation;
+            outputError(errorMessage);
             System.out.println("Valid operations: add, list, remove");
+            metadataService.failOperation(alertOperationId, 
+                                         new IllegalArgumentException(errorMessage));
             return 1;
         }
     }
@@ -634,7 +910,7 @@ public class AdminAuditCommand implements Callable<Integer> {
      * @param auditService the audit service
      * @return the exit code
      */
-    private int handleInvestigationOperation(AuditService auditService) {
+    private int handleInvestigationOperation(AuditService auditService, String operationId) {
         if (args.length == 0) {
             System.err.println("Error: Missing investigation subcommand. Use 'create', 'findings', or 'actions'.");
             return 1;
@@ -856,16 +1132,20 @@ public class AdminAuditCommand implements Callable<Integer> {
      * Outputs an error message in either JSON or text format.
      *
      * @param message the error message
+     * @param severity the error severity
+     */
+    private void outputError(String message, ErrorHandler.Severity severity) {
+        errorHandler.outputError(message, null, severity);
+    }
+    
+    /**
+     * Outputs an error message in either JSON or text format.
+     * Uses ERROR severity by default.
+     *
+     * @param message the error message
      */
     private void outputError(String message) {
-        if ("json".equalsIgnoreCase(format)) {
-            Map<String, Object> errorData = new HashMap<>();
-            errorData.put("result", "error");
-            errorData.put("message", message);
-            System.out.println(OutputFormatter.toJson(errorData, verbose));
-        } else {
-            System.err.println("Error: " + message);
-        }
+        errorHandler.outputError(message, null);
     }
     
     /**
@@ -875,9 +1155,7 @@ public class AdminAuditCommand implements Callable<Integer> {
      */
     private void outputSuccess(String message) {
         if ("json".equalsIgnoreCase(format)) {
-            Map<String, Object> successData = new HashMap<>();
-            successData.put("result", "success");
-            successData.put("message", message);
+            Map<String, Object> successData = errorHandler.createSuccessResult("admin-audit", Map.of("message", message));
             System.out.println(OutputFormatter.toJson(successData, verbose));
         } else {
             System.out.println(message);

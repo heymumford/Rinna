@@ -35,9 +35,9 @@ type VersionInfo struct {
 
 // Version information set during build process
 var (
-	Version   = "1.6.2"
+	Version   = "1.6.6"
 	CommitSHA = "runtime"
-	BuildTime = "2025-04-09T14:16:07Z"
+	BuildTime = "2025-04-09T20:14:56Z"
 )
 
 // NewVersionInfo creates a new VersionInfo with default values
@@ -46,11 +46,11 @@ func NewVersionInfo() *VersionInfo {
 	return &VersionInfo{
 		Major:        1,
 		Minor:        6,
-		Patch:        2,
+		Patch:        6,
 		FullVersion:  Version,
 		LastUpdated:  "2025-04-09",
 		ReleaseType:  "RELEASE",
-		BuildNumber:  501,
+		BuildNumber:  502,
 		BuildTime:    BuildTime,
 		GitCommit:    CommitSHA,
 		IsConsistent: true,
