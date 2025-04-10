@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# build.sh - Unified Build Orchestrator for Rinna
+# rin-build-main-all.sh - Unified Build Orchestrator for Rinna
 #
 # This script orchestrates the entire build process for the Rinna project,
 # covering Java, Go, and Python components with consistent status reporting.

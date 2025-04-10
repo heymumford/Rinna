@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# run-all.sh - Run all quality checks sequentially
+# rin-quality-check-all.sh - Run all quality checks sequentially
 #
 # PURPOSE: Run all quality checks in a controlled sequence
 #
