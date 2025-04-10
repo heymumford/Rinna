@@ -1,5 +1,7 @@
 # Rinna: Developer-Centric Workflow Management
 
+Rinna liberates engineers from the tyranny of bloated workflow tools by bringing task management directly into the terminal where code flows. Born from the frustration of context-switching and interrupted flow states, this elegant system speaks the language of developers—terminal commands, git workflows, and clean architecture. Rinna doesn't just track work; it becomes an invisible extension of your development environment, letting you focus on creation rather than documentation, all while maintaining the clarity teams need without the ceremony managers demand.
+
 > **⚠️ DEVELOPMENT STANDARD**: For all XML manipulation (especially POM files), ALWAYS use the XMLStarlet-based tools in `bin/xml-tools.sh`. NEVER use grep, sed, or other text-based tools for XML files.
 
 <div align="center">
@@ -10,7 +12,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Java Version](https://img.shields.io/badge/java-21-orange.svg)](https://openjdk.java.net/projects/jdk/21/)
 [![Go Version](https://img.shields.io/badge/go-1.21-blue.svg)](https://golang.org/doc/go1.21)
-[![Version](https://img.shields.io/badge/version-1.6.2-blue.svg)](https://github.com/heymumford/Rinna/releases)
+[![Version](https://img.shields.io/badge/version-1.6.3-blue.svg)](https://github.com/heymumford/Rinna/releases)
 [![Build](https://img.shields.io/badge/build-502-green.svg)](https://github.com/heymumford/Rinna/actions)
 [![GitHub Stars](https://img.shields.io/github/stars/heymumford/Rinna?style=social)](https://github.com/heymumford/Rinna/stargazers)
 
@@ -20,13 +22,13 @@
 [🚀 Getting Started](docs/getting-started/README.md) • 
 [🧪 TDD Guide](rinna-cli/TDD_GUIDE.md) • 
 [🤝 Contribute](docs/CONTRIBUTING.md) • 
-[📋 Changelog](CHANGELOG.md)
+[📋 Changelog](docs/project-docs/CHANGELOG.md)
 
 </div>
 
 ## What Is Rinna?
 
-Rinna is a workflow management system built for software engineers. It minimizes process overhead and integrates directly into your development environment, providing clear visibility without excessive ceremony.
+Rinna is a unified workflow management system built for software engineers that treats all types of work—business, product, engineering, and test—as part of a single coherent system. It minimizes process overhead and integrates directly into your development environment, providing clear visibility without excessive ceremony.
 
 **Rinna isn't replacing enterprise tools – it exists to make workflow management work _for_ developers, not the other way around.**
 
@@ -37,6 +39,8 @@ Traditional workflow tools:
 - Interrupt [flow state](docs/technical-specification.md#core-philosophy)
 - Prioritize reporting over productivity
 - Add unnecessary complexity
+- Separate different types of work into silos
+- Require complex setup and platform-specific installation
 
 ### The Solution
 
@@ -44,13 +48,20 @@ Traditional workflow tools:
 - **Zero-friction workflow** adds only what's necessary
 - **Developer-owned process** puts control in the right hands
 - **Clean architecture** with Go API and Java core
+- **Unified work management** treats all work types (business, product, engineering, test) consistently
+- **Cross-platform containers** for simple deployment on Windows, WSL, and Linux
 - **Standardized logging** with SLF4J and clearly defined log levels
+- **OAuth integration** for secure third-party API access
 
-## Work Model
+## Unified Work Model
 
-- **Work Items**: Goals → Features → Bugs → Chores
-- **Workflow**: Found → Triaged → To Do → In Progress → In Test → Done
+- **Work Items**: Business → Product → Engineering → Test
+- **Work Types**: Goals → Epics → Features → User Stories → Tasks → Bugs → Tests
+- **Workflow**: Found → Triaged → To Do → In Progress → In Test → Done → Released
 - **No customization needed**: We've built what works based on experience
+- **POC Status**: Currently ~20% complete with unified work management implementation
+
+For details, see [Unified Work Management](docs/user-guide/unified-work-management.md) and [Cross-Platform Container Setup](docs/user-guide/cross-platform-container-setup.md).
 
 ## Example Usage
 
@@ -79,6 +90,19 @@ curl -X POST "http://localhost:8080/api/v1/workitems" \
     "type": "FEATURE",
     "priority": "HIGH"
   }'
+
+# OAuth integration examples
+# Get authorization URL for GitHub
+curl -X GET "http://localhost:8080/api/v1/oauth/authorize/github?project=PROJECT_ID&user_id=USER_ID" \
+  -H "Authorization: Bearer ri-dev-token"
+
+# List OAuth tokens
+curl -X GET "http://localhost:8080/api/v1/oauth/tokens?project=PROJECT_ID" \
+  -H "Authorization: Bearer ri-dev-token"
+
+# Revoke an OAuth token
+curl -X DELETE "http://localhost:8080/api/v1/oauth/tokens/github?project=PROJECT_ID&user_id=USER_ID" \
+  -H "Authorization: Bearer ri-dev-token"
 ```
 
 ### Administrative Operations
@@ -111,6 +135,8 @@ bin/rin admin recovery plan --from=latest                 # Create recovery plan
 
 ## Installation
 
+### Standard Installation
+
 ```bash
 # Clone and build
 git clone https://github.com/heymumford/Rinna.git
@@ -118,6 +144,22 @@ cd Rinna
 chmod +x bin/rin bin/rin-version bin/rin-build bin/run-tests.sh
 bin/rin build
 ```
+
+### Container-Based Zero-Install Option
+
+```bash
+# Run with Docker (no build required)
+docker-compose up -d
+
+# Or with Podman
+podman-compose up -d
+
+# Access CLI through container
+docker exec -it rinna-cli-1 /bin/bash
+rin list
+```
+
+See [Cross-Platform Container Setup](docs/user-guide/cross-platform-container-setup.md) for detailed instructions for Windows, WSL, and Linux.
 
 ### Build System
 
@@ -401,21 +443,32 @@ The project follows a clean and organized directory structure:
   - `/bin/scripts` - Utility scripts for build, test, and demos
 - `/config` - Configuration files for all components
   - `/config/checkstyle` - Java style checking rules
+  - `/config/docker` - Docker and podman configurations
   - `/config/git` - Git-related configurations
+  - `/config/hooks` - Git hooks configurations
   - `/config/maven` - Maven test configurations
   - `/config/owasp` - Security scanning configurations
   - `/config/pmd` - Code quality rules
   - `/config/python` - Python tooling configurations
   - `/config/sonar` - Code analysis configurations
   - `/config/spotbugs` - Bug detection configurations
+  - `/config/version` - Version tracking files
 - `/docs` - Comprehensive documentation
   - `/docs/architecture` - Architecture decisions and diagrams
   - `/docs/development` - Developer guides and reference
   - `/docs/implementation` - Implementation details and summaries
+  - `/docs/project-docs` - Project-specific documentation (like CHANGELOG.md, CLAUDE.md)
   - `/docs/project-status` - Project tracking and status reports
   - `/docs/standards` - Coding standards and guidelines
   - `/docs/testing` - Testing strategies and guides
   - `/docs/user-guide` - End-user documentation
+- `/logs` - Log files and build artifacts
+  - `/logs/coverage` - Test coverage reports
+  - `/logs/dependency-check` - Dependency scan reports
+  - `/logs/cache` - Cache directories for build tools
+  - `/logs/temp` - Temporary files
+  - `/logs/test-bin` - Test binaries
+  - `/logs/test-output` - Test output files
 - `/python` - Python modules and components
 - `/rinna-cli` - Java CLI implementation
 - `/rinna-core` - Core domain model and business logic
