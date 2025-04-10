@@ -10,10 +10,13 @@ Rinna focuses on providing a streamlined, developer-centric approach to workflow
 
 - [CLI Tool (rin)](rin-cli.md) - Command-Line Interface utility for managing work and automating developer workflows
 - [Quick Reference](rin-quick-reference.md) - Concise reference for common developer CLI (Command-Line Interface) commands
+- [CLI Printable Reference Card](rin-cli-printable-reference.md) - Printable quick reference card for CLI commands
+- [CLI Operation Tracking](cli-operation-tracking.md) - Understanding CLI operation tracking capabilities
 - [Document Generation](documents.md) - Generate beautiful reports and documents from your workflow data
 - [Service Management](service-management.md) - Understanding the service architecture and management
 - [Version Guide](version-guide.md) - Understanding Rinna's versioning system
 - [Test-Driven Development (TDD) Workflow](#test-driven-development-workflow) - Using Rinna for effective TDD
+- [Troubleshooting Guide](troubleshooting-guide.md) - Solutions for common issues and error codes
 
 ## Administration Guides
 
@@ -45,6 +48,7 @@ Rinna focuses on providing a streamlined, developer-centric approach to workflow
 - [Complex Dependency Management](complex-dependency-management.md) - Advanced techniques for managing dependencies
 - [Multi-Team Workflows](multi-team-workflows.md) - Coordinating work across multiple teams
 - [Advanced Workflow Scenarios](advanced-workflow-scenarios.md) - Special workflow patterns for complex situations
+- [Workflow Limitations FAQ](workflow-limitations-faq.md) - Common questions about workflow constraints
 
 ### Developer Workflow Stages
 

@@ -55,5 +55,6 @@ The current focus areas are:
 
 1. Complete CLI module refactoring (Q2 2025)
 2. Achieve 80% test coverage (Q2 2025)
-3. Implement full SQLite persistence (Q3 2025)
-4. Enhance security features (Q3 2025)
+3. Complete API documentation suite with Swagger enhancements (Q2 2025)
+4. Implement full SQLite persistence (Q3 2025)
+5. Enhance security features (Q3 2025)
