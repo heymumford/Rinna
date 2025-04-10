@@ -9,17 +9,9 @@
  */
 package org.rinna.cli.bdd;
 
-import io.cucumber.java.After;
-import io.cucumber.java.Before;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
-import org.rinna.cli.command.UndoCommand;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.WorkflowState;
-import org.rinna.cli.service.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,9 +22,18 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import org.rinna.cli.command.UndoCommand;
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.model.WorkflowState;
+import org.rinna.cli.service.*;
+
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for the Undo Command BDD tests.

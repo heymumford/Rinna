@@ -10,14 +10,14 @@
 
 package org.rinna.cli.command;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
 import org.rinna.cli.security.SecurityManager;
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.util.OutputFormatter;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
 
 /**
  * Command for managing user permissions and admin access.

@@ -9,17 +9,17 @@
  */
 package org.rinna.cli.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.List;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.rinna.cli.notifications.Notification;
 import org.rinna.cli.notifications.NotificationType;
-
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("MockNotificationService Tests")
 class MockNotificationServiceTest {

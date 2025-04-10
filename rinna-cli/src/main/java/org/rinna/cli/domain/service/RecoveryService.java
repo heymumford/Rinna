@@ -9,7 +9,6 @@
  */
 package org.rinna.cli.domain.service;
 
-import java.util.Map;
 
 /**
  * Domain interface for system recovery services in the CLI module.

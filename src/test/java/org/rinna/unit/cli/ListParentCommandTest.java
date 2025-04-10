@@ -9,6 +9,19 @@
  */
 package org.rinna.unit.cli;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,26 +32,11 @@ import org.rinna.cli.command.ListCommand;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.domain.Priority;
 import org.rinna.domain.WorkItem;
-import org.rinna.domain.WorkItemRelationship;
 import org.rinna.domain.WorkItemRelationshipType;
 import org.rinna.domain.WorkItemType;
 import org.rinna.domain.WorkflowState;
 import org.rinna.usecase.ItemService;
 import org.rinna.usecase.RelationshipService;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for the ListCommand class focusing on parent-child hierarchy features.

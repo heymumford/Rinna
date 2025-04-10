@@ -9,10 +9,10 @@
  */
 package org.rinna.cli.domain.service;
 
-import org.rinna.cli.domain.model.DomainWorkItem;
-
 import java.util.List;
 import java.util.UUID;
+
+import org.rinna.cli.domain.model.DomainWorkItem;
 
 /**
  * Service interface for identifying critical paths in projects.

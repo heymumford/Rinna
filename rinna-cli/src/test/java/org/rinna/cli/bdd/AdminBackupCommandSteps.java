@@ -1,21 +1,12 @@
 package org.rinna.cli.bdd;
 
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.When;
-import io.cucumber.java.en.Then;
-import org.rinna.cli.service.BackupService;
-import org.rinna.cli.service.MockBackupService;
-import org.rinna.cli.service.MockSecurityService;
-import org.rinna.cli.service.ServiceManager;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.*;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
+
+import org.rinna.cli.service.MockBackupService;
+import org.rinna.cli.service.MockSecurityService;
+
 
 /**
  * Step definitions for admin backup command tests.

@@ -9,6 +9,13 @@
  */
 package org.rinna.cli.command;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+
 import org.rinna.cli.domain.model.Comment;
 import org.rinna.cli.model.WorkItem;
 import org.rinna.cli.service.ContextManager;
@@ -18,13 +25,6 @@ import org.rinna.cli.service.MockItemService;
 import org.rinna.cli.service.MockWorkflowService;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.util.OutputFormatter;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.Callable;
 
 /**
  * Command to add a comment to a work item.

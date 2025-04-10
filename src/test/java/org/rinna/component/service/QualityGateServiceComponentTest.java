@@ -8,6 +8,11 @@
 
 package org.rinna.component.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,11 +27,6 @@ import org.rinna.repository.ItemRepository;
 import org.rinna.repository.QualityGateRepository;
 import org.rinna.usecase.QualityGateService;
 import org.rinna.usecase.WorkflowService;
-
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Component tests for QualityGateService.

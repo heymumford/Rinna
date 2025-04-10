@@ -8,13 +8,13 @@
 
 package org.rinna.repository;
 
-import org.rinna.domain.model.Comment;
-import org.rinna.domain.model.CommentType;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.rinna.domain.model.Comment;
+import org.rinna.domain.model.CommentType;
 
 /**
  * Repository interface for managing work item comments.

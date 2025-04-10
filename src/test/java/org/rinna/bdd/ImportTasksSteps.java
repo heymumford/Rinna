@@ -1,15 +1,5 @@
 package org.rinna.bdd;
 
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.When;
-import io.cucumber.java.en.Then;
-import org.junit.Assert;
-import org.rinna.domain.WorkItem;
-import org.rinna.domain.WorkflowState;
-import org.rinna.domain.Priority;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,6 +8,17 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.Assert;
+import org.rinna.domain.Priority;
+import org.rinna.domain.WorkItem;
+import org.rinna.domain.WorkflowState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for importing tasks from markdown files.

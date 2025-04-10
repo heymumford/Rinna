@@ -9,14 +9,13 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.cli.report.ReportConfig;
-import org.rinna.cli.report.ReportFormat;
-import org.rinna.cli.report.ReportService;
-import org.rinna.cli.report.ReportType;
-
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.rinna.cli.report.ReportConfig;
+import org.rinna.cli.report.ReportFormat;
+import org.rinna.cli.report.ReportType;
 
 /**
  * Mock implementation of ReportService for testing.

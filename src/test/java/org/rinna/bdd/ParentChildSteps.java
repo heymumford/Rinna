@@ -9,21 +9,8 @@
  */
 package org.rinna.bdd;
 
-import io.cucumber.datatable.DataTable;
-import io.cucumber.java.Before;
-import io.cucumber.java.en.And;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
-import org.junit.jupiter.api.Assertions;
-import org.rinna.domain.Priority;
-import org.rinna.domain.WorkItem;
-import org.rinna.domain.WorkItemRelationship;
-import org.rinna.domain.WorkItemRelationshipType;
-import org.rinna.domain.WorkItemType;
-import org.rinna.domain.WorkflowState;
-import org.rinna.usecase.ItemService;
-import org.rinna.usecase.RelationshipService;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -33,8 +20,21 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.Assertions;
+import org.rinna.domain.Priority;
+import org.rinna.domain.WorkItem;
+import org.rinna.domain.WorkItemRelationshipType;
+import org.rinna.domain.WorkItemType;
+import org.rinna.domain.WorkflowState;
+import org.rinna.usecase.ItemService;
+import org.rinna.usecase.RelationshipService;
+
+import io.cucumber.datatable.DataTable;
+import io.cucumber.java.Before;
+import io.cucumber.java.en.And;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for parent-child relationship features.

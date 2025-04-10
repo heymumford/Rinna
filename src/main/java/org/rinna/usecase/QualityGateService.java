@@ -8,12 +8,12 @@
 
 package org.rinna.usecase;
 
-import org.rinna.domain.WorkItem;
-import org.rinna.domain.WorkflowState;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import org.rinna.domain.WorkItem;
+import org.rinna.domain.WorkflowState;
 
 /**
  * Service interface for quality gate operations.

@@ -1,9 +1,9 @@
 package org.rinna.domain.service.macro;
 
+import java.util.List;
+
 import org.rinna.domain.model.macro.MacroDefinition;
 import org.rinna.domain.model.macro.TriggerEvent;
-
-import java.util.List;
 
 /**
  * Service interface for managing macro triggers and events.

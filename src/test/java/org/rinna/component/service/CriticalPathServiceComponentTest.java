@@ -8,6 +8,13 @@
 
 package org.rinna.component.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.time.LocalDate;
+import java.util.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,13 +30,6 @@ import org.rinna.domain.WorkflowState;
 import org.rinna.repository.DependencyRepository;
 import org.rinna.repository.ItemRepository;
 import org.rinna.usecase.CriticalPathService;
-
-import java.time.LocalDate;
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * Component tests for CriticalPathService.

@@ -8,6 +8,14 @@
 
 package org.rinna.adapter.service;
 
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.rinna.domain.model.DefaultWorkQueue;
 import org.rinna.domain.model.Priority;
 import org.rinna.domain.model.WorkItem;
@@ -16,19 +24,10 @@ import org.rinna.domain.model.WorkItemMetadata;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkQueue;
 import org.rinna.domain.model.WorkflowState;
-import org.rinna.repository.QueueRepository;
 import org.rinna.repository.MetadataRepository;
-import org.rinna.usecase.InvalidTransitionException;
+import org.rinna.repository.QueueRepository;
 import org.rinna.usecase.ItemService;
 import org.rinna.usecase.QueueService;
-
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation of the QueueService interface.

@@ -15,7 +15,6 @@ import org.junit.jupiter.api.TestInfo;
 import org.rinna.cli.polyglot.framework.PolyglotTestHarness;
 import org.rinna.cli.polyglot.go.GoApiTester;
 import org.rinna.cli.polyglot.java.JavaCliTester;
-import org.rinna.cli.polyglot.java.JavaCliTester.CliResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

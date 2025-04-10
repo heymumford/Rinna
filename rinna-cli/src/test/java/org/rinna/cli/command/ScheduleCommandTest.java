@@ -9,6 +9,17 @@
  */
 package org.rinna.cli.command;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.time.DayOfWeek;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,19 +42,6 @@ import org.rinna.cli.service.ContextManager;
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.MockReportService;
 import org.rinna.cli.service.ServiceManager;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.time.DayOfWeek;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Test class for ScheduleCommand with focus on MetadataService integration.

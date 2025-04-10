@@ -9,19 +9,18 @@
  */
 package org.rinna.cli.command;
 
-import org.junit.jupiter.api.*;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.service.MockBacklogService;
-import org.rinna.cli.service.MockMetadataService;
-import org.rinna.cli.service.ServiceManager;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.*;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.rinna.cli.service.MockBacklogService;
+import org.rinna.cli.service.MockMetadataService;
+import org.rinna.cli.service.ServiceManager;
 
 /**
  * Basic tests for BacklogCommand.

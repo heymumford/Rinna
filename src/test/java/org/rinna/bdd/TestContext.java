@@ -8,19 +8,19 @@
 
 package org.rinna.bdd;
 
-import org.rinna.utils.TestRinna;
-import org.rinna.domain.APIToken;
-import org.rinna.domain.model.Project;
-import org.rinna.domain.model.Release;
-import org.rinna.domain.WebhookConfig;
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkItemCreateRequest;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import org.rinna.domain.APIToken;
+import org.rinna.domain.WebhookConfig;
+import org.rinna.domain.model.Project;
+import org.rinna.domain.model.Release;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
+import org.rinna.utils.TestRinna;
 
 /**
  * Test context for sharing state between Cucumber step definitions.

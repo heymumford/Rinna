@@ -8,14 +8,6 @@
 
 package org.rinna.cli.command.impl;
 
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.service.MonitoringService;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.util.ErrorHandler;
-import org.rinna.cli.util.MapConverter;
-import org.rinna.cli.util.OperationTracker;
-import org.rinna.cli.util.OutputFormatter;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,6 +15,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
+
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.MonitoringService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.ErrorHandler;
+import org.rinna.cli.util.OperationTracker;
+import org.rinna.cli.util.OutputFormatter;
 
 /**
  * Command handler for system monitoring operations.
@@ -37,7 +36,7 @@ public class AdminMonitorCommand implements Callable<Integer> {
     private final Scanner scanner;
     private final MetadataService metadataService;
     private final OperationTracker operationTracker;
-    private final ErrorHandlerExtension errorHandler;
+    private final ErrorHandler errorHandler;
     private String format = "text";
     private boolean verbose = false;
     
@@ -53,7 +52,7 @@ public class AdminMonitorCommand implements Callable<Integer> {
         
         // Initialize utility instances
         this.operationTracker = new OperationTracker(metadataService);
-        this.errorHandler = new ErrorHandlerExtension(metadataService);
+        this.errorHandler = new ErrorHandler(metadataService);
     }
     
     /**
@@ -1077,19 +1076,6 @@ public class AdminMonitorCommand implements Callable<Integer> {
             .outputError(message, null);
     }
     
-    /**
-     * Private method to expose the outputError functionality of ErrorHandler.
-     * This is needed because ErrorHandler's outputError method is private.
-     */
-    private static class ErrorHandlerExtension extends ErrorHandler {
-        public ErrorHandlerExtension(MetadataService metadataService) {
-            super(metadataService);
-        }
-        
-        public void outputError(String message, Throwable exception) {
-            super.outputError(message, exception);
-        }
-    }
     
     /**
      * Outputs a success message or data in either JSON or text format.

@@ -9,19 +9,18 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.cli.domain.model.Comment;
-import org.rinna.cli.domain.model.CommentType;
-import org.rinna.cli.domain.model.WorkflowState;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.rinna.cli.domain.model.Comment;
+import org.rinna.cli.domain.model.CommentType;
+import org.rinna.cli.domain.model.WorkflowState;
 
 /**
  * Mock implementation of a comment service for testing.

@@ -9,6 +9,9 @@
  */
 package org.rinna.integration.cli;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,15 +21,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.rinna.base.IntegrationTest;
 import org.rinna.cli.RinnaCli;
-import org.rinna.cli.messaging.MessageStatus;
-import org.rinna.cli.messaging.RinnaMessage;
 import org.rinna.cli.service.ConfigurationService;
 import org.rinna.cli.service.ServiceManager;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.time.Instant;
-import java.util.List;
 
 /**
  * Integration tests for messaging functionality.

@@ -8,23 +8,8 @@
 
 package org.rinna.unit.model;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.rinna.domain.model.Priority;
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkItemCreateRequest;
-import org.rinna.domain.model.WorkItemRecord;
-import org.rinna.domain.model.WorkItemType;
-import org.rinna.domain.model.WorkflowState;
-import org.rinna.domain.service.ItemService;
-import org.rinna.domain.service.InvalidTransitionException;
-import org.rinna.domain.service.WorkflowService;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -35,10 +20,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.rinna.domain.model.Priority;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemRecord;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.domain.model.WorkflowState;
+import org.rinna.domain.service.ItemService;
+import org.rinna.domain.service.WorkflowService;
 
 @DisplayName("Flexible Work Item Model Tests")
 class FlexibleWorkItemTest {

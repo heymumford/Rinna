@@ -8,12 +8,12 @@
 
 package org.rinna.usecase;
 
-import org.rinna.domain.WorkItem;
-import org.rinna.domain.WorkItemDependency;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import org.rinna.domain.WorkItem;
+import org.rinna.domain.WorkItemDependency;
 
 /**
  * Service interface for managing work item dependencies and critical path operations.

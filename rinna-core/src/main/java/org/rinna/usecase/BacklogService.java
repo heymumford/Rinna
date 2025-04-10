@@ -1,6 +1,7 @@
 package org.rinna.usecase;
 
 import java.util.List;
+
 import org.rinna.domain.WorkItem;
 
 /**

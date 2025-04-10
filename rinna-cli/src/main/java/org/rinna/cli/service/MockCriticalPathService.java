@@ -7,11 +7,9 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.cli.model.WorkItem;
-
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 /**
  * Mock implementation of critical path analysis service for testing.

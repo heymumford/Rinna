@@ -7,14 +7,14 @@
  */
 package org.rinna.unit.report;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.rinna.base.UnitTest;
 import org.rinna.cli.report.ReportFormat;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for ReportFormat enum.

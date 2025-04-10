@@ -9,6 +9,16 @@
  */
 package org.rinna.component.cli;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,16 +36,6 @@ import org.rinna.domain.WorkItemType;
 import org.rinna.domain.WorkflowState;
 import org.rinna.usecase.ItemService;
 import org.rinna.usecase.SearchService;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Component tests for the GrepCommand class.

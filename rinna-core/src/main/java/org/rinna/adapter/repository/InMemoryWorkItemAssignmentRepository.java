@@ -8,8 +8,6 @@
 
 package org.rinna.adapter.repository;
 
-import org.rinna.domain.service.WorkItemAssignmentRepository;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,6 +18,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import org.rinna.domain.service.WorkItemAssignmentRepository;
 
 /**
  * In-memory implementation of the WorkItemAssignmentRepository interface.

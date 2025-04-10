@@ -7,20 +7,19 @@
  */
 package org.rinna.cli.stats;
 
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.service.MockItemService;
-import org.rinna.cli.adapter.MockItemServiceAdapter;
-import org.rinna.cli.adapter.StatisticItemAdapter;
-import org.rinna.cli.domain.model.WorkflowState;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.Priority;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import org.rinna.cli.adapter.MockItemServiceAdapter;
+import org.rinna.cli.adapter.StatisticItemAdapter;
+import org.rinna.cli.domain.model.WorkflowState;
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.service.MockItemService;
+import org.rinna.cli.service.ServiceManager;
 
 /**
  * Service for computing and tracking statistics about work items and workflow.

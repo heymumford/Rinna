@@ -8,9 +8,9 @@
 
 package org.rinna.bdd;
 
-import org.junit.platform.suite.api.*;
-
 import static io.cucumber.junit.platform.engine.Constants.*;
+
+import org.junit.platform.suite.api.*;
 
 /**
  * JUnit Platform test suite for running Admin Backup and Recovery BDD tests.

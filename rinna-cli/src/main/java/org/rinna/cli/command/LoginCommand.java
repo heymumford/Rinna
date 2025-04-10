@@ -9,15 +9,15 @@
  */
 package org.rinna.cli.command;
 
-import org.rinna.cli.security.SecurityManager;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.service.ServiceManager;
-
 import java.io.Console;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
+
+import org.rinna.cli.security.SecurityManager;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.ServiceManager;
 
 /**
  * Command for authenticating users with the Rinna system.

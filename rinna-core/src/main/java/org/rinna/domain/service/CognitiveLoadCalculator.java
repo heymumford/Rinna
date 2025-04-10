@@ -8,13 +8,13 @@
 
 package org.rinna.domain.service;
 
+import java.util.List;
+import java.util.UUID;
+
 import org.rinna.domain.model.CynefinDomain;
 import org.rinna.domain.model.OrganizationalUnit;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkParadigm;
-
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Service interface for calculating cognitive load in the Ryorin-do framework.

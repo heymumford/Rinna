@@ -9,14 +9,14 @@
  */
 package org.rinna.cli.service;
 
+import java.time.LocalDateTime;
+import java.util.*;
+
 import org.rinna.cli.model.Priority;
 import org.rinna.cli.model.WorkItem;
 import org.rinna.cli.model.WorkItemCreateRequest;
 import org.rinna.cli.model.WorkItemType;
 import org.rinna.cli.model.WorkflowState;
-
-import java.time.LocalDateTime;
-import java.util.*;
 
 /**
  * Mock implementation of item service functionality for CLI use.

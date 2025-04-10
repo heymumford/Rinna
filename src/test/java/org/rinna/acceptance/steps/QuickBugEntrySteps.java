@@ -8,19 +8,20 @@
 
 package org.rinna.acceptance.steps;
 
-import io.cucumber.datatable.DataTable;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.*;
+
 import org.rinna.bdd.TestContext;
 import org.rinna.domain.WorkItem;
 import org.rinna.domain.WorkItemType;
 import org.rinna.domain.WorkflowState;
 
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for the Quick Bug Entry feature.

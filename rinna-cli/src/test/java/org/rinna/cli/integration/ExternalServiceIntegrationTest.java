@@ -9,17 +9,8 @@
  */
 package org.rinna.cli.integration;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
-import org.rinna.cli.command.ReportCommand;
-import org.rinna.cli.command.NotifyCommand;
-import org.rinna.cli.notifications.Notification;
-import org.rinna.cli.notifications.NotificationType;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -28,8 +19,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.rinna.cli.command.NotifyCommand;
+import org.rinna.cli.command.ReportCommand;
+import org.rinna.cli.notifications.Notification;
+import org.rinna.cli.notifications.NotificationType;
 
 /**
  * Integration tests for CLI interaction with external services.

@@ -8,6 +8,12 @@
 
 package org.rinna.component.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.util.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,12 +28,6 @@ import org.rinna.domain.WorkflowState;
 import org.rinna.repository.ItemRepository;
 import org.rinna.repository.TemplateRepository;
 import org.rinna.usecase.FlexibleWorkItemService;
-
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Component tests for FlexibleWorkItemService.

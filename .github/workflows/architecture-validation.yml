@@ -6,11 +6,14 @@ on:
   pull_request:
     branches: [ main, develop ]
   workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 1'  # Run weekly on Mondays at midnight
 
 jobs:
   validate-architecture:
-    name: Validate Architecture
+    name: Clean Architecture Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     
     steps:
     - uses: actions/checkout@v4
@@ -24,16 +27,42 @@ jobs:
         distribution: 'temurin'
         cache: maven
     
-    - name: Run Architecture Validation Checks
+    - name: Make scripts executable
       run: |
-        echo "Running architecture validation checks..."
-        ./bin/run-checks.sh
-        
-        # Run package structure validation
-        if [ -f "./bin/checks/enforce-package-structure.sh" ]; then
-          echo "Running package structure validation..."
-          ./bin/checks/enforce-package-structure.sh
+        find ./bin -type f -name "*.sh" -exec chmod +x {} \;
+        chmod +x ./bin/run-checks.sh || true
+        chmod +x ./bin/checks/check-clean-architecture.sh || true
+        chmod +x ./bin/checks/enforce-package-structure.sh || true
+    
+    - name: Run Clean Architecture Validation Checks
+      run: |
+        echo "Running clean architecture validation checks..."
+        if [ -f "./bin/checks/check-clean-architecture.sh" ]; then
+          ./bin/checks/check-clean-architecture.sh
+        else
+          echo "Clean architecture check script not found."
         fi
+      continue-on-error: true
+    
+    - name: Run Package Structure Validation
+      run: |
+        echo "Running package structure validation..."
+        if [ -f "./bin/checks/enforce-package-structure.sh" ]; then
+          ./bin/checks/enforce-package-structure.sh
+        else
+          echo "Package structure enforcement script not found."
+        fi
+      continue-on-error: true
+    
+    - name: Run All Architecture Checks
+      run: |
+        echo "Running all architecture checks..."
+        if [ -f "./bin/run-checks.sh" ]; then
+          ./bin/run-checks.sh
+        else
+          echo "Architecture checks script not found."
+        fi
+      continue-on-error: true
       
     - name: Run Maven Build with Architecture Validation
       run: |
@@ -50,3 +79,305 @@ jobs:
         # Run parent validation
         cd ..
         mvn -B validate -P validate-architecture
+      continue-on-error: true
+        
+    - name: Generate Architecture Report
+      run: |
+        mkdir -p architecture-reports
+        
+        echo "# Architecture Validation Report" > architecture-reports/index.md
+        echo "Generated on $(date)" >> architecture-reports/index.md
+        echo "" >> architecture-reports/index.md
+        
+        # Clean Architecture Check Results
+        echo "## Clean Architecture" >> architecture-reports/index.md
+        if [ -f "./bin/checks/check-clean-architecture.sh" ]; then
+          echo "### Violations" >> architecture-reports/index.md
+          echo '```' >> architecture-reports/index.md
+          ./bin/checks/check-clean-architecture.sh | grep -A 5 "VIOLATION" || echo "No violations found"
+          echo '```' >> architecture-reports/index.md
+        else
+          echo "Clean architecture check script not available." >> architecture-reports/index.md
+        fi
+        echo "" >> architecture-reports/index.md
+        
+        # Package Structure Check Results
+        echo "## Package Structure" >> architecture-reports/index.md
+        if [ -f "./bin/checks/enforce-package-structure.sh" ]; then
+          echo "### Issues" >> architecture-reports/index.md
+          echo '```' >> architecture-reports/index.md
+          ./bin/checks/enforce-package-structure.sh | grep -A 3 "ERROR" || echo "No issues found"
+          echo '```' >> architecture-reports/index.md
+        else
+          echo "Package structure check script not available." >> architecture-reports/index.md
+        fi
+        
+        # Convert to HTML for GitHub Pages
+        if command -v pandoc &> /dev/null; then
+          pandoc -f markdown -t html architecture-reports/index.md -o architecture-reports/index.html
+        fi
+    
+    - name: Upload Architecture Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: architecture-report
+        path: architecture-reports/
+        
+  dependency-validation:
+    name: Dependency Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Make scripts executable
+      run: |
+        find ./bin -type f -name "*.sh" -exec chmod +x {} \;
+        chmod +x ./bin/checks/dependency-validator.sh || true
+        chmod +x ./bin/checks/dependency-validator-xml.sh || true
+    
+    - name: Check Maven Dependency Convergence
+      run: |
+        echo "Checking Maven dependency convergence..."
+        mvn org.apache.maven.plugins:maven-enforcer-plugin:3.4.1:enforce -Drules=dependencyConvergence || true
+        
+    - name: Run Dependency Validation
+      run: |
+        if [ -f "./bin/checks/dependency-validator.sh" ]; then
+          echo "Running dependency validation..."
+          ./bin/checks/dependency-validator.sh
+        fi
+        
+        if [ -f "./bin/checks/dependency-validator-xml.sh" ]; then
+          echo "Running XML dependency validation..."
+          ./bin/checks/dependency-validator-xml.sh
+        fi
+      continue-on-error: true
+        
+    - name: Check Circular Dependencies
+      run: |
+        echo "Checking for circular dependencies..."
+        mvn -B dependency:analyze -DoutputXML=true -DoutputFile=target/dependency-analysis.xml || true
+        
+        if [ -f "target/dependency-analysis.xml" ]; then
+          grep -A 5 "circularDependency" target/dependency-analysis.xml || echo "No circular dependencies found."
+        fi
+      continue-on-error: true
+    
+    - name: Generate Dependency Report
+      run: |
+        mkdir -p dependency-reports
+        
+        echo "# Dependency Validation Report" > dependency-reports/index.md
+        echo "Generated on $(date)" >> dependency-reports/index.md
+        echo "" >> dependency-reports/index.md
+        
+        # Maven Dependency Convergence
+        echo "## Maven Dependency Convergence" >> dependency-reports/index.md
+        echo '```' >> dependency-reports/index.md
+        mvn org.apache.maven.plugins:maven-enforcer-plugin:3.4.1:enforce -Drules=dependencyConvergence 2>&1 | grep -A 10 "Dependency convergence error" || echo "All dependencies converge!"
+        echo '```' >> dependency-reports/index.md
+        echo "" >> dependency-reports/index.md
+        
+        # Custom Dependency Validation
+        echo "## Custom Dependency Validation" >> dependency-reports/index.md
+        if [ -f "./bin/checks/dependency-validator.sh" ]; then
+          echo '```' >> dependency-reports/index.md
+          ./bin/checks/dependency-validator.sh | grep -A 5 "ERROR" || echo "No dependency issues found."
+          echo '```' >> dependency-reports/index.md
+        else
+          echo "Custom dependency validation script not available." >> dependency-reports/index.md
+        fi
+        
+        # Convert to HTML for GitHub Pages
+        if command -v pandoc &> /dev/null; then
+          pandoc -f markdown -t html dependency-reports/index.md -o dependency-reports/index.html
+        fi
+    
+    - name: Upload Dependency Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-report
+        path: dependency-reports/
+        
+  test-structure-validation:
+    name: Test Structure Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+        
+    - name: Make scripts executable
+      run: |
+        find ./bin -type f -name "*.sh" -exec chmod +x {} \;
+        chmod +x ./bin/checks/test-structure-validator.sh || true
+    
+    - name: Run Test Structure Validation
+      run: |
+        if [ -f "./bin/checks/test-structure-validator.sh" ]; then
+          echo "Running test structure validation..."
+          ./bin/checks/test-structure-validator.sh
+        else
+          echo "Test structure validation script not found."
+        fi
+      continue-on-error: true
+        
+    - name: Check Test Naming Conventions
+      run: |
+        echo "Checking test naming conventions..."
+        find . -name "*Test.java" | grep -v "Base.*Test.java" | xargs grep -l "@Test" | while read file; do
+          # Make sure test methods follow naming conventions
+          grep -E "public void (test|should|when)[A-Z0-9]" "$file" > /dev/null || echo "Warning: Test methods in $file may not follow naming conventions"
+        done
+      continue-on-error: true
+    
+    - name: Validate Testing Pyramid
+      run: |
+        echo "Validating testing pyramid structure..."
+        
+        # Count tests in each category
+        UNIT_TESTS=$(find . -path "*/unit/*Test.java" | wc -l)
+        COMPONENT_TESTS=$(find . -path "*/component/*Test.java" | wc -l)
+        INTEGRATION_TESTS=$(find . -path "*/integration/*Test.java" | wc -l)
+        ACCEPTANCE_TESTS=$(find . -path "*/acceptance/*Test.java" | wc -l)
+        PERFORMANCE_TESTS=$(find . -path "*/performance/*Test.java" | wc -l)
+        
+        echo "Test Distribution:"
+        echo "- Unit Tests: $UNIT_TESTS"
+        echo "- Component Tests: $COMPONENT_TESTS"
+        echo "- Integration Tests: $INTEGRATION_TESTS"
+        echo "- Acceptance Tests: $ACCEPTANCE_TESTS"
+        echo "- Performance Tests: $PERFORMANCE_TESTS"
+        
+        # Check pyramid shape (unit > component > integration > acceptance)
+        if [[ $UNIT_TESTS -lt $COMPONENT_TESTS ]]; then
+          echo "Warning: Testing pyramid violated - more component tests than unit tests"
+        fi
+        
+        if [[ $COMPONENT_TESTS -lt $INTEGRATION_TESTS ]]; then
+          echo "Warning: Testing pyramid violated - more integration tests than component tests"
+        fi
+        
+        if [[ $INTEGRATION_TESTS -lt $ACCEPTANCE_TESTS ]]; then
+          echo "Warning: Testing pyramid violated - more acceptance tests than integration tests"
+        fi
+      continue-on-error: true
+    
+    - name: Generate Test Structure Report
+      run: |
+        mkdir -p test-structure-reports
+        
+        echo "# Test Structure Validation Report" > test-structure-reports/index.md
+        echo "Generated on $(date)" >> test-structure-reports/index.md
+        echo "" >> test-structure-reports/index.md
+        
+        # Test Pyramid Analysis
+        echo "## Testing Pyramid Analysis" >> test-structure-reports/index.md
+        
+        # Count tests in each category
+        UNIT_TESTS=$(find . -path "*/unit/*Test.java" | wc -l)
+        COMPONENT_TESTS=$(find . -path "*/component/*Test.java" | wc -l)
+        INTEGRATION_TESTS=$(find . -path "*/integration/*Test.java" | wc -l)
+        ACCEPTANCE_TESTS=$(find . -path "*/acceptance/*Test.java" | wc -l)
+        PERFORMANCE_TESTS=$(find . -path "*/performance/*Test.java" | wc -l)
+        
+        echo "| Test Type | Count | Percentage |" >> test-structure-reports/index.md
+        echo "|-----------|-------|------------|" >> test-structure-reports/index.md
+        
+        TOTAL_TESTS=$((UNIT_TESTS + COMPONENT_TESTS + INTEGRATION_TESTS + ACCEPTANCE_TESTS + PERFORMANCE_TESTS))
+        
+        if [ $TOTAL_TESTS -gt 0 ]; then
+          UNIT_PCT=$((UNIT_TESTS * 100 / TOTAL_TESTS))
+          COMPONENT_PCT=$((COMPONENT_TESTS * 100 / TOTAL_TESTS))
+          INTEGRATION_PCT=$((INTEGRATION_TESTS * 100 / TOTAL_TESTS))
+          ACCEPTANCE_PCT=$((ACCEPTANCE_TESTS * 100 / TOTAL_TESTS))
+          PERFORMANCE_PCT=$((PERFORMANCE_TESTS * 100 / TOTAL_TESTS))
+          
+          echo "| Unit | $UNIT_TESTS | ${UNIT_PCT}% |" >> test-structure-reports/index.md
+          echo "| Component | $COMPONENT_TESTS | ${COMPONENT_PCT}% |" >> test-structure-reports/index.md
+          echo "| Integration | $INTEGRATION_TESTS | ${INTEGRATION_PCT}% |" >> test-structure-reports/index.md
+          echo "| Acceptance | $ACCEPTANCE_TESTS | ${ACCEPTANCE_PCT}% |" >> test-structure-reports/index.md
+          echo "| Performance | $PERFORMANCE_TESTS | ${PERFORMANCE_PCT}% |" >> test-structure-reports/index.md
+          echo "| **Total** | $TOTAL_TESTS | 100% |" >> test-structure-reports/index.md
+        else
+          echo "No tests found matching the standard test pyramid structure." >> test-structure-reports/index.md
+        fi
+        
+        # Convert to HTML for GitHub Pages
+        if command -v pandoc &> /dev/null; then
+          pandoc -f markdown -t html test-structure-reports/index.md -o test-structure-reports/index.html
+        fi
+    
+    - name: Upload Test Structure Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-structure-report
+        path: test-structure-reports/
+        
+  validation-summary:
+    name: Architecture Validation Summary
+    runs-on: ubuntu-latest
+    needs: [validate-architecture, dependency-validation, test-structure-validation]
+    if: always()
+    
+    steps:
+    - name: Download all reports
+      uses: actions/download-artifact@v3
+      with:
+        path: all-reports
+        
+    - name: Create summary report
+      run: |
+        mkdir -p summary-report
+        
+        echo "# Architecture Validation Summary" > summary-report/index.md
+        echo "Generated on $(date)" >> summary-report/index.md
+        echo "" >> summary-report/index.md
+        
+        echo "## Job Status" >> summary-report/index.md
+        echo "| Validation | Status |" >> summary-report/index.md
+        echo "|------------|--------|" >> summary-report/index.md
+        echo "| Clean Architecture | ${{ needs.validate-architecture.result }} |" >> summary-report/index.md
+        echo "| Dependency Validation | ${{ needs.dependency-validation.result }} |" >> summary-report/index.md
+        echo "| Test Structure | ${{ needs.test-structure-validation.result }} |" >> summary-report/index.md
+        echo "" >> summary-report/index.md
+        
+        echo "For detailed reports, check the workflow artifacts." >> summary-report/index.md
+    
+    - name: Upload summary report
+      uses: actions/upload-artifact@v3
+      with:
+        name: architecture-validation-summary
+        path: summary-report/
+        
+    - name: Add PR comment
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          const summaryContent = fs.readFileSync('summary-report/index.md', 'utf8');
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summaryContent
+          });

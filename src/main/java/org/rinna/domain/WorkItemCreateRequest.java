@@ -1,6 +1,5 @@
 package org.rinna.domain;
 
-import java.util.UUID;
 
 /**
  * Compatibility class for WorkItemCreateRequest that delegates to the new class.

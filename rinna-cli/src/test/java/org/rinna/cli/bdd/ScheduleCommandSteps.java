@@ -1,38 +1,38 @@
 package org.rinna.cli.bdd;
 
-import io.cucumber.java.Before;
-import io.cucumber.java.After;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.When;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.And;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.mockito.ArgumentCaptor;
-import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
-
-import org.rinna.cli.command.ScheduleCommand;
-import org.rinna.cli.report.ReportConfig;
-import org.rinna.cli.report.ReportScheduler;
-import org.rinna.cli.report.ReportScheduler.ScheduledReport;
-import org.rinna.cli.report.ReportScheduler.ScheduleType;
-import org.rinna.cli.report.ReportType;
-import org.rinna.cli.report.ReportFormat;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.service.MockReportService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.util.OutputFormatter;
+import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.time.DayOfWeek;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.rinna.cli.command.ScheduleCommand;
+import org.rinna.cli.report.ReportConfig;
+import org.rinna.cli.report.ReportFormat;
+import org.rinna.cli.report.ReportScheduler;
+import org.rinna.cli.report.ReportScheduler.ScheduleType;
+import org.rinna.cli.report.ReportScheduler.ScheduledReport;
+import org.rinna.cli.report.ReportType;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.MockReportService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.OutputFormatter;
+
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
+import io.cucumber.java.en.And;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for testing the ScheduleCommand.

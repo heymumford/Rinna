@@ -9,6 +9,12 @@
  */
 package org.rinna.pui.component;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+
 import org.rinna.cli.model.WorkflowState;
 import org.rinna.pui.geom.Dimension;
 import org.rinna.pui.geom.Point;
@@ -16,12 +22,6 @@ import org.rinna.pui.input.KeyHandler;
 import org.rinna.pui.style.BorderStyle;
 import org.rinna.pui.style.Color;
 import org.rinna.pui.style.Style;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * A component that visualizes workflow states and transitions.

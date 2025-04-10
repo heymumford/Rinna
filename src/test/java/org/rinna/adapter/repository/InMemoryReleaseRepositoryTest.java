@@ -8,18 +8,18 @@
 
 package org.rinna.adapter.repository;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.rinna.domain.model.DefaultRelease;
-import org.rinna.domain.model.Release;
-import org.rinna.repository.ReleaseRepository;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.rinna.domain.model.DefaultRelease;
+import org.rinna.domain.model.Release;
+import org.rinna.repository.ReleaseRepository;
 
 /**
  * Unit tests for {@link InMemoryReleaseRepository}.

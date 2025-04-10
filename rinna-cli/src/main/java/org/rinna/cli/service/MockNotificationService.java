@@ -7,13 +7,6 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.cli.notifications.Notification;
-import org.rinna.cli.notifications.Notification.Priority;
-import org.rinna.cli.notifications.NotificationType;
-import org.rinna.cli.notifications.NotificationService;
-import org.rinna.cli.security.SecurityManager;
-import org.rinna.cli.config.SecurityConfig;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -21,7 +14,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -32,6 +24,12 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.rinna.cli.notifications.Notification;
+import org.rinna.cli.notifications.Notification.Priority;
+import org.rinna.cli.notifications.NotificationService;
+import org.rinna.cli.notifications.NotificationType;
+import org.rinna.cli.security.SecurityManager;
 
 /**
  * Mock implementation of notification service for testing and development.

@@ -9,16 +9,6 @@
  */
 package org.rinna.cli.command;
 
-import org.rinna.cli.domain.model.WorkItemRelationshipType;
-import org.rinna.cli.service.ContextManager;
-import org.rinna.cli.service.ItemService;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.service.MockHistoryService;
-import org.rinna.cli.service.MockRelationshipService;
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.util.OutputFormatter;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -27,6 +17,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+
+import org.rinna.cli.domain.model.WorkItemRelationshipType;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.service.ContextManager;
+import org.rinna.cli.service.ItemService;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.MockHistoryService;
+import org.rinna.cli.service.MockRelationshipService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.OutputFormatter;
 
 /**
  * Command to list work items with Linux-style options.

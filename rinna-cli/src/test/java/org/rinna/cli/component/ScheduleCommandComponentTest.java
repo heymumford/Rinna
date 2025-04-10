@@ -1,33 +1,31 @@
 package org.rinna.cli.component;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import static org.mockito.Mockito.*;
-import static org.junit.jupiter.api.Assertions.*;
-
 import org.rinna.cli.command.ScheduleCommand;
 import org.rinna.cli.report.ReportConfig;
 import org.rinna.cli.report.ReportFormat;
 import org.rinna.cli.report.ReportScheduler;
-import org.rinna.cli.report.ReportScheduler.ScheduledReport;
 import org.rinna.cli.report.ReportScheduler.ScheduleType;
+import org.rinna.cli.report.ReportScheduler.ScheduledReport;
 import org.rinna.cli.report.ReportType;
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.MockReportService;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.util.OutputFormatter;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.time.DayOfWeek;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Component tests for ScheduleCommand.

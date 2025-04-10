@@ -8,20 +8,19 @@
 
 package org.rinna.cli.security;
 
-import org.rinna.cli.config.SecurityConfig;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Properties;
 import java.util.UUID;
+
+import org.rinna.cli.config.SecurityConfig;
 
 /**
  * Service for authenticating CLI users and managing security tokens.

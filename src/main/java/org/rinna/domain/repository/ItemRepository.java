@@ -8,12 +8,12 @@
 
 package org.rinna.domain.repository;
 
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkItemCreateRequest;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
 
 /**
  * Repository interface for work items.

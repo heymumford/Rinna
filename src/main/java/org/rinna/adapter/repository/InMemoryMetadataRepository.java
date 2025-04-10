@@ -8,9 +8,6 @@
 
 package org.rinna.adapter.repository;
 
-import org.rinna.domain.model.WorkItemMetadata;
-import org.rinna.repository.MetadataRepository;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +15,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.rinna.domain.model.WorkItemMetadata;
+import org.rinna.repository.MetadataRepository;
 
 /**
  * In-memory implementation of the MetadataRepository interface.

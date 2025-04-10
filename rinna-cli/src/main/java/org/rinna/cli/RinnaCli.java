@@ -9,6 +9,11 @@
  */
 package org.rinna.cli;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+
 import org.rinna.cli.command.*;
 import org.rinna.cli.command.ScheduleCommand;
 import org.rinna.cli.messaging.AnsiFormatter;
@@ -16,21 +21,8 @@ import org.rinna.cli.messaging.MessageService;
 import org.rinna.cli.messaging.RinnaMessage;
 import org.rinna.cli.notifications.NotificationService;
 import org.rinna.cli.notifications.NotificationType;
-import org.rinna.cli.report.ReportType;
-import org.rinna.cli.report.ReportFormat;
-import org.rinna.cli.report.ReportConfig;
-import org.rinna.cli.report.ReportService;
-import org.rinna.cli.report.ReportScheduler;
 import org.rinna.cli.service.ConfigurationService;
 import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.WorkflowState;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.Callable;
 
 /**
  * Main entry point for the Rinna CLI.

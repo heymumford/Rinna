@@ -9,19 +9,10 @@
  */
 package org.rinna.cli.command;
 
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.WorkflowState;
-import org.rinna.cli.service.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -34,10 +25,18 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.model.WorkflowState;
+import org.rinna.cli.service.*;
 
 /**
  * Comprehensive test suite for ImportCommand.

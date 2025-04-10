@@ -9,16 +9,19 @@
  */
 package org.rinna.cli.command.impl;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.List;
+import java.util.UUID;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -26,24 +29,10 @@ import org.rinna.cli.model.Priority;
 import org.rinna.cli.model.WorkItem;
 import org.rinna.cli.model.WorkItemType;
 import org.rinna.cli.model.WorkflowState;
-import org.rinna.cli.service.BacklogService;
 import org.rinna.cli.service.ConfigurationService;
-import org.rinna.cli.service.ItemService;
 import org.rinna.cli.service.MockBacklogService;
 import org.rinna.cli.service.MockItemService;
 import org.rinna.cli.service.ServiceManager;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Comprehensive test class for the BacklogCommand functionality.

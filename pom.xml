@@ -251,6 +251,28 @@
               <excludedGroups>component,integration,acceptance,performance</excludedGroups>
             </configuration>
           </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>
@@ -269,6 +291,28 @@
               <excludedGroups>unit,integration,acceptance,performance</excludedGroups>
             </configuration>
           </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>
@@ -286,6 +330,28 @@
               <groups>integration</groups>
               <excludedGroups>unit,component,acceptance,performance</excludedGroups>
             </configuration>
+          </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
@@ -308,6 +374,28 @@
               </includes>
             </configuration>
           </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>
@@ -325,6 +413,28 @@
               <groups>performance</groups>
               <excludedGroups>unit,component,integration,acceptance</excludedGroups>
             </configuration>
+          </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
@@ -355,6 +465,28 @@
               </execution>
             </executions>
           </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>
@@ -382,6 +514,28 @@
                     <argument>--clean</argument>
                   </arguments>
                 </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
               </execution>
             </executions>
           </plugin>
@@ -431,6 +585,28 @@
               </execution>
             </executions>
           </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>
@@ -476,6 +652,28 @@
                     </rule>
                   </rules>
                 </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
               </execution>
             </executions>
           </plugin>
@@ -560,6 +758,28 @@
               </rulesets>
             </configuration>
           </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>
@@ -611,6 +831,28 @@
               <failurePriority>1</failurePriority>
               <maxAllowedViolations>1000</maxAllowedViolations>
             </configuration>
+          </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
@@ -693,6 +935,28 @@
               </execution>
             </executions>
           </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>
@@ -721,6 +985,28 @@
               <skipTests>false</skipTests>
               <skip>false</skip>
             </configuration>
+          </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
@@ -776,6 +1062,28 @@
               </execution>
             </executions>
           </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
       </build>
     </profile>
@@ -799,6 +1107,28 @@
                   <executable>${session.executionRootDirectory}/bin/run-checks.sh</executable>
                   <workingDirectory>${session.executionRootDirectory}</workingDirectory>
                 </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
               </execution>
             </executions>
           </plugin>
@@ -913,6 +1243,28 @@
             <outputDirectory>${project.build.directory}/dependency-check</outputDirectory>
           </configuration>
         </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
+          </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -1139,6 +1491,28 @@
           <skip>true</skip>
         </configuration>
       </plugin>
+          <plugin>
+            <groupId>com.diffplug.spotless</groupId>
+            <artifactId>spotless-maven-plugin</artifactId>
+            <version>2.43.0</version>
+            <configuration>
+              <java>
+                <importOrder>
+                  <order>java,javax,org,com</order>
+                </importOrder>
+                <removeUnusedImports />
+                <formatAnnotations />
+              </java>
+            </configuration>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>process-sources</phase>
+              </execution>
+            </executions>
+          </plugin>
     </plugins>
   </build>
 </project>

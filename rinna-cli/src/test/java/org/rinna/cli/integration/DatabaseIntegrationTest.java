@@ -9,6 +9,17 @@
  */
 package org.rinna.cli.integration;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -27,26 +38,11 @@ import org.rinna.cli.model.WorkItem;
 import org.rinna.cli.model.WorkItemType;
 import org.rinna.cli.service.ItemService;
 import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.test.OutputAssertions;
-import org.rinna.cli.util.ModelMapper;
 import org.rinna.data.sqlite.SqliteConnectionManager;
 import org.rinna.data.sqlite.SqliteRepositoryFactory;
 import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.repository.ItemRepository;
 import org.rinna.domain.repository.MetadataRepository;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration tests for CLI-to-Database interactions.

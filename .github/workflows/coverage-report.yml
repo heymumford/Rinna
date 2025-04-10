@@ -1,0 +1,234 @@
+name: Unified Code Coverage Report
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 1'  # Run weekly on Mondays at midnight
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    name: Generate Comprehensive Coverage Report
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for branch comparison
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc curl jq xmlstarlet
+          
+          # Install Python dependencies
+          pip install -r requirements.txt
+          pip install coverage pytest pytest-cov
+          
+          # Make scripts executable
+          chmod +x bin/ci/generate-coverage-report.sh
+          chmod +x bin/polyglot-coverage.sh
+      
+      # Run tests and generate coverage for all languages
+      - name: Run Java tests with coverage
+        run: mvn clean test jacoco:report
+        continue-on-error: true
+      
+      - name: Run Go tests with coverage
+        run: |
+          cd api
+          mkdir -p ../target/coverage/go
+          go test -coverprofile=../target/coverage/go/coverage.out ./...
+          go tool cover -html=../target/coverage/go/coverage.out -o ../target/coverage/go/coverage.html
+          cd ..
+        continue-on-error: true
+      
+      - name: Run Python tests with coverage
+        run: |
+          cd python
+          mkdir -p ../target/coverage/python/html
+          python -m pytest --cov=rinna tests/ --cov-report=xml:../target/coverage/python/coverage.xml --cov-report=html:../target/coverage/python/html
+          cd ..
+        continue-on-error: true
+      
+      # Generate consolidated report
+      - name: Generate unified coverage report
+        id: coverage
+        run: |
+          mkdir -p target/coverage/badges
+          ./bin/ci/generate-coverage-report.sh --ci --pr-comment --badge --verbose
+      
+      # Create or update summary badge in README if on main branch
+      - name: Update coverage badge in README
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p .github/badges
+          if [ -f "target/coverage/badges/badge-overall.svg" ]; then
+            cp target/coverage/badges/badge-overall.svg .github/badges/coverage.svg
+            cp target/coverage/badges/badge-java.svg .github/badges/java-coverage.svg
+            cp target/coverage/badges/badge-go.svg .github/badges/go-coverage.svg
+            cp target/coverage/badges/badge-python.svg .github/badges/python-coverage.svg
+            
+            # Commit and push badge to repository
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git add .github/badges/*.svg
+            git commit -m "Update coverage badges [skip ci]" || echo "No changes to commit"
+            git push || echo "Could not push badge update"
+          fi
+        continue-on-error: true
+      
+      # Add coverage report comment to PR
+      - name: Comment PR with coverage report
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          path: target/coverage/pr-comment.md
+      
+      # Upload coverage report artifact
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            target/coverage/html/
+            target/coverage/badges/
+            target/coverage/coverage.json
+            target/coverage/pr-comment.md
+            target/site/jacoco/
+            target/coverage/go/coverage.html
+            target/coverage/python/html/
+          retention-days: 14
+      
+      # Generate SonarQube compatible report if SonarQube is configured
+      - name: Generate SonarQube compatible report
+        if: env.SONAR_TOKEN != ''
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -n "$SONAR_TOKEN" ]; then
+            mvn sonar:sonar -Dsonar.host.url=${{ secrets.SONAR_HOST_URL || 'https://sonarcloud.io' }} \
+                           -Dsonar.projectKey=rinna \
+                           -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION || github.repository_owner }} \
+                           -Dsonar.java.coveragePlugin=jacoco \
+                           -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+                           -Dsonar.python.coverage.reportPaths=target/coverage/python/coverage.xml \
+                           -Dsonar.go.coverage.reportPaths=target/coverage/go/coverage.out
+          fi
+        continue-on-error: true
+  
+  # Daily trend report (only on scheduled runs)
+  trend-report:
+    name: Coverage Trend Report
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    needs: coverage
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download coverage data
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: target/coverage
+      
+      - name: Process historical data
+        run: |
+          mkdir -p .github/coverage-history
+          
+          # Extract overall coverage percentage
+          COVERAGE=$(jq -r '.summary.overall' target/coverage/coverage.json)
+          DATE=$(date +%Y-%m-%d)
+          
+          # Add to history file
+          echo "$DATE,$COVERAGE" >> .github/coverage-history/trend.csv
+          
+          # Sort and deduplicate (keep latest for each date)
+          cat .github/coverage-history/trend.csv | sort -u -t, -k1,1 > .github/coverage-history/trend-sorted.csv
+          mv .github/coverage-history/trend-sorted.csv .github/coverage-history/trend.csv
+          
+          # Generate trend markdown
+          echo "# Coverage Trend" > .github/coverage-history/trend.md
+          echo "" >> .github/coverage-history/trend.md
+          echo "| Date | Coverage |" >> .github/coverage-history/trend.md
+          echo "|------|----------|" >> .github/coverage-history/trend.md
+          
+          # Add last 10 entries
+          tail -n 10 .github/coverage-history/trend.csv | sort -r | while IFS=, read -r date cov; do
+            echo "| $date | $cov% |" >> .github/coverage-history/trend.md
+          done
+          
+          # Commit and push history
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .github/coverage-history/
+          git commit -m "Update coverage history [skip ci]" || echo "No changes to commit"
+          git push || echo "Could not push history update"
+      
+      - name: Generate trend report as artifact
+        run: |
+          mkdir -p trend-report
+          cp .github/coverage-history/trend.md trend-report/
+          
+          # Create simple HTML version
+          cat > trend-report/index.html << EOF
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Rinna Coverage Trend</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              table { border-collapse: collapse; width: 100%; }
+              th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+              th { background-color: #f2f2f2; }
+            </style>
+          </head>
+          <body>
+            <h1>Rinna Coverage Trend Report</h1>
+            <table>
+              <tr><th>Date</th><th>Coverage</th></tr>
+          EOF
+          
+          # Add table rows
+          tail -n 10 .github/coverage-history/trend.csv | sort -r | while IFS=, read -r date cov; do
+            echo "<tr><td>$date</td><td>$cov%</td></tr>" >> trend-report/index.html
+          done
+          
+          # Close HTML
+          echo "</table></body></html>" >> trend-report/index.html
+      
+      - name: Upload trend report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-trend-report
+          path: trend-report/

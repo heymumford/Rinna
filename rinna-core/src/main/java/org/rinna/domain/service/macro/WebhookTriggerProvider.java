@@ -1,10 +1,10 @@
 package org.rinna.domain.service.macro;
 
+import java.util.Map;
+
 import org.rinna.domain.model.macro.MacroTrigger;
 import org.rinna.domain.model.macro.TriggerEvent;
 import org.rinna.domain.model.macro.TriggerType;
-
-import java.util.Map;
 
 /**
  * Specialized trigger provider for webhook triggers.

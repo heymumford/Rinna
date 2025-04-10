@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestExecutionExceptionHandler;
-import org.rinna.cli.test.ParallelExecutionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

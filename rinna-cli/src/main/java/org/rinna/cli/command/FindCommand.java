@@ -9,16 +9,6 @@
  */
 package org.rinna.cli.command;
 
-import org.rinna.cli.service.ItemService;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.WorkflowState;
-import org.rinna.cli.service.ContextManager;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.util.OutputFormatter;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,7 +21,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.function.Predicate;
+
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.model.WorkflowState;
+import org.rinna.cli.service.ContextManager;
+import org.rinna.cli.service.ItemService;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.OutputFormatter;
 
 /**
  * Command to find work items based on various criteria, similar to the Unix find command.

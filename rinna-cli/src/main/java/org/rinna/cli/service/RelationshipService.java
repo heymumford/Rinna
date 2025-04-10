@@ -9,10 +9,10 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.domain.model.WorkItemRelationshipType;
-
 import java.util.List;
 import java.util.UUID;
+
+import org.rinna.domain.model.WorkItemRelationshipType;
 
 /**
  * Interface for relationship services.

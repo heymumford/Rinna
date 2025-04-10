@@ -1,21 +1,22 @@
 package org.rinna.component.component;
 
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Disabled;
-import org.rinna.cli.command.ViewCommand;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.WorkflowState;
-import picocli.CommandLine;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.rinna.cli.command.ViewCommand;
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.model.WorkflowState;
+
+import picocli.CommandLine;
 
 /**
  * Component tests for CLI command execution using Picocli.

@@ -9,24 +9,21 @@
  */
 package org.rinna.cli.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.rinna.cli.domain.model.SearchResult;
 import org.rinna.cli.model.Priority;
 import org.rinna.cli.model.WorkItem;
 import org.rinna.cli.model.WorkItemType;
 import org.rinna.cli.model.WorkflowState;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("MockSearchService Tests")
 class MockSearchServiceTest {

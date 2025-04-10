@@ -7,6 +7,13 @@
  */
 package org.rinna.cli.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,13 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.rinna.cli.model.WorkflowState;
 import org.rinna.cli.service.MockHistoryService.HistoryEntryRecord;
 import org.rinna.cli.service.MockHistoryService.HistoryEntryType;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for the MockHistoryService class.

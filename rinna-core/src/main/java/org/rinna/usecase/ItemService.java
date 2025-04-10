@@ -8,12 +8,12 @@
 
 package org.rinna.usecase;
 
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkItemCreateRequest;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
 
 /**
  * Service interface for managing work items.

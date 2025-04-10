@@ -8,18 +8,17 @@
 
 package org.rinna.adapter.service;
 
-import org.rinna.domain.model.DocumentConfig;
-import org.rinna.domain.model.Project;
-import org.rinna.domain.model.Release;
-import org.rinna.domain.model.WorkItem;
-import org.rinna.usecase.DocumentService;
-
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rinna.domain.model.DocumentConfig;
+import org.rinna.domain.model.Project;
+import org.rinna.domain.model.Release;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.usecase.DocumentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

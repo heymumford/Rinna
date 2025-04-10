@@ -8,10 +8,10 @@
 
 package org.rinna.adapter.service;
 
+import java.util.logging.Logger;
+
 import org.rinna.domain.model.DocumentConfig;
 import org.rinna.usecase.DocumentService;
-
-import java.util.logging.Logger;
 
 /**
  * Factory for creating document service instances.

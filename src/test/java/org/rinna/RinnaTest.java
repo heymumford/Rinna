@@ -8,14 +8,13 @@
 
 package org.rinna;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.Test;
 import org.rinna.domain.model.Priority;
-import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Core tests for the Rinna workflow management system.

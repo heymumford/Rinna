@@ -8,27 +8,25 @@
 
 package org.rinna.unit.impl;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Tag;
-import org.rinna.persistence.InMemoryItemRepository;
-import org.rinna.service.DefaultWorkflowService;
-import org.rinna.domain.model.DefaultWorkItem;
-import org.rinna.domain.model.Priority;
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkItemCreateRequest;
-import org.rinna.domain.model.WorkItemType;
-import org.rinna.domain.model.WorkflowState;
-import org.rinna.repository.ItemRepository;
-import org.rinna.usecase.InvalidTransitionException;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.rinna.domain.model.DefaultWorkItem;
+import org.rinna.domain.model.Priority;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.domain.model.WorkflowState;
+import org.rinna.persistence.InMemoryItemRepository;
+import org.rinna.repository.ItemRepository;
+import org.rinna.service.DefaultWorkflowService;
+import org.rinna.usecase.InvalidTransitionException;
 
 /**
  * Tests for the DefaultWorkflowService class.

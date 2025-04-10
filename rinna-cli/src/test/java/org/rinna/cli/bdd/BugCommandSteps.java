@@ -9,28 +9,26 @@
  */
 package org.rinna.cli.bdd;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.Map;
+
+import org.rinna.cli.command.BugCommand;
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkflowState;
+import org.rinna.cli.service.*;
+
+import io.cucumber.datatable.DataTable;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import io.cucumber.datatable.DataTable;
-import org.rinna.cli.command.BugCommand;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.WorkflowState;
-import org.rinna.cli.service.*;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Step definitions for the Bug Command BDD tests.

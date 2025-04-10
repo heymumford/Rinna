@@ -1,13 +1,13 @@
 package org.rinna.pui.component;
 
-import org.rinna.pui.cli.ShellCommandBridge;
-import org.rinna.pui.cli.ShellEscapeHandler;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+
+import org.rinna.pui.cli.ShellCommandBridge;
+import org.rinna.pui.cli.ShellEscapeHandler;
 
 /**
  * Component for input and execution of commands with shell integration.

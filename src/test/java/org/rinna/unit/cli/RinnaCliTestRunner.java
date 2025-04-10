@@ -1,5 +1,9 @@
 package org.rinna.unit.cli;
 
+import java.io.PrintWriter;
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.Launcher;
@@ -8,10 +12,6 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
-
-import java.io.PrintWriter;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * A standalone test runner for CLI tests.

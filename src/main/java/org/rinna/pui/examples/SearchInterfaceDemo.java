@@ -9,21 +9,6 @@
  */
 package org.rinna.pui.examples;
 
-import org.rinna.pui.RinnaPUI;
-import org.rinna.pui.cli.SearchBridge;
-import org.rinna.pui.cli.ServiceBridge;
-import org.rinna.pui.component.*;
-import org.rinna.pui.component.BoxLayout.Orientation;
-import org.rinna.pui.component.BoxLayout.BoxConstraints;
-import org.rinna.pui.geom.Dimension;
-import org.rinna.pui.geom.Point;
-import org.rinna.pui.style.BorderStyle;
-import org.rinna.pui.style.Color;
-import org.rinna.pui.style.Style;
-import org.rinna.pui.style.Theme;
-
-import org.rinna.cli.model.WorkItem;
-
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -31,6 +16,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+
+import org.rinna.cli.model.WorkItem;
+import org.rinna.pui.RinnaPUI;
+import org.rinna.pui.cli.SearchBridge;
+import org.rinna.pui.cli.ServiceBridge;
+import org.rinna.pui.component.*;
+import org.rinna.pui.component.BoxLayout.BoxConstraints;
+import org.rinna.pui.component.BoxLayout.Orientation;
+import org.rinna.pui.geom.Dimension;
+import org.rinna.pui.geom.Point;
+import org.rinna.pui.style.BorderStyle;
+import org.rinna.pui.style.Color;
+import org.rinna.pui.style.Style;
+import org.rinna.pui.style.Theme;
 
 /**
  * Demo that showcases a context-aware search interface with auto-completion.

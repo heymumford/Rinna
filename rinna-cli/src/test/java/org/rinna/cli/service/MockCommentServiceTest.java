@@ -9,6 +9,14 @@
  */
 package org.rinna.cli.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,14 +25,6 @@ import org.rinna.cli.domain.model.Comment;
 import org.rinna.cli.domain.model.CommentType;
 import org.rinna.cli.domain.model.WorkflowState;
 import org.rinna.cli.service.MockCommentService.CommentImpl;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("MockCommentService Tests")
 class MockCommentServiceTest {

@@ -9,14 +9,14 @@
  */
 package org.rinna.cli.adapter;
 
-import org.rinna.cli.domain.model.Comment;
-import org.rinna.cli.domain.service.CommentService;
-import org.rinna.cli.service.MockCommentService;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.rinna.cli.domain.model.Comment;
+import org.rinna.cli.domain.service.CommentService;
+import org.rinna.cli.service.MockCommentService;
 
 /**
  * Adapter for the CommentService that bridges between the domain CommentService and

@@ -1,10 +1,10 @@
 package org.rinna.domain.service.macro;
 
-import org.rinna.domain.model.macro.MacroDefinition;
-import org.rinna.domain.model.macro.MacroExecution;
-
 import java.util.List;
 import java.util.Map;
+
+import org.rinna.domain.model.macro.MacroDefinition;
+import org.rinna.domain.model.macro.MacroExecution;
 
 /**
  * Service interface for managing macro definitions and executions.

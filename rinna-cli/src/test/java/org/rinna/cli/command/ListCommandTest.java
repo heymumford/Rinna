@@ -9,31 +9,27 @@
  */
 package org.rinna.cli.command;
 
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.WorkflowState;
-import org.rinna.cli.service.SearchService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.service.TestSearchService;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.model.WorkflowState;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.service.TestSearchService;
 
 /**
  * Comprehensive unit tests for the ListCommand class.

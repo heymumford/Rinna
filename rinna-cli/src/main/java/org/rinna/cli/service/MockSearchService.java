@@ -9,20 +9,17 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.cli.model.SearchResult;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 import org.rinna.cli.model.Priority;
 import org.rinna.cli.model.WorkItem;
 import org.rinna.cli.model.WorkItemType;
 import org.rinna.cli.model.WorkflowState;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Mock implementation of search service functionality for CLI use.

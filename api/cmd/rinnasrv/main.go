@@ -15,10 +15,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/heymumford/rinna/api/internal/auth"
 	"github.com/heymumford/rinna/api/internal/client"
 	"github.com/heymumford/rinna/api/internal/handlers"
 	"github.com/heymumford/rinna/api/internal/middleware"
@@ -128,14 +130,26 @@ func main() {
 
 	// Create router
 	r := mux.NewRouter()
-	r.Use(middleware.Logging)
-	r.Use(middleware.RequestID)
-	r.Use(middleware.CORS(cfg.Auth.AllowedOrigins))
-
+	
+	// Create security-focused logger
+	securityLogger := logger.GetLogger().WithPrefix("security")
+	
+	// Create rate limiter
+	rateLimiter := middleware.NewRateLimiter(&cfg.RateLimit, securityLogger)
+	
+	// Apply middleware in correct order
+	r.Use(middleware.RequestID)                          // First add request ID for tracing
+	r.Use(middleware.SecurityLogging(securityLogger))    // Then add security logging for all requests
+	r.Use(middleware.ExtractBodyMiddleware)              // Extract body for multiple reads
+	r.Use(middleware.RateLimit(rateLimiter))             // Apply rate limiting before other processing
+	r.Use(middleware.Logging)                            // General request logging
+	r.Use(middleware.CORS(cfg.Auth.AllowedOrigins))      // CORS headers
+	
 	// API version middleware
 	api := r.PathPrefix("/api/v1").Subrouter()
 	
 	// Apply authentication middleware
+	// Uncomment the following line to use the more robust token authentication
 	// api.Use(middleware.TokenAuthentication(authService))
 	
 	// For backward compatibility, use the simplified authentication for now
@@ -144,11 +158,133 @@ func main() {
 	// Apply webhook authentication middleware for webhook endpoints
 	api.Use(middleware.WebhookAuthentication(authService))
 
+	// Setup OAuth
+	// Get OAuth token storage directory
+	oauthDir := os.Getenv("RINNA_OAUTH_DIR")
+	if oauthDir == "" {
+		homeDir, _ := os.UserHomeDir()
+		oauthDir = filepath.Join(homeDir, ".rinna/oauth")
+	}
+	
+	// Ensure OAuth directory exists
+	os.MkdirAll(oauthDir, 0700)
+	
+	// Create token storage
+	tokenStorage, err := auth.NewFileTokenStorage(oauthDir, cfg.Auth.TokenSecret)
+	if err != nil {
+		logger.Fatal("Failed to create OAuth token storage", logger.Field("error", err))
+	}
+	
+	// Create OAuth manager
+	oauthManager := auth.NewOAuthManager(tokenStorage)
+	
+	// Register common OAuth providers
+	if cfg.OAuth.GitHub.Enabled {
+		err := oauthManager.RegisterProvider(&auth.OAuthConfig{
+			Provider:     auth.OAuthProviderGitHub,
+			ClientID:     cfg.OAuth.GitHub.ClientID,
+			ClientSecret: cfg.OAuth.GitHub.ClientSecret,
+			RedirectURL:  cfg.OAuth.GitHub.RedirectURL,
+			AuthURL:      "https://github.com/login/oauth/authorize",
+			TokenURL:     "https://github.com/login/oauth/access_token",
+			Scopes:       cfg.OAuth.GitHub.Scopes,
+			APIBaseURL:   "https://api.github.com",
+			ExtraParams: map[string]string{
+				"userinfo_url": "https://api.github.com/user",
+			},
+		})
+		if err != nil {
+			logger.Error("Failed to register GitHub OAuth provider", logger.Field("error", err))
+		} else {
+			logger.Info("GitHub OAuth provider registered")
+		}
+	}
+	
+	if cfg.OAuth.GitLab.Enabled {
+		err := oauthManager.RegisterProvider(&auth.OAuthConfig{
+			Provider:     auth.OAuthProviderGitLab,
+			ClientID:     cfg.OAuth.GitLab.ClientID,
+			ClientSecret: cfg.OAuth.GitLab.ClientSecret,
+			RedirectURL:  cfg.OAuth.GitLab.RedirectURL,
+			AuthURL:      cfg.OAuth.GitLab.ServerURL + "/oauth/authorize",
+			TokenURL:     cfg.OAuth.GitLab.ServerURL + "/oauth/token",
+			Scopes:       cfg.OAuth.GitLab.Scopes,
+			APIBaseURL:   cfg.OAuth.GitLab.ServerURL + "/api/v4",
+			ExtraParams: map[string]string{
+				"userinfo_url": cfg.OAuth.GitLab.ServerURL + "/api/v4/user",
+			},
+		})
+		if err != nil {
+			logger.Error("Failed to register GitLab OAuth provider", logger.Field("error", err))
+		} else {
+			logger.Info("GitLab OAuth provider registered")
+		}
+	}
+	
+	if cfg.OAuth.Azure.Enabled {
+		// Azure DevOps has a different OAuth flow
+		err := oauthManager.RegisterProvider(&auth.OAuthConfig{
+			Provider:     auth.OAuthProviderAzureDevOps,
+			ClientID:     cfg.OAuth.Azure.ClientID,
+			ClientSecret: cfg.OAuth.Azure.ClientSecret,
+			RedirectURL:  cfg.OAuth.Azure.RedirectURL,
+			AuthURL:      "https://app.vssps.visualstudio.com/oauth2/authorize",
+			TokenURL:     "https://app.vssps.visualstudio.com/oauth2/token",
+			Scopes:       cfg.OAuth.Azure.Scopes,
+			APIBaseURL:   "https://app.vssps.visualstudio.com",
+			ExtraParams: map[string]string{
+				"userinfo_url": "https://app.vssps.visualstudio.com/_apis/profile/profiles/me",
+			},
+		})
+		if err != nil {
+			logger.Error("Failed to register Azure DevOps OAuth provider", logger.Field("error", err))
+		} else {
+			logger.Info("Azure DevOps OAuth provider registered")
+		}
+	}
+	
+	if cfg.OAuth.Jira.Enabled {
+		err := oauthManager.RegisterProvider(&auth.OAuthConfig{
+			Provider:     auth.OAuthProviderJira,
+			ClientID:     cfg.OAuth.Jira.ClientID,
+			ClientSecret: cfg.OAuth.Jira.ClientSecret,
+			RedirectURL:  cfg.OAuth.Jira.RedirectURL,
+			AuthURL:      cfg.OAuth.Jira.ServerURL + "/plugins/servlet/oauth/authorize",
+			TokenURL:     cfg.OAuth.Jira.ServerURL + "/plugins/servlet/oauth/access-token",
+			Scopes:       cfg.OAuth.Jira.Scopes,
+			APIBaseURL:   cfg.OAuth.Jira.ServerURL,
+			ExtraParams: map[string]string{
+				"userinfo_url": cfg.OAuth.Jira.ServerURL + "/rest/api/2/myself",
+			},
+		})
+		if err != nil {
+			logger.Error("Failed to register Jira OAuth provider", logger.Field("error", err))
+		} else {
+			logger.Info("Jira OAuth provider registered")
+		}
+	}
+	
 	// Register routes
 	handlers.RegisterWorkItemRoutes(api, javaClient)
 	handlers.RegisterReleaseRoutes(api, javaClient)
 	handlers.RegisterProjectRoutes(api, javaClient)
 	handlers.RegisterWebhookRoutes(api, javaClient, authService)
+	handlers.RegisterOAuthRoutes(r, oauthManager, authService.TokenAuthMiddleware)
+	
+	// Get the API directory for documentation
+	apiDir := os.Getenv("RINNA_API_DIR")
+	if apiDir == "" {
+		// Use the current working directory as fallback
+		var err error
+		apiDir, err = os.Getwd()
+		if err != nil {
+			logger.Error("Failed to get working directory", logger.Field("error", err))
+			apiDir = "."
+		}
+	}
+	
+	// Register documentation routes (without authentication)
+	handlers.RegisterDocumentationRoutes(r, apiDir)
 	
 	// Create health handler with Java client checker
 	javaChecker := &JavaHealthChecker{client: javaClient}

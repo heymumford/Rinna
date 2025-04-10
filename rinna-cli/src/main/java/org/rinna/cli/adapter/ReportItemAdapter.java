@@ -9,12 +9,11 @@
  */
 package org.rinna.cli.adapter;
 
-import org.rinna.cli.model.WorkItem;
-
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+
+import org.rinna.cli.model.WorkItem;
 
 /**
  * Adapter class to adapt WorkItem model to methods needed by the report generator.

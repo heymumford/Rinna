@@ -9,12 +9,12 @@
  */
 package org.rinna.cli.domain.service;
 
-import org.rinna.cli.domain.model.DomainWorkItem;
-import org.rinna.cli.domain.model.DomainWorkflowState;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.rinna.cli.domain.model.DomainWorkItem;
+import org.rinna.cli.domain.model.DomainWorkflowState;
 
 /**
  * Domain service interface for workflow operations - used to minimize dependency issues

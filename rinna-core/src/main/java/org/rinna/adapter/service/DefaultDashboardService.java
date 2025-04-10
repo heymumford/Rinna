@@ -1,9 +1,15 @@
 package org.rinna.adapter.service;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
 import org.rinna.domain.model.CynefinDomain;
 import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkParadigm;
 import org.rinna.domain.model.WorkItemType;
+import org.rinna.domain.model.WorkParadigm;
 import org.rinna.domain.repository.ItemRepository;
 import org.rinna.domain.repository.OrganizationalUnitRepository;
 import org.rinna.domain.repository.WorkItemAssignmentRepository;
@@ -11,12 +17,6 @@ import org.rinna.domain.service.CognitiveLoadCalculator;
 import org.rinna.domain.service.ItemService;
 import org.rinna.domain.service.OrganizationalUnitService;
 import org.rinna.domain.service.dashboard.*;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation of the DashboardService interface.

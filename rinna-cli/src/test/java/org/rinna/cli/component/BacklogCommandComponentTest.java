@@ -1,14 +1,21 @@
 package org.rinna.cli.component;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import static org.mockito.Mockito.*;
-import static org.junit.jupiter.api.Assertions.*;
-
 import org.rinna.cli.command.BacklogCommand;
 import org.rinna.cli.model.Priority;
 import org.rinna.cli.model.WorkItem;
@@ -19,14 +26,6 @@ import org.rinna.cli.service.MockBacklogService;
 import org.rinna.cli.service.MockItemService;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.util.OutputFormatter;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * Component tests for BacklogCommand.

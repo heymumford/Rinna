@@ -1,9 +1,10 @@
 package org.rinna.acceptance;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Simple acceptance test with a Tag to demonstrate our test categorization system.

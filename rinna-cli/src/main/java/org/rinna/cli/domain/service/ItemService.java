@@ -9,14 +9,14 @@
  */
 package org.rinna.cli.domain.service;
 
-import org.rinna.cli.domain.model.DomainPriority;
-import org.rinna.cli.domain.model.DomainWorkItem;
-import org.rinna.cli.domain.model.DomainWorkItemType;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.rinna.cli.domain.model.DomainPriority;
+import org.rinna.cli.domain.model.DomainWorkItem;
+import org.rinna.cli.domain.model.DomainWorkItemType;
 
 /**
  * Service interface for managing work items.

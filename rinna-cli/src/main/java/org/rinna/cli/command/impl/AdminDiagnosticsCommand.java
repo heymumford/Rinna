@@ -8,15 +8,6 @@
 
 package org.rinna.cli.command.impl;
 
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.service.DiagnosticsService;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.util.MapConverter;
-import org.rinna.cli.util.OutputFormatter;
-import org.rinna.cli.util.ErrorHandler;
-import org.rinna.cli.util.OperationTracker;
-import org.rinna.cli.util.ErrorHandler.Severity;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,6 +15,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
+
+import org.rinna.cli.service.DiagnosticsService;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.ErrorHandler;
+import org.rinna.cli.util.OperationTracker;
+import org.rinna.cli.util.OutputFormatter;
 
 /**
  * Command handler for system diagnostics operations.

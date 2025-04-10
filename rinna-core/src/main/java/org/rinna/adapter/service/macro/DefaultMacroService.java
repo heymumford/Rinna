@@ -1,17 +1,15 @@
 package org.rinna.adapter.service.macro;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.rinna.domain.model.macro.*;
 import org.rinna.domain.repository.MacroRepository;
 import org.rinna.domain.service.macro.MacroService;
 import org.rinna.domain.service.macro.SchedulerService;
 import org.rinna.domain.service.macro.TriggerService;
-
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * Default implementation of the MacroService interface.

@@ -8,12 +8,6 @@
 
 package org.rinna.domain.service.impl;
 
-import org.rinna.domain.model.Priority;
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkflowState;
-import org.rinna.domain.service.CriticalPathService;
-import org.rinna.domain.service.ItemService;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -24,6 +18,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkflowState;
+import org.rinna.domain.service.CriticalPathService;
+import org.rinna.domain.service.ItemService;
 
 /**
  * Default implementation of the CriticalPathService interface.

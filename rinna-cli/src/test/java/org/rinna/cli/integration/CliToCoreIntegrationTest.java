@@ -9,6 +9,12 @@
  */
 package org.rinna.cli.integration;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.UUID;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,12 +38,6 @@ import org.rinna.cli.test.OutputAssertions;
 import org.rinna.cli.util.ModelMapper;
 import org.rinna.cli.util.StateMapper;
 import org.rinna.domain.model.WorkItemCreateRequest;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration tests for CLI-to-Core interactions.

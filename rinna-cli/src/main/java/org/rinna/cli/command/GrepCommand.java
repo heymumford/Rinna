@@ -9,23 +9,22 @@
  */
 package org.rinna.cli.command;
 
-import org.rinna.cli.service.ContextManager;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.service.MockSearchService;
-import org.rinna.cli.service.ItemService;
-import org.rinna.cli.domain.model.SearchResult;
-import org.rinna.cli.domain.model.SearchResult.Match;
-import org.rinna.cli.util.OutputFormatter;
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+
+import org.rinna.cli.domain.model.SearchResult;
+import org.rinna.cli.domain.model.SearchResult.Match;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.service.ContextManager;
+import org.rinna.cli.service.ItemService;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.MockSearchService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.OutputFormatter;
 
 /**
  * Command to search for text in work items, similar to the Unix grep command.

@@ -8,13 +8,13 @@
 
 package org.rinna.repository;
 
-import org.rinna.domain.model.HistoryEntry;
-import org.rinna.domain.model.HistoryEntryType;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.rinna.domain.model.HistoryEntry;
+import org.rinna.domain.model.HistoryEntryType;
 
 /**
  * Repository interface for managing work item history entries.

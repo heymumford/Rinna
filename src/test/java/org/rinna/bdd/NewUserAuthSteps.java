@@ -1,19 +1,17 @@
 package org.rinna.bdd;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.Assert;
+
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.junit.Assert;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.net.InetAddress;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Map;
-import java.util.HashMap;
 
 public class NewUserAuthSteps {
     private final TestContext context;

@@ -8,11 +8,11 @@
 
 package org.rinna.domain.repository;
 
-import org.rinna.domain.model.WorkQueue;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.rinna.domain.model.WorkQueue;
 
 /**
  * Repository interface for work queues.

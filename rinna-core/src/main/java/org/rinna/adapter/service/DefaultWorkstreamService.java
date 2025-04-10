@@ -8,15 +8,6 @@
 
 package org.rinna.adapter.service;
 
-import org.rinna.domain.model.CynefinDomain;
-import org.rinna.domain.model.Priority;
-import org.rinna.domain.model.Workstream;
-import org.rinna.domain.model.WorkstreamCreateRequest;
-import org.rinna.domain.model.WorkstreamRecord;
-import org.rinna.domain.repository.WorkstreamRepository;
-import org.rinna.domain.service.ItemService;
-import org.rinna.domain.service.WorkstreamService;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -25,6 +16,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.rinna.domain.model.CynefinDomain;
+import org.rinna.domain.model.Priority;
+import org.rinna.domain.model.Workstream;
+import org.rinna.domain.model.WorkstreamCreateRequest;
+import org.rinna.domain.model.WorkstreamRecord;
+import org.rinna.domain.repository.WorkstreamRepository;
+import org.rinna.domain.service.ItemService;
+import org.rinna.domain.service.WorkstreamService;
 
 /**
  * Default implementation of the WorkstreamService interface.

@@ -17,10 +17,17 @@ import org.rinna.usecase.ItemService;
 /**
  * Factory for creating ItemService instances.
  */
-public class ItemServiceFactory {
+public final class ItemServiceFactory {
     
     // Singleton instance
     private static ItemService itemService;
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private ItemServiceFactory() {
+        // Utility class should not be instantiated
+    }
     
     /**
      * Creates or returns an ItemService instance.

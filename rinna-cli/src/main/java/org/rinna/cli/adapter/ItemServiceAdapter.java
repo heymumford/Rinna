@@ -9,6 +9,12 @@
  */
 package org.rinna.cli.adapter;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.rinna.cli.domain.model.DomainPriority;
 import org.rinna.cli.domain.model.DomainWorkItem;
 import org.rinna.cli.domain.model.DomainWorkItemType;
@@ -16,12 +22,6 @@ import org.rinna.cli.domain.service.ItemService;
 import org.rinna.cli.service.MockItemService;
 import org.rinna.cli.util.ModelMapper;
 import org.rinna.cli.util.StateMapper;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Adapter that implements the CLI domain ItemService interface

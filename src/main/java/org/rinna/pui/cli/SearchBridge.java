@@ -9,14 +9,6 @@
  */
 package org.rinna.pui.cli;
 
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.service.MockItemService;
-import org.rinna.cli.service.MockSearchService;
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.WorkflowState;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,6 +20,14 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.model.WorkflowState;
+import org.rinna.cli.service.MockItemService;
+import org.rinna.cli.service.MockSearchService;
+import org.rinna.cli.service.ServiceManager;
 
 /**
  * Bridge between the PUI components and CLI search services.

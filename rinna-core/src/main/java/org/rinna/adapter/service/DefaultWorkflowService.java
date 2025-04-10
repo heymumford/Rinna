@@ -8,6 +8,10 @@
 
 package org.rinna.adapter.service;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+
 import org.rinna.domain.model.DefaultWorkItem;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemRecord;
@@ -15,10 +19,6 @@ import org.rinna.domain.model.WorkflowState;
 import org.rinna.domain.repository.ItemRepository;
 import org.rinna.domain.service.InvalidTransitionException;
 import org.rinna.domain.service.WorkflowService;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
 
 /**
  * Default implementation of the WorkflowService interface.

@@ -1,7 +1,7 @@
 package org.rinna.usecase;
 
-import java.util.List;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Service for managing comments on work items.

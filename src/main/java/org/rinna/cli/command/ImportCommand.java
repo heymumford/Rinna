@@ -1,13 +1,5 @@
 package org.rinna.cli.command;
 
-import org.rinna.domain.Priority;
-import org.rinna.domain.WorkItem;
-import org.rinna.domain.WorkItemType;
-import org.rinna.domain.WorkflowState;
-import org.rinna.usecase.ItemService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -18,9 +10,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.rinna.domain.Priority;
+import org.rinna.domain.WorkItem;
+import org.rinna.domain.WorkItemType;
+import org.rinna.domain.WorkflowState;
+import org.rinna.usecase.ItemService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Command for importing tasks from markdown files.

@@ -8,17 +8,16 @@
 
 package org.rinna.cli.command.impl;
 
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.WorkflowState;
-import org.rinna.cli.service.MockBacklogService;
-import org.rinna.cli.service.MockItemService;
-
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.model.WorkflowState;
+import org.rinna.cli.service.MockBacklogService;
+import org.rinna.cli.service.MockItemService;
 
 /**
  * Command handler for bug creation and management.

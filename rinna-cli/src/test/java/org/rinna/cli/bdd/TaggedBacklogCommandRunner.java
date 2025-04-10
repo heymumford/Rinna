@@ -1,8 +1,9 @@
 package org.rinna.cli.bdd;
 
+import org.junit.runner.RunWith;
+
 import io.cucumber.junit.Cucumber;
 import io.cucumber.junit.CucumberOptions;
-import org.junit.runner.RunWith;
 
 /**
  * Runner for BacklogCommand BDD tests with tags.

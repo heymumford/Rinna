@@ -7,16 +7,14 @@
  */
 package org.rinna.cli.bdd;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.rinna.cli.security.SecurityManager;
 import org.rinna.cli.service.ServiceManager;
-import java.util.UUID;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Helper class for processing commands in BDD tests.

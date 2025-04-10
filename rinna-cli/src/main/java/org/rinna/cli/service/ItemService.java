@@ -7,14 +7,14 @@
  */
 package org.rinna.cli.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.rinna.cli.model.Priority;
 import org.rinna.cli.model.WorkItem;
 import org.rinna.cli.model.WorkItemCreateRequest;
 import org.rinna.cli.model.WorkItemType;
-
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * Service interface for work item operations.

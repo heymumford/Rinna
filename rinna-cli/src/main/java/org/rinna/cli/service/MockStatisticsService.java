@@ -7,11 +7,11 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.cli.stats.StatisticType;
-import org.rinna.cli.stats.StatisticValue;
-
 import java.util.*;
 import java.util.stream.Collectors;
+
+import org.rinna.cli.stats.StatisticType;
+import org.rinna.cli.stats.StatisticValue;
 
 /**
  * Mock implementation of the StatisticsService for testing.

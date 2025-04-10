@@ -9,13 +9,13 @@
  */
 package org.rinna.cli.command;
 
-import org.rinna.cli.security.SecurityManager;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.service.ServiceManager;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
+
+import org.rinna.cli.security.SecurityManager;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.ServiceManager;
 
 /**
  * Command for logging out users from the Rinna system.

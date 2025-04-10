@@ -8,6 +8,14 @@
 
 package org.rinna.domain.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,14 +25,6 @@ import org.rinna.domain.model.WorkItemRecord;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
 import org.rinna.domain.service.impl.DefaultCriticalPathService;
-
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Critical Path Service Tests")
 class CriticalPathServiceTest {

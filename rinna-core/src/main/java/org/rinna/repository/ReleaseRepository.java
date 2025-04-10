@@ -8,11 +8,11 @@
 
 package org.rinna.repository;
 
-import org.rinna.domain.model.Release;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.rinna.domain.model.Release;
 
 /**
  * Repository interface for managing Release entities.

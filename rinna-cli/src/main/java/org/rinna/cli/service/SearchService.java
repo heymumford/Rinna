@@ -9,13 +9,13 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.WorkflowState;
-
 import java.util.List;
 import java.util.Map;
+
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.model.WorkflowState;
 
 /**
  * Interface for search services.

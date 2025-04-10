@@ -9,14 +9,24 @@
  */
 package org.rinna.pui.examples;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.model.WorkflowState;
 import org.rinna.pui.RinnaPUI;
 import org.rinna.pui.cli.ServiceBridge;
 import org.rinna.pui.component.*;
-import org.rinna.pui.component.BoxLayout.Orientation;
 import org.rinna.pui.component.BoxLayout.BoxConstraints;
-import org.rinna.pui.component.BoxLayout.VerticalAlignment;
 import org.rinna.pui.component.BoxLayout.HorizontalAlignment;
-import org.rinna.pui.component.Button.ClickListener;
+import org.rinna.pui.component.BoxLayout.Orientation;
+import org.rinna.pui.component.BoxLayout.VerticalAlignment;
 import org.rinna.pui.component.List;
 import org.rinna.pui.geom.Dimension;
 import org.rinna.pui.geom.Point;
@@ -24,20 +34,6 @@ import org.rinna.pui.style.BorderStyle;
 import org.rinna.pui.style.Color;
 import org.rinna.pui.style.Style;
 import org.rinna.pui.style.Theme;
-
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.WorkflowState;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Demo that showcases a work item list with advanced filtering and sorting capabilities.

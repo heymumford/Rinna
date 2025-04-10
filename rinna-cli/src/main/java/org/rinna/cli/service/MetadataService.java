@@ -110,6 +110,26 @@ public interface MetadataService {
     int clearOperationHistory(int days);
     
     /**
+     * Tracks an error during an operation.
+     *
+     * @param parentOperationId The parent operation ID
+     * @param operationName The name of the operation where the error occurred
+     * @param errorMessage The error message
+     * @param exception The exception that occurred
+     */
+    void trackOperationError(String parentOperationId, String operationName, 
+                            String errorMessage, Exception exception);
+    
+    /**
+     * Tracks a detail for an operation.
+     *
+     * @param operationId The operation ID
+     * @param key The detail key
+     * @param value The detail value
+     */
+    void trackOperationDetail(String operationId, String key, Object value);
+    
+    /**
      * Class representing operation metadata.
      */
     class OperationMetadata {

@@ -9,11 +9,11 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.cli.model.WorkItem;
-
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import org.rinna.cli.model.WorkItem;
 
 /**
  * Service interface for backlog management operations.

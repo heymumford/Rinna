@@ -9,11 +9,11 @@
  */
 package org.rinna.pui.component;
 
-import org.rinna.pui.geom.Dimension;
-import org.rinna.pui.geom.Point;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.rinna.pui.geom.Dimension;
+import org.rinna.pui.geom.Point;
 
 /**
  * Layout manager that arranges components in a single row or column.

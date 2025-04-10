@@ -1,16 +1,15 @@
 package org.rinna.cli.command;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
 import org.rinna.cli.service.ConfigurationService;
 import org.rinna.cli.service.ContextManager;
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.util.OutputFormatter;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
 
 /**
  * Command to manage Rinna services.

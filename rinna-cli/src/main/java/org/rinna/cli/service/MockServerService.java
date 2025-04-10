@@ -7,11 +7,11 @@
  */
 package org.rinna.cli.service;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Collections;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Mock implementation of server service for testing server management commands.

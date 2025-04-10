@@ -1,11 +1,11 @@
 package org.rinna.domain.service.dashboard;
 
-import org.rinna.domain.model.CynefinDomain;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import org.rinna.domain.model.CynefinDomain;
 
 /**
  * Distribution data for CYNEFIN domains across work items.

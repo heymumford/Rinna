@@ -8,17 +8,17 @@
 
 package org.rinna.adapter.service;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.UUID;
+
 import org.rinna.domain.model.HistoryEntry;
 import org.rinna.domain.model.HistoryEntryRecord;
 import org.rinna.domain.model.HistoryEntryType;
 import org.rinna.domain.model.WorkflowState;
 import org.rinna.repository.HistoryRepository;
 import org.rinna.usecase.HistoryService;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Default implementation of the HistoryService interface.

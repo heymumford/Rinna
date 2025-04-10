@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rinna API Documentation</title>
+  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.1.0/swagger-ui.css">
+  <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5.1.0/favicon-32x32.png" sizes="32x32">
+  <style>
+    html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+    *, *:before, *:after { box-sizing: inherit; }
+    body { margin: 0; padding: 0; background: #fafafa; }
+    
+    /* Rinna branding colors */
+    .swagger-ui .topbar { background-color: #0074d9; }
+    .swagger-ui .topbar .download-url-wrapper .select-label select { border-color: #0074d9; }
+    
+    /* Enhanced styling */
+    .swagger-ui .opblock.opblock-get { background: rgba(97, 175, 254, 0.1); }
+    .swagger-ui .opblock.opblock-post { background: rgba(73, 204, 144, 0.1); }
+    .swagger-ui .opblock.opblock-put { background: rgba(252, 161, 48, 0.1); }
+    .swagger-ui .opblock.opblock-delete { background: rgba(249, 62, 62, 0.1); }
+    
+    /* Security styles */
+    .swagger-ui .authorization__btn { background-color: #0074d9; }
+    .swagger-ui .authorization__btn.locked { background-color: #7a7a7a; }
+    .swagger-ui .btn.authorize { border-color: #0074d9; color: #0074d9; }
+    
+    /* Custom header */
+    .rinna-header {
+      padding: 10px 20px;
+      background-color: #f8f9fa;
+      border-bottom: 1px solid #e9ecef;
+      margin-bottom: 20px;
+    }
+    .rinna-header h1 {
+      font-size: 24px;
+      color: #1a1a1a;
+      margin: 0;
+    }
+    .rinna-header p {
+      color: #6c757d;
+      margin: 5px 0 0 0;
+    }
+    
+    /* Custom footer */
+    .rinna-footer {
+      text-align: center;
+      padding: 20px;
+      margin-top: 40px;
+      border-top: 1px solid #e9ecef;
+      color: #6c757d;
+      font-size: 12px;
+    }
+    
+    /* Make JSON samples more readable */
+    .swagger-ui .highlight-code {
+      max-height: 400px;
+    }
+    
+    /* Improve tag styling */
+    .swagger-ui .opblock-tag {
+      font-size: 18px;
+      border-bottom: 1px solid #e9ecef;
+      padding-bottom: 10px;
+    }
+    
+    /* Fix scrolling in operation containers */
+    .swagger-ui .opblock-body pre {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="rinna-header">
+    <h1>Rinna API Documentation</h1>
+    <p>Version 1.6.6 - Developer-friendly API for workflow management</p>
+  </div>
+  
+  <div id="swagger-ui"></div>
+  
+  <div class="rinna-footer">
+    <p>&copy; 2025 Eric C. Mumford - Licensed under MIT</p>
+    <p>Rinna: A clean, compact solution for product, project, development, and quality management!</p>
+  </div>
+
+  <script src="https://unpkg.com/swagger-ui-dist@5.1.0/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5.1.0/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function() {
+      const ui = SwaggerUIBundle({
+        url: "../swagger.json",
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl
+        ],
+        layout: "StandaloneLayout",
+        validatorUrl: null,
+        
+        // Improved UX configuration
+        docExpansion: 'none',           // Start with all sections collapsed for cleaner look
+        defaultModelsExpandDepth: 1,    // Collapse models by default
+        displayRequestDuration: true,   // Show the request duration on Try it out
+        filter: true,                   // Add search filter for operations
+        
+        // Enhanced syntax highlighting
+        syntaxHighlight: {
+          activate: true,
+          theme: "monokai"
+        },
+        
+        // Fully supported HTTP methods
+        supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch', 'head', 'options'],
+        
+        // OAuth2 configuration
+        oauth2RedirectUrl: window.location.origin + '/api/docs/swagger-ui/oauth2-redirect.html',
+        
+        // Add tags for better organization
+        tagsSorter: 'alpha',
+        
+        // Custom function to handle operation display
+        onComplete: function() {
+          // Add version badge to top bar
+          const topbarEl = document.getElementsByClassName('topbar')[0];
+          if (topbarEl) {
+            const versionBadge = document.createElement('span');
+            versionBadge.className = 'topbar-wrapper';
+            versionBadge.style.marginLeft = '20px';
+            versionBadge.style.color = 'white';
+            versionBadge.textContent = 'API v1.6.6';
+            topbarEl.appendChild(versionBadge);
+          }
+        }
+      });
+      
+      // Store UI instance for console debugging
+      window.ui = ui;
+    };
+  </script>
+</body>
+</html>

@@ -9,36 +9,32 @@
  */
 package org.rinna.cli.bdd;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.rinna.cli.command.ServerCommand;
+import org.rinna.cli.service.ConfigurationService;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.service.ServiceManager.ServiceStatusInfo;
+
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.rinna.cli.command.ServerCommand;
-import org.rinna.cli.service.ConfigurationService;
-import org.rinna.cli.service.ContextManager;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.service.ServiceManager.ServiceStatusInfo;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Step definitions for the Server Command feature.
@@ -119,12 +115,12 @@ public class ServerCommandSteps {
                     
                     if (args.length > 2) {
                         // Handle service name
-                        if (\!args[2].startsWith("--")) {
+                        if (!args[2].startsWith("--")) {
                             serverCommand.setServiceName(args[2]);
                         }
                         
                         // Handle config path if present
-                        if (args.length > 3 && \!args[3].startsWith("--")) {
+                        if (args.length > 3 && !args[3].startsWith("--")) {
                             serverCommand.setConfigPath(args[3]);
                         }
                     }

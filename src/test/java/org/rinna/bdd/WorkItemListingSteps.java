@@ -1,9 +1,11 @@
 package org.rinna.bdd;
 
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.When;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.And;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.List;
+
 import org.rinna.adapter.repository.InMemoryItemRepository;
 import org.rinna.adapter.service.DefaultItemService;
 import org.rinna.domain.model.Priority;
@@ -11,14 +13,13 @@ import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
-import org.rinna.usecase.ItemService;
 import org.rinna.repository.ItemRepository;
+import org.rinna.usecase.ItemService;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import io.cucumber.java.en.And;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 public class WorkItemListingSteps {
     

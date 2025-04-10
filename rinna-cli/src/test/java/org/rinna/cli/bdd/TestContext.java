@@ -9,7 +9,13 @@
  */
 package org.rinna.cli.bdd;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.mockito.Mockito;
+import org.rinna.cli.service.ConfigurationService;
 import org.rinna.cli.service.MockAuditService;
 import org.rinna.cli.service.MockBackupService;
 import org.rinna.cli.service.MockCommentService;
@@ -28,14 +34,8 @@ import org.rinna.cli.service.MockSecurityService;
 import org.rinna.cli.service.MockServerService;
 import org.rinna.cli.service.MockStatisticsService;
 import org.rinna.cli.service.MockWorkflowService;
-import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.service.ProjectContext;
-import org.rinna.cli.service.ConfigurationService;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.Map;
+import org.rinna.cli.service.ServiceManager;
 
 /**
  * Shared test context for BDD tests to transfer state between steps.

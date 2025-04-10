@@ -9,6 +9,12 @@
  */
 package org.rinna.performance.messaging;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,17 +24,10 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.rinna.performance.base.PerformanceTest;
 import org.rinna.cli.messaging.MessageStatus;
 import org.rinna.cli.messaging.RinnaMessage;
 import org.rinna.cli.service.MockMessageService;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import org.rinna.performance.base.PerformanceTest;
 
 /**
  * Performance tests for MessageService operations.

@@ -9,18 +9,18 @@
  */
 package org.rinna.pui.examples;
 
+import java.io.IOException;
+
 import org.rinna.pui.RinnaPUI;
 import org.rinna.pui.component.BoxLayout;
-import org.rinna.pui.component.Container;
 import org.rinna.pui.component.BoxLayout.Orientation;
+import org.rinna.pui.component.Container;
 import org.rinna.pui.geom.Dimension;
 import org.rinna.pui.geom.Point;
 import org.rinna.pui.style.BorderStyle;
 import org.rinna.pui.style.Color;
 import org.rinna.pui.style.Style;
 import org.rinna.pui.style.Theme;
-
-import java.io.IOException;
 
 /**
  * Simple demo of the Rinna Pragmatic User Interface (PUI).

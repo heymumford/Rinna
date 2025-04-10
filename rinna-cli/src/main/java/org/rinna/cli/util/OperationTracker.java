@@ -9,11 +9,11 @@
  */
 package org.rinna.cli.util;
 
-import org.rinna.cli.service.MetadataService;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
+
+import org.rinna.cli.service.MetadataService;
 
 /**
  * Utility class to simplify operation tracking in CLI commands.

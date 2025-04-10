@@ -7,6 +7,14 @@
  */
 package org.rinna.integration.report;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,14 +26,6 @@ import org.rinna.cli.model.WorkflowState;
 import org.rinna.cli.report.*;
 import org.rinna.cli.service.ItemService;
 import org.rinna.cli.service.ServiceManager;
-
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration tests for the Report System.

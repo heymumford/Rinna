@@ -8,19 +8,20 @@
 
 package org.rinna.cli.bdd;
 
-import io.cucumber.datatable.DataTable;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.When;
-import io.cucumber.java.en.Then;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
 import org.rinna.cli.notifications.NotificationType;
 import org.rinna.cli.security.SecurityManager;
 import org.rinna.cli.service.MockNotificationService;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for notification command tests.

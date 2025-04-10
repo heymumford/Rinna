@@ -8,18 +8,18 @@
 
 package org.rinna.adapter.service;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.rinna.domain.model.Comment;
 import org.rinna.domain.model.CommentRecord;
 import org.rinna.domain.model.CommentType;
 import org.rinna.domain.model.WorkflowState;
 import org.rinna.repository.CommentRepository;
 import org.rinna.usecase.CommentService;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Default implementation of the CommentService interface.

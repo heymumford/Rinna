@@ -1,23 +1,22 @@
 package org.rinna.cli.acceptance;
 
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.io.TempDir;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.WorkflowState;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.model.WorkflowState;
 
 /**
  * Acceptance tests for workflow operations using the CLI.

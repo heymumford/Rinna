@@ -9,15 +9,14 @@
  */
 package org.rinna.pui.render;
 
+import java.io.IOException;
+
 import org.rinna.pui.component.Component;
 import org.rinna.pui.component.Container;
 import org.rinna.pui.geom.Dimension;
 import org.rinna.pui.geom.Point;
-import org.rinna.pui.style.Color;
 import org.rinna.pui.style.Style;
 import org.rinna.pui.style.Theme;
-
-import java.io.IOException;
 
 /**
  * Low-level terminal renderer that provides methods for drawing text and other elements.

@@ -7,28 +7,11 @@
  */
 package org.rinna.cli.bdd;
 
-import io.cucumber.datatable.DataTable;
-import io.cucumber.java.After;
-import io.cucumber.java.DocString;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkflowState;
-import org.rinna.cli.report.ReportFormat;
-import org.rinna.cli.report.ReportType;
-import org.rinna.cli.service.ConfigurationService;
-import org.rinna.cli.service.MockHistoryService;
-import org.rinna.cli.service.MockItemService;
-import org.rinna.cli.service.ServiceManager;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,12 +26,25 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkflowState;
+import org.rinna.cli.report.ReportFormat;
+import org.rinna.cli.report.ReportType;
+import org.rinna.cli.service.ConfigurationService;
+import org.rinna.cli.service.MockItemService;
+import org.rinna.cli.service.ServiceManager;
+
+import io.cucumber.datatable.DataTable;
+import io.cucumber.java.After;
+import io.cucumber.java.DocString;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for report command tests.

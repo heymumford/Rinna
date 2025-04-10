@@ -9,10 +9,11 @@
  */
 package org.rinna.cli.bdd;
 
-import io.cucumber.datatable.DataTable;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.When;
-import io.cucumber.java.en.Then;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.List;
+import java.util.Map;
+
 import org.rinna.cli.command.CatCommand;
 import org.rinna.cli.command.EditCommand;
 import org.rinna.cli.command.GrepCommand;
@@ -25,12 +26,11 @@ import org.rinna.cli.model.WorkItemType;
 import org.rinna.cli.model.WorkflowState;
 import org.rinna.cli.service.MockItemService;
 import org.rinna.cli.service.MockWorkflowService;
-import org.rinna.cli.service.ContextManager;
 
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
+import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for the Linux-style commands feature.

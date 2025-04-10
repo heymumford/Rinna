@@ -7,18 +7,14 @@
  */
 package org.rinna.cli.notifications;
 
-import org.rinna.cli.config.SecurityConfig;
-import org.rinna.cli.security.SecurityManager;
-
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import org.rinna.cli.security.SecurityManager;
 
 /**
  * Service for managing and delivering notifications to users.

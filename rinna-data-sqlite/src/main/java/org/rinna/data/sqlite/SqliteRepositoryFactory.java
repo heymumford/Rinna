@@ -8,8 +8,8 @@
 
 package org.rinna.data.sqlite;
 
-import org.rinna.domain.repository.MetadataRepository;
 import org.rinna.domain.repository.ItemRepository;
+import org.rinna.domain.repository.MetadataRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

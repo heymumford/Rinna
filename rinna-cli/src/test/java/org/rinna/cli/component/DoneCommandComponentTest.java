@@ -16,9 +16,7 @@ import static org.mockito.Mockito.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +39,6 @@ import org.rinna.cli.service.InvalidTransitionException;
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.MockWorkflowService;
 import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.util.OutputFormatter;
 
 /**
  * Component integration tests for the DoneCommand.

@@ -9,11 +9,11 @@
  */
 package org.rinna.cli.domain.service;
 
-import org.rinna.cli.domain.model.Comment;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.rinna.cli.domain.model.Comment;
 
 /**
  * Domain interface for managing comments on work items.

@@ -9,6 +9,14 @@
  */
 package org.rinna.cli.component;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,16 +27,6 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.rinna.cli.command.AdminCommand;
 import org.rinna.cli.command.impl.AdminAuditCommand;
 import org.rinna.cli.command.impl.AdminBackupCommand;
@@ -40,7 +38,6 @@ import org.rinna.cli.security.SecurityManager;
 import org.rinna.cli.service.AuditService;
 import org.rinna.cli.service.BackupService;
 import org.rinna.cli.service.ComplianceService;
-import org.rinna.cli.service.ContextManager;
 import org.rinna.cli.service.DiagnosticsService;
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.MonitoringService;

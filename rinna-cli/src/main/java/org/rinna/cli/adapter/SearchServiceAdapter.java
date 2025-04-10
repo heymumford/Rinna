@@ -9,6 +9,10 @@
  */
 package org.rinna.cli.adapter;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.rinna.cli.domain.model.DomainPriority;
 import org.rinna.cli.domain.model.DomainWorkItem;
 import org.rinna.cli.domain.model.DomainWorkItemType;
@@ -21,10 +25,6 @@ import org.rinna.cli.model.WorkflowState;
 import org.rinna.cli.service.MockSearchService;
 import org.rinna.cli.util.ModelMapper;
 import org.rinna.cli.util.StateMapper;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Adapter for the SearchService that bridges between the domain SearchService and

@@ -8,8 +8,10 @@
 
 package org.rinna.unit;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.rinna.domain.model.Priority;
 import org.rinna.domain.model.Release;
 import org.rinna.domain.model.WorkItem;
@@ -21,8 +23,6 @@ import org.rinna.usecase.ItemService;
 import org.rinna.usecase.QueueService;
 import org.rinna.usecase.ReleaseService;
 import org.rinna.usecase.WorkflowService;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for the Rinna class.

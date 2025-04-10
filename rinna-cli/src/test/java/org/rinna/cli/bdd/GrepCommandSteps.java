@@ -9,10 +9,12 @@
  */
 package org.rinna.cli.bdd;
 
-import io.cucumber.datatable.DataTable;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.When;
-import io.cucumber.java.en.Then;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.rinna.cli.command.GrepCommand;
 import org.rinna.cli.domain.model.SearchResult;
 import org.rinna.cli.domain.model.SearchResult.Match;
@@ -23,11 +25,10 @@ import org.rinna.cli.model.WorkflowState;
 import org.rinna.cli.service.MockItemService;
 import org.rinna.cli.service.MockSearchService;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
+import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for the grep command feature.

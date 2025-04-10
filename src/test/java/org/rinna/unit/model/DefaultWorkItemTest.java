@@ -8,18 +8,18 @@
 
 package org.rinna.unit.model;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.time.Instant;
+import java.util.UUID;
+
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.rinna.domain.model.DefaultWorkItem;
 import org.rinna.domain.model.Priority;
 import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
-
-import java.time.Instant;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for the DefaultWorkItem class.

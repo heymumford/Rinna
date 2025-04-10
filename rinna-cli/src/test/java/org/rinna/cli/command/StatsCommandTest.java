@@ -7,21 +7,9 @@
  */
 package org.rinna.cli.command;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-import org.rinna.cli.adapter.MockItemServiceAdapter;
-import org.rinna.cli.adapter.StatisticItemAdapter;
-import org.rinna.cli.service.MockItemService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.stats.StatisticType;
-import org.rinna.cli.stats.StatisticValue;
-import org.rinna.cli.stats.StatisticsService;
-import org.rinna.cli.stats.StatisticsVisualizer;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -31,9 +19,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.rinna.cli.service.MockItemService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.stats.StatisticType;
+import org.rinna.cli.stats.StatisticValue;
+import org.rinna.cli.stats.StatisticsService;
+import org.rinna.cli.stats.StatisticsVisualizer;
 
 /**
  * Unit tests for the StatsCommand class.

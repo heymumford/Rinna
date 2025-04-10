@@ -9,13 +9,6 @@
  */
 package org.rinna.pui.component;
 
-import org.rinna.pui.geom.Dimension;
-import org.rinna.pui.geom.Point;
-import org.rinna.pui.input.KeyHandler;
-import org.rinna.pui.style.BorderStyle;
-import org.rinna.pui.style.Color;
-import org.rinna.pui.style.Style;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -23,6 +16,12 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import org.rinna.pui.geom.Dimension;
+import org.rinna.pui.input.KeyHandler;
+import org.rinna.pui.style.BorderStyle;
+import org.rinna.pui.style.Color;
+import org.rinna.pui.style.Style;
 
 /**
  * A text box that provides auto-completion suggestions as the user types.

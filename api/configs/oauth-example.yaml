@@ -1,0 +1,62 @@
+# Example OAuth Configuration for Rinna API
+# Copy and customize this file to your ~/.rinna/config/go/config.yaml
+
+oauth:
+  # This key is used to encrypt tokens at rest
+  # IMPORTANT: Use a strong, random key in production!
+  token_encryption_key: "your-secure-encryption-key"
+  
+  # GitHub configuration
+  github:
+    enabled: true
+    client_id: "your-github-client-id"
+    client_secret: "your-github-client-secret"
+    redirect_url: "http://localhost:8080/api/v1/oauth/callback"
+    scopes:
+      - "repo"
+      - "user:email"
+  
+  # GitLab configuration
+  gitlab:
+    enabled: false  # Change to true when configured
+    client_id: ""
+    client_secret: ""
+    redirect_url: "http://localhost:8080/api/v1/oauth/callback"
+    server_url: "https://gitlab.com"  # Or your GitLab instance URL
+    scopes:
+      - "api"
+      - "read_user"
+  
+  # Jira configuration
+  jira:
+    enabled: false  # Change to true when configured
+    client_id: ""
+    client_secret: ""
+    redirect_url: "http://localhost:8080/api/v1/oauth/callback"
+    server_url: "https://your-instance.atlassian.net"
+    scopes:
+      - "read:jira-work"
+      - "read:jira-user"
+  
+  # Azure DevOps configuration
+  azure:
+    enabled: false  # Change to true when configured
+    client_id: ""
+    client_secret: ""
+    redirect_url: "http://localhost:8080/api/v1/oauth/callback"
+    scopes:
+      - "vso.code"
+      - "vso.project"
+      - "vso.work"
+  
+  # Bitbucket configuration
+  bitbucket:
+    enabled: false  # Change to true when configured
+    client_id: ""
+    client_secret: ""
+    redirect_url: "http://localhost:8080/api/v1/oauth/callback"
+    scopes:
+      - "account"
+      - "repository"
+
+# Other configuration sections would go here (auth, server, etc.)

@@ -9,10 +9,11 @@
  */
 package org.rinna.cli.util;
 
-import org.rinna.cli.service.MetadataService;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
+
+import org.rinna.cli.service.MetadataService;
 
 /**
  * Standardized error handling for CLI commands with integrated operation tracking.

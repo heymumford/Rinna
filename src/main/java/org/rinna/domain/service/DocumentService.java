@@ -8,13 +8,13 @@
 
 package org.rinna.domain.service;
 
-import org.rinna.domain.model.Project;
-import org.rinna.domain.model.Release;
-import org.rinna.domain.model.WorkItem;
-
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
+
+import org.rinna.domain.model.Project;
+import org.rinna.domain.model.Release;
+import org.rinna.domain.model.WorkItem;
 
 /**
  * Service for generating documents from Rinna data.

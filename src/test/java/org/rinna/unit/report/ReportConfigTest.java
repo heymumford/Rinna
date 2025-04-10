@@ -7,13 +7,7 @@
  */
 package org.rinna.unit.report;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.rinna.base.UnitTest;
-import org.rinna.cli.report.ReportConfig;
-import org.rinna.cli.report.ReportFormat;
-import org.rinna.cli.report.ReportType;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -21,7 +15,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.rinna.base.UnitTest;
+import org.rinna.cli.report.ReportConfig;
+import org.rinna.cli.report.ReportFormat;
+import org.rinna.cli.report.ReportType;
 
 /**
  * Unit tests for ReportConfig class.

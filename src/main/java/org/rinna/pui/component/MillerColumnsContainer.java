@@ -9,18 +9,17 @@
  */
 package org.rinna.pui.component;
 
-import org.rinna.pui.component.BoxLayout.Orientation;
-import org.rinna.pui.geom.Dimension;
-import org.rinna.pui.geom.Point;
-import org.rinna.pui.input.KeyHandler;
-import org.rinna.pui.style.BorderStyle;
-import org.rinna.pui.style.Style;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+
+import org.rinna.pui.component.BoxLayout.Orientation;
+import org.rinna.pui.geom.Dimension;
+import org.rinna.pui.input.KeyHandler;
+import org.rinna.pui.style.BorderStyle;
+import org.rinna.pui.style.Style;
 
 /**
  * A container that implements Miller columns for hierarchical data navigation.

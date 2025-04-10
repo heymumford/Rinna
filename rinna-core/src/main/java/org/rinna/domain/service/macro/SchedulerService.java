@@ -1,9 +1,9 @@
 package org.rinna.domain.service.macro;
 
+import java.util.List;
+
 import org.rinna.domain.model.macro.MacroSchedule;
 import org.rinna.domain.model.macro.ScheduledExecution;
-
-import java.util.List;
 
 /**
  * Service interface for scheduling macro executions.

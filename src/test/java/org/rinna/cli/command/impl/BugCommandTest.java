@@ -8,6 +8,13 @@
 
 package org.rinna.cli.command.impl;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.util.Map;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,14 +27,6 @@ import org.rinna.domain.WorkItemCreateRequest;
 import org.rinna.domain.WorkItemType;
 import org.rinna.usecase.BacklogService;
 import org.rinna.usecase.ItemService;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class BugCommandTest {

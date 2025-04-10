@@ -8,13 +8,6 @@
 
 package org.rinna.adapter.repository;
 
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkItemCreateRequest;
-import org.rinna.domain.model.WorkItemRecord;
-import org.rinna.domain.model.WorkItemType;
-import org.rinna.domain.model.WorkflowState;
-import org.rinna.domain.repository.ItemRepository;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +16,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
+import org.rinna.domain.model.WorkItemRecord;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.domain.model.WorkflowState;
+import org.rinna.domain.repository.ItemRepository;
 
 /**
  * In-memory implementation of the ItemRepository interface.

@@ -8,14 +8,14 @@
 
 package org.rinna.adapter.service;
 
+import java.util.*;
+
 import org.rinna.domain.WorkItem;
 import org.rinna.domain.WorkItemCreateRequest;
 import org.rinna.domain.WorkItemType;
 import org.rinna.repository.ItemRepository;
 import org.rinna.repository.TemplateRepository;
 import org.rinna.usecase.FlexibleWorkItemService;
-
-import java.util.*;
 
 /**
  * Default implementation of the FlexibleWorkItemService interface.

@@ -9,11 +9,15 @@
  */
 package org.rinna.acceptance.cli;
 
-import io.cucumber.java.After;
-import io.cucumber.java.Before;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.rinna.acceptance.base.AcceptanceTestRunner;
 import org.rinna.base.AcceptanceTest;
@@ -27,14 +31,11 @@ import org.rinna.service.InMemoryItemService;
 import org.rinna.service.ItemServiceFactory;
 import org.rinna.service.SearchServiceFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Acceptance tests for the GrepCommand using Cucumber BDD.

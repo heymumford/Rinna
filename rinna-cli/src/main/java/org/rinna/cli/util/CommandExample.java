@@ -9,13 +9,13 @@
  */
 package org.rinna.cli.util;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.ServiceManager;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
-import java.util.concurrent.Callable;
 
 /**
  * Example command implementation showing how to use the new operation tracking utilities.

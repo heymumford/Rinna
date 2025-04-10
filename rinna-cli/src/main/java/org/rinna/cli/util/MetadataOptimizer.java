@@ -9,8 +9,6 @@
  */
 package org.rinna.cli.util;
 
-import org.rinna.cli.service.MetadataService;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +19,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+
+import org.rinna.cli.service.MetadataService;
 
 /**
  * Utility class for optimizing metadata tracking for high-volume operations.

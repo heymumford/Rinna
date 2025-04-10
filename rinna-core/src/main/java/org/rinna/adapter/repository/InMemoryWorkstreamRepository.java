@@ -8,17 +8,9 @@
 
 package org.rinna.adapter.repository;
 
-import org.rinna.domain.model.CynefinDomain;
-import org.rinna.domain.model.Priority;
-import org.rinna.domain.model.Workstream;
-import org.rinna.domain.model.WorkstreamCreateRequest;
-import org.rinna.domain.model.WorkstreamRecord;
-import org.rinna.domain.repository.WorkstreamRepository;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +20,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import org.rinna.domain.model.CynefinDomain;
+import org.rinna.domain.model.Priority;
+import org.rinna.domain.model.Workstream;
+import org.rinna.domain.model.WorkstreamCreateRequest;
+import org.rinna.domain.model.WorkstreamRecord;
+import org.rinna.domain.repository.WorkstreamRepository;
 
 /**
  * In-memory implementation of the WorkstreamRepository interface.

@@ -8,22 +8,16 @@
 
 package org.rinna.adapter.repository;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.rinna.domain.model.DefaultWorkItem;
-import org.rinna.domain.model.DefaultWorkQueue;
-import org.rinna.domain.model.Priority;
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkItemType;
-import org.rinna.domain.model.WorkQueue;
-import org.rinna.domain.model.WorkflowState;
-import org.rinna.repository.QueueRepository;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.rinna.domain.model.DefaultWorkQueue;
+import org.rinna.domain.model.WorkQueue;
 
 /**
  * Unit tests for {@link InMemoryQueueRepository}.

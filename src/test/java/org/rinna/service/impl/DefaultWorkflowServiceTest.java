@@ -1,18 +1,13 @@
 package org.rinna.service.impl;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.util.UUID;
-
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkItemType;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.rinna.adapter.service.DefaultWorkflowService;
 import org.rinna.domain.model.WorkflowState;
 import org.rinna.repository.ItemRepository;
-import org.rinna.usecase.InvalidTransitionException;
-import org.rinna.adapter.service.DefaultWorkflowService;
 
 /**
  * Unit tests for the DefaultWorkflowService class.

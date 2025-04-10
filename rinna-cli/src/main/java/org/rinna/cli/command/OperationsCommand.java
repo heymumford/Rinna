@@ -9,12 +9,6 @@
  */
 package org.rinna.cli.command;
 
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.service.MetadataService.OperationMetadata;
-import org.rinna.cli.service.MockMetadataService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.util.OutputFormatter;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -23,6 +17,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+
+import org.rinna.cli.service.MetadataService.OperationMetadata;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.OutputFormatter;
 
 /**
  * Command for managing operations metadata.

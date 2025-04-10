@@ -1,17 +1,15 @@
 package org.rinna.cli.bdd;
 
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.When;
-import io.cucumber.java.en.Then;
-import org.rinna.cli.service.AuditService;
-import org.rinna.cli.service.MockAuditService;
-import org.rinna.cli.service.MockSecurityService;
-import org.rinna.cli.service.ServiceManager;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.*;
+
+import org.rinna.cli.service.MockAuditService;
+import org.rinna.cli.service.MockSecurityService;
+
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for admin audit command tests.

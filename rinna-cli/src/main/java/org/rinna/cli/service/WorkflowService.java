@@ -9,11 +9,11 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkflowState;
-
 import java.util.List;
 import java.util.UUID;
+
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkflowState;
 
 /**
  * Interface for workflow services.

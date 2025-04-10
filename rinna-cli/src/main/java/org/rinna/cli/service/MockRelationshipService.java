@@ -9,10 +9,10 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.cli.domain.model.WorkItemRelationshipType;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.rinna.cli.domain.model.WorkItemRelationshipType;
 
 /**
  * Mock implementation of relationship service functionality for CLI use.

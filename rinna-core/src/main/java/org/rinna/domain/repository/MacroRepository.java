@@ -1,12 +1,12 @@
 package org.rinna.domain.repository;
 
+import java.util.List;
+import java.util.Map;
+
 import org.rinna.domain.model.macro.MacroDefinition;
 import org.rinna.domain.model.macro.MacroExecution;
 import org.rinna.domain.model.macro.ScheduledExecution;
 import org.rinna.domain.model.macro.TriggerType;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Repository interface for managing macro definitions, executions, and schedules.

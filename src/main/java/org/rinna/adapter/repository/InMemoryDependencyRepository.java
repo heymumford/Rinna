@@ -8,12 +8,12 @@
 
 package org.rinna.adapter.repository;
 
-import org.rinna.domain.WorkItemDependency;
-import org.rinna.repository.DependencyRepository;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import org.rinna.domain.WorkItemDependency;
+import org.rinna.repository.DependencyRepository;
 
 /**
  * In-memory implementation of the DependencyRepository interface.

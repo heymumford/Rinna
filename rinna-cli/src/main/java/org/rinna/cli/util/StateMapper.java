@@ -9,12 +9,12 @@
  */
 package org.rinna.cli.util;
 
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.WorkflowState;
 import org.rinna.cli.domain.model.DomainPriority;
 import org.rinna.cli.domain.model.DomainWorkItemType;
 import org.rinna.cli.domain.model.DomainWorkflowState;
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.model.WorkflowState;
 
 /**
  * Utility class for mapping between different enum types from different modules.

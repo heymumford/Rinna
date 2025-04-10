@@ -8,21 +8,20 @@
 
 package org.rinna.acceptance.steps;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.*;
+
+import org.rinna.bdd.TestContext;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.domain.model.WorkflowState;
+
+import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import io.cucumber.datatable.DataTable;
-import org.rinna.bdd.TestContext;
-import org.rinna.domain.model.Priority;
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkItemType;
-import org.rinna.domain.model.WorkflowState;
-import org.rinna.domain.model.WorkItemCreateRequest;
-
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Step definitions for critical path-related Cucumber scenarios.

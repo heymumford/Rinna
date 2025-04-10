@@ -9,15 +9,15 @@
  */
 package org.rinna.pui.component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rinna.pui.geom.Dimension;
 import org.rinna.pui.geom.Point;
 import org.rinna.pui.input.KeyHandler;
 import org.rinna.pui.render.ComponentRenderer;
 import org.rinna.pui.render.TextBoxRenderer;
 import org.rinna.pui.style.Style;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A text box component for text input.

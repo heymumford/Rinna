@@ -9,11 +9,10 @@
  */
 package org.rinna.cli.adapter;
 
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.service.MockItemService;
-
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.rinna.cli.service.MockItemService;
 
 /**
  * Adapter for the MockItemService to provide ItemService compatible operations.

@@ -9,22 +9,15 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.cli.adapter.HistoryServiceAdapter;
-import org.rinna.cli.messaging.MessageClient;
-import org.rinna.cli.messaging.MessageService;
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.notifications.NotificationService;
-
-import java.util.List;
-
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.rinna.cli.messaging.MessageClient;
+import org.rinna.cli.messaging.MessageService;
 
 /**
  * Manages services for the CLI application.

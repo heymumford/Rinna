@@ -8,9 +8,9 @@
 
 package org.rinna.usecase;
 
-import org.rinna.domain.model.WorkflowState;
-
 import java.util.UUID;
+
+import org.rinna.domain.model.WorkflowState;
 
 /**
  * Exception thrown when an invalid workflow transition is attempted.
@@ -24,6 +24,10 @@ public class InvalidTransitionException extends Exception {
     
     /**
      * Constructs a new InvalidTransitionException with the specified item ID and states.
+     *
+     * @param itemId the ID of the work item
+     * @param currentState the current workflow state
+     * @param targetState the target workflow state
      */
     public InvalidTransitionException(UUID itemId, WorkflowState currentState, WorkflowState targetState) {
         super("Invalid transition for item " + itemId + ": " + currentState + " → " + targetState);
@@ -34,6 +38,8 @@ public class InvalidTransitionException extends Exception {
     
     /**
      * Constructs a new InvalidTransitionException with a custom message.
+     * 
+     * @param message the error message
      */
     public InvalidTransitionException(String message) {
         super(message);

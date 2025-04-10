@@ -8,6 +8,11 @@
 
 package org.rinna.adapter.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,11 +23,6 @@ import org.rinna.domain.WorkItem;
 import org.rinna.repository.BacklogRepository;
 import org.rinna.repository.ItemRepository;
 import org.rinna.usecase.BacklogService;
-
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DefaultBacklogServiceTest {

@@ -8,11 +8,6 @@
 
 package org.rinna.data.sqlite;
 
-import org.rinna.domain.model.WorkItemMetadata;
-import org.rinna.domain.repository.MetadataRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -25,6 +20,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.rinna.domain.model.WorkItemMetadata;
+import org.rinna.domain.repository.MetadataRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SQLite implementation of the MetadataRepository interface.
@@ -314,6 +314,39 @@ public class SqliteMetadataRepository implements MetadataRepository {
         } catch (SQLException e) {
             logger.error("Error finding all metadata", e);
             throw new RuntimeException("Error finding all metadata", e);
+        }
+    }
+    
+    @Override
+    public boolean updateMetadata(UUID workItemId, Map<String, String> metadata) {
+        logger.debug("Updating metadata for work item: {}", workItemId);
+        
+        // Use a transaction to ensure consistency
+        try (Connection conn = connectionManager.getConnection()) {
+            conn.setAutoCommit(false);
+            
+            try {
+                // Clear existing metadata
+                deleteByWorkItemId(workItemId);
+                
+                // Add new metadata
+                for (Map.Entry<String, String> entry : metadata.entrySet()) {
+                    saveMetadata(workItemId, entry.getKey(), entry.getValue());
+                }
+                
+                conn.commit();
+                logger.debug("Metadata updated successfully for work item: {}", workItemId);
+                return true;
+            } catch (Exception e) {
+                conn.rollback();
+                logger.error("Error updating metadata, transaction rolled back: {}", workItemId, e);
+                throw new RuntimeException("Error updating metadata: " + workItemId, e);
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            logger.error("Error updating metadata for work item: {}", workItemId, e);
+            throw new RuntimeException("Error updating metadata: " + workItemId, e);
         }
     }
     

@@ -9,6 +9,13 @@
  */
 package org.rinna.integration.cli;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.UUID;
+import java.util.stream.Stream;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,21 +27,12 @@ import org.rinna.base.IntegrationTest;
 import org.rinna.cli.RinnaCli;
 import org.rinna.cli.service.ContextManager;
 import org.rinna.domain.Priority;
-import org.rinna.domain.WorkItem;
 import org.rinna.domain.WorkItemType;
 import org.rinna.domain.WorkflowState;
 import org.rinna.service.DefaultSearchService;
 import org.rinna.service.InMemoryItemService;
 import org.rinna.service.ItemServiceFactory;
 import org.rinna.service.SearchServiceFactory;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.time.Instant;
-import java.util.UUID;
-import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration tests for the Grep command in the CLI.

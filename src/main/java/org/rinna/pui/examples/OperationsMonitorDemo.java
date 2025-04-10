@@ -9,14 +9,16 @@
  */
 package org.rinna.pui.examples;
 
+import java.io.IOException;
+import java.util.Map;
+
 import org.rinna.pui.RinnaPUI;
 import org.rinna.pui.cli.ServiceBridge;
 import org.rinna.pui.component.*;
-import org.rinna.pui.component.BoxLayout.Orientation;
 import org.rinna.pui.component.BoxLayout.BoxConstraints;
-import org.rinna.pui.component.BoxLayout.VerticalAlignment;
 import org.rinna.pui.component.BoxLayout.HorizontalAlignment;
-import org.rinna.pui.component.Button.ClickListener;
+import org.rinna.pui.component.BoxLayout.Orientation;
+import org.rinna.pui.component.BoxLayout.VerticalAlignment;
 import org.rinna.pui.component.List;
 import org.rinna.pui.geom.Dimension;
 import org.rinna.pui.geom.Point;
@@ -24,10 +26,6 @@ import org.rinna.pui.style.BorderStyle;
 import org.rinna.pui.style.Color;
 import org.rinna.pui.style.Style;
 import org.rinna.pui.style.Theme;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Map;
 
 /**
  * Demo that showcases the ServiceBridge integration with PUI.

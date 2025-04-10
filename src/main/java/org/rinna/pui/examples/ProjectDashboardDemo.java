@@ -9,33 +9,28 @@
  */
 package org.rinna.pui.examples;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import org.rinna.cli.stats.StatisticType;
+import org.rinna.cli.stats.StatisticValue;
 import org.rinna.pui.RinnaPUI;
 import org.rinna.pui.cli.StatisticsBridge;
 import org.rinna.pui.component.*;
-import org.rinna.pui.component.BoxLayout.Orientation;
 import org.rinna.pui.component.BoxLayout.BoxConstraints;
+import org.rinna.pui.component.BoxLayout.Orientation;
 import org.rinna.pui.geom.Dimension;
 import org.rinna.pui.geom.Point;
 import org.rinna.pui.style.BorderStyle;
 import org.rinna.pui.style.Color;
 import org.rinna.pui.style.Style;
 import org.rinna.pui.style.Theme;
-import org.rinna.pui.component.Button.ClickListener;
-
-import org.rinna.cli.stats.StatisticType;
-import org.rinna.cli.stats.StatisticValue;
-
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.function.Consumer;
 
 /**
  * Demo that showcases a project dashboard with real-time statistics and charts.

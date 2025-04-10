@@ -9,20 +9,7 @@
  */
 package org.rinna.integration.cli;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.rinna.base.IntegrationTest;
-import org.rinna.cli.command.UndoCommand;
-import org.rinna.cli.service.MockHistoryService;
-import org.rinna.cli.service.MockItemService;
-import org.rinna.cli.service.MockWorkflowService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.domain.HistoryEntry;
-import org.rinna.domain.HistoryEntryType;
-import org.rinna.domain.Priority;
-import org.rinna.domain.WorkflowState;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,7 +20,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.rinna.base.IntegrationTest;
+import org.rinna.cli.command.UndoCommand;
+import org.rinna.cli.service.MockHistoryService;
+import org.rinna.cli.service.MockItemService;
+import org.rinna.cli.service.MockWorkflowService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.domain.HistoryEntryType;
+import org.rinna.domain.Priority;
+import org.rinna.domain.WorkflowState;
 
 /**
  * Integration tests for UndoCommand with real service implementations.

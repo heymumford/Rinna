@@ -7,6 +7,17 @@
  */
 package org.rinna.cli.component;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,24 +28,11 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.rinna.cli.command.NotifyCommand;
 import org.rinna.cli.notifications.Notification;
-import org.rinna.cli.notifications.NotificationType;
 import org.rinna.cli.notifications.Notification.Priority;
+import org.rinna.cli.notifications.NotificationType;
 import org.rinna.cli.security.SecurityManager;
 import org.rinna.cli.service.*;
 import org.rinna.cli.util.OutputFormatter;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Component tests for the NotifyCommand, focusing on integration with

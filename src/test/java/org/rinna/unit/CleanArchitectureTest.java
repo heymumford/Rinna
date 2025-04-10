@@ -8,18 +8,18 @@
 
 package org.rinna.unit;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.rinna.domain.model.Priority;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
 import org.rinna.usecase.InvalidTransitionException;
-
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for verifying that the Clean Architecture implementation works correctly.

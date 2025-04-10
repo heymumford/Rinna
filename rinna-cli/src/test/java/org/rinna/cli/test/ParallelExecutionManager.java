@@ -9,14 +9,14 @@
  */
 package org.rinna.cli.test;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestExecutionExceptionHandler;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
-
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Helper class for managing parallel test execution.

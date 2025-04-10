@@ -8,16 +8,16 @@
 
 package org.rinna.domain.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.rinna.domain.model.Priority;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkQueue;
 import org.rinna.domain.model.WorkflowState;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Service interface for managing work queues.

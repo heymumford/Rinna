@@ -8,15 +8,15 @@
 
 package org.rinna.adapter.service;
 
+import java.time.LocalDateTime;
+import java.util.*;
+
 import org.rinna.domain.WorkItem;
 import org.rinna.domain.WorkflowState;
 import org.rinna.repository.ItemRepository;
 import org.rinna.repository.QualityGateRepository;
 import org.rinna.usecase.QualityGateService;
 import org.rinna.usecase.WorkflowService;
-
-import java.time.LocalDateTime;
-import java.util.*;
 
 /**
  * Default implementation of the QualityGateService interface.

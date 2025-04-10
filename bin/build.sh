@@ -314,6 +314,11 @@ main() {
   fi
   
   log_info "✅ Build process completed successfully"
+  
+  # Run XML cleanup scheduler if it exists
+  if [[ -f "$PROJECT_ROOT/bin/xml-tools/xml-cleanup-scheduler.sh" ]]; then
+    "$PROJECT_ROOT/bin/xml-tools/xml-cleanup-scheduler.sh" || true
+  fi
 }
 
 # Run a specific build phase

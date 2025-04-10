@@ -8,20 +8,7 @@
 
 package org.rinna.acceptance.bdd;
 
-import io.cucumber.datatable.DataTable;
-import io.cucumber.java.After;
-import io.cucumber.java.Before;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
-import org.rinna.domain.model.Priority;
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkItemRecord;
-import org.rinna.domain.model.WorkItemType;
-import org.rinna.domain.model.WorkflowState;
-import org.rinna.domain.service.CriticalPathService;
-import org.rinna.domain.service.ItemService;
-import org.rinna.domain.service.impl.DefaultCriticalPathService;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -34,7 +21,21 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.rinna.domain.model.Priority;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemRecord;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.domain.model.WorkflowState;
+import org.rinna.domain.service.CriticalPathService;
+import org.rinna.domain.service.ItemService;
+import org.rinna.domain.service.impl.DefaultCriticalPathService;
+
+import io.cucumber.datatable.DataTable;
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for the critical path BDD tests.

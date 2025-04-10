@@ -9,9 +9,6 @@
  */
 package org.rinna.cli.service;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Interface for system recovery services.

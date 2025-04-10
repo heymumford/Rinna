@@ -8,7 +8,6 @@
 
 package org.rinna.domain.model;
 
-import java.time.Instant;
 import java.util.UUID;
 
 /**

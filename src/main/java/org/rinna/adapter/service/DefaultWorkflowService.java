@@ -8,24 +8,21 @@
 
 package org.rinna.adapter.service;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.rinna.domain.model.CommentType;
 import org.rinna.domain.model.DefaultWorkItem;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemRecord;
 import org.rinna.domain.model.WorkflowState;
-import org.rinna.repository.CommentRepository;
-import org.rinna.repository.HistoryRepository;
 import org.rinna.repository.ItemRepository;
 import org.rinna.usecase.CommentService;
 import org.rinna.usecase.HistoryService;
 import org.rinna.usecase.InvalidTransitionException;
 import org.rinna.usecase.WorkflowService;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Default implementation of the WorkflowService interface.

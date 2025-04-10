@@ -8,10 +8,6 @@
 
 package org.rinna.adapter.repository;
 
-import org.rinna.domain.model.DefaultRelease;
-import org.rinna.domain.model.Release;
-import org.rinna.domain.repository.ReleaseRepository;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +15,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
+
+import org.rinna.domain.model.DefaultRelease;
+import org.rinna.domain.model.Release;
+import org.rinna.domain.repository.ReleaseRepository;
 
 /**
  * In-memory implementation of the ReleaseRepository interface.

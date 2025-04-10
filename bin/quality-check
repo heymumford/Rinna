@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+#
+# quality-check - Main entry point for modular quality tools
+#
+# PURPOSE: Provide easy access to individual quality check tools
+#
+
+set -e
+
+# Determine script and project directories
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+QUALITY_TOOLS_DIR="$SCRIPT_DIR/quality-tools"
+RINNA_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Error handling
+error() {
+  echo -e "${RED}Error: $1${NC}" >&2
+  exit 1
+}
+
+# Help message
+help() {
+  cat << EOF
+${BLUE}quality-check${NC} - Main entry point for modular quality tools
+
+Usage: quality-check <tool> [options]
+
+Available tools:
+  all         Run all quality checks (alias for run-all)
+  checkstyle   Run Java coding style checks
+  pmd         Run PMD static code analysis
+  spotbugs    Run SpotBugs bug detection tool
+  owasp       Run OWASP dependency check for security vulnerabilities
+  enforcer    Run Maven Enforcer rules
+  fix-imports  Automatically fix import ordering issues
+
+Examples:
+  ./bin/quality-check all --module=rinna-cli   # Run all checks on CLI module
+  ./bin/quality-check checkstyle               # Run only checkstyle on all code
+  ./bin/quality-check pmd --category=security  # Run only PMD security checks
+  ./bin/quality-check help                     # Show this help message
+
+Run './bin/quality-check <tool> --help' for tool-specific options.
+EOF
+}
+
+# Make sure scripts are executable
+chmod +x "$QUALITY_TOOLS_DIR"/*.sh 2>/dev/null || true
+
+# Check if quality tools directory exists
+if [[ ! -d "$QUALITY_TOOLS_DIR" ]]; then
+  error "Quality tools directory not found: $QUALITY_TOOLS_DIR"
+fi
+
+# No arguments or help requested
+if [[ $# -eq 0 ]] || [[ "$1" == "help" ]] || [[ "$1" == "--help" ]]; then
+  help
+  exit 0
+fi
+
+# Get the tool argument
+TOOL="$1"
+shift
+
+# Map tool name to script
+case "$TOOL" in
+  all|run-all)
+    SCRIPT="run-all.sh"
+    ;;
+  checkstyle)
+    SCRIPT="checkstyle.sh"
+    ;;
+  pmd)
+    SCRIPT="pmd.sh"
+    ;;
+  spotbugs)
+    SCRIPT="spotbugs.sh"
+    ;;
+  owasp)
+    SCRIPT="owasp.sh"
+    ;;
+  enforcer)
+    SCRIPT="enforcer.sh"
+    ;;
+  fix-imports)
+    SCRIPT="fix-imports.sh"
+    ;;
+  *)
+    error "Unknown tool: $TOOL. Run './bin/quality-check help' for available tools."
+    ;;
+esac
+
+# Execute the script with remaining arguments
+"$QUALITY_TOOLS_DIR/$SCRIPT" "$@"

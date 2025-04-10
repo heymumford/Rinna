@@ -9,19 +9,25 @@
  */
 package org.rinna.performance.cli;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+import java.util.stream.Stream;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.rinna.base.PerformanceTest;
 import org.rinna.cli.command.GrepCommand;
-import org.rinna.cli.service.ServiceManager;
 import org.rinna.domain.Priority;
-import org.rinna.domain.SearchResult;
-import org.rinna.domain.WorkItem;
 import org.rinna.domain.WorkItemType;
 import org.rinna.domain.WorkflowState;
 import org.rinna.performance.benchmark.PerformanceBenchmark;
@@ -30,19 +36,6 @@ import org.rinna.service.DefaultSearchService;
 import org.rinna.service.InMemoryItemService;
 import org.rinna.service.ItemServiceFactory;
 import org.rinna.service.SearchServiceFactory;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Performance tests for the GrepCommand class.

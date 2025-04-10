@@ -7,29 +7,11 @@
  */
 package org.rinna.cli.bdd;
 
-import io.cucumber.datatable.DataTable;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
-import org.mockito.Mockito;
-import org.rinna.cli.command.WorkflowCommand;
-import org.rinna.cli.service.ConfigurationService;
-import org.rinna.cli.service.MockWorkflowService;
-import org.rinna.cli.service.MockItemService;
-import org.rinna.cli.service.MockCommentService;
-import org.rinna.cli.service.MockHistoryService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkItemCreateRequest;
-import org.rinna.cli.model.WorkflowState;
-import org.rinna.cli.model.Priority;
-import org.rinna.domain.model.Comment;
-import org.rinna.domain.model.CommentType;
-import org.rinna.domain.model.HistoryEntry;
-import org.rinna.domain.model.HistoryEntryType;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -41,9 +23,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import org.mockito.Mockito;
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkflowState;
+import org.rinna.cli.service.ConfigurationService;
+import org.rinna.cli.service.MockCommentService;
+import org.rinna.cli.service.MockHistoryService;
+import org.rinna.cli.service.MockItemService;
+import org.rinna.cli.service.MockWorkflowService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.domain.model.HistoryEntry;
+import org.rinna.domain.model.HistoryEntryType;
+
+import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for workflow command tests.

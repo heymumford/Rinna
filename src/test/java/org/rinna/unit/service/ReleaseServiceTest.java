@@ -8,30 +8,27 @@
 
 package org.rinna.unit.service;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.Tag;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
-import org.rinna.persistence.InMemoryReleaseRepository;
-import org.rinna.service.DefaultReleaseService;
-import org.rinna.domain.model.Release;
-import org.rinna.domain.model.WorkItem;
-import org.rinna.repository.ReleaseRepository;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.rinna.domain.model.Release;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.persistence.InMemoryReleaseRepository;
+import org.rinna.repository.ReleaseRepository;
+import org.rinna.service.DefaultReleaseService;
 
 /**
  * Tests for the ReleaseService interface.

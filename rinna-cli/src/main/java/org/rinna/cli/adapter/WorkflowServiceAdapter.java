@@ -9,6 +9,11 @@
  */
 package org.rinna.cli.adapter;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.rinna.cli.domain.model.DomainWorkItem;
 import org.rinna.cli.domain.model.DomainWorkflowState;
 import org.rinna.cli.domain.service.InvalidTransitionException;
@@ -18,11 +23,6 @@ import org.rinna.cli.model.WorkflowState;
 import org.rinna.cli.service.MockWorkflowService;
 import org.rinna.cli.util.ModelMapper;
 import org.rinna.cli.util.StateMapper;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Adapter class that converts between CLI and domain workflow service models.

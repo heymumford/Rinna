@@ -1,14 +1,9 @@
 package org.rinna.domain.service.dashboard;
 
-import org.rinna.domain.model.CynefinDomain;
-import org.rinna.domain.model.WorkParadigm;
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkItemType;
-
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
+
 
 /**
  * Service interface for generating management dashboards and reports related to work items,

@@ -9,6 +9,13 @@
  */
 package org.rinna.cli.test;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.time.LocalDateTime;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mock;
@@ -22,13 +29,6 @@ import org.rinna.cli.service.MockSearchService;
 import org.rinna.cli.service.MockWorkflowService;
 import org.rinna.cli.service.ProjectContext;
 import org.rinna.cli.service.ServiceManager;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.time.LocalDateTime;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Base class for test fixtures that provides common functionality like:

@@ -9,16 +9,19 @@
  */
 package org.rinna.bdd;
 
-import io.cucumber.java.Before;
-import io.cucumber.java.en.And;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.junit.jupiter.api.Assertions;
-import org.mockito.Mockito;
 import org.rinna.cli.service.PermissionService;
-import org.rinna.domain.HistoryEntry;
-import org.rinna.domain.HistoryEntryType;
 import org.rinna.domain.PermissionLevel;
 import org.rinna.domain.Priority;
 import org.rinna.domain.Project;
@@ -32,18 +35,10 @@ import org.rinna.usecase.ItemService;
 import org.rinna.usecase.ProjectService;
 import org.rinna.usecase.RelationshipService;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import io.cucumber.java.Before;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for advanced Linux-style command features.

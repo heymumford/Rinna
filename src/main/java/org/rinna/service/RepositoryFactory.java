@@ -23,13 +23,20 @@ import org.rinna.repository.ReleaseRepository;
  * This centralizes repository creation to ensure consistent use of repositories
  * throughout the application.
  */
-public class RepositoryFactory {
+public final class RepositoryFactory {
     
     // Singleton instances for in-memory repositories
     private static ItemRepository itemRepository;
     private static MetadataRepository metadataRepository;
     private static QueueRepository queueRepository;
     private static ReleaseRepository releaseRepository;
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private RepositoryFactory() {
+        // Utility class should not be instantiated
+    }
     
     /**
      * Creates or returns an ItemRepository instance.

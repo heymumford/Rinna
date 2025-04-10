@@ -9,19 +9,6 @@
  */
 package org.rinna.cli.command;
 
-import org.rinna.cli.service.ItemService;
-import org.rinna.cli.service.MockWorkflowService;
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkflowState;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.service.ContextManager;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.service.MockHistoryService;
-import org.rinna.cli.service.MockItemService;
-import org.rinna.cli.service.MockWorkflowService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.util.OutputFormatter;
-
 import static org.rinna.cli.service.MockHistoryService.HistoryEntryType.*;
 
 import java.time.Instant;
@@ -34,6 +21,17 @@ import java.util.Scanner;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkflowState;
+import org.rinna.cli.service.ContextManager;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.MockHistoryService;
+import org.rinna.cli.service.MockItemService;
+import org.rinna.cli.service.MockWorkflowService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.OutputFormatter;
 
 /**
  * Command to undo the last action performed on a work item.

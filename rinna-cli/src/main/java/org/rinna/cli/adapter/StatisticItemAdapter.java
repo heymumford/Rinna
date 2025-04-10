@@ -9,11 +9,11 @@
  */
 package org.rinna.cli.adapter;
 
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.domain.model.WorkflowState;
-
 import java.time.Instant;
 import java.time.ZoneId;
+
+import org.rinna.cli.domain.model.WorkflowState;
+import org.rinna.cli.model.WorkItem;
 
 /**
  * Adapter class for statistics-related work item operations.

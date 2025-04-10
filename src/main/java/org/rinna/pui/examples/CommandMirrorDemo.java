@@ -1,6 +1,8 @@
 package org.rinna.pui.examples;
 
-import org.rinna.pui.cli.CommandMirror;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.rinna.pui.cli.ShellIntegrationLayer;
 import org.rinna.pui.component.BoxLayout;
 import org.rinna.pui.component.Button;
@@ -8,9 +10,6 @@ import org.rinna.pui.component.Container;
 import org.rinna.pui.component.Label;
 import org.rinna.pui.component.List;
 import org.rinna.pui.component.TextBox;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Demonstration of SUSBS-compliant command mirroring in PUI.

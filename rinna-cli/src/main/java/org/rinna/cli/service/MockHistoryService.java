@@ -9,13 +9,13 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.cli.model.WorkflowState;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import org.rinna.cli.model.WorkflowState;
 
 /**
  * A mock implementation of history service functionality for CLI use.

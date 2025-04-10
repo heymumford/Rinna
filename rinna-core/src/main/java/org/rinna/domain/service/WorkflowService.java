@@ -8,11 +8,11 @@
 
 package org.rinna.domain.service;
 
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkflowState;
-
 import java.util.List;
 import java.util.UUID;
+
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkflowState;
 
 /**
  * Service interface for managing workflow transitions.

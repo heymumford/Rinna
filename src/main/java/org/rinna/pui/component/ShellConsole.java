@@ -1,10 +1,10 @@
 package org.rinna.pui.component;
 
-import org.rinna.pui.cli.ShellIntegrationLayer;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
+import org.rinna.pui.cli.ShellIntegrationLayer;
 
 /**
  * A PUI component that provides a full shell console experience.

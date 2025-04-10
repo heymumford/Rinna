@@ -1,9 +1,9 @@
 package org.rinna.domain.service.macro;
 
-import org.rinna.domain.model.macro.WebhookConfig;
-
 import java.util.List;
 import java.util.Map;
+
+import org.rinna.domain.model.macro.WebhookConfig;
 
 /**
  * Service interface for managing incoming and outgoing webhooks.

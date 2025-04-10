@@ -347,6 +347,68 @@ public final class MockMetadataService implements MetadataService {
         return keysToRemove.size();
     }
     
+    @Override
+    public void trackOperationError(String parentOperationId, String operationName, 
+                                   String errorMessage, Exception exception) {
+        OperationMetadata metadata = operations.get(parentOperationId);
+        if (metadata != null) {
+            // Create a sub-operation map to track this specific error
+            Map<String, Object> errorData = new HashMap<>();
+            errorData.put("operation", operationName);
+            errorData.put("errorMessage", errorMessage);
+            errorData.put("exceptionType", exception.getClass().getSimpleName());
+            
+            // Update the parent operation with this error information
+            if (metadata.getParameters() == null) {
+                metadata.getParameters().put("errors", new ArrayList<Map<String, Object>>());
+            }
+            
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> errors = (List<Map<String, Object>>) 
+                metadata.getParameters().getOrDefault("errors", new ArrayList<Map<String, Object>>());
+            errors.add(errorData);
+            metadata.getParameters().put("errors", errors);
+            
+            // Also update the error message in the main operation if not already set
+            if (metadata.getErrorMessage() == null) {
+                metadata.setErrorMessage(errorMessage);
+            }
+        }
+    }
+    
+    @Override
+    public void trackOperationDetail(String operationId, String key, Object value) {
+        OperationMetadata metadata = operations.get(operationId);
+        if (metadata != null && key != null) {
+            // Create the details map if it doesn't exist
+            if (!metadata.getParameters().containsKey("details")) {
+                metadata.getParameters().put("details", new HashMap<String, Object>());
+            }
+            
+            // Add or update the detail
+            @SuppressWarnings("unchecked")
+            Map<String, Object> details = (Map<String, Object>) metadata.getParameters().get("details");
+            details.put(key, value);
+            
+            // Update the recent operations list if this is a completed operation
+            if ("COMPLETED".equals(metadata.getStatus())) {
+                synchronized (recentOperations) {
+                    for (Map<String, Object> op : recentOperations) {
+                        if (operationId.equals(op.get("id"))) {
+                            // Update the details in the recent operations list
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> recentOpDetails = (Map<String, Object>) 
+                                op.getOrDefault("details", new HashMap<String, Object>());
+                            recentOpDetails.put(key, value);
+                            op.put("details", recentOpDetails);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     /**
      * Gets a list of recent operations in simplified format for PUI components.
      * 

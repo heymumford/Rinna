@@ -9,6 +9,10 @@
  */
 package org.rinna.unit.messaging;
 
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Execution;
@@ -17,16 +21,11 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.rinna.base.UnitTest;
 import org.rinna.cli.messaging.MessageService;
 import org.rinna.cli.messaging.MessageStatus;
 import org.rinna.cli.messaging.RinnaMessage;
 import org.rinna.cli.service.MockMessageService;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Unit tests for MockMessageService class.

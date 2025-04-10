@@ -9,6 +9,13 @@
  */
 package org.rinna.cli.command;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+
 import org.rinna.cli.model.Priority;
 import org.rinna.cli.model.WorkItem;
 import org.rinna.cli.model.WorkItemType;
@@ -21,13 +28,6 @@ import org.rinna.cli.service.SearchService;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.service.WorkflowService;
 import org.rinna.cli.util.OutputFormatter;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.Callable;
 
 /**
  * Command to perform bulk updates on work items.

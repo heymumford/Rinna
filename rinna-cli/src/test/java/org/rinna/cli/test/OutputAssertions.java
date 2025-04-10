@@ -9,15 +9,13 @@
  */
 package org.rinna.cli.test;
 
-import org.rinna.cli.model.Priority;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.List;
+
 import org.rinna.cli.model.WorkItem;
 import org.rinna.cli.model.WorkItemType;
 import org.rinna.cli.model.WorkflowState;
-
-import java.util.List;
-import java.util.regex.Pattern;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Utility class for standardized output assertions in tests.

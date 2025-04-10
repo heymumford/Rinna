@@ -20,12 +20,15 @@ import (
 
 // RinnaConfig represents the full configuration for the Rinna API server.
 type RinnaConfig struct {
-	Project  ProjectConfig     `mapstructure:"project"`
-	Security SecurityConfig    `mapstructure:"security"`
-	Auth     AuthConfig        `mapstructure:"auth"`
-	Go       GoConfig          `mapstructure:"go"`
-	Server   ServerConfig      `mapstructure:"server"`
-	Java     JavaServiceConfig `mapstructure:"java"`
+	Project    ProjectConfig     `mapstructure:"project"`
+	Security   SecurityConfig    `mapstructure:"security"`
+	Auth       AuthConfig        `mapstructure:"auth"`
+	OAuth      OAuthConfig       `mapstructure:"oauth"`
+	Go         GoConfig          `mapstructure:"go"`
+	Server     ServerConfig      `mapstructure:"server"`
+	Java       JavaServiceConfig `mapstructure:"java"`
+	RateLimit  RateLimitConfig   `mapstructure:"rate_limit"`
+	Logging    LoggingConfig     `mapstructure:"logging"`
 }
 
 // AuthConfig contains authentication-related configuration.
@@ -36,6 +39,29 @@ type AuthConfig struct {
 	AllowedSources      []string `mapstructure:"allowed_sources"`
 	AllowedOrigins      []string `mapstructure:"allowed_origins"`
 	DevMode             bool     `mapstructure:"dev_mode"`
+	TokenEncryptionKey  string   `mapstructure:"token_encryption_key"`
+	TokenSecret         string   `mapstructure:"token_secret"`
+}
+
+// OAuthConfig contains OAuth provider configurations
+type OAuthConfig struct {
+	TokenEncryptionKey string              `mapstructure:"token_encryption_key"`
+	GitHub             OAuthProviderConfig `mapstructure:"github"`
+	GitLab             OAuthProviderConfig `mapstructure:"gitlab"`
+	Jira               OAuthProviderConfig `mapstructure:"jira"`
+	Azure              OAuthProviderConfig `mapstructure:"azure"`
+	BitBucket          OAuthProviderConfig `mapstructure:"bitbucket"`
+	Generic            OAuthProviderConfig `mapstructure:"generic"`
+}
+
+// OAuthProviderConfig contains configuration for a specific OAuth provider
+type OAuthProviderConfig struct {
+	Enabled      bool     `mapstructure:"enabled"`
+	ClientID     string   `mapstructure:"client_id"`
+	ClientSecret string   `mapstructure:"client_secret"`
+	RedirectURL  string   `mapstructure:"redirect_url"`
+	ServerURL    string   `mapstructure:"server_url"`
+	Scopes       []string `mapstructure:"scopes"`
 }
 
 // ServerConfig contains the API server configuration.
@@ -110,6 +136,33 @@ type JavaServiceConfig struct {
 	ConnectTimeout int               `json:"connect_timeout"`
 	RequestTimeout int               `json:"request_timeout"`
 	Endpoints      map[string]string `json:"endpoints"`
+}
+
+// RateLimitConfig contains rate limiting configuration
+type RateLimitConfig struct {
+	Enabled             bool                `mapstructure:"enabled"`
+	DefaultLimit        int                 `mapstructure:"default_limit"`        // Requests per minute
+	BurstLimit          int                 `mapstructure:"burst_limit"`          // Allowed burst size
+	IPWhitelist         []string            `mapstructure:"ip_whitelist"`         // Whitelisted IPs (no rate limit)
+	CustomIPLimits      map[string]int      `mapstructure:"custom_ip_limits"`     // IP-specific limits
+	CustomProjectLimits map[string]int      `mapstructure:"custom_project_limits"` // Project-specific limits
+	CustomPathLimits    map[string]int      `mapstructure:"custom_path_limits"`   // Path-specific limits
+	DefaultPenaltyTime  int                 `mapstructure:"default_penalty_time"` // Seconds of penalty when rate limit is exceeded
+}
+
+// LoggingConfig contains logging configuration
+type LoggingConfig struct {
+	Level           string            `mapstructure:"level"`            // debug, info, warn, error
+	Format          string            `mapstructure:"format"`           // json or text
+	FileEnabled     bool              `mapstructure:"file_enabled"`     // Enable file logging
+	FilePath        string            `mapstructure:"file_path"`        // Log file path
+	Rotation        bool              `mapstructure:"rotation"`         // Enable log rotation
+	MaxSize         int               `mapstructure:"max_size"`         // Max size in MB before rotation
+	MaxAge          int               `mapstructure:"max_age"`          // Max age in days before deletion
+	MaxBackups      int               `mapstructure:"max_backups"`      // Max number of rotated files to keep
+	SecurityLogging bool              `mapstructure:"security_logging"` // Enable detailed security logging
+	RedactPaths     []string          `mapstructure:"redact_paths"`     // Paths that need redaction of sensitive data
+	CustomFields    map[string]string `mapstructure:"custom_fields"`    // Custom fields to include in all logs
 }
 
 const (
@@ -252,6 +305,45 @@ func setDefaultValues(cfg *RinnaConfig) {
 		cfg.Auth.DevMode = true
 	}
 	
+	// Set a default token secret if not provided (should be overridden in production)
+	if cfg.Auth.TokenSecret == "" {
+		cfg.Auth.TokenSecret = "default-token-secret-for-development-only"
+	}
+	
+	// OAuth defaults
+	if cfg.OAuth.TokenEncryptionKey == "" {
+		// Use the same encryption key as auth if not specified
+		cfg.OAuth.TokenEncryptionKey = cfg.Auth.TokenSecret
+	}
+	
+	// Set GitHub OAuth defaults
+	if len(cfg.OAuth.GitHub.Scopes) == 0 {
+		cfg.OAuth.GitHub.Scopes = []string{"repo", "user:email"}
+	}
+	
+	if cfg.OAuth.GitHub.ServerURL == "" {
+		cfg.OAuth.GitHub.ServerURL = "https://github.com"
+	}
+	
+	// Set GitLab OAuth defaults
+	if len(cfg.OAuth.GitLab.Scopes) == 0 {
+		cfg.OAuth.GitLab.Scopes = []string{"api", "read_user"}
+	}
+	
+	if cfg.OAuth.GitLab.ServerURL == "" {
+		cfg.OAuth.GitLab.ServerURL = "https://gitlab.com"
+	}
+	
+	// Set Jira OAuth defaults
+	if len(cfg.OAuth.Jira.Scopes) == 0 {
+		cfg.OAuth.Jira.Scopes = []string{"read:jira-work", "read:jira-user"}
+	}
+	
+	// Set Azure DevOps OAuth defaults
+	if len(cfg.OAuth.Azure.Scopes) == 0 {
+		cfg.OAuth.Azure.Scopes = []string{"vso.code", "vso.project", "vso.work"}
+	}
+	
 	// Server defaults
 	if cfg.Server.Host == "" {
 		cfg.Server.Host = "0.0.0.0"
@@ -323,5 +415,83 @@ func setDefaultValues(cfg *RinnaConfig) {
 	
 	if cfg.Go.Backend.RequestTimeoutMS == 0 {
 		cfg.Go.Backend.RequestTimeoutMS = 10000
+	}
+	
+	// Rate limiting defaults
+	if !cfg.RateLimit.Enabled {
+		cfg.RateLimit.Enabled = true // Enable rate limiting by default
+	}
+	
+	if cfg.RateLimit.DefaultLimit == 0 {
+		cfg.RateLimit.DefaultLimit = 300 // 300 requests per minute
+	}
+	
+	if cfg.RateLimit.BurstLimit == 0 {
+		cfg.RateLimit.BurstLimit = 50 // 50 burst requests
+	}
+	
+	if cfg.RateLimit.DefaultPenaltyTime == 0 {
+		cfg.RateLimit.DefaultPenaltyTime = 60 // 60 seconds penalty
+	}
+	
+	// Initialize maps if nil
+	if cfg.RateLimit.CustomIPLimits == nil {
+		cfg.RateLimit.CustomIPLimits = make(map[string]int)
+	}
+	
+	if cfg.RateLimit.CustomProjectLimits == nil {
+		cfg.RateLimit.CustomProjectLimits = make(map[string]int)
+	}
+	
+	if cfg.RateLimit.CustomPathLimits == nil {
+		cfg.RateLimit.CustomPathLimits = make(map[string]int)
+		
+		// Set some sensible defaults for specific endpoints
+		cfg.RateLimit.CustomPathLimits["/api/v1/auth/*"] = 60    // 60 requests per minute for auth endpoints
+		cfg.RateLimit.CustomPathLimits["/api/v1/oauth/*"] = 60   // 60 requests per minute for oauth endpoints
+		cfg.RateLimit.CustomPathLimits["/api/v1/webhooks/*"] = 600 // 600 requests per minute for webhooks
+		cfg.RateLimit.CustomPathLimits["/health"] = 1200      // 1200 requests per minute for health checks
+		cfg.RateLimit.CustomPathLimits["/metrics"] = 600      // 600 requests per minute for metrics
+	}
+	
+	// Logging defaults
+	if cfg.Logging.Level == "" {
+		cfg.Logging.Level = "info"
+	}
+	
+	if cfg.Logging.Format == "" {
+		cfg.Logging.Format = "json" // Use JSON format by default
+	}
+	
+	if cfg.Logging.FilePath == "" {
+		cfg.Logging.FilePath = "/var/log/rinna/api.log" // Default log path
+	}
+	
+	if cfg.Logging.MaxSize == 0 {
+		cfg.Logging.MaxSize = 100 // 100 MB
+	}
+	
+	if cfg.Logging.MaxAge == 0 {
+		cfg.Logging.MaxAge = 30 // 30 days
+	}
+	
+	if cfg.Logging.MaxBackups == 0 {
+		cfg.Logging.MaxBackups = 10 // Keep 10 backups
+	}
+	
+	// Default sensitive paths that need redaction
+	if len(cfg.Logging.RedactPaths) == 0 {
+		cfg.Logging.RedactPaths = []string{
+			"/api/v1/auth/",
+			"/api/v1/oauth/",
+			"/api/v1/token/",
+		}
+	}
+	
+	// Initialize custom fields map if nil
+	if cfg.Logging.CustomFields == nil {
+		cfg.Logging.CustomFields = make(map[string]string)
+		cfg.Logging.CustomFields["service"] = "rinna-api"
+		cfg.Logging.CustomFields["environment"] = cfg.Project.Environment
 	}
 }

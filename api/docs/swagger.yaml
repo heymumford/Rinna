@@ -1660,6 +1660,498 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/Error'
+  
+  #
+  # OAuth Endpoints
+  #
+  /oauth/providers:
+    get:
+      tags:
+        - oauth
+      summary: List OAuth providers
+      description: Returns a list of all configured OAuth providers
+      operationId: listOAuthProviders
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: List of available OAuth providers
+          schema:
+            type: object
+            properties:
+              providers:
+                type: array
+                items:
+                  $ref: '#/definitions/OAuthProvider'
+              count:
+                type: integer
+                format: int32
+                description: Number of providers
+          examples:
+            application/json: {
+              "providers": [
+                {
+                  "provider": "github",
+                  "client_id": "abcdef1234567890",
+                  "redirect_url": "http://localhost:8080/api/v1/oauth/callback",
+                  "auth_url": "https://github.com/login/oauth/authorize",
+                  "token_url": "https://github.com/login/oauth/access_token",
+                  "scopes": ["repo", "user:email"],
+                  "api_base_url": "https://api.github.com"
+                },
+                {
+                  "provider": "gitlab",
+                  "client_id": "abcdef1234567890",
+                  "redirect_url": "http://localhost:8080/api/v1/oauth/callback",
+                  "auth_url": "https://gitlab.com/oauth/authorize",
+                  "token_url": "https://gitlab.com/oauth/token",
+                  "scopes": ["api", "read_user"],
+                  "api_base_url": "https://gitlab.com/api/v4"
+                }
+              ],
+              "count": 2
+            }
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+  
+  /oauth/providers/{provider}:
+    get:
+      tags:
+        - oauth
+      summary: Get OAuth provider details
+      description: Returns details about a specific OAuth provider
+      operationId: getOAuthProvider
+      parameters:
+        - name: provider
+          in: path
+          description: OAuth provider name (e.g., github, gitlab)
+          required: true
+          type: string
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: OAuth provider details
+          schema:
+            $ref: '#/definitions/OAuthProvider'
+          examples:
+            application/json: {
+              "provider": "github",
+              "client_id": "abcdef1234567890",
+              "redirect_url": "http://localhost:8080/api/v1/oauth/callback",
+              "auth_url": "https://github.com/login/oauth/authorize",
+              "token_url": "https://github.com/login/oauth/access_token",
+              "scopes": ["repo", "user:email"],
+              "api_base_url": "https://api.github.com"
+            }
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Provider not found
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json: {
+              "code": 404,
+              "message": "Provider not found",
+              "details": ["Provider 'unknown' is not configured"]
+            }
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /oauth/authorize/{provider}:
+    get:
+      tags:
+        - oauth
+      summary: Initiate OAuth authorization
+      description: |
+        Initiates the OAuth authorization flow for the specified provider.
+        
+        If a redirect_uri is provided, the user will be redirected directly to the
+        OAuth provider's authorization page. Otherwise, the authorization URL is
+        returned in the response.
+      operationId: authorizeOAuth
+      parameters:
+        - name: provider
+          in: path
+          description: OAuth provider name (e.g., github, gitlab)
+          required: true
+          type: string
+        - name: project
+          in: query
+          description: Project key or ID
+          required: true
+          type: string
+        - name: user_id
+          in: query
+          description: User ID for token association
+          required: true
+          type: string
+        - name: redirect_uri
+          in: query
+          description: Optional URI to redirect to after authorization
+          required: false
+          type: string
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Authorization URL and state token
+          schema:
+            type: object
+            properties:
+              authorization_url:
+                type: string
+                description: URL to redirect the user to for authorization
+              state:
+                type: string
+                description: State token for CSRF protection
+              provider:
+                type: string
+                description: Provider name
+              expires_in:
+                type: string
+                description: Expiration time in seconds for the state token
+          examples:
+            application/json: {
+              "authorization_url": "https://github.com/login/oauth/authorize?client_id=abcdef1234567890&response_type=code&scope=repo%20user%3Aemail&state=random-state-token",
+              "state": "random-state-token",
+              "provider": "github",
+              "expires_in": "1800"
+            }
+        302:
+          description: Redirect to OAuth provider's authorization page
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Provider not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /oauth/callback:
+    get:
+      tags:
+        - oauth
+      summary: OAuth callback endpoint
+      description: |
+        Handles OAuth provider callbacks. This endpoint is typically called by
+        the OAuth provider after the user authorizes the application.
+        
+        This is a public endpoint that doesn't require authentication since
+        it's called by the OAuth provider.
+      operationId: oauthCallback
+      parameters:
+        - name: code
+          in: query
+          description: Authorization code from the OAuth provider
+          required: true
+          type: string
+        - name: state
+          in: query
+          description: State token for CSRF protection
+          required: true
+          type: string
+        - name: error
+          in: query
+          description: Error code (if authorization failed)
+          required: false
+          type: string
+        - name: error_description
+          in: query
+          description: Error description (if authorization failed)
+          required: false
+          type: string
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Authorization successful
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                description: Status of the operation
+              provider:
+                type: string
+                description: OAuth provider
+              project_id:
+                type: string
+                description: Project ID or key
+              user_id:
+                type: string
+                description: User ID
+              token_type:
+                type: string
+                description: Token type (usually Bearer)
+              expires_in:
+                type: integer
+                description: Token expiration time in seconds
+              scopes:
+                type: array
+                items:
+                  type: string
+                description: Authorized scopes
+              created_at:
+                type: string
+                format: date-time
+                description: When the token was created
+          examples:
+            application/json: {
+              "status": "success",
+              "provider": "github",
+              "project_id": "RINNA",
+              "user_id": "john.doe",
+              "token_type": "Bearer",
+              "expires_in": 3600,
+              "scopes": ["repo", "user:email"],
+              "created_at": "2025-04-09T12:34:56Z"
+            }
+        400:
+          description: Bad request or OAuth provider error
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json: {
+              "code": 400,
+              "message": "OAuth provider returned an error",
+              "details": ["access_denied - The user denied the request"]
+            }
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /oauth/tokens:
+    get:
+      tags:
+        - oauth
+      summary: List OAuth tokens
+      description: Returns a list of OAuth tokens for a project
+      operationId: listOAuthTokens
+      parameters:
+        - name: project
+          in: query
+          description: Project key or ID
+          required: true
+          type: string
+        - name: provider
+          in: query
+          description: Optional filter by provider
+          required: false
+          type: string
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: List of OAuth tokens
+          schema:
+            type: object
+            properties:
+              tokens:
+                type: array
+                items:
+                  $ref: '#/definitions/OAuthTokenInfo'
+              count:
+                type: integer
+                description: Number of tokens
+          examples:
+            application/json: {
+              "tokens": [
+                {
+                  "provider": "github",
+                  "project_id": "RINNA",
+                  "user_id": "john.doe",
+                  "token_type": "Bearer",
+                  "expires_in": 3600,
+                  "scopes": ["repo", "user:email"],
+                  "created_at": "2025-04-09T12:34:56Z",
+                  "updated_at": "2025-04-09T12:34:56Z",
+                  "has_refresh": true,
+                  "is_expired": false
+                },
+                {
+                  "provider": "gitlab",
+                  "project_id": "RINNA",
+                  "user_id": "jane.smith",
+                  "token_type": "Bearer",
+                  "expires_in": 7200,
+                  "scopes": ["api", "read_user"],
+                  "created_at": "2025-04-08T10:20:30Z",
+                  "updated_at": "2025-04-08T10:20:30Z",
+                  "has_refresh": true,
+                  "is_expired": false
+                }
+              ],
+              "count": 2
+            }
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+
+  /oauth/tokens/{provider}:
+    get:
+      tags:
+        - oauth
+      summary: Get OAuth token
+      description: Returns details about a specific OAuth token
+      operationId: getOAuthToken
+      parameters:
+        - name: provider
+          in: path
+          description: OAuth provider name
+          required: true
+          type: string
+        - name: project
+          in: query
+          description: Project key or ID
+          required: true
+          type: string
+        - name: user_id
+          in: query
+          description: User ID
+          required: true
+          type: string
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: OAuth token details
+          schema:
+            $ref: '#/definitions/OAuthTokenInfo'
+          examples:
+            application/json: {
+              "provider": "github",
+              "project_id": "RINNA",
+              "user_id": "john.doe",
+              "token_type": "Bearer",
+              "expires_in": 3600,
+              "scopes": ["repo", "user:email"],
+              "created_at": "2025-04-09T12:34:56Z",
+              "updated_at": "2025-04-09T12:34:56Z",
+              "has_refresh": true,
+              "is_expired": false,
+              "metadata": {
+                "login": "johndoe",
+                "name": "John Doe"
+              }
+            }
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Token not found
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json: {
+              "code": 404,
+              "message": "Token not found",
+              "details": ["No token found for provider 'github', project 'RINNA', and user 'john.doe'"]
+            }
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
+    delete:
+      tags:
+        - oauth
+      summary: Revoke OAuth token
+      description: Revokes and deletes an OAuth token
+      operationId: revokeOAuthToken
+      parameters:
+        - name: provider
+          in: path
+          description: OAuth provider name
+          required: true
+          type: string
+        - name: project
+          in: query
+          description: Project key or ID
+          required: true
+          type: string
+        - name: user_id
+          in: query
+          description: User ID
+          required: true
+          type: string
+      produces:
+        - application/json
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Token revoked successfully
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                description: Status of the operation
+              message:
+                type: string
+                description: Human-readable message
+              provider:
+                type: string
+                description: OAuth provider
+              project_id:
+                type: string
+                description: Project ID or key
+              user_id:
+                type: string
+                description: User ID
+          examples:
+            application/json: {
+              "status": "success",
+              "message": "Token revoked successfully",
+              "provider": "github",
+              "project_id": "RINNA",
+              "user_id": "john.doe"
+            }
+        401:
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Token not found
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/Error'
           
 definitions:
   HealthStatus:
@@ -2326,6 +2818,78 @@ definitions:
       event:
         type: string
         description: Type of event that was processed (if applicable)
+  
+  OAuthProvider:
+    type: object
+    description: OAuth provider configuration information
+    properties:
+      provider:
+        type: string
+        description: Provider identifier (e.g., github, gitlab)
+      client_id:
+        type: string
+        description: OAuth client ID
+      redirect_url:
+        type: string
+        description: Redirect URL for OAuth callback
+      auth_url:
+        type: string
+        description: Authorization URL
+      token_url:
+        type: string
+        description: Token URL
+      scopes:
+        type: array
+        description: Supported OAuth scopes
+        items:
+          type: string
+      api_base_url:
+        type: string
+        description: Base URL for API calls
+  
+  OAuthTokenInfo:
+    type: object
+    description: OAuth token information
+    properties:
+      provider:
+        type: string
+        description: OAuth provider (e.g., github, gitlab)
+      project_id:
+        type: string
+        description: Project ID or key
+      user_id:
+        type: string
+        description: User ID
+      token_type:
+        type: string
+        description: Token type (usually Bearer)
+      expires_in:
+        type: integer
+        description: Token expiration time in seconds
+      scopes:
+        type: array
+        description: Authorized scopes
+        items:
+          type: string
+      created_at:
+        type: string
+        format: date-time
+        description: When the token was created
+      updated_at:
+        type: string
+        format: date-time
+        description: When the token was last updated
+      has_refresh:
+        type: boolean
+        description: Whether the token has a refresh token
+      is_expired:
+        type: boolean
+        description: Whether the token is expired
+      metadata:
+        type: object
+        description: Additional metadata from the provider
+        additionalProperties:
+          type: string
           
   Error:
     type: object

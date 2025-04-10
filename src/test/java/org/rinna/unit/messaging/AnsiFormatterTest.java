@@ -9,21 +9,17 @@
  */
 package org.rinna.unit.messaging;
 
+import java.lang.reflect.Method;
+
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Execution;
 import org.junit.jupiter.api.ExecutionMode;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.rinna.base.UnitTest;
 import org.rinna.cli.messaging.AnsiFormatter;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Arrays;
 
 /**
  * Unit tests for AnsiFormatter class.

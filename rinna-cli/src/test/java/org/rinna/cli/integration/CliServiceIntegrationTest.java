@@ -1,13 +1,6 @@
 package org.rinna.cli.integration;
 
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.io.TempDir;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.service.ServiceManager.ServiceStatusInfo;
-import org.rinna.cli.service.ServiceStatus;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -15,8 +8,13 @@ import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.service.ServiceManager.ServiceStatusInfo;
 
 /**
  * Integration tests for CLI service management.

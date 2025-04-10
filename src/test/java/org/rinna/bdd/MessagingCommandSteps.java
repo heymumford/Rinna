@@ -9,24 +9,8 @@
  */
 package org.rinna.bdd;
 
-import io.cucumber.datatable.DataTable;
-import io.cucumber.java.Before;
-import io.cucumber.java.en.And;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
-import org.junit.jupiter.api.Assertions;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
-import org.rinna.base.AcceptanceTest;
-import org.rinna.cli.RinnaCli;
-import org.rinna.cli.messaging.MessageClient;
-import org.rinna.cli.messaging.MessageService;
-import org.rinna.cli.messaging.MessageStatus;
-import org.rinna.cli.messaging.RinnaMessage;
-import org.rinna.cli.messaging.UserSession;
-import org.rinna.cli.service.ConfigurationService;
-import org.rinna.cli.service.ProjectContext;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -41,8 +25,22 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.Assertions;
+import org.mockito.ArgumentCaptor;
+import org.rinna.cli.RinnaCli;
+import org.rinna.cli.messaging.MessageClient;
+import org.rinna.cli.messaging.MessageService;
+import org.rinna.cli.messaging.MessageStatus;
+import org.rinna.cli.messaging.RinnaMessage;
+import org.rinna.cli.messaging.UserSession;
+import org.rinna.cli.service.ConfigurationService;
+import org.rinna.cli.service.ProjectContext;
+
+import io.cucumber.datatable.DataTable;
+import io.cucumber.java.Before;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for messaging feature in BDD tests.

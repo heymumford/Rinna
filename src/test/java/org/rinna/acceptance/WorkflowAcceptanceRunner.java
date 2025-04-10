@@ -1,9 +1,10 @@
 package org.rinna.acceptance;
 
+import org.junit.jupiter.api.Tag;
+import org.junit.runner.RunWith;
+
 import io.cucumber.junit.Cucumber;
 import io.cucumber.junit.CucumberOptions;
-import org.junit.runner.RunWith;
-import org.junit.jupiter.api.Tag;
 
 /**
  * Runner for workflow acceptance tests.

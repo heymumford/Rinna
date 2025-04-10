@@ -1,0 +1,49 @@
+# Architecture rules for Rinna Project
+clean_architecture:
+  layers:
+    - domain
+    - usecase
+    - adapter
+    - infrastructure
+    - presentation
+  allowed_dependencies:
+    domain: []
+    usecase: 
+      - domain
+    adapter: 
+      - domain
+      - usecase
+    infrastructure: 
+      - domain
+      - usecase
+      - adapter
+    presentation: 
+      - domain
+      - usecase
+      - adapter
+
+package_structure:
+  rinna-core:
+    domain_model_path: src/main/java/org/rinna/domain/model
+    required_packages:
+      - org.rinna.domain.model
+      - org.rinna.domain.repository
+      - org.rinna.domain.service
+      - org.rinna.usecase
+      - org.rinna.adapter.repository
+      - org.rinna.adapter.service
+  rinna-cli:
+    required_packages:
+      - org.rinna.cli.command
+      - org.rinna.cli.service
+      - org.rinna.cli.util
+  rinna-data-sqlite:
+    required_packages:
+      - org.rinna.data.repository
+
+naming_conventions:
+  service_implementations: ^Default[A-Z][a-zA-Z0-9]*Service$
+  repositories: ^[A-Z][a-zA-Z0-9]*Repository$
+  repository_implementations: ^(InMemory|Sqlite)[A-Z][a-zA-Z0-9]*Repository$
+  domain_models: ^[A-Z][a-zA-Z0-9]*$
+  usecases: ^[A-Z][a-zA-Z0-9]*Service$

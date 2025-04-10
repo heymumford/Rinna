@@ -8,13 +8,6 @@
 
 package org.rinna.adapter.service;
 
-import org.rinna.domain.model.DefaultRelease;
-import org.rinna.domain.model.Release;
-import org.rinna.domain.model.WorkItem;
-import org.rinna.repository.ReleaseRepository;
-import org.rinna.usecase.ItemService;
-import org.rinna.usecase.ReleaseService;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -23,6 +16,13 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import org.rinna.domain.model.DefaultRelease;
+import org.rinna.domain.model.Release;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.repository.ReleaseRepository;
+import org.rinna.usecase.ItemService;
+import org.rinna.usecase.ReleaseService;
 
 /**
  * Default implementation of the ReleaseService interface.

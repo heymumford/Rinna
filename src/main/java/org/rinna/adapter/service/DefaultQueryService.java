@@ -9,12 +9,6 @@
  */
 package org.rinna.adapter.service;
 
-import org.rinna.domain.model.WorkItem;
-import org.rinna.repository.ItemRepository;
-import org.rinna.repository.MetadataRepository;
-import org.rinna.usecase.ItemService;
-import org.rinna.usecase.QueryService;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -24,6 +18,12 @@ import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import org.rinna.domain.model.WorkItem;
+import org.rinna.repository.ItemRepository;
+import org.rinna.repository.MetadataRepository;
+import org.rinna.usecase.ItemService;
+import org.rinna.usecase.QueryService;
 
 /**
  * Default implementation of the QueryService interface.

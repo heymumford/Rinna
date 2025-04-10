@@ -9,10 +9,10 @@
  */
 package org.rinna.cli.adapter;
 
+import java.util.List;
+
 import org.rinna.cli.domain.service.MonitoringService;
 import org.rinna.cli.service.MockMonitoringService;
-
-import java.util.List;
 
 /**
  * Adapter for the MonitoringService that bridges between the domain MonitoringService and

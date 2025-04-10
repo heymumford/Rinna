@@ -7,10 +7,6 @@
  */
 package org.rinna.cli.report;
 
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.service.ItemService;
-import org.rinna.cli.service.ServiceManager;
-
 import java.io.File;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -18,6 +14,10 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.logging.Logger;
+
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.service.ItemService;
+import org.rinna.cli.service.ServiceManager;
 
 /**
  * Service for generating reports about work items.

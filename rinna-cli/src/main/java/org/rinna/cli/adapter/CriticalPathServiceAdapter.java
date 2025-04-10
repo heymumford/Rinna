@@ -9,6 +9,11 @@
  */
 package org.rinna.cli.adapter;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.rinna.cli.domain.model.DefaultDomainWorkItem;
 import org.rinna.cli.domain.model.DomainWorkItem;
 import org.rinna.cli.domain.service.CriticalPathService;
@@ -16,11 +21,6 @@ import org.rinna.cli.service.MockCriticalPathService;
 import org.rinna.cli.service.MockItemService;
 import org.rinna.cli.util.ModelMapper;
 import org.rinna.cli.util.StateMapper;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * Adapter class that converts between CLI implementation and domain critical path service models.

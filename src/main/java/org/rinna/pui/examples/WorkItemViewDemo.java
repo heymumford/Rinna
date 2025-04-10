@@ -9,12 +9,14 @@
  */
 package org.rinna.pui.examples;
 
+import java.io.IOException;
+import java.util.ArrayList;
+
 import org.rinna.pui.RinnaPUI;
 import org.rinna.pui.component.*;
-import org.rinna.pui.component.BoxLayout.Orientation;
 import org.rinna.pui.component.BoxLayout.BoxConstraints;
 import org.rinna.pui.component.BoxLayout.HorizontalAlignment;
-import org.rinna.pui.component.Button.ClickListener;
+import org.rinna.pui.component.BoxLayout.Orientation;
 import org.rinna.pui.component.List;
 import org.rinna.pui.geom.Dimension;
 import org.rinna.pui.geom.Point;
@@ -22,9 +24,6 @@ import org.rinna.pui.style.BorderStyle;
 import org.rinna.pui.style.Color;
 import org.rinna.pui.style.Style;
 import org.rinna.pui.style.Theme;
-
-import java.io.IOException;
-import java.util.ArrayList;
 
 /**
  * Example demonstrating a work item view using the PUI components.

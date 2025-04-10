@@ -9,22 +9,22 @@
  */
 package org.rinna.cli.command;
 
-import org.rinna.cli.stats.StatisticType;
-import org.rinna.cli.stats.StatisticValue;
-import org.rinna.cli.stats.StatisticsService;
-import org.rinna.cli.stats.StatisticsVisualizer;
-import org.rinna.cli.service.ConfigurationService;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.util.OutputFormatter;
-
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+
+import org.rinna.cli.service.ConfigurationService;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.stats.StatisticType;
+import org.rinna.cli.stats.StatisticValue;
+import org.rinna.cli.stats.StatisticsService;
+import org.rinna.cli.stats.StatisticsVisualizer;
+import org.rinna.cli.util.OutputFormatter;
 
 /**
  * Command for displaying statistics about the project.

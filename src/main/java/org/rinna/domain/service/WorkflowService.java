@@ -8,13 +8,13 @@
 
 package org.rinna.domain.service;
 
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkflowState;
-import org.rinna.usecase.InvalidTransitionException;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkflowState;
+import org.rinna.usecase.InvalidTransitionException;
 
 /**
  * Service interface for managing workflow transitions.

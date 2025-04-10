@@ -9,7 +9,12 @@
  */
 package org.rinna.cli.command;
 
-import org.rinna.cli.domain.model.DomainWorkItem;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+
 import org.rinna.cli.model.Priority;
 import org.rinna.cli.model.WorkItem;
 import org.rinna.cli.model.WorkItemType;
@@ -18,12 +23,6 @@ import org.rinna.cli.service.ConfigurationService;
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.MockItemService;
 import org.rinna.cli.service.MockWorkflowService;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.Callable;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.util.ModelMapper;
 import org.rinna.cli.util.OutputFormatter;

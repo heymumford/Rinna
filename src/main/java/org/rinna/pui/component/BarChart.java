@@ -9,17 +9,15 @@
  */
 package org.rinna.pui.component;
 
-import org.rinna.pui.geom.Dimension;
-import org.rinna.pui.style.Color;
-import org.rinna.pui.style.Style;
-
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
+
+import org.rinna.pui.geom.Dimension;
+import org.rinna.pui.style.Color;
+import org.rinna.pui.style.Style;
 
 /**
  * A component that displays data as a horizontal bar chart.

@@ -9,6 +9,11 @@
  */
 package org.rinna.component.cli;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.time.Instant;
+import java.util.List;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,13 +33,6 @@ import org.rinna.cli.service.ConfigurationService;
 import org.rinna.cli.service.MockMessageService;
 import org.rinna.cli.service.ProjectContext;
 import org.rinna.cli.service.ServiceManager;
-
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Component tests for MsgCommand class.

@@ -21,38 +21,58 @@ import (
 	"github.com/heymumford/rinna/api/internal/client"
 	"github.com/heymumford/rinna/api/internal/middleware"
 	"github.com/heymumford/rinna/api/internal/models"
+	"github.com/heymumford/rinna/api/pkg/config"
 	"github.com/heymumford/rinna/api/pkg/logger"
 )
 
 // WebhookHandler handles webhook-related requests
 type WebhookHandler struct {
-	javaClient  *client.JavaClient
-	authService *middleware.AuthService
+	javaClient        *client.JavaClient
+	securityService   *middleware.WebhookSecurityService
+	config            *config.RinnaConfig
+	// Track received webhooks for idempotency
+	processedEvents   map[string]time.Time
 }
 
 // NewWebhookHandler creates a new webhook handler
-func NewWebhookHandler(javaClient *client.JavaClient, authService *middleware.AuthService) *WebhookHandler {
+func NewWebhookHandler(javaClient *client.JavaClient, securityService *middleware.WebhookSecurityService, config *config.RinnaConfig) *WebhookHandler {
 	return &WebhookHandler{
-		javaClient:  javaClient,
-		authService: authService,
+		javaClient:      javaClient,
+		securityService: securityService,
+		config:          config,
+		processedEvents: make(map[string]time.Time),
 	}
 }
 
 // RegisterWebhookRoutes registers webhook-related routes
-func RegisterWebhookRoutes(router *mux.Router, javaClient *client.JavaClient, authService *middleware.AuthService) {
+func RegisterWebhookRoutes(router *mux.Router, javaClient *client.JavaClient, securityService *middleware.WebhookSecurityService, config *config.RinnaConfig) {
 	// Create handler with dependencies
-	handler := NewWebhookHandler(javaClient, authService)
+	handler := NewWebhookHandler(javaClient, securityService, config)
 
-	// Register routes
-	router.HandleFunc("/webhooks/github", handler.HandleGitHubWebhook).Methods(http.MethodPost) // For backward compatibility
-	router.HandleFunc("/api/v1/webhooks/github", handler.HandleGitHubWebhook).Methods(http.MethodPost) // New API path
+	// Webhook endpoints - use the same handler with different URL patterns
+	webhooksRouter := router.PathPrefix("/api/v1/webhooks").Subrouter()
+	
+	// GitHub webhooks
+	webhooksRouter.HandleFunc("/github", handler.HandleGitHubWebhook).Methods(http.MethodPost)
+	
+	// GitLab webhooks
+	webhooksRouter.HandleFunc("/gitlab", handler.HandleGitLabWebhook).Methods(http.MethodPost)
+	
+	// Bitbucket webhooks
+	webhooksRouter.HandleFunc("/bitbucket", handler.HandleBitbucketWebhook).Methods(http.MethodPost)
+	
+	// Custom webhooks with ID parameter
+	webhooksRouter.HandleFunc("/custom/{id}", handler.HandleCustomWebhook).Methods(http.MethodPost)
+	
+	// Legacy routes for backward compatibility
+	router.HandleFunc("/webhooks/github", handler.HandleGitHubWebhook).Methods(http.MethodPost)
 }
 
 // HandleGitHubWebhook handles GitHub webhook requests
 func (h *WebhookHandler) HandleGitHubWebhook(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
-	// Add request ID for better tracking
+	// Get request ID from security middleware
 	requestID := r.Header.Get("X-Request-ID")
 	if requestID == "" {
 		requestID = fmt.Sprintf("webhook-%d", time.Now().UnixNano())
@@ -65,10 +85,14 @@ func (h *WebhookHandler) HandleGitHubWebhook(w http.ResponseWriter, r *http.Requ
 		"path":      r.URL.Path,
 	})
 
-	log.Info("Received GitHub webhook")
+	log.Info("Processing GitHub webhook")
 
-	// Get the project key from the query parameter
-	projectKey := r.URL.Query().Get("project")
+	// Get the project key from the context or query parameter
+	projectKey := middleware.GetProjectID(r.Context())
+	if projectKey == "" {
+		projectKey = r.URL.Query().Get("project")
+	}
+	
 	log = log.WithField("project", projectKey)
 	
 	if projectKey == "" {
@@ -76,15 +100,6 @@ func (h *WebhookHandler) HandleGitHubWebhook(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "Project key is required", http.StatusBadRequest)
 		return
 	}
-
-	// Get the signature from the header
-	signature := r.Header.Get("X-Hub-Signature-256")
-	if !strings.HasPrefix(signature, "sha256=") {
-		log.Warn("Missing or invalid signature format in webhook request")
-		http.Error(w, "Missing or invalid signature", http.StatusUnauthorized)
-		return
-	}
-	signature = strings.TrimPrefix(signature, "sha256=")
 
 	// Get the event type
 	eventType := r.Header.Get("X-GitHub-Event")
@@ -96,28 +111,44 @@ func (h *WebhookHandler) HandleGitHubWebhook(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// Check for duplicate events using delivery ID
+	eventID := r.Header.Get("X-GitHub-Delivery")
+	if eventID != "" {
+		// Check if we've already processed this event
+		if _, exists := h.processedEvents[eventID]; exists {
+			log.WithField("eventID", eventID).Info("Ignoring duplicate webhook event")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{
+				"status":  "ignored",
+				"message": "Duplicate event",
+			})
+			return
+		}
+		
+		// Mark this event as processed
+		h.processedEvents[eventID] = time.Now()
+		
+		// Clean up old events (keep map size reasonable)
+		cleanupTime := time.Now().Add(-24 * time.Hour)
+		for id, t := range h.processedEvents {
+			if t.Before(cleanupTime) {
+				delete(h.processedEvents, id)
+			}
+		}
+	}
+
 	// Read the request body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.WithField("error", err).Error("Failed to read webhook request body")
-		http.Error(w, "Failed to read request body: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
 		return
 	}
 
 	// Log payload size for debugging
 	log = log.WithField("payloadSize", len(body))
-	log.Debug("Validating webhook signature")
 
-	// Validate the signature with the auth service
-	if err := h.authService.ValidateWebhookSignature(r.Context(), projectKey, "github", signature, body); err != nil {
-		log.WithField("error", err).Warn("Invalid webhook signature")
-		http.Error(w, "Invalid webhook signature: "+err.Error(), http.StatusUnauthorized)
-		return
-	}
-
-	log.Debug("Webhook signature validated successfully")
-
-	// Parse the payload based on the event type
+	// Process specific event
 	var response interface{}
 	switch eventType {
 	case "pull_request":
@@ -131,10 +162,11 @@ func (h *WebhookHandler) HandleGitHubWebhook(w http.ResponseWriter, r *http.Requ
 	case "ping":
 		// Special case for GitHub's ping event
 		response = map[string]string{
-			"status": "ok",
+			"status":  "ok",
 			"message": "Webhook received successfully",
 		}
 	default:
+		log.WithField("eventType", eventType).Info("Unsupported event type")
 		http.Error(w, "Unsupported event type: "+eventType, http.StatusBadRequest)
 		return
 	}
@@ -153,6 +185,291 @@ func (h *WebhookHandler) HandleGitHubWebhook(w http.ResponseWriter, r *http.Requ
 		"duration": duration.String(),
 		"status":   "success",
 	}).Info("Webhook processed successfully")
+	
+	// Return the response
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Request-ID", requestID)
+	w.Header().Set("X-Processing-Time", duration.String())
+	
+	// Add cache control headers to prevent caching
+	w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+	
+	json.NewEncoder(w).Encode(response)
+}
+
+// HandleGitLabWebhook handles GitLab webhook requests
+func (h *WebhookHandler) HandleGitLabWebhook(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+
+	// Get request ID from security middleware
+	requestID := r.Header.Get("X-Request-ID")
+	if requestID == "" {
+		requestID = fmt.Sprintf("webhook-%d", time.Now().UnixNano())
+	}
+
+	// Create a logger with context fields
+	log := logger.WithFields(map[string]interface{}{
+		"requestID": requestID,
+		"source":    "gitlab",
+		"path":      r.URL.Path,
+	})
+
+	log.Info("Processing GitLab webhook")
+
+	// Get the project key from the context or query parameter
+	projectKey := middleware.GetProjectID(r.Context())
+	if projectKey == "" {
+		projectKey = r.URL.Query().Get("project")
+	}
+	
+	log = log.WithField("project", projectKey)
+	
+	if projectKey == "" {
+		log.Warn("Missing project key in webhook request")
+		http.Error(w, "Project key is required", http.StatusBadRequest)
+		return
+	}
+
+	// Get the event type
+	eventType := r.Header.Get("X-Gitlab-Event")
+	log = log.WithField("eventType", eventType)
+	
+	if eventType == "" {
+		log.Warn("Missing event type in webhook request")
+		http.Error(w, "Missing event type", http.StatusBadRequest)
+		return
+	}
+
+	// Check for duplicate events using event UUID
+	eventID := r.Header.Get("X-Gitlab-Event-UUID")
+	if eventID != "" {
+		// Check if we've already processed this event
+		if _, exists := h.processedEvents[eventID]; exists {
+			log.WithField("eventID", eventID).Info("Ignoring duplicate webhook event")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{
+				"status":  "ignored",
+				"message": "Duplicate event",
+			})
+			return
+		}
+		
+		// Mark this event as processed
+		h.processedEvents[eventID] = time.Now()
+	}
+
+	// Read the request body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.WithField("error", err).Error("Failed to read webhook request body")
+		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+		return
+	}
+
+	// Return simple success response for now
+	// TODO: Add GitLab webhook event parsing and handling
+	response := map[string]string{
+		"status":  "received",
+		"message": "GitLab webhook received successfully - implementation pending",
+	}
+
+	// Calculate processing time
+	duration := time.Since(start)
+	
+	// Log the result
+	log.WithFields(map[string]interface{}{
+		"duration": duration.String(),
+		"status":   "success",
+	}).Info("Webhook received")
+	
+	// Return the response
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Request-ID", requestID)
+	w.Header().Set("X-Processing-Time", duration.String())
+	json.NewEncoder(w).Encode(response)
+}
+
+// HandleBitbucketWebhook handles Bitbucket webhook requests
+func (h *WebhookHandler) HandleBitbucketWebhook(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+
+	// Get request ID from security middleware
+	requestID := r.Header.Get("X-Request-ID")
+	if requestID == "" {
+		requestID = fmt.Sprintf("webhook-%d", time.Now().UnixNano())
+	}
+
+	// Create a logger with context fields
+	log := logger.WithFields(map[string]interface{}{
+		"requestID": requestID,
+		"source":    "bitbucket",
+		"path":      r.URL.Path,
+	})
+
+	log.Info("Processing Bitbucket webhook")
+
+	// Get the project key from the context or query parameter
+	projectKey := middleware.GetProjectID(r.Context())
+	if projectKey == "" {
+		projectKey = r.URL.Query().Get("project")
+	}
+	
+	log = log.WithField("project", projectKey)
+	
+	if projectKey == "" {
+		log.Warn("Missing project key in webhook request")
+		http.Error(w, "Project key is required", http.StatusBadRequest)
+		return
+	}
+
+	// Get the event type
+	eventType := r.Header.Get("X-Event-Key")
+	log = log.WithField("eventType", eventType)
+	
+	if eventType == "" {
+		log.Warn("Missing event type in webhook request")
+		http.Error(w, "Missing event type", http.StatusBadRequest)
+		return
+	}
+
+	// Check for duplicate events using request UUID
+	eventID := r.Header.Get("X-Request-UUID")
+	if eventID != "" {
+		// Check if we've already processed this event
+		if _, exists := h.processedEvents[eventID]; exists {
+			log.WithField("eventID", eventID).Info("Ignoring duplicate webhook event")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{
+				"status":  "ignored",
+				"message": "Duplicate event",
+			})
+			return
+		}
+		
+		// Mark this event as processed
+		h.processedEvents[eventID] = time.Now()
+	}
+
+	// Read the request body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.WithField("error", err).Error("Failed to read webhook request body")
+		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+		return
+	}
+
+	// Return simple success response for now
+	// TODO: Add Bitbucket webhook event parsing and handling
+	response := map[string]string{
+		"status":  "received",
+		"message": "Bitbucket webhook received successfully - implementation pending",
+	}
+
+	// Calculate processing time
+	duration := time.Since(start)
+	
+	// Log the result
+	log.WithFields(map[string]interface{}{
+		"duration": duration.String(),
+		"status":   "success",
+	}).Info("Webhook received")
+	
+	// Return the response
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Request-ID", requestID)
+	w.Header().Set("X-Processing-Time", duration.String())
+	json.NewEncoder(w).Encode(response)
+}
+
+// HandleCustomWebhook handles custom webhook requests
+func (h *WebhookHandler) HandleCustomWebhook(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+
+	// Get the custom webhook ID from the URL
+	vars := mux.Vars(r)
+	webhookID := vars["id"]
+
+	// Get request ID from security middleware
+	requestID := r.Header.Get("X-Request-ID")
+	if requestID == "" {
+		requestID = fmt.Sprintf("webhook-%d", time.Now().UnixNano())
+	}
+
+	// Create a logger with context fields
+	log := logger.WithFields(map[string]interface{}{
+		"requestID": requestID,
+		"source":    "custom",
+		"webhookID": webhookID,
+		"path":      r.URL.Path,
+	})
+
+	log.Info("Processing custom webhook")
+
+	// Get the project key from the context or query parameter
+	projectKey := middleware.GetProjectID(r.Context())
+	if projectKey == "" {
+		projectKey = r.URL.Query().Get("project")
+	}
+	
+	log = log.WithField("project", projectKey)
+	
+	if projectKey == "" {
+		log.Warn("Missing project key in webhook request")
+		http.Error(w, "Project key is required", http.StatusBadRequest)
+		return
+	}
+
+	// Get the event type
+	eventType := r.Header.Get("X-Webhook-Event")
+	if eventType == "" {
+		eventType = "default" // Default event type for custom webhooks
+	}
+	log = log.WithField("eventType", eventType)
+
+	// Check for duplicate events using event ID
+	eventID := r.Header.Get("X-Webhook-Nonce")
+	if eventID != "" {
+		// Check if we've already processed this event
+		if _, exists := h.processedEvents[eventID]; exists {
+			log.WithField("eventID", eventID).Info("Ignoring duplicate webhook event")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{
+				"status":  "ignored",
+				"message": "Duplicate event",
+			})
+			return
+		}
+		
+		// Mark this event as processed
+		h.processedEvents[eventID] = time.Now()
+	}
+
+	// Read the request body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.WithField("error", err).Error("Failed to read webhook request body")
+		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+		return
+	}
+
+	// Return simple success response for now
+	response := map[string]string{
+		"status":     "received",
+		"message":    "Custom webhook received successfully",
+		"webhook_id": webhookID,
+		"event_type": eventType,
+	}
+
+	// Calculate processing time
+	duration := time.Since(start)
+	
+	// Log the result
+	log.WithFields(map[string]interface{}{
+		"duration": duration.String(),
+		"status":   "success",
+	}).Info("Webhook received")
 	
 	// Return the response
 	w.Header().Set("Content-Type", "application/json")

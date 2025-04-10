@@ -8,24 +8,6 @@
 
 package org.rinna.adapter.service;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpServer;
-import org.rinna.Rinna;
-import org.rinna.domain.model.DefaultWorkItem;
-import org.rinna.domain.service.ItemService;
-import org.rinna.domain.model.Priority;
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkItemCreateRequest;
-import org.rinna.domain.model.WorkItemType;
-import org.rinna.domain.model.WorkflowState;
-
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -34,13 +16,27 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+
+import org.rinna.Rinna;
+import org.rinna.domain.model.Priority;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.domain.model.WorkflowState;
+import org.rinna.domain.service.ItemService;
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 
 /**
  * A simple HTTP server that provides health check endpoints and API endpoints.

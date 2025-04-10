@@ -9,22 +9,21 @@
  */
 package org.rinna.cli.command;
 
-import org.rinna.cli.service.ConfigurationService;
-import org.rinna.cli.service.MockWorkflowService;
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkflowState;
-import org.rinna.cli.service.InvalidTransitionException;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.service.ContextManager;
-import org.rinna.cli.util.OutputFormatter;
-import org.rinna.cli.util.StateMapper;
-
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkflowState;
+import org.rinna.cli.service.ConfigurationService;
+import org.rinna.cli.service.ContextManager;
+import org.rinna.cli.service.InvalidTransitionException;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.MockWorkflowService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.OutputFormatter;
 
 /**
  * Command to mark a work item as done.

@@ -8,6 +8,13 @@
 
 package org.rinna.adapter.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.rinna.adapter.repository.InMemoryItemRepository;
@@ -17,20 +24,11 @@ import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
-import org.rinna.repository.CommentRepository;
-import org.rinna.repository.HistoryRepository;
 import org.rinna.repository.ItemRepository;
 import org.rinna.usecase.CommentService;
 import org.rinna.usecase.HistoryService;
 import org.rinna.usecase.InvalidTransitionException;
 import org.rinna.usecase.WorkflowService;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link DefaultWorkflowService}.

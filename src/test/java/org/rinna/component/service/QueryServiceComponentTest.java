@@ -9,6 +9,16 @@
  */
 package org.rinna.component.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.rinna.adapter.repository.InMemoryItemRepository;
@@ -25,16 +35,6 @@ import org.rinna.repository.MetadataRepository;
 import org.rinna.usecase.ItemService;
 import org.rinna.usecase.QueryService;
 import org.rinna.usecase.QueryService.QueryFilter;
-
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Component tests for the QueryService with actual implementations.

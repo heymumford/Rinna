@@ -8,10 +8,11 @@
 
 package org.rinna.bdd;
 
-import io.cucumber.datatable.DataTable;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
 import org.rinna.domain.model.Priority;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemCreateRequest;
@@ -19,12 +20,10 @@ import org.rinna.domain.model.WorkItemMetadata;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
+import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for input interface-related Cucumber scenarios.

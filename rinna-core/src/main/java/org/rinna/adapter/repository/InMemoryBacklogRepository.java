@@ -8,10 +8,10 @@
 
 package org.rinna.adapter.repository;
 
-import org.rinna.domain.repository.BacklogRepository;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.rinna.domain.repository.BacklogRepository;
 
 /**
  * In-memory implementation of the BacklogRepository interface.

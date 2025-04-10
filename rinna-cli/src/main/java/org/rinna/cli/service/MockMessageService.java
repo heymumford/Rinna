@@ -9,10 +9,6 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.cli.messaging.MessageService;
-import org.rinna.cli.messaging.MessageStatus;
-import org.rinna.cli.messaging.RinnaMessage;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +17,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import org.rinna.cli.messaging.MessageService;
+import org.rinna.cli.messaging.MessageStatus;
+import org.rinna.cli.messaging.RinnaMessage;
 
 /**
  * Mock implementation of MessageService for testing.

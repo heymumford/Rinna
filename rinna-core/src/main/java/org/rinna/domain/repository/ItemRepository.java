@@ -8,12 +8,13 @@
 
 package org.rinna.domain.repository;
 
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkItemCreateRequest;
-
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemCreateRequest;
 
 /**
  * Repository interface for work items.
@@ -90,4 +91,22 @@ public interface ItemRepository {
      * @return true if the work item exists
      */
     boolean existsById(UUID id);
+    
+    /**
+     * Updates metadata for a work item.
+     *
+     * @param id the ID of the work item
+     * @param metadata the metadata to update
+     * @return the updated work item
+     */
+    WorkItem updateMetadata(UUID id, Map<String, String> metadata);
+    
+    /**
+     * Finds work items by custom field metadata.
+     *
+     * @param field the metadata field name
+     * @param value the metadata field value
+     * @return a list of work items with matching metadata
+     */
+    List<WorkItem> findByCustomField(String field, String value);
 }

@@ -9,16 +9,16 @@
  */
 package org.rinna.adapter.service;
 
-import org.rinna.domain.SearchResult;
-import org.rinna.domain.WorkItem;
-import org.rinna.usecase.ItemService;
-import org.rinna.usecase.SearchService;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.rinna.domain.SearchResult;
+import org.rinna.domain.WorkItem;
+import org.rinna.usecase.ItemService;
+import org.rinna.usecase.SearchService;
 
 /**
  * Default implementation of the SearchService interface.

@@ -9,16 +9,6 @@
  */
 package org.rinna.cli.command;
 
-import org.rinna.cli.service.ItemService;
-import org.rinna.cli.service.MockWorkflowService;
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.service.ContextManager;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.service.MockCommentService;
-import org.rinna.cli.service.MockHistoryService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.util.OutputFormatter;
-
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -30,6 +20,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.service.ContextManager;
+import org.rinna.cli.service.ItemService;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.MockCommentService;
+import org.rinna.cli.service.MockHistoryService;
+import org.rinna.cli.service.MockWorkflowService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.OutputFormatter;
 
 /**
  * Command to display the history of a work item.

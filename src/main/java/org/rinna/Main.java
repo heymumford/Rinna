@@ -7,14 +7,20 @@
  */
 package org.rinna;
 
-import org.rinna.adapter.service.ApiHealthServer;
-import org.rinna.config.RinnaConfig;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.rinna.data.sqlite.SqliteConnectionManager;
 import org.rinna.data.sqlite.SqliteRepositoryFactory;
+import org.rinna.domain.model.Priority;
 import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.model.WorkItemType;
-import org.rinna.domain.model.Priority;
-import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.repository.MetadataRepository;
 import org.rinna.logging.MultiLanguageLogger;
 import org.rinna.repository.ItemRepository;
@@ -24,19 +30,6 @@ import org.rinna.usecase.ItemService;
 import org.rinna.usecase.QueueService;
 import org.rinna.usecase.ReleaseService;
 import org.rinna.usecase.WorkflowService;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.UUID;
 
 /**
  * Main application entry point for Rinna.
@@ -55,12 +48,19 @@ import java.util.UUID;
  *   <li>--init-demo: Initialize with demo data</li>
  * </ul>
  */
-public class Main {
-    private static final MultiLanguageLogger logger = MultiLanguageLogger.getLogger(Main.class);
+public final class Main {
+    private static final MultiLanguageLogger LOGGER = MultiLanguageLogger.getLogger(Main.class);
     private static final String VERSION = "1.10.0";
     private static final int DEFAULT_PORT = 8081;
     
     private static RinnaInstanceBuilder rinnaBuilder;
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private Main() {
+        // Utility class should not be instantiated
+    }
     
     /**
      * Main entry point.
@@ -113,7 +113,7 @@ public class Main {
             }
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
-            logger.error("Application error", e);
+            LOGGER.error("Application error", e);
             System.exit(1);
         }
     }
@@ -223,7 +223,7 @@ public class Main {
                 rinnaBuilder.withItemRepository(repositoryFactory.getItemRepository())
                            .withMetadataRepository(repositoryFactory.getMetadataRepository());
                 
-                logger.info("Using SQLite storage at {}", path);
+                LOGGER.info("Using SQLite storage at {}", path);
                 System.out.println("Using SQLite storage at " + path);
             } else {
                 // Use the default database path
@@ -232,12 +232,12 @@ public class Main {
                 rinnaBuilder.withItemRepository(repositoryFactory.getItemRepository())
                            .withMetadataRepository(repositoryFactory.getMetadataRepository());
                 
-                logger.info("Using SQLite storage at default location");
+                LOGGER.info("Using SQLite storage at default location");
                 System.out.println("Using SQLite storage at default location");
             }
         } else {
             // Use in-memory storage (default)
-            logger.info("Using in-memory storage");
+            LOGGER.info("Using in-memory storage");
             System.out.println("Using in-memory storage");
             
             // The builder will use in-memory repositories by default
@@ -263,7 +263,7 @@ public class Main {
         try {
             // Start the API server
             if (rinna.startApiServer(port)) {
-                logger.info("API server started on port {}", port);
+                LOGGER.info("API server started on port {}", port);
                 System.out.println("API server started on port " + port);
                 System.out.println("Press Ctrl+C to stop");
                 
@@ -277,7 +277,7 @@ public class Main {
                 try {
                     Thread.currentThread().join();
                 } catch (InterruptedException e) {
-                    logger.info("Main thread interrupted, shutting down");
+                    LOGGER.info("Main thread interrupted, shutting down");
                 }
             } else {
                 System.err.println("Failed to start API server on port " + port);
@@ -285,7 +285,7 @@ public class Main {
             }
         } catch (Exception e) {
             System.err.println("Error starting API server: " + e.getMessage());
-            logger.error("API server error", e);
+            LOGGER.error("API server error", e);
             System.exit(1);
         }
     }
@@ -296,7 +296,7 @@ public class Main {
      * @param rinna the Rinna instance
      */
     private static void initializeDemoData(Rinna rinna) {
-        logger.info("Initializing demo data");
+        LOGGER.info("Initializing demo data");
         System.out.println("Initializing demo data...");
         
         ItemService itemService = rinna.items();
@@ -360,7 +360,7 @@ public class Main {
             itemService.create(request);
         }
         
-        logger.info("Demo data initialized");
+        LOGGER.info("Demo data initialized");
         System.out.println("Demo data initialized");
     }
     

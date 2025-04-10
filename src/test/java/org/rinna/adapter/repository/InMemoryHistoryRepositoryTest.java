@@ -8,13 +8,7 @@
 
 package org.rinna.adapter.repository;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.rinna.domain.model.HistoryEntry;
-import org.rinna.domain.model.HistoryEntryRecord;
-import org.rinna.domain.model.HistoryEntryType;
-import org.rinna.domain.model.WorkflowState;
-import org.rinna.repository.HistoryRepository;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -22,7 +16,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.rinna.domain.model.HistoryEntry;
+import org.rinna.domain.model.HistoryEntryRecord;
+import org.rinna.domain.model.HistoryEntryType;
+import org.rinna.domain.model.WorkflowState;
+import org.rinna.repository.HistoryRepository;
 
 /**
  * Test class for the InMemoryHistoryRepository.

@@ -7,6 +7,12 @@
  */
 package org.rinna.cli.command;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+
 import org.rinna.cli.notifications.Notification;
 import org.rinna.cli.notifications.NotificationService;
 import org.rinna.cli.notifications.NotificationType;
@@ -17,12 +23,6 @@ import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.MockNotificationService;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.util.OutputFormatter;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.Callable;
 
 /**
  * Command for managing notifications.

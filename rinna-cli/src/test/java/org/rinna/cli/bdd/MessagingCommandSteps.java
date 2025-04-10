@@ -7,30 +7,25 @@
  */
 package org.rinna.cli.bdd;
 
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.When;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.And;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.Assertions;
-import org.mockito.Mockito;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.rinna.cli.command.MsgCommand;
 import org.rinna.cli.messaging.MessageStatus;
 import org.rinna.cli.messaging.RinnaMessage;
-import org.rinna.cli.service.MockMessageService;
 import org.rinna.cli.service.ConfigurationService;
+import org.rinna.cli.service.MockMessageService;
 import org.rinna.cli.service.ProjectContext;
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Arrays;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for messaging command tests.

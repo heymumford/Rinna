@@ -10,11 +10,13 @@ package middleware
 
 import (
 	"context"
+	"math/rand"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/heymumford/rinna/api/pkg/config"
 	"github.com/heymumford/rinna/api/pkg/logger"
 )
 
@@ -140,4 +142,38 @@ func CORS(allowedOrigins []string) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+// InitializeSecurityMiddleware initializes all security-related middleware
+func InitializeSecurityMiddleware(cfg *config.RinnaConfig, javaClient JavaClientInterface) (*AuthService, *WebhookSecurityService) {
+	// Initialize authentication service
+	authService := NewAuthService(javaClient, &cfg.Auth)
+
+	// Initialize webhook security service
+	webhookSecurity := NewWebhookSecurityService(javaClient, &cfg.Auth)
+
+	// Seed the random number generator for security functions
+	rand.Seed(time.Now().UnixNano())
+
+	return authService, webhookSecurity
+}
+
+// ApplySecurityMiddleware applies all security middleware to a router
+func ApplySecurityMiddleware(handler http.Handler, authService *AuthService, webhookSecurity *WebhookSecurityService, cfg *config.RinnaConfig) http.Handler {
+	// Add CORS middleware
+	handler = CORS(cfg.Auth.AllowedOrigins)(handler)
+
+	// Add request ID middleware
+	handler = RequestID(handler)
+
+	// Add logging middleware
+	handler = Logging(handler)
+
+	// Add webhook security middleware
+	handler = WebhookSecurityMiddleware(webhookSecurity)(handler)
+
+	// Add token authentication middleware
+	handler = TokenAuthentication(authService)(handler)
+
+	return handler
 }

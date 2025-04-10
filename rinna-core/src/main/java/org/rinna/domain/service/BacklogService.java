@@ -8,10 +8,10 @@
 
 package org.rinna.domain.service;
 
-import org.rinna.domain.model.WorkItem;
-
 import java.util.List;
 import java.util.UUID;
+
+import org.rinna.domain.model.WorkItem;
 
 /**
  * Service interface for managing developer backlogs.

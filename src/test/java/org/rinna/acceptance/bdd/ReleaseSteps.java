@@ -8,15 +8,14 @@
 
 package org.rinna.acceptance.bdd;
 
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
+import static org.junit.jupiter.api.Assertions.*;
+
 import org.rinna.domain.model.Release;
 import org.rinna.domain.model.WorkItem;
 
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for release-related Cucumber scenarios.

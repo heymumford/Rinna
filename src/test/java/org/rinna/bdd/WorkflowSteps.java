@@ -8,9 +8,12 @@
 
 package org.rinna.bdd;
 
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.rinna.domain.model.Priority;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemCreateRequest;
@@ -18,11 +21,9 @@ import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
 import org.rinna.usecase.InvalidTransitionException;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for workflow-related Cucumber scenarios.

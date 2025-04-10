@@ -2,13 +2,27 @@
 
 project:
   name: "Rinna"
-  version: "1.10.3"
+  version: "1.10.4"
   environment: "development"
+  data_dir: "${HOME}/.rinna/data"
+  temp_dir: "${HOME}/.rinna/temp"
+  config_dir: "${HOME}/.rinna/config"
+
+security:
+  api_token_expiration_days: 90
+  webhook_token_expiration_days: 365
+  token_encryption_key: "${RINNA_TOKEN_ENCRYPTION_KEY:-rinna-default-encryption-key-12345}"
+  enable_cors: true
+  allowed_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
 
 server:
   port: 9080
   host: "localhost"
   shutdownTimeout: 15
+  read_timeout: 30
+  write_timeout: 30
 
 java:
   command: "java"
@@ -19,16 +33,95 @@ java:
   # API endpoints
   endpoints:
     workitems: "/api/workitems"
+    projects: "/api/projects"
+    releases: "/api/releases"
     health: "/health"
+    auth_token: "/api/auth/token/validate"
+    token_generate: "/api/auth/token/generate"
+    token_revoke: "/api/auth/token/revoke"
+    webhook_secret: "/api/projects/webhooks/secret"
 
 logging:
   level: "info"
   format: "json"
-  file: ""
+  file_enabled: true
+  file_path: "${HOME}/.rinna/logs/api.log"
+  rotation: true
+  max_size: 100  # 100 MB
+  max_age: 30    # 30 days
+  max_backups: 10
+  security_logging: true
+  redact_paths:
+    - "/api/v1/auth/"
+    - "/api/v1/oauth/"
+    - "/api/v1/token/"
+  custom_fields:
+    service: "rinna-api"
+    component: "api-server"
 
 auth:
   tokenSecret: "rinna-development-secret-key"
-  tokenExpiry: 1440  # 1 day in minutes
+  tokenExpiry: 60  # 60 minutes
+  secretExpiry: 60  # 60 minutes
+  webhookSecretExpiry: 1440  # 24 hours
+  tokenEncryptionKey: "${RINNA_TOKEN_ENCRYPTION_KEY:-rinna-default-encryption-key-12345}"
+  devMode: true
+  allowedSources:
+    - "github"
+    - "gitlab"
+    - "bitbucket"
+    - "custom"
   allowedOrigins:
     - "http://localhost:3000"
     - "http://localhost:8080"
+
+go:
+  api:
+    port: 8080
+    read_timeout_seconds: 30
+    write_timeout_seconds: 30
+    shutdown_timeout_seconds: 10
+    enable_cors: true
+    log_level: "info"
+  
+  health:
+    enabled: true
+    path: "/health"
+  
+  metrics:
+    enabled: true
+    path: "/metrics"
+  
+  backend:
+    java_url: "http://localhost:8090/api/v1"
+    connection_timeout_ms: 5000
+    request_timeout_ms: 10000
+
+# API rate limiting configuration
+rate_limit:
+  enabled: true
+  default_limit: 300      # Default: 300 requests per minute 
+  burst_limit: 50         # Allow 50 burst requests
+  default_penalty_time: 60  # 60 seconds penalty when rate limit is exceeded
+  # IP addresses/CIDR ranges that are exempt from rate limiting
+  ip_whitelist:
+    - "127.0.0.1"         # Local development
+    - "192.168.0.0/16"    # Internal network
+    - "10.0.0.0/8"        # VPN network
+  
+  # Custom limits for specific IPs
+  custom_ip_limits:
+    "203.0.113.1": 100    # Limit this IP to 100 requests per minute
+  
+  # Custom limits for specific projects
+  custom_project_limits:
+    "admin-project": 600  # Admin project gets higher limits
+    "test-project": 150   # Test project gets lower limits
+  
+  # Custom limits for specific API paths
+  custom_path_limits:
+    "/api/v1/auth/*": 60        # Auth endpoints: 60 requests per minute
+    "/api/v1/oauth/*": 60       # OAuth endpoints: 60 requests per minute
+    "/api/v1/webhooks/*": 600   # Webhooks: 600 requests per minute
+    "/health": 1200             # Health checks: 1200 requests per minute
+    "/metrics": 600             # Metrics: 600 requests per minute

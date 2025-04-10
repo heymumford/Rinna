@@ -8,17 +8,16 @@
 
 package org.rinna.cli.command.impl;
 
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.WorkflowState;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.service.MockItemService;
-import org.rinna.cli.service.MockWorkflowService;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.model.WorkflowState;
+import org.rinna.cli.service.MockItemService;
+import org.rinna.cli.service.MockWorkflowService;
 
 /**
  * Command handler for workflow transition commands such as 'test' and 'done'.

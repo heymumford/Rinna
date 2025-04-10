@@ -8,11 +8,11 @@
 
 package org.rinna.repository;
 
-import org.rinna.domain.WorkItemDependency;
-
 import java.util.List;
-import java.util.UUID;
 import java.util.Optional;
+import java.util.UUID;
+
+import org.rinna.domain.WorkItemDependency;
 
 /**
  * Repository interface for work item dependencies.

@@ -1,8 +1,8 @@
 package org.rinna.usecase;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Date;
 
 /**
  * Service for system diagnostics.

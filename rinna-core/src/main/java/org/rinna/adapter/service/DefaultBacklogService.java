@@ -8,16 +8,15 @@
 
 package org.rinna.adapter.service;
 
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.repository.BacklogRepository;
-import org.rinna.domain.repository.ItemRepository;
-import org.rinna.domain.service.BacklogService;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
+
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.repository.BacklogRepository;
+import org.rinna.domain.repository.ItemRepository;
+import org.rinna.domain.service.BacklogService;
 
 /**
  * Default implementation of the BacklogService interface.

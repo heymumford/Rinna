@@ -467,6 +467,31 @@ service:
 
 For more details on service configuration, see [Service Management](service-management.md).
 
+## Operation Tracking
+
+The `rin` CLI includes comprehensive operation tracking capabilities that enhance auditability, traceability, and analytics. All CLI commands automatically record detailed execution data, including:
+
+- Command name, parameters, and arguments
+- Timestamps for start and completion
+- Success or failure status with result data
+- User and client information
+- Hierarchical relationships between operations
+
+This data enables advanced usage analytics, detailed audit trails, and performance optimization. View operation history and analytics with:
+
+```bash
+# List recent operations
+rin admin operations list
+
+# View operations analytics dashboard
+rin admin operations dashboard
+
+# View real-time operations monitor (PUI)
+./run-operations-monitor.sh
+```
+
+For detailed information about operation tracking, see [CLI Operation Tracking](cli-operation-tracking.md).
+
 ## Benefits
 
 - **Automated Service Management**: Services start automatically when needed
@@ -474,13 +499,16 @@ For more details on service configuration, see [Service Management](service-mana
 - **Polyglot Architecture**: Seamless integration between Java and Go components
 - **Consistent Interface**: Same command structure regardless of the underlying system
 - **Configuration Flexibility**: Customize behavior per-project or globally
-- **Execution Tracking**: Shows how long each phase takes, helping identify bottlenecks
+- **Comprehensive Operation Tracking**: Detailed auditing and analytics for all commands
+- **Execution Performance Analysis**: Track execution time and resource usage for optimization
 - **Color-Coded Output**: Success, warnings, and errors are color-coded for easy identification
 - **Adaptive Verbosity**: Control how much information is shown based on your needs
 
 ## Related Documentation
 
+- [CLI Operation Tracking](cli-operation-tracking.md) - Detailed guide to operation tracking capabilities
 - [Service Management](service-management.md) - Detailed documentation on service architecture
 - [Configuration Reference](configuration-reference.md) - Complete configuration options
 - [Build System](../development/build-system.md) - Information about the build system
 - [Version Management](../development/version-management.md) - Version control details
+- [PUI Architecture](pui-architecture.md) - Information about the Pragmatic User Interface architecture

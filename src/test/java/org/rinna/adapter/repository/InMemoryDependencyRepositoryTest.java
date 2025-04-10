@@ -8,16 +8,16 @@
 
 package org.rinna.adapter.repository;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.rinna.domain.WorkItemDependency;
-import org.rinna.repository.DependencyRepository;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.rinna.domain.WorkItemDependency;
+import org.rinna.repository.DependencyRepository;
 
 /**
  * Test class for the InMemoryDependencyRepository.

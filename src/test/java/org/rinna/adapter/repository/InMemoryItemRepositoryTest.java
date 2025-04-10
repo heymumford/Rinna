@@ -8,6 +8,12 @@
 
 package org.rinna.adapter.repository;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.rinna.domain.model.Priority;
@@ -17,15 +23,6 @@ import org.rinna.domain.model.WorkItemRecord;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
 import org.rinna.repository.ItemRepository;
-
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test class for the InMemoryItemRepository.

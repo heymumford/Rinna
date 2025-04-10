@@ -1,9 +1,9 @@
 package org.rinna.utils;
 
 import org.rinna.usecase.ItemService;
-import org.rinna.usecase.WorkflowService;
-import org.rinna.usecase.ReleaseService;
 import org.rinna.usecase.QueueService;
+import org.rinna.usecase.ReleaseService;
+import org.rinna.usecase.WorkflowService;
 
 /**
  * Test utility class that provides access to services for testing.

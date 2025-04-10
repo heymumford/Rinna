@@ -7,6 +7,15 @@
  */
 package org.rinna.component.report;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,16 +27,6 @@ import org.rinna.cli.report.ReportScheduler;
 import org.rinna.cli.report.ReportScheduler.ScheduleType;
 import org.rinna.cli.report.ReportScheduler.ScheduledReport;
 import org.rinna.cli.report.ReportType;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.DayOfWeek;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Component tests for ReportScheduler.

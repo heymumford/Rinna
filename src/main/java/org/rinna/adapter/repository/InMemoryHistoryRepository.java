@@ -8,10 +8,6 @@
 
 package org.rinna.adapter.repository;
 
-import org.rinna.domain.model.HistoryEntry;
-import org.rinna.domain.model.HistoryEntryType;
-import org.rinna.repository.HistoryRepository;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +15,10 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import org.rinna.domain.model.HistoryEntry;
+import org.rinna.domain.model.HistoryEntryType;
+import org.rinna.repository.HistoryRepository;
 
 /**
  * In-memory implementation of the HistoryRepository interface.

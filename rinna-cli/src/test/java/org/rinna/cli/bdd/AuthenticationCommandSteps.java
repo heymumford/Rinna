@@ -8,13 +8,14 @@
 
 package org.rinna.cli.bdd;
 
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.When;
-import io.cucumber.java.en.Then;
 import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
 import org.rinna.cli.security.SecurityManager;
 import org.rinna.cli.service.MockSecurityService;
+
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for authentication command tests.

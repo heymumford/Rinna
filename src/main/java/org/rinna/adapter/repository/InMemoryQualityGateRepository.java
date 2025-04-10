@@ -8,11 +8,11 @@
 
 package org.rinna.adapter.repository;
 
-import org.rinna.repository.QualityGateRepository;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import org.rinna.repository.QualityGateRepository;
 
 /**
  * In-memory implementation of the QualityGateRepository interface.

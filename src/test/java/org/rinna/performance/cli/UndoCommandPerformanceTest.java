@@ -9,17 +9,7 @@
  */
 package org.rinna.performance.cli;
 
-import org.junit.jupiter.api.*;
-import org.rinna.base.PerformanceTest;
-import org.rinna.cli.command.UndoCommand;
-import org.rinna.cli.service.MockHistoryService;
-import org.rinna.cli.service.MockItemService;
-import org.rinna.cli.service.MockWorkflowService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.domain.HistoryEntry;
-import org.rinna.domain.HistoryEntryType;
-import org.rinna.domain.Priority;
-import org.rinna.domain.WorkflowState;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayInputStream;
 import java.time.Duration;
@@ -27,7 +17,16 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.*;
+import org.rinna.base.PerformanceTest;
+import org.rinna.cli.command.UndoCommand;
+import org.rinna.cli.service.MockHistoryService;
+import org.rinna.cli.service.MockItemService;
+import org.rinna.cli.service.MockWorkflowService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.domain.HistoryEntryType;
+import org.rinna.domain.Priority;
+import org.rinna.domain.WorkflowState;
 
 /**
  * Performance tests for the UndoCommand.

@@ -51,6 +51,32 @@ Updates version numbers across the project:
 - Creates backups before modifications
 - Commits changes to git
 
+### xml-cleanup.sh
+
+Formats and validates all XML files in the repository:
+
+- Formats XML files with proper indentation
+- Validates XML syntax correctness
+- Fixes common POM file issues (incorrect tags, escaped comments)
+- Checks for dependency consistency across modules
+
+### pom-n-tag-fixer.sh
+
+Specialized script to fix the POM tag issue:
+
+- Specifically targets the n vs. name tag issue in POM files
+- More reliable solution compared to the generic cleanup
+- Runs automatically before xml-cleanup.sh in the scheduled process
+
+### xml-cleanup-scheduler.sh
+
+Schedules automated XML cleanup to run periodically:
+
+- Runs automatically after every build via integration with build.sh
+- Executes full XML cleanup every 10 builds by default
+- Tracks build count in .rinna-build-tracking/xml-cleanup-counter
+- Can be run manually with --force flag to trigger immediate cleanup
+
 ## Usage
 
 1. Source the XML tools library in your scripts:
@@ -82,6 +108,27 @@ xml_add_dependency "pom.xml" "org.mockito" "mockito-core" "5.17.0" "test"
 ### Update project version
 ```bash
 xml_set_version "pom.xml" "1.5.2"
+```
+
+### Run XML cleanup manually
+```bash
+# Run full cleanup (format, validate, check dependencies)
+bin/xml-tools/xml-cleanup.sh
+
+# Only validate XML files
+bin/xml-tools/xml-cleanup.sh --validate-only
+
+# Only check dependencies
+bin/xml-tools/xml-cleanup.sh --deps-only
+
+# Show detailed output
+bin/xml-tools/xml-cleanup.sh --verbose
+```
+
+### Force immediate XML cleanup
+```bash
+# Force cleanup regardless of build counter
+bin/xml-tools/xml-cleanup-scheduler.sh --force
 ```
 
 ## Advantages Over Text-Based Tools

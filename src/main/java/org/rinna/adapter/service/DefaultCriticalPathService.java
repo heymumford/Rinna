@@ -8,16 +8,16 @@
 
 package org.rinna.adapter.service;
 
-import org.rinna.domain.WorkItem;
-import org.rinna.domain.WorkItemDependency;
-import org.rinna.repository.DependencyRepository;
-import org.rinna.repository.ItemRepository;
-import org.rinna.usecase.CriticalPathService;
-import org.rinna.domain.WorkflowState;
-
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import org.rinna.domain.WorkItem;
+import org.rinna.domain.WorkItemDependency;
+import org.rinna.domain.WorkflowState;
+import org.rinna.repository.DependencyRepository;
+import org.rinna.repository.ItemRepository;
+import org.rinna.usecase.CriticalPathService;
 
 /**
  * Default implementation of the CriticalPathService interface.

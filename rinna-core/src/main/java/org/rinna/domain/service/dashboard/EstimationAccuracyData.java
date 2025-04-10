@@ -1,13 +1,13 @@
 package org.rinna.domain.service.dashboard;
 
-import org.rinna.domain.model.CynefinDomain;
-import org.rinna.domain.model.WorkParadigm;
-import org.rinna.domain.model.WorkItemType;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import org.rinna.domain.model.CynefinDomain;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.domain.model.WorkParadigm;
 
 /**
  * Data comparing estimated vs. actual cognitive load for completed work items.

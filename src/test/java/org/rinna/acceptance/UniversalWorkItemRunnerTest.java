@@ -7,10 +7,11 @@
  */
 package org.rinna.acceptance;
 
-import io.cucumber.junit.Cucumber;
-import io.cucumber.junit.CucumberOptions;
 import org.junit.runner.RunWith;
 import org.rinna.base.AcceptanceTest;
+
+import io.cucumber.junit.Cucumber;
+import io.cucumber.junit.CucumberOptions;
 
 /**
  * Runner for the Rinna Universal Work Item (RUWI) acceptance tests.

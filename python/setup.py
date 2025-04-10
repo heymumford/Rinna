@@ -12,7 +12,7 @@ if package_name == "rinna":
     # Main Rinna package
     setup(
         name="rinna",
-        version="0.1.0",
+        version="1.6.3",
         packages=["rinna"] + [f"rinna.{pkg}" for pkg in find_packages(where="rinna")],
         description="Rinna Python package",
         author="Rinna Project",
@@ -29,7 +29,7 @@ elif package_name == "lucidchart-py":
     # Mock Lucidchart API client for diagram integrations
     setup(
         name="lucidchart-py",
-        version="0.1.0",
+        version="1.6.3",
         packages=["lucidchart_py"],
         description="Mock Lucidchart API Python client",
         author="Rinna Project",

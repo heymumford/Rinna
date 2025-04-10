@@ -8,6 +8,10 @@
 
 package org.rinna.domain.service;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.rinna.domain.model.CynefinDomain;
 import org.rinna.domain.model.OrganizationalUnit;
 import org.rinna.domain.model.OrganizationalUnitCreateRequest;
@@ -15,10 +19,6 @@ import org.rinna.domain.model.OrganizationalUnitType;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkParadigm;
 import org.rinna.domain.model.Workstream;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Service interface for managing organizational units.

@@ -8,16 +8,15 @@
 
 package org.rinna.cli.command.impl;
 
+import java.util.List;
+import java.util.UUID;
+
 import org.rinna.cli.model.Priority;
 import org.rinna.cli.model.WorkItem;
 import org.rinna.cli.model.WorkItemType;
 import org.rinna.cli.model.WorkflowState;
 import org.rinna.cli.service.MockBacklogService;
 import org.rinna.cli.service.MockItemService;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Command implementation for managing developer backlogs.

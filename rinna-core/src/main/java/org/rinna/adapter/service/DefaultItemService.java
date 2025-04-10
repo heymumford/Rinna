@@ -8,6 +8,13 @@
 
 package org.rinna.adapter.service;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.rinna.domain.model.DefaultWorkItem;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemCreateRequest;
@@ -15,13 +22,6 @@ import org.rinna.domain.model.WorkItemRecord;
 import org.rinna.domain.repository.ItemRepository;
 import org.rinna.domain.repository.MetadataRepository;
 import org.rinna.domain.service.ItemService;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Default implementation of the ItemService interface.

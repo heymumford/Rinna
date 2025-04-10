@@ -1,8 +1,36 @@
 swagger: '2.0'
 info:
   title: Rinna API
-  description: API for the Rinna project management system
-  version: 1.0.0
+  description: |
+    API for the Rinna project management system
+    
+    ## Security
+    
+    The Rinna API implements several security features to protect your data:
+    
+    - API Key Authentication: All endpoints require a valid API key in the Authorization header
+    - Rate Limiting: Configurable request limits to prevent abuse
+    - OAuth Integration: Connect to third-party services securely
+    - Webhook Security: End-to-end verification of webhook payloads
+    - Request Tracing: All requests include a unique X-Request-ID for traceability
+    
+    ## Rate Limiting
+    
+    Rate limiting is applied to all API endpoints to ensure fair usage and system stability. When rate limited, you will receive a 429 Too Many Requests response with a Retry-After header.
+    
+    Rate limit headers:
+    - X-RateLimit-Limit: Maximum requests allowed per minute
+    - X-RateLimit-Remaining: Remaining requests in the current window
+    - X-RateLimit-Reset: Timestamp when the limit resets (Unix time)
+
+    ## Detailed Documentation
+
+    For more detailed documentation, please refer to:
+    - [API Security Guide](./docs/api-security-guide.md)
+    - [Rate Limiting Documentation](./docs/rate-limiting.md)
+    - [Secure Integration Examples](./docs/secure-integration-examples.md)
+    
+  version: 1.6.6
   contact:
     name: Eric C. Mumford
     email: info@example.com
@@ -22,6 +50,16 @@ securityDefinitions:
     type: apiKey
     in: header
     name: Authorization
+    description: "API key authentication using the Bearer scheme. Example: 'Authorization: Bearer ri-api-key'"
+  OAuth2:
+    type: oauth2
+    flow: accessCode
+    authorizationUrl: https://localhost:8080/api/v1/oauth/authorize
+    tokenUrl: https://localhost:8080/api/v1/oauth/token
+    scopes:
+      read: Read access to projects and work items
+      write: Write access to projects and work items
+      admin: Administrative access
 paths:
   /health:
     get:
@@ -82,6 +120,34 @@ paths:
         503:
           description: Service is not ready
           
+  /test/rate-limit:
+    get:
+      tags:
+        - health
+      summary: Test rate limiting
+      description: Endpoint that always returns a 429 Too Many Requests response for testing rate limit handling
+      operationId: testRateLimit
+      produces:
+        - application/json
+      responses:
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
+            X-RateLimit-Limit:
+              type: integer
+              description: Maximum requests allowed per minute
+            X-RateLimit-Remaining:
+              type: integer
+              description: Remaining requests (0 in this case)
+            X-RateLimit-Reset:
+              type: integer
+              description: Unix timestamp when the rate limit resets
+          schema:
+            $ref: '#/definitions/Error'
+          
   /projects:
     get:
       tags:
@@ -120,6 +186,12 @@ paths:
               $ref: '#/definitions/Project'
         401:
           description: Unauthorized
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
@@ -149,6 +221,12 @@ paths:
           description: Invalid input
         401:
           description: Unauthorized
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
@@ -178,6 +256,12 @@ paths:
           description: Unauthorized
         404:
           description: Project not found
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
@@ -214,6 +298,12 @@ paths:
           description: Unauthorized
         404:
           description: Project not found
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
@@ -263,6 +353,12 @@ paths:
           description: Unauthorized
         404:
           description: Project not found
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
@@ -310,6 +406,12 @@ paths:
               $ref: '#/definitions/Release'
         401:
           description: Unauthorized
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
@@ -339,6 +441,12 @@ paths:
           description: Invalid input
         401:
           description: Unauthorized
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
@@ -368,6 +476,12 @@ paths:
           description: Unauthorized
         404:
           description: Release not found
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
@@ -404,6 +518,12 @@ paths:
           description: Unauthorized
         404:
           description: Release not found
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
@@ -453,6 +573,12 @@ paths:
           description: Unauthorized
         404:
           description: Release not found
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
@@ -522,6 +648,12 @@ paths:
               $ref: '#/definitions/WorkItem'
         401:
           description: Unauthorized
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
@@ -551,6 +683,12 @@ paths:
           description: Invalid input
         401:
           description: Unauthorized
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
@@ -580,6 +718,12 @@ paths:
           description: Unauthorized
         404:
           description: Work item not found
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
@@ -616,6 +760,12 @@ paths:
           description: Unauthorized
         404:
           description: Work item not found
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
@@ -655,6 +805,12 @@ paths:
           description: Work item not found
         422:
           description: Invalid transition for current state
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
@@ -684,20 +840,43 @@ paths:
           description: Event processed successfully
         400:
           description: Invalid event payload
+        429:
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
-  /api/v1/webhooks/github:
+  /webhooks/github:
     post:
       tags:
         - webhooks
       summary: GitHub webhook handler
-      description: Handles incoming GitHub events
+      description: |
+        Handles incoming GitHub events. Includes security validation with HMAC-SHA256 signatures.
+        Requires X-Hub-Signature-256 header for webhook payload verification.
       operationId: handleGithubWebhookV1
       parameters:
         - name: X-GitHub-Event
           in: header
           description: GitHub event type
+          required: true
+          type: string
+        - name: X-Hub-Signature-256
+          in: header
+          description: GitHub signature for payload verification (sha256=HMAC signature)
+          required: true
+          type: string
+        - name: X-GitHub-Delivery
+          in: header
+          description: Unique identifier for the webhook delivery (used for nonce verification)
+          required: true
+          type: string
+        - name: project
+          in: query
+          description: Project key for the webhook target
           required: true
           type: string
         - name: body
@@ -713,9 +892,552 @@ paths:
           description: Event processed successfully
         400:
           description: Invalid event payload
+        401:
+          description: Invalid signature or authentication failure
+        429:
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
         500:
           description: Internal server error
           
+  /webhooks/gitlab:
+    post:
+      tags:
+        - webhooks
+      summary: GitLab webhook handler
+      description: |
+        Handles incoming GitLab events. Includes security validation with token verification.
+        Requires X-Gitlab-Token header for webhook payload verification.
+      operationId: handleGitlabWebhook
+      parameters:
+        - name: X-Gitlab-Event
+          in: header
+          description: GitLab event type
+          required: true
+          type: string
+        - name: X-Gitlab-Token
+          in: header
+          description: GitLab token for payload verification
+          required: true
+          type: string
+        - name: project
+          in: query
+          description: Project key for the webhook target
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: GitLab event payload
+          required: true
+          schema:
+            type: object
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Event processed successfully
+        400:
+          description: Invalid event payload
+        401:
+          description: Invalid token or authentication failure
+        429:
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
+        500:
+          description: Internal server error
+          
+  /webhooks/bitbucket:
+    post:
+      tags:
+        - webhooks
+      summary: Bitbucket webhook handler
+      description: |
+        Handles incoming Bitbucket events. Includes security validation with HMAC-SHA1 signatures.
+        Requires X-Hub-Signature header for webhook payload verification.
+      operationId: handleBitbucketWebhook
+      parameters:
+        - name: X-Event-Key
+          in: header
+          description: Bitbucket event type
+          required: true
+          type: string
+        - name: X-Hub-Signature
+          in: header
+          description: Bitbucket signature for payload verification
+          required: true
+          type: string
+        - name: X-Request-UUID
+          in: header
+          description: Unique identifier for the webhook delivery (used for nonce verification)
+          required: true
+          type: string
+        - name: project
+          in: query
+          description: Project key for the webhook target
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: Bitbucket event payload
+          required: true
+          schema:
+            type: object
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Event processed successfully
+        400:
+          description: Invalid event payload
+        401:
+          description: Invalid signature or authentication failure
+        429:
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
+        500:
+          description: Internal server error
+          
+  /webhooks/custom/{id}:
+    post:
+      tags:
+        - webhooks
+      summary: Custom webhook handler
+      description: |
+        Handles incoming custom webhook events. Includes security validation with HMAC-SHA256 signatures.
+        Requires X-Webhook-Signature header for webhook payload verification.
+      operationId: handleCustomWebhook
+      parameters:
+        - name: id
+          in: path
+          description: Custom webhook ID
+          required: true
+          type: string
+        - name: X-Webhook-Event
+          in: header
+          description: Custom event type
+          required: true
+          type: string
+        - name: X-Webhook-Signature
+          in: header
+          description: Custom signature for payload verification
+          required: true
+          type: string
+        - name: project
+          in: query
+          description: Project key for the webhook target
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: Custom event payload
+          required: true
+          schema:
+            type: object
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Event processed successfully
+        400:
+          description: Invalid event payload
+        401:
+          description: Invalid signature or authentication failure
+        429:
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              type: integer
+              description: Seconds to wait before retrying
+        500:
+          description: Internal server error
+          
+  /webhooks/configure/{source}:
+    post:
+      tags:
+        - webhooks
+      summary: Configure webhook settings
+      description: Configures webhook settings for a specific source
+      operationId: configureWebhook
+      parameters:
+        - name: source
+          in: path
+          description: Webhook source (github, gitlab, bitbucket, custom)
+          required: true
+          type: string
+          enum: [github, gitlab, bitbucket, custom]
+        - name: body
+          in: body
+          description: Webhook configuration
+          required: true
+          schema:
+            $ref: '#/definitions/WebhookConfig'
+      security:
+        - ApiKeyAuth: []
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Webhook configured successfully
+          schema:
+            $ref: '#/definitions/WebhookConfig'
+        400:
+          description: Invalid configuration
+        401:
+          description: Unauthorized
+        429:
+          description: Rate limit exceeded
+        500:
+          description: Internal server error
+          
+  /oauth/authorize/{provider}:
+    get:
+      tags:
+        - oauth
+      summary: Get OAuth authorization URL
+      description: |
+        Generates an authorization URL for the specified OAuth provider.
+        This is the first step in the OAuth flow to connect to external services.
+      operationId: getOAuthAuthorizationURL
+      parameters:
+        - name: provider
+          in: path
+          description: OAuth provider (github, jira, azure-devops, gitlab, bitbucket)
+          required: true
+          type: string
+          enum: [github, jira, azure-devops, gitlab, bitbucket]
+        - name: project_id
+          in: query
+          description: Project ID to associate with the OAuth token
+          required: true
+          type: string
+        - name: user_id
+          in: query
+          description: User ID to associate with the OAuth token
+          required: true
+          type: string
+        - name: redirect_uri
+          in: query
+          description: URI to redirect to after authorization (must be whitelisted)
+          required: false
+          type: string
+      security:
+        - ApiKeyAuth: []
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OAuth authorization URL generated successfully
+          schema:
+            type: object
+            properties:
+              authorization_url:
+                type: string
+                description: URL to redirect the user to for OAuth authorization
+              state:
+                type: string
+                description: State token to validate the callback
+        400:
+          description: Invalid request parameters
+        401:
+          description: Unauthorized
+        429:
+          description: Rate limit exceeded
+        500:
+          description: Internal server error
+          
+  /oauth/callback:
+    get:
+      tags:
+        - oauth
+      summary: OAuth callback handler
+      description: |
+        Handles the callback from OAuth providers after user authorization.
+        Exchanges the authorization code for access tokens.
+      operationId: handleOAuthCallback
+      parameters:
+        - name: code
+          in: query
+          description: Authorization code from OAuth provider
+          required: true
+          type: string
+        - name: state
+          in: query
+          description: State token to validate the request
+          required: true
+          type: string
+      produces:
+        - application/json
+      responses:
+        200:
+          description: OAuth authorization successful
+          schema:
+            $ref: '#/definitions/OAuthToken'
+        400:
+          description: Invalid request parameters
+        401:
+          description: Invalid state token
+        500:
+          description: Internal server error
+          
+  /oauth/tokens:
+    get:
+      tags:
+        - oauth
+      summary: List OAuth tokens
+      description: Lists all OAuth tokens for a provider and project
+      operationId: listOAuthTokens
+      parameters:
+        - name: provider
+          in: query
+          description: OAuth provider to filter by
+          required: false
+          type: string
+          enum: [github, jira, azure-devops, gitlab, bitbucket]
+        - name: project_id
+          in: query
+          description: Project ID to filter by
+          required: true
+          type: string
+      security:
+        - ApiKeyAuth: []
+      produces:
+        - application/json
+      responses:
+        200:
+          description: List of OAuth tokens
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/OAuthToken'
+        401:
+          description: Unauthorized
+        429:
+          description: Rate limit exceeded
+        500:
+          description: Internal server error
+  
+  /oauth/tokens/{provider}:
+    delete:
+      tags:
+        - oauth
+      summary: Revoke OAuth token
+      description: Revokes and removes an OAuth token for a provider, project, and user
+      operationId: revokeOAuthToken
+      parameters:
+        - name: provider
+          in: path
+          description: OAuth provider
+          required: true
+          type: string
+          enum: [github, jira, azure-devops, gitlab, bitbucket]
+        - name: project_id
+          in: query
+          description: Project ID associated with the token
+          required: true
+          type: string
+        - name: user_id
+          in: query
+          description: User ID associated with the token
+          required: true
+          type: string
+      security:
+        - ApiKeyAuth: []
+      produces:
+        - application/json
+      responses:
+        204:
+          description: OAuth token revoked successfully
+        401:
+          description: Unauthorized
+        404:
+          description: Token not found
+        429:
+          description: Rate limited
+        500:
+          description: Internal server error
+          
+  /oauth/providers:
+    get:
+      tags:
+        - oauth
+      summary: List available OAuth providers
+      description: Returns a list of available OAuth providers and their configuration requirements
+      operationId: listOAuthProviders
+      security:
+        - ApiKeyAuth: []
+      produces:
+        - application/json
+      responses:
+        200:
+          description: List of OAuth providers
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/OAuthProvider'
+        401:
+          description: Unauthorized
+        429:
+          description: Rate limited
+        500:
+          description: Internal server error
+          
+  /rate-limits:
+    get:
+      tags:
+        - security
+      summary: Get rate limit information
+      description: |
+        Retrieves current rate limit information for the authenticated client.
+        Useful for monitoring rate limit status without making an actual API request.
+      operationId: getRateLimitInfo
+      security:
+        - ApiKeyAuth: []
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Rate limit information
+          headers:
+            X-RateLimit-Limit:
+              type: integer
+              description: Maximum requests allowed per minute
+            X-RateLimit-Remaining:
+              type: integer
+              description: Remaining requests in the current window
+            X-RateLimit-Reset:
+              type: integer
+              description: Unix timestamp when the rate limit resets
+          schema:
+            $ref: '#/definitions/RateLimitInfo'
+        401:
+          description: Unauthorized
+        429:
+          description: Rate limited
+        500:
+          description: Internal server error
+          
+  /rate-limits/config:
+    get:
+      tags:
+        - security
+      summary: Get rate limit configuration
+      description: Returns the current rate limit configuration for different endpoints and client types
+      operationId: getRateLimitConfig
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+            - admin
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Rate limit configuration
+          schema:
+            type: object
+            properties:
+              default_limit:
+                type: integer
+                description: Default rate limit for standard API calls
+              endpoint_limits:
+                type: object
+                additionalProperties:
+                  type: integer
+                description: Custom limits for specific endpoints
+              ip_whitelist:
+                type: array
+                items:
+                  type: string
+                description: Whitelisted IP addresses/ranges
+        401:
+          description: Unauthorized
+        403:
+          description: Forbidden - requires admin scope
+        429:
+          description: Rate limited
+        500:
+          description: Internal server error
+  
+    put:
+      tags:
+        - security
+      summary: Update rate limit configuration
+      description: Updates the rate limit configuration for different endpoints and client types
+      operationId: updateRateLimitConfig
+      parameters:
+        - name: body
+          in: body
+          description: Rate limit configuration
+          required: true
+          schema:
+            type: object
+            properties:
+              default_limit:
+                type: integer
+                description: Default rate limit for standard API calls
+              endpoint_limits:
+                type: object
+                additionalProperties:
+                  type: integer
+                description: Custom limits for specific endpoints
+              ip_whitelist:
+                type: array
+                items:
+                  type: string
+                description: Whitelisted IP addresses/ranges
+      security:
+        - ApiKeyAuth: []
+        - OAuth2:
+            - admin
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Rate limit configuration updated successfully
+        400:
+          description: Invalid configuration
+        401:
+          description: Unauthorized
+        403:
+          description: Forbidden - requires admin scope
+        429:
+          description: Rate limited
+        500:
+          description: Internal server error
+          
+  /security/context:
+    get:
+      tags:
+        - security
+      summary: Get security context
+      description: |
+        Returns the current security context for the request.
+        Includes information about the client IP, user agent, user ID, and other security details.
+      operationId: getSecurityContext
+      security:
+        - ApiKeyAuth: []
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Security context
+          schema:
+            $ref: '#/definitions/SecurityContext'
+        401:
+          description: Unauthorized
+        429:
+          description: Rate limited
+        500:
+          description: Internal server error
+
 definitions:
   HealthStatus:
     type: object
@@ -725,7 +1447,7 @@ definitions:
         example: "OK"
       version:
         type: string
-        example: "1.0.0"
+        example: "1.6.6"
       timestamp:
         type: string
         format: date-time
@@ -1042,15 +1764,230 @@ definitions:
             type: string
       # This is a simplified representation - actual GitHub events are more complex
 
+  OAuthToken:
+    type: object
+    properties:
+      access_token:
+        type: string
+        description: The OAuth access token
+      token_type:
+        type: string
+        description: The token type (usually "Bearer")
+      refresh_token:
+        type: string
+        description: The refresh token (if available)
+      expiry:
+        type: string
+        format: date-time
+        description: When the token expires
+      scopes:
+        type: array
+        items:
+          type: string
+        description: The scopes this token has access to
+      provider:
+        type: string
+        description: The OAuth provider (github, jira, etc.)
+      user_id:
+        type: string
+        description: The user ID associated with this token
+      project_id:
+        type: string
+        description: The project ID associated with this token
+      created_at:
+        type: string
+        format: date-time
+        description: When the token was created
+      updated_at:
+        type: string
+        format: date-time
+        description: When the token was last updated
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+        description: Additional metadata about the token
+
+  OAuthProvider:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Provider identifier (e.g., github, jira)
+      name:
+        type: string
+        description: Display name of the provider
+      description:
+        type: string
+        description: Description of the provider
+      icon_url:
+        type: string
+        description: URL to the provider's icon
+      auth_url_template:
+        type: string
+        description: Template for constructing the authorization URL
+      token_url:
+        type: string
+        description: URL for token exchange
+      scopes:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+              description: Scope identifier
+            name:
+              type: string
+              description: Display name of the scope
+            description:
+              type: string
+              description: Description of what the scope grants access to
+      configuration_fields:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Field name
+            label:
+              type: string
+              description: Display label for the field
+            required:
+              type: boolean
+              description: Whether the field is required
+            type:
+              type: string
+              description: Field type (string, boolean, number)
+      documentation_url:
+        type: string
+        description: URL to documentation about integrating with this provider
+
+  WebhookConfig:
+    type: object
+    required:
+      - source
+      - secret
+    properties:
+      source:
+        type: string
+        enum: [github, gitlab, bitbucket, custom]
+        description: The webhook source
+      secret:
+        type: string
+        description: The secret used to validate webhooks
+      enabled:
+        type: boolean
+        default: true
+        description: Whether this webhook configuration is enabled
+      project_key:
+        type: string
+        description: The project key associated with this webhook
+      security_mode:
+        type: string
+        enum: [standard, strict]
+        default: standard
+        description: Security validation mode for webhooks
+      allowed_ips:
+        type: array
+        items:
+          type: string
+        description: IP addresses or CIDR ranges allowed to send webhooks
+      rate_limit:
+        type: integer
+        description: Rate limit for this webhook source (requests per minute)
+      metadata:
+        type: object
+        additionalProperties:
+          type: string
+        description: Additional metadata for this webhook configuration
+
+  SecurityContext:
+    type: object
+    properties:
+      request_id:
+        type: string
+        description: Unique identifier for the request
+      ip:
+        type: string
+        description: Client IP address
+      user_agent:
+        type: string
+        description: Client user agent
+      method:
+        type: string
+        description: HTTP method
+      path:
+        type: string
+        description: Request path
+      user_id:
+        type: string
+        description: User ID (if authenticated)
+      project_id:
+        type: string
+        description: Project ID (if applicable)
+      token_type:
+        type: string
+        description: Type of authentication token used
+      webhook_source:
+        type: string
+        description: Source of webhook (if applicable)
+      status_code:
+        type: integer
+        description: HTTP status code of the response
+      duration:
+        type: string
+        description: Request processing duration
+
+  RateLimitInfo:
+    type: object
+    properties:
+      limit:
+        type: integer
+        description: Maximum number of requests allowed per minute
+      remaining:
+        type: integer
+        description: Remaining requests in the current period
+      reset:
+        type: integer
+        format: int64
+        description: Unix timestamp when the rate limit resets
+      retry_after:
+        type: integer
+        description: Seconds to wait before retrying (only on 429 responses)
+      endpoint_limits:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            limit:
+              type: integer
+              description: Maximum requests allowed per minute
+            remaining:
+              type: integer
+              description: Remaining requests
+        description: Rate limits for specific endpoints
+
   Error:
     type: object
     properties:
       code:
         type: integer
         format: int32
+        description: HTTP status code
       message:
         type: string
+        description: Error message
       details:
         type: array
         items:
           type: string
+        description: Detailed error information
+      request_id:
+        type: string
+        description: Request ID for tracing
+      timestamp:
+        type: string
+        format: date-time
+        description: When the error occurred

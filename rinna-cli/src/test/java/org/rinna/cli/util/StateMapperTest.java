@@ -9,6 +9,8 @@
  */
 package org.rinna.cli.util;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,8 +20,6 @@ import org.rinna.cli.domain.model.DomainWorkflowState;
 import org.rinna.cli.model.Priority;
 import org.rinna.cli.model.WorkItemType;
 import org.rinna.cli.model.WorkflowState;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("StateMapper Tests")
 class StateMapperTest {

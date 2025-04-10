@@ -9,17 +9,17 @@
  */
 package org.rinna.pui;
 
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.rinna.pui.component.Component;
 import org.rinna.pui.component.Container;
 import org.rinna.pui.component.Layout;
 import org.rinna.pui.input.KeyHandler;
 import org.rinna.pui.render.TerminalRenderer;
 import org.rinna.pui.style.Theme;
-
-import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Main entry point for the Rinna Pragmatic User Interface (PUI).

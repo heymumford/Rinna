@@ -8,18 +8,13 @@
 
 package org.rinna;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import org.junit.jupiter.api.Test;
 import org.rinna.domain.model.Priority;
-import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.model.WorkItemType;
 import org.rinna.domain.model.WorkflowState;
-import org.rinna.usecase.InvalidTransitionException;
-import org.rinna.usecase.ItemService;
-import org.rinna.usecase.WorkflowService;
-import org.rinna.utils.TestRinna;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test-Driven Development examples for the Rinna workflow management system.

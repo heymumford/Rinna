@@ -9,15 +9,15 @@
  */
 package org.rinna.usecase;
 
-import org.rinna.domain.model.Priority;
-import org.rinna.domain.model.WorkItem;
-import org.rinna.domain.model.WorkItemType;
-import org.rinna.domain.model.WorkflowState;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import org.rinna.domain.model.Priority;
+import org.rinna.domain.model.WorkItem;
+import org.rinna.domain.model.WorkItemType;
+import org.rinna.domain.model.WorkflowState;
 
 /**
  * Service interface for developer-focused querying and filtering of work items.

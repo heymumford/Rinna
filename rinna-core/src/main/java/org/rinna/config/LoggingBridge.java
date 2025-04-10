@@ -8,11 +8,11 @@
 
 package org.rinna.config;
 
+import java.util.logging.LogManager;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
-
-import java.util.logging.LogManager;
 
 /**
  * Utility class to bridge Java Util Logging (JUL) to SLF4J.

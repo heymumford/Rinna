@@ -9,9 +9,9 @@
  */
 package org.rinna.usecase;
 
-import org.rinna.domain.SearchResult;
-
 import java.util.List;
+
+import org.rinna.domain.SearchResult;
 
 /**
  * Service interface for searching work items.

@@ -8,11 +8,6 @@
 
 package org.rinna.cli.command.impl;
 
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.service.BackupService;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.util.OutputFormatter;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -20,6 +15,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
+
+import org.rinna.cli.service.BackupService;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.OutputFormatter;
 
 /**
  * Command handler for backup-related operations.

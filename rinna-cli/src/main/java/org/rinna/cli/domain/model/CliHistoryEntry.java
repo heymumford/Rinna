@@ -9,12 +9,12 @@
  */
 package org.rinna.cli.domain.model;
 
-import org.rinna.cli.service.MockHistoryService;
-
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import org.rinna.cli.service.MockHistoryService;
 
 /**
  * Implementation of HistoryEntry that adapts from MockHistoryService.HistoryEntryRecord.

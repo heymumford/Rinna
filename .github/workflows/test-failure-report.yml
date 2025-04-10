@@ -1,6 +1,10 @@
 name: Test Failure Analysis
 
 on:
+  workflow_run:
+    workflows: ["rin-ci", "Rinna Quality CI"]
+    types:
+      - completed
   workflow_dispatch:
     inputs:
       reports-dir:
@@ -28,9 +32,137 @@ on:
         type: boolean
 
 jobs:
+  # This job handles automatic workflow runs when CI fails
+  process-workflow-failures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download artifacts
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: ${{ github.event.workflow_run.id }}
+            });
+            
+            const testReportsArtifact = artifacts.data.artifacts.find(
+              artifact => artifact.name === "test-reports" || 
+                         artifact.name === "integration-test-reports" || 
+                         artifact.name === "acceptance-test-reports"
+            );
+            
+            if (!testReportsArtifact) {
+              console.log("No test report artifacts found.");
+              return;
+            }
+            
+            const download = await github.rest.actions.downloadArtifact({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: testReportsArtifact.id,
+              archive_format: 'zip'
+            });
+            
+            fs.writeFileSync('test-reports.zip', Buffer.from(download.data));
+            
+            console.log(`Downloaded test report artifact: ${testReportsArtifact.name}`);
+      
+      - name: Setup test reports directory
+        run: |
+          mkdir -p test-reports
+          unzip -q test-reports.zip -d test-reports || echo "No test reports found"
+      
+      - name: Make scripts executable
+        run: chmod +x bin/test-failure-notify.sh
+      
+      - name: Analyze test failures
+        run: |
+          ./bin/test-failure-notify.sh \
+            --reports-dir "test-reports" \
+            --notify-method "all" \
+            --slack-webhook "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            --email-to "${{ secrets.NOTIFICATION_EMAIL }}" \
+            --threshold "1" \
+            --ci \
+            --summary-only
+        continue-on-error: true
+      
+      - name: Create GitHub Issue for test failures
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const workflowName = '${{ github.event.workflow_run.name }}';
+            const workflowUrl = '${{ github.event.workflow_run.html_url }}';
+            const runNumber = '${{ github.event.workflow_run.run_number }}';
+            const runAttempt = '${{ github.event.workflow_run.run_attempt }}';
+            const branch = '${{ github.event.workflow_run.head_branch }}';
+            const commitSha = '${{ github.event.workflow_run.head_sha }}';
+            const shortSha = commitSha.substring(0, 7);
+            
+            // Generate issue body
+            const body = `## Test Failures in ${workflowName} Workflow
+            
+            This issue was automatically created because test failures were detected in workflow run [#${runNumber}.${runAttempt}](${workflowUrl}).
+            
+            ### Workflow Information
+            - **Workflow:** ${workflowName}
+            - **Branch:** ${branch}
+            - **Commit:** ${shortSha}
+            - **Run ID:** ${runNumber}.${runAttempt}
+            
+            ### Failure Summary
+            Detailed test failure reports are available in the workflow artifacts. Please check the [workflow run](${workflowUrl}) for more information.
+            
+            ### Next Steps
+            1. Review the test failures in the workflow artifacts or logs
+            2. Fix the failing tests
+            3. Push a new commit to the branch
+            4. Close this issue once the tests are passing
+            
+            > This issue was automatically created by the Test Failure Notification workflow.`;
+            
+            // Search for an existing open issue for this workflow run
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'test-failure'
+            });
+            
+            const existingIssue = issues.data.find(issue => 
+              issue.title.includes(workflowName) && 
+              issue.title.includes(runNumber)
+            );
+            
+            if (existingIssue) {
+              console.log(`Found existing issue #${existingIssue.number}, not creating a new one.`);
+              return;
+            }
+            
+            // Create GitHub issue
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Test Failures: ${workflowName} #${runNumber} (${branch})`,
+              body: body,
+              labels: ['bug', 'test-failure', 'automated']
+            });
+            
+            console.log(`Created issue #${issue.data.number}: ${issue.data.html_url}`);
+
+  # This job handles manual invocation with specific parameters
   analyze-test-failures:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

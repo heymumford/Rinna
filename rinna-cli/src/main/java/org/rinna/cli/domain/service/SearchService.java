@@ -9,13 +9,13 @@
  */
 package org.rinna.cli.domain.service;
 
+import java.util.List;
+import java.util.Map;
+
 import org.rinna.cli.domain.model.DomainPriority;
 import org.rinna.cli.domain.model.DomainWorkItem;
 import org.rinna.cli.domain.model.DomainWorkItemType;
 import org.rinna.cli.domain.model.DomainWorkflowState;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Domain interface for search operations in the CLI module.

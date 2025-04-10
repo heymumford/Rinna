@@ -8,17 +8,17 @@
 
 package org.rinna.adapter.service;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.rinna.domain.model.DefaultWorkItem;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemCreateRequest;
 import org.rinna.domain.model.WorkItemRecord;
 import org.rinna.repository.ItemRepository;
 import org.rinna.usecase.ItemService;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Default implementation of the ItemService interface.

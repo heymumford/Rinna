@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/heymumford/rinna/api/internal/models"
@@ -23,8 +24,10 @@ import (
 
 // JavaClient handles communication with the Java service
 type JavaClient struct {
-	config     *config.JavaServiceConfig
-	httpClient *http.Client
+	config       *config.JavaServiceConfig
+	httpClient   *http.Client
+	tokenManager *TokenManager
+	fullConfig   *config.RinnaConfig
 }
 
 // NewJavaClient creates a new Java client
@@ -41,6 +44,45 @@ func NewJavaClient(config *config.JavaServiceConfig) *JavaClient {
 			Timeout: requestTimeout,
 		},
 	}
+}
+
+// WithFullConfig sets the full configuration on the Java client
+func (c *JavaClient) WithFullConfig(cfg *config.RinnaConfig) *JavaClient {
+	c.fullConfig = cfg
+	return c
+}
+
+// InitializeTokenManager initializes the token manager if not already initialized
+func (c *JavaClient) InitializeTokenManager() error {
+	if c.tokenManager != nil {
+		return nil
+	}
+
+	if c.fullConfig == nil {
+		var err error
+		c.fullConfig, err = config.GetConfig()
+		if err != nil {
+			return fmt.Errorf("failed to get configuration: %w", err)
+		}
+	}
+
+	tokenManager, err := NewTokenManager(c.fullConfig, c)
+	if err != nil {
+		return fmt.Errorf("failed to create token manager: %w", err)
+	}
+
+	c.tokenManager = tokenManager
+	return nil
+}
+
+// GetTokenManager returns the token manager
+func (c *JavaClient) GetTokenManager() (*TokenManager, error) {
+	if c.tokenManager == nil {
+		if err := c.InitializeTokenManager(); err != nil {
+			return nil, err
+		}
+	}
+	return c.tokenManager, nil
 }
 
 // Request sends a request to the Java service
@@ -69,12 +111,33 @@ func (c *JavaClient) Request(ctx context.Context, method, path string, payload i
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
+	// Add authentication if token manager is available and path is not the token generation endpoint
+	if c.tokenManager != nil && !strings.Contains(path, "/token/generate") && !strings.Contains(path, "/token/validate") {
+		// Check for project ID in the context
+		projectID := ctx.Value("projectID")
+		if projectID != nil {
+			// Get token for the project
+			token, err := c.tokenManager.GetToken(ctx, projectID.(string))
+			if err == nil {
+				req.Header.Set("Authorization", "Bearer "+token)
+			} else {
+				fmt.Printf("Warning: Failed to get token for project %s: %v\n", projectID, err)
+			}
+		}
+	}
+
 	// Send the request
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to send request: %v", err)
 	}
 	defer resp.Body.Close()
+
+	// Check for token expiration warning
+	if expiringHeader := resp.Header.Get("X-Token-Expiring-Soon"); expiringHeader == "true" {
+		expiresIn := resp.Header.Get("X-Token-Expires-In")
+		fmt.Printf("Warning: API token is expiring soon. Expires in %s hours\n", expiresIn)
+	}
 
 	// Check the status code
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -84,6 +147,27 @@ func (c *JavaClient) Request(ctx context.Context, method, path string, payload i
 		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err != nil {
 			return fmt.Errorf("received non-success status code: %d", resp.StatusCode)
 		}
+		
+		// Handle unauthorized errors - token might be invalid
+		if resp.StatusCode == http.StatusUnauthorized && c.tokenManager != nil {
+			// Check for auth token in the request
+			if authHeader := req.Header.Get("Authorization"); strings.HasPrefix(authHeader, "Bearer ") {
+				token := strings.TrimPrefix(authHeader, "Bearer ")
+				
+				// Mark token as invalid
+				if tokenInfo, err := c.tokenManager.GetTokenInfo(token); err == nil {
+					// Only log for non-validation endpoints to avoid circular logging
+					if !strings.Contains(path, "/token/validate") {
+						fmt.Printf("Token %s for project %s is no longer valid. Removing from cache.\n", 
+							truncateToken(token), tokenInfo.ProjectID)
+					}
+					
+					// Revoke the token locally
+					c.tokenManager.RevokeToken(ctx, token)
+				}
+			}
+		}
+		
 		return fmt.Errorf("received error response: %s", errorResponse.Error)
 	}
 
@@ -95,6 +179,14 @@ func (c *JavaClient) Request(ctx context.Context, method, path string, payload i
 	}
 
 	return nil
+}
+
+// truncateToken returns a truncated token for logging (security)
+func truncateToken(token string) string {
+	if len(token) <= 12 {
+		return "********"
+	}
+	return token[:8] + "..." + token[len(token)-4:]
 }
 
 // Ping checks if the Java service is reachable

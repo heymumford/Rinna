@@ -8,6 +8,13 @@
 
 package org.rinna.domain.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,17 +24,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.rinna.adapter.repository.InMemoryReleaseRepository;
-import org.rinna.service.DefaultReleaseService;
 import org.rinna.domain.model.Release;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.repository.ReleaseRepository;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.rinna.service.DefaultReleaseService;
 
 /**
  * Tests for the ReleaseService interface.

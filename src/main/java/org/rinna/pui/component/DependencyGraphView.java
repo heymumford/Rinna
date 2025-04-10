@@ -9,6 +9,10 @@
  */
 package org.rinna.pui.component;
 
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import org.rinna.cli.model.WorkItem;
 import org.rinna.pui.examples.model.WorkItemRelationship;
 import org.rinna.pui.geom.Dimension;
@@ -17,10 +21,6 @@ import org.rinna.pui.input.KeyHandler;
 import org.rinna.pui.style.BorderStyle;
 import org.rinna.pui.style.Color;
 import org.rinna.pui.style.Style;
-
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * A component that visualizes work item dependencies and relationships.

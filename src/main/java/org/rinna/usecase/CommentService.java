@@ -8,13 +8,13 @@
 
 package org.rinna.usecase;
 
-import org.rinna.domain.model.Comment;
-import org.rinna.domain.model.CommentType;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.rinna.domain.model.Comment;
+import org.rinna.domain.model.CommentType;
 
 /**
  * Service interface for managing work item comments.

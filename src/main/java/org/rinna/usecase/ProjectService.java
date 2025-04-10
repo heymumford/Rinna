@@ -9,10 +9,10 @@
  */
 package org.rinna.usecase;
 
-import org.rinna.domain.Project;
-
 import java.util.List;
 import java.util.UUID;
+
+import org.rinna.domain.Project;
 
 /**
  * Service interface for managing projects.

@@ -10,30 +10,29 @@
 
 package org.rinna.cli.command;
 
-import org.rinna.cli.command.impl.AdminAuditCommand;
-import org.rinna.cli.command.impl.AdminBackupCommand;
-import org.rinna.cli.command.impl.AdminComplianceCommand;
-import org.rinna.cli.command.impl.AdminDiagnosticsCommand;
-import org.rinna.cli.command.impl.AdminMonitorCommand;
-import org.rinna.cli.command.impl.AdminRecoveryCommand;
-import org.rinna.cli.service.AuditService;
-import org.rinna.cli.service.BackupService;
-import org.rinna.cli.service.ComplianceService;
-import org.rinna.cli.service.DiagnosticsService;
-import org.rinna.cli.service.MonitoringService;
-import org.rinna.cli.service.RecoveryService;
-import org.rinna.cli.security.SecurityManager;
-import org.rinna.cli.service.ContextManager;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.util.OutputFormatter;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+
+import org.rinna.cli.command.impl.AdminAuditCommand;
+import org.rinna.cli.command.impl.AdminBackupCommand;
+import org.rinna.cli.command.impl.AdminComplianceCommand;
+import org.rinna.cli.command.impl.AdminDiagnosticsCommand;
+import org.rinna.cli.command.impl.AdminMonitorCommand;
+import org.rinna.cli.command.impl.AdminRecoveryCommand;
+import org.rinna.cli.security.SecurityManager;
+import org.rinna.cli.service.AuditService;
+import org.rinna.cli.service.BackupService;
+import org.rinna.cli.service.ComplianceService;
+import org.rinna.cli.service.DiagnosticsService;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.MonitoringService;
+import org.rinna.cli.service.RecoveryService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.OutputFormatter;
 
 /**
  * The AdminCommand handles all administrative operations in Rinna.

@@ -1,5 +1,9 @@
 package org.rinna.cli.unit;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
 import org.rinna.cli.domain.model.DefaultDomainWorkItem;
 import org.rinna.cli.domain.model.DomainPriority;
@@ -11,13 +15,6 @@ import org.rinna.cli.model.WorkItem;
 import org.rinna.cli.model.WorkItemType;
 import org.rinna.cli.model.WorkflowState;
 import org.rinna.cli.util.ModelMapper;
-
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Simple unit tests for the ModelMapper utility class.

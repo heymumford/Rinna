@@ -18,7 +18,14 @@ import org.rinna.usecase.QueryService;
 /**
  * Factory for creating QueryService instances.
  */
-public class QueryServiceFactory {
+public final class QueryServiceFactory {
+    
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private QueryServiceFactory() {
+        // Utility class should not be instantiated
+    }
     
     /**
      * Creates a new QueryService instance.

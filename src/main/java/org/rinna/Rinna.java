@@ -8,15 +8,14 @@
 
 package org.rinna;
 
+import java.io.IOException;
+
 import org.rinna.adapter.service.ApiHealthServer;
-import org.rinna.config.RinnaConfig;
 import org.rinna.repository.MetadataRepository;
 import org.rinna.usecase.ItemService;
 import org.rinna.usecase.QueueService;
 import org.rinna.usecase.ReleaseService;
 import org.rinna.usecase.WorkflowService;
-
-import java.io.IOException;
 
 /**
  * Main entry point for the Rinna system.

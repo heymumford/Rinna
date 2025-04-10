@@ -8,10 +8,6 @@
 
 package org.rinna.logging;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +19,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * Multi-language logging system that provides a unified logging interface

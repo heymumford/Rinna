@@ -7,33 +7,15 @@
  */
 package org.rinna.cli.bdd;
 
-import io.cucumber.datatable.DataTable;
-import io.cucumber.java.DocString;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
-import io.cucumber.java.en.When;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
-import org.rinna.cli.service.ConfigurationService;
-import org.rinna.cli.service.MockItemService;
-import org.rinna.cli.service.MockCommentService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkItemCreateRequest;
-import org.rinna.cli.model.WorkflowState;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.Comment;
-import org.rinna.cli.model.CommentType;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,9 +28,23 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+import org.rinna.cli.model.Comment;
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkItemCreateRequest;
+import org.rinna.cli.model.WorkflowState;
+import org.rinna.cli.service.ConfigurationService;
+import org.rinna.cli.service.MockCommentService;
+import org.rinna.cli.service.MockItemService;
+import org.rinna.cli.service.ServiceManager;
+
+import io.cucumber.datatable.DataTable;
+import io.cucumber.java.DocString;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 /**
  * Step definitions for item command tests.

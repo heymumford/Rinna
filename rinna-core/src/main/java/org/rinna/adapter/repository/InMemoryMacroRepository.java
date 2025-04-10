@@ -1,15 +1,15 @@
 package org.rinna.adapter.repository;
 
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
 import org.rinna.domain.model.macro.MacroDefinition;
 import org.rinna.domain.model.macro.MacroExecution;
 import org.rinna.domain.model.macro.ScheduledExecution;
 import org.rinna.domain.model.macro.TriggerType;
 import org.rinna.domain.repository.MacroRepository;
-
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * In-memory implementation of the MacroRepository interface.

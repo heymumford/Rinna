@@ -8,14 +8,6 @@
 
 package org.rinna.adapter.repository;
 
-import org.rinna.domain.model.CynefinDomain;
-import org.rinna.domain.model.OrganizationalUnit;
-import org.rinna.domain.model.OrganizationalUnitCreateRequest;
-import org.rinna.domain.model.OrganizationalUnitRecord;
-import org.rinna.domain.model.OrganizationalUnitType;
-import org.rinna.domain.model.WorkParadigm;
-import org.rinna.domain.repository.OrganizationalUnitRepository;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,6 +20,14 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import org.rinna.domain.model.CynefinDomain;
+import org.rinna.domain.model.OrganizationalUnit;
+import org.rinna.domain.model.OrganizationalUnitCreateRequest;
+import org.rinna.domain.model.OrganizationalUnitRecord;
+import org.rinna.domain.model.OrganizationalUnitType;
+import org.rinna.domain.model.WorkParadigm;
+import org.rinna.domain.repository.OrganizationalUnitRepository;
 
 /**
  * In-memory implementation of the OrganizationalUnitRepository interface.

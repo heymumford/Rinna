@@ -9,6 +9,10 @@
  */
 package org.rinna.cli.adapter;
 
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.rinna.cli.domain.model.DomainWorkItem;
 import org.rinna.cli.domain.service.BacklogService;
 import org.rinna.cli.model.WorkItem;
@@ -16,11 +20,6 @@ import org.rinna.cli.service.MockBacklogService;
 import org.rinna.cli.service.MockItemService;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.util.ModelMapper;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Adapter that implements the CLI domain BacklogService interface 

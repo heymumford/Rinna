@@ -9,30 +9,27 @@
  */
 package org.rinna.pui.examples;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.rinna.cli.model.Priority;
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.model.WorkItemType;
+import org.rinna.cli.model.WorkflowState;
 import org.rinna.pui.RinnaPUI;
 import org.rinna.pui.cli.ServiceBridge;
 import org.rinna.pui.component.*;
-import org.rinna.pui.component.BoxLayout.Orientation;
 import org.rinna.pui.component.BoxLayout.BoxConstraints;
+import org.rinna.pui.component.BoxLayout.Orientation;
 import org.rinna.pui.geom.Dimension;
 import org.rinna.pui.geom.Point;
 import org.rinna.pui.style.BorderStyle;
 import org.rinna.pui.style.Color;
 import org.rinna.pui.style.Style;
 import org.rinna.pui.style.Theme;
-
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.model.WorkItemType;
-import org.rinna.cli.model.Priority;
-import org.rinna.cli.model.WorkflowState;
-import org.rinna.cli.service.InvalidTransitionException;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Demo that showcases workflow state transitions with single-key operations.

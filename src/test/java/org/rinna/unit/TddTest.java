@@ -7,6 +7,12 @@
  */
 package org.rinna.unit;
 
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+
+import java.time.Duration;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
@@ -19,12 +25,6 @@ import org.rinna.domain.model.WorkflowState;
 import org.rinna.usecase.ItemService;
 import org.rinna.usecase.ReleaseService;
 import org.rinna.usecase.WorkflowService;
-
-import java.time.Duration;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import static org.junit.jupiter.api.Assertions.assertTimeout;
 
 /**
  * Base class for TDD-style development tests.

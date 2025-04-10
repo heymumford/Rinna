@@ -8,10 +8,10 @@
 
 package org.rinna.usecase;
 
-import org.rinna.domain.WorkItem;
-
 import java.util.List;
 import java.util.UUID;
+
+import org.rinna.domain.WorkItem;
 
 /**
  * Service interface for managing developer backlogs.

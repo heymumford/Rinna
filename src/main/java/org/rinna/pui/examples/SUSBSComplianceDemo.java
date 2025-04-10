@@ -1,5 +1,13 @@
 package org.rinna.pui.examples;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.rinna.pui.cli.CommandGenerator;
 import org.rinna.pui.cli.ShellCommandBridge;
 import org.rinna.pui.cli.ShellEscapeHandler;
@@ -11,14 +19,6 @@ import org.rinna.pui.component.Container;
 import org.rinna.pui.component.Label;
 import org.rinna.pui.component.List;
 import org.rinna.pui.component.TextBox;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Demonstration of SUSBS (Standardized Utility Shell-Based Solution) compliance

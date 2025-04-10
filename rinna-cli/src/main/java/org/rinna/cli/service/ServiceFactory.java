@@ -10,15 +10,15 @@
 package org.rinna.cli.service;
 
 // Import adapters as we implement the service adapter pattern
-import org.rinna.cli.adapter.WorkflowServiceAdapter;
-import org.rinna.cli.adapter.HistoryServiceAdapter;
-import org.rinna.cli.adapter.CriticalPathServiceAdapter;
 import org.rinna.cli.adapter.BacklogServiceAdapter;
-import org.rinna.cli.adapter.ItemServiceAdapter;
 import org.rinna.cli.adapter.CommentServiceAdapter;
-import org.rinna.cli.adapter.SearchServiceAdapter;
+import org.rinna.cli.adapter.CriticalPathServiceAdapter;
+import org.rinna.cli.adapter.HistoryServiceAdapter;
+import org.rinna.cli.adapter.ItemServiceAdapter;
 import org.rinna.cli.adapter.MonitoringServiceAdapter;
 import org.rinna.cli.adapter.RecoveryServiceAdapter;
+import org.rinna.cli.adapter.SearchServiceAdapter;
+import org.rinna.cli.adapter.WorkflowServiceAdapter;
 // All service adapters are now implemented
 
 /**

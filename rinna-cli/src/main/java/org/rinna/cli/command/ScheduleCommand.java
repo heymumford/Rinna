@@ -9,19 +9,6 @@
  */
 package org.rinna.cli.command;
 
-import org.rinna.cli.report.ReportConfig;
-import org.rinna.cli.report.ReportFormat;
-import org.rinna.cli.report.ReportScheduler;
-import org.rinna.cli.report.ReportScheduler.ScheduleType;
-import org.rinna.cli.report.ReportScheduler.ScheduledReport;
-import org.rinna.cli.report.ReportService;
-import org.rinna.cli.report.ReportType;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.service.MockReportService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.service.ContextManager;
-import org.rinna.cli.util.OutputFormatter;
-
 import java.io.File;
 import java.nio.file.Paths;
 import java.time.DayOfWeek;
@@ -33,6 +20,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
+
+import org.rinna.cli.report.ReportConfig;
+import org.rinna.cli.report.ReportFormat;
+import org.rinna.cli.report.ReportScheduler;
+import org.rinna.cli.report.ReportScheduler.ScheduleType;
+import org.rinna.cli.report.ReportScheduler.ScheduledReport;
+import org.rinna.cli.report.ReportType;
+import org.rinna.cli.service.ContextManager;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.MockReportService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.OutputFormatter;
 
 /**
  * Command to manage scheduled reports.

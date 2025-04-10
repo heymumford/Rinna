@@ -1,8 +1,8 @@
 package org.rinna.domain.service.macro;
 
 import org.rinna.domain.model.macro.ActionResult;
-import org.rinna.domain.model.macro.MacroAction;
 import org.rinna.domain.model.macro.ExecutionContext;
+import org.rinna.domain.model.macro.MacroAction;
 
 /**
  * Service interface for executing macro actions.

@@ -8,6 +8,18 @@
 
 package org.rinna.data.sqlite;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.rinna.domain.model.Priority;
 import org.rinna.domain.model.WorkItem;
 import org.rinna.domain.model.WorkItemCreateRequest;
@@ -17,19 +29,6 @@ import org.rinna.domain.model.WorkflowState;
 import org.rinna.domain.repository.ItemRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 
 /**
  * SQLite implementation of the ItemRepository interface.
@@ -172,7 +171,7 @@ public class SqliteItemRepository implements ItemRepository {
     }
     
     @Override
-    public List<WorkItem> findByType(WorkItemType type) {
+    public List<WorkItem> findByType(String type) {
         logger.debug("Finding work items by type: {}", type);
         
         String sql = """
@@ -186,7 +185,7 @@ public class SqliteItemRepository implements ItemRepository {
         try (Connection conn = connectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setString(1, type.name());
+            stmt.setString(1, type);
             
             try (ResultSet rs = stmt.executeQuery()) {
                 List<WorkItem> items = new ArrayList<>();
@@ -204,7 +203,7 @@ public class SqliteItemRepository implements ItemRepository {
     }
     
     @Override
-    public List<WorkItem> findByStatus(WorkflowState status) {
+    public List<WorkItem> findByStatus(String status) {
         logger.debug("Finding work items by status: {}", status);
         
         String sql = """
@@ -218,7 +217,7 @@ public class SqliteItemRepository implements ItemRepository {
         try (Connection conn = connectionManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             
-            stmt.setString(1, status.name());
+            stmt.setString(1, status);
             
             try (ResultSet rs = stmt.executeQuery()) {
                 List<WorkItem> items = new ArrayList<>();
@@ -372,6 +371,28 @@ public class SqliteItemRepository implements ItemRepository {
         } catch (SQLException e) {
             logger.error("Error deleting work item: {}", id, e);
             throw new RuntimeException("Error deleting work item: " + id, e);
+        }
+    }
+    
+    @Override
+    public boolean existsById(UUID id) {
+        logger.debug("Checking if work item exists by ID: {}", id);
+        
+        String sql = "SELECT 1 FROM work_items WHERE id = ?";
+        
+        try (Connection conn = connectionManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, id.toString());
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                boolean exists = rs.next();
+                logger.debug("Work item exists: {} (result: {})", id, exists);
+                return exists;
+            }
+        } catch (SQLException e) {
+            logger.error("Error checking if work item exists: {}", id, e);
+            throw new RuntimeException("Error checking if work item exists: " + id, e);
         }
     }
     

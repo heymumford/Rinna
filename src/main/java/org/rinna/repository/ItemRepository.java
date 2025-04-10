@@ -8,15 +8,15 @@
 
 package org.rinna.repository;
 
-import org.rinna.domain.WorkItem;
-import org.rinna.domain.WorkItemCreateRequest;
-import org.rinna.domain.WorkItemType;
-import org.rinna.domain.WorkflowState;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.rinna.domain.WorkItem;
+import org.rinna.domain.WorkItemCreateRequest;
+import org.rinna.domain.WorkItemType;
+import org.rinna.domain.WorkflowState;
 
 /**
  * Repository interface for work items.

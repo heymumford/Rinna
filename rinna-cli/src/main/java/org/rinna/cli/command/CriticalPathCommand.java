@@ -9,18 +9,18 @@
  */
 package org.rinna.cli.command;
 
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.service.MetadataService;
-import org.rinna.cli.service.MockCriticalPathService;
-import org.rinna.cli.service.ServiceManager;
-import org.rinna.cli.util.OutputFormatter;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.service.MockCriticalPathService;
+import org.rinna.cli.service.ServiceManager;
+import org.rinna.cli.util.OutputFormatter;
 
 /**
  * Command to analyze and display the critical path for a project.

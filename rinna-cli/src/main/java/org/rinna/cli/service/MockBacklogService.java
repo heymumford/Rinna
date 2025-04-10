@@ -9,10 +9,6 @@
  */
 package org.rinna.cli.service;
 
-import org.rinna.cli.model.WorkItem;
-import org.rinna.cli.util.ModelMapper;
-import org.rinna.cli.service.BacklogService;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -21,6 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.rinna.cli.model.WorkItem;
+import org.rinna.cli.util.ModelMapper;
 
 /**
  * Mock implementation of backlog service functionality for CLI use.

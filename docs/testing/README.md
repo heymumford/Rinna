@@ -9,6 +9,10 @@ This directory contains comprehensive documentation for the Rinna testing strate
 | [Test Pyramid Strategy](TEST_PYRAMID.md) | Overview of our five-layer test pyramid approach and philosophy |
 | [Cross-Language Testing](CROSS_LANGUAGE_TESTING.md) | Guide to cross-language testing between Java, Go, and Python |
 | [TDD Practical Guide](TDD_PRACTICAL_GUIDE.md) | Step-by-step guide to Test-Driven Development in a multi-language environment |
+| [Karate Test Syntax](KARATE_TEST_SYNTAX.md) | Overview of Karate API testing syntax and best practices |
+| [Python Container Testing](PYTHON_CONTAINER_TESTING.md) | Guide to running Python tests in containers |
+| [Docker Image Caching](DOCKER_IMAGE_CACHING.md) | Strategy for optimizing container builds with caching |
+| [Container Strategy](CONTAINER_STRATEGY.md) | Overall container testing strategy |
 
 ## Streamlined Test Structure
 
@@ -147,6 +151,17 @@ All our tests are organized to ensure seamless integration between components wr
 - Go-Python integration through REST API and WebSockets
 
 See [Cross-Language Testing](CROSS_LANGUAGE_TESTING.md) for more details.
+
+## Container Testing
+
+We provide comprehensive container-based testing strategies that ensure consistent environments:
+
+- Docker/Podman support for all testing levels
+- Optimized image caching for faster builds
+- Multi-stage builds for different use cases (dev, test, prod)
+- Consistent behavior between local development and CI/CD
+
+See [Container Strategy](CONTAINER_STRATEGY.md) and [Python Container Testing](PYTHON_CONTAINER_TESTING.md) for details.
 
 ## Code Coverage
 
