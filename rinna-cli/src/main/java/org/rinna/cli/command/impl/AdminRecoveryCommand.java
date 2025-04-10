@@ -11,7 +11,11 @@ package org.rinna.cli.command.impl;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.service.RecoveryService;
 import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.util.MapConverter;
 import org.rinna.cli.util.OutputFormatter;
+import org.rinna.cli.util.ErrorHandler;
+import org.rinna.cli.util.OperationTracker;
+import org.rinna.cli.util.ErrorHandler.Severity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +36,8 @@ public class AdminRecoveryCommand implements Callable<Integer> {
     private final ServiceManager serviceManager;
     private final Scanner scanner;
     private final MetadataService metadataService;
+    private final ErrorHandler errorHandler;
+    private final OperationTracker operationTracker;
     private String format = "text";
     private boolean verbose = false;
     
@@ -43,6 +49,8 @@ public class AdminRecoveryCommand implements Callable<Integer> {
     public AdminRecoveryCommand(ServiceManager serviceManager) {
         this.serviceManager = serviceManager;
         this.metadataService = serviceManager.getMetadataService();
+        this.errorHandler = new ErrorHandler(metadataService);
+        this.operationTracker = new OperationTracker(metadataService);
         this.scanner = new Scanner(System.in, java.nio.charset.StandardCharsets.UTF_8.name());
     }
     
@@ -62,6 +70,7 @@ public class AdminRecoveryCommand implements Callable<Integer> {
      */
     public void setJsonOutput(boolean jsonOutput) {
         this.format = jsonOutput ? "json" : "text";
+        this.errorHandler.outputFormat(this.format);
     }
     
     /**
@@ -71,6 +80,7 @@ public class AdminRecoveryCommand implements Callable<Integer> {
      */
     public void setFormat(String format) {
         this.format = format;
+        this.errorHandler.outputFormat(this.format);
     }
     
     /**
@@ -80,6 +90,7 @@ public class AdminRecoveryCommand implements Callable<Integer> {
      */
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
+        this.errorHandler.verbose(this.verbose);
     }
     
     /**
@@ -93,7 +104,7 @@ public class AdminRecoveryCommand implements Callable<Integer> {
     
     @Override
     public Integer call() {
-        // Create operation parameters for tracking
+        // Setup operation parameters for tracking
         Map<String, Object> params = new HashMap<>();
         params.put("operation", operation != null ? operation : "help");
         params.put("argsCount", args.length);
@@ -103,8 +114,12 @@ public class AdminRecoveryCommand implements Callable<Integer> {
         params.put("format", format);
         params.put("verbose", verbose);
         
-        // Start tracking operation
-        String operationId = metadataService.startOperation("admin-recovery", "RECOVERY", params);
+        // Initialize and start the operation tracker
+        String operationId = operationTracker
+            .command("admin-recovery")
+            .operationType("RECOVERY")
+            .params(params)
+            .start();
         
         try {
             if (operation == null || operation.isEmpty()) {
@@ -116,9 +131,8 @@ public class AdminRecoveryCommand implements Callable<Integer> {
             RecoveryService recoveryService = serviceManager.getRecoveryService();
             if (recoveryService == null) {
                 String errorMessage = "Recovery service is not available.";
-                outputError(errorMessage);
-                metadataService.failOperation(operationId, new IllegalStateException(errorMessage));
-                return 1;
+                return errorHandler.handleError(operationId, "admin-recovery", 
+                    errorMessage, new IllegalStateException(errorMessage), Severity.SYSTEM);
             }
             
             // Delegate to the appropriate operation
@@ -143,11 +157,9 @@ public class AdminRecoveryCommand implements Callable<Integer> {
                 
                 default:
                     String errorMessage = "Unknown recovery operation: " + operation;
-                    outputError(errorMessage);
                     displayHelp(operationId);
-                    metadataService.failOperation(operationId, new IllegalArgumentException(errorMessage));
-                    result = 1;
-                    break;
+                    return errorHandler.handleError(operationId, "admin-recovery", 
+                        errorMessage, new IllegalArgumentException(errorMessage), Severity.VALIDATION);
             }
             
             // Complete operation if successful
@@ -155,18 +167,12 @@ public class AdminRecoveryCommand implements Callable<Integer> {
                 Map<String, Object> resultData = new HashMap<>();
                 resultData.put("success", true);
                 resultData.put("operation", operation);
-                metadataService.completeOperation(operationId, resultData);
+                errorHandler.handleSuccess(operationId, resultData);
             }
             
             return result;
         } catch (Exception e) {
-            String errorMessage = e.getMessage();
-            outputError(errorMessage);
-            if (verbose) {
-                e.printStackTrace();
-            }
-            metadataService.failOperation(operationId, e);
-            return 1;
+            return errorHandler.handleUnexpectedError(operationId, "admin-recovery", e);
         }
     }
     
@@ -181,20 +187,20 @@ public class AdminRecoveryCommand implements Callable<Integer> {
         Map<String, String> options = parseOptions(args);
         String backupId = options.getOrDefault("backup-id", null);
         
-        // Create operation parameters for tracking
-        Map<String, Object> params = new HashMap<>();
-        params.put("operation", "start");
-        params.put("backupId", backupId);
-        params.put("format", format);
+        // Create a sub-tracker for this operation
+        OperationTracker startTracker = operationTracker
+            .createSubTracker("admin-recovery-start")
+            .param("operation", "start")
+            .param("backupId", backupId)
+            .param("format", format);
         
         // Start tracking sub-operation
-        String startOperationId = metadataService.trackOperation("admin-recovery-start", params);
+        String startOperationId = startTracker.start();
         
         if (backupId == null) {
             String errorMessage = "Missing required parameter --backup-id.";
-            outputError(errorMessage);
-            metadataService.failOperation(startOperationId, new IllegalArgumentException(errorMessage));
-            return 1;
+            return errorHandler.handleError(startOperationId, "admin-recovery-start", 
+                errorMessage, new IllegalArgumentException(errorMessage), Severity.VALIDATION);
         }
         
         if ("json".equalsIgnoreCase(format)) {
@@ -212,7 +218,7 @@ public class AdminRecoveryCommand implements Callable<Integer> {
             System.out.println(OutputFormatter.toJson(resultData, verbose));
             
             // Can't continue in JSON mode without interactive input
-            metadataService.completeOperation(startOperationId, resultData);
+            errorHandler.handleSuccess(startOperationId, resultData);
             return 0;
         }
         
@@ -226,38 +232,60 @@ public class AdminRecoveryCommand implements Callable<Integer> {
         System.out.println();
         System.out.print("Are you sure you want to proceed? (yes/no): ");
         
-        // Track confirmation request
-        Map<String, Object> confirmParams = new HashMap<>();
-        confirmParams.put("confirmationRequested", true);
-        confirmParams.put("backupId", backupId);
-        metadataService.trackOperationWithData("admin-recovery-confirmation-request", confirmParams);
+        // Create confirmation request sub-tracker
+        OperationTracker confirmTracker = operationTracker
+            .createSubTracker("admin-recovery-confirmation-request")
+            .param("confirmationRequested", true)
+            .param("backupId", backupId);
+        
+        String confirmOpId = confirmTracker.start();
         
         String confirm = scanner.nextLine().trim().toLowerCase();
         
-        // Track confirmation response
-        Map<String, Object> confirmResponseParams = new HashMap<>();
-        confirmResponseParams.put("confirmation", confirm);
-        confirmResponseParams.put("backupId", backupId);
-        metadataService.trackOperationWithData("admin-recovery-confirmation-response", confirmResponseParams);
+        // Create confirmation response sub-tracker
+        OperationTracker responseTracker = operationTracker
+            .createSubTracker("admin-recovery-confirmation-response")
+            .param("confirmation", confirm)
+            .param("backupId", backupId);
+        
+        String responseOpId = responseTracker.start();
+        errorHandler.handleSuccess(responseOpId, new HashMap<>());
         
         if (!"yes".equals(confirm) && !"y".equals(confirm)) {
             String cancelMessage = "Recovery cancelled.";
-            outputSuccess(cancelMessage);
+            
+            if ("json".equalsIgnoreCase(format)) {
+                Map<String, Object> successData = new HashMap<>();
+                successData.put("result", "success");
+                successData.put("message", cancelMessage);
+                System.out.println(OutputFormatter.toJson(successData, verbose));
+            } else {
+                System.out.println(cancelMessage);
+            }
             
             // Track cancellation
             Map<String, Object> cancelData = new HashMap<>();
             cancelData.put("cancelled", true);
             cancelData.put("backupId", backupId);
-            metadataService.completeOperation(startOperationId, cancelData);
+            errorHandler.handleSuccess(startOperationId, cancelData);
+            errorHandler.handleSuccess(confirmOpId, cancelData);
             
             return 0;
         }
         
-        // Execute recovery with tracking
-        Map<String, Object> recoveryParams = new HashMap<>();
-        recoveryParams.put("backupId", backupId);
-        recoveryParams.put("confirmed", true);
-        String executeOperationId = metadataService.trackOperation("admin-recovery-execute", recoveryParams);
+        // Successfully completed confirmation
+        errorHandler.handleSuccess(confirmOpId, new HashMap<String, Object>() {{
+            put("confirmed", true);
+            put("backupId", backupId);
+        }});
+        
+        // Create execute recovery sub-tracker
+        OperationTracker executeTracker = operationTracker
+            .createSubTracker("admin-recovery-execute")
+            .param("backupId", backupId)
+            .param("confirmed", true);
+        
+        String executeOperationId = executeTracker.start();
         
         try {
             System.out.println();
@@ -269,32 +297,35 @@ public class AdminRecoveryCommand implements Callable<Integer> {
             
             if (success) {
                 String successMessage = "Recovery completed successfully!";
-                outputSuccess(successMessage);
+                
+                if ("json".equalsIgnoreCase(format)) {
+                    Map<String, Object> successData = new HashMap<>();
+                    successData.put("result", "success");
+                    successData.put("message", successMessage);
+                    System.out.println(OutputFormatter.toJson(successData, verbose));
+                } else {
+                    System.out.println(successMessage);
+                }
                 
                 // Track successful recovery
                 Map<String, Object> resultData = new HashMap<>();
                 resultData.put("success", true);
                 resultData.put("backupId", backupId);
-                metadataService.completeOperation(executeOperationId, resultData);
-                metadataService.completeOperation(startOperationId, resultData);
+                errorHandler.handleSuccess(executeOperationId, resultData);
+                errorHandler.handleSuccess(startOperationId, resultData);
                 
                 return 0;
             } else {
                 String errorMessage = "Recovery failed. See log for details.";
-                outputError(errorMessage);
-                metadataService.failOperation(executeOperationId, new RuntimeException(errorMessage));
-                metadataService.failOperation(startOperationId, new RuntimeException(errorMessage));
-                return 1;
+                errorHandler.handleError(executeOperationId, "admin-recovery-execute", 
+                    errorMessage, new RuntimeException(errorMessage), Severity.ERROR);
+                return errorHandler.handleError(startOperationId, "admin-recovery-start", 
+                    errorMessage, new RuntimeException(errorMessage), Severity.ERROR);
             }
         } catch (Exception e) {
             String errorMessage = "Error during recovery: " + e.getMessage();
-            outputError(errorMessage);
-            if (verbose) {
-                e.printStackTrace();
-            }
-            metadataService.failOperation(executeOperationId, e);
-            metadataService.failOperation(startOperationId, e);
-            return 1;
+            errorHandler.handleError(executeOperationId, "admin-recovery-execute", errorMessage, e, Severity.SYSTEM);
+            return errorHandler.handleError(startOperationId, "admin-recovery-start", errorMessage, e, Severity.SYSTEM);
         }
     }
     
@@ -306,13 +337,14 @@ public class AdminRecoveryCommand implements Callable<Integer> {
      * @return the exit code
      */
     private int handleStatusOperation(RecoveryService recoveryService, String parentOperationId) {
-        // Create operation parameters for tracking
-        Map<String, Object> params = new HashMap<>();
-        params.put("operation", "status");
-        params.put("format", format);
+        // Create a sub-tracker for this operation
+        OperationTracker statusTracker = operationTracker
+            .createSubTracker("admin-recovery-status")
+            .param("operation", "status")
+            .param("format", format);
         
         // Start tracking sub-operation
-        String statusOperationId = metadataService.trackOperation("admin-recovery-status", params);
+        String statusOperationId = statusTracker.start();
         
         try {
             String status = recoveryService.getRecoveryStatus();
@@ -331,17 +363,12 @@ public class AdminRecoveryCommand implements Callable<Integer> {
             // Track operation success
             Map<String, Object> resultData = new HashMap<>();
             resultData.put("success", true);
-            metadataService.completeOperation(statusOperationId, resultData);
-            
-            return 0;
+            resultData.put("status", status);
+            return errorHandler.handleSuccess(statusOperationId, resultData);
         } catch (Exception e) {
             String errorMessage = "Error getting recovery status: " + e.getMessage();
-            outputError(errorMessage);
-            if (verbose) {
-                e.printStackTrace();
-            }
-            metadataService.failOperation(statusOperationId, e);
-            return 1;
+            return errorHandler.handleError(statusOperationId, "admin-recovery-status", 
+                errorMessage, e, Severity.SYSTEM);
         }
     }
     
@@ -353,23 +380,24 @@ public class AdminRecoveryCommand implements Callable<Integer> {
      * @return the exit code
      */
     private int handlePlanOperation(RecoveryService recoveryService, String parentOperationId) {
-        // Create operation parameters for tracking
-        Map<String, Object> params = new HashMap<>();
-        params.put("operation", "plan");
-        params.put("format", format);
+        // Create a sub-tracker for this operation
+        OperationTracker planTracker = operationTracker
+            .createSubTracker("admin-recovery-plan")
+            .param("operation", "plan")
+            .param("format", format);
         
         // Start tracking sub-operation
-        String planOperationId = metadataService.trackOperation("admin-recovery-plan", params);
+        String planOperationId = planTracker.start();
         
         if (args.length == 0) {
             String errorMessage = "Missing plan subcommand. Use 'generate' or 'test'.";
-            outputError(errorMessage);
-            metadataService.failOperation(planOperationId, new IllegalArgumentException(errorMessage));
-            return 1;
+            Map<String, String> validationErrors = new HashMap<>();
+            validationErrors.put("subcommand", "Missing required subcommand");
+            return errorHandler.handleValidationError(planOperationId, "admin-recovery-plan", validationErrors);
         }
         
         String planOperation = args[0];
-        params.put("planOperation", planOperation);
+        planTracker.param("planOperation", planOperation);
         
         if ("generate".equals(planOperation)) {
             return handlePlanGenerateOperation(recoveryService, planOperationId);
@@ -377,8 +405,13 @@ public class AdminRecoveryCommand implements Callable<Integer> {
             return handlePlanTestOperation(recoveryService, planOperationId);
         } else {
             String errorMessage = "Unknown plan operation: " + planOperation;
-            outputError(errorMessage);
             
+            // For invalid subcommands, use a validation error with specific details
+            Map<String, String> validationErrors = new HashMap<>();
+            validationErrors.put("subcommand", "Invalid operation: " + planOperation);
+            validationErrors.put("validOptions", "Valid operations are: generate, test");
+            
+            // Output additional information for users about valid operations
             if ("json".equalsIgnoreCase(format)) {
                 Map<String, Object> resultData = new HashMap<>();
                 resultData.put("result", "error");
@@ -390,8 +423,7 @@ public class AdminRecoveryCommand implements Callable<Integer> {
                 System.out.println("Valid operations: generate, test");
             }
             
-            metadataService.failOperation(planOperationId, new IllegalArgumentException(errorMessage));
-            return 1;
+            return errorHandler.handleValidationError(planOperationId, "admin-recovery-plan", validationErrors);
         }
     }
     
@@ -403,13 +435,14 @@ public class AdminRecoveryCommand implements Callable<Integer> {
      * @return the exit code
      */
     private int handlePlanGenerateOperation(RecoveryService recoveryService, String parentOperationId) {
-        // Create operation parameters for tracking
-        Map<String, Object> params = new HashMap<>();
-        params.put("operation", "plan-generate");
-        params.put("format", format);
+        // Create a sub-tracker for this operation
+        OperationTracker generateTracker = operationTracker
+            .createSubTracker("admin-recovery-plan-generate")
+            .param("operation", "plan-generate")
+            .param("format", format);
         
         // Start tracking sub-operation
-        String generateOperationId = metadataService.trackOperation("admin-recovery-plan-generate", params);
+        String generateOperationId = generateTracker.start();
         
         try {
             String planPath = recoveryService.generateRecoveryPlan();
@@ -430,17 +463,11 @@ public class AdminRecoveryCommand implements Callable<Integer> {
             Map<String, Object> resultData = new HashMap<>();
             resultData.put("success", true);
             resultData.put("planPath", planPath);
-            metadataService.completeOperation(generateOperationId, resultData);
-            
-            return 0;
+            return errorHandler.handleSuccess(generateOperationId, resultData);
         } catch (Exception e) {
             String errorMessage = "Error generating recovery plan: " + e.getMessage();
-            outputError(errorMessage);
-            if (verbose) {
-                e.printStackTrace();
-            }
-            metadataService.failOperation(generateOperationId, e);
-            return 1;
+            return errorHandler.handleError(generateOperationId, "admin-recovery-plan-generate", 
+                errorMessage, e, Severity.ERROR);
         }
     }
     
@@ -455,14 +482,15 @@ public class AdminRecoveryCommand implements Callable<Integer> {
         Map<String, String> options = parseOptions(args);
         boolean simulation = options.containsKey("simulation");
         
-        // Create operation parameters for tracking
-        Map<String, Object> params = new HashMap<>();
-        params.put("operation", "plan-test");
-        params.put("simulation", simulation);
-        params.put("format", format);
+        // Create a sub-tracker for this operation
+        OperationTracker testTracker = operationTracker
+            .createSubTracker("admin-recovery-plan-test")
+            .param("operation", "plan-test")
+            .param("simulation", simulation)
+            .param("format", format);
         
         // Start tracking sub-operation
-        String testOperationId = metadataService.trackOperation("admin-recovery-plan-test", params);
+        String testOperationId = testTracker.start();
         
         try {
             String results = recoveryService.testRecoveryPlan(simulation);
@@ -483,17 +511,12 @@ public class AdminRecoveryCommand implements Callable<Integer> {
             Map<String, Object> resultData = new HashMap<>();
             resultData.put("success", true);
             resultData.put("simulation", simulation);
-            metadataService.completeOperation(testOperationId, resultData);
-            
-            return 0;
+            resultData.put("results", results);
+            return errorHandler.handleSuccess(testOperationId, resultData);
         } catch (Exception e) {
             String errorMessage = "Error testing recovery plan: " + e.getMessage();
-            outputError(errorMessage);
-            if (verbose) {
-                e.printStackTrace();
-            }
-            metadataService.failOperation(testOperationId, e);
-            return 1;
+            return errorHandler.handleError(testOperationId, "admin-recovery-plan-test", 
+                errorMessage, e, Severity.ERROR);
         }
     }
     
@@ -533,14 +556,15 @@ public class AdminRecoveryCommand implements Callable<Integer> {
      * @param operationId the parent operation ID for tracking
      */
     private void displayHelp(String operationId) {
-        // Create operation parameters for tracking
-        Map<String, Object> helpData = new HashMap<>();
-        helpData.put("command", "admin recovery");
-        helpData.put("action", "help");
-        helpData.put("format", format);
+        // Create a sub-tracker for this operation
+        OperationTracker helpTracker = operationTracker
+            .createSubTracker("admin-recovery-help")
+            .param("command", "admin recovery")
+            .param("action", "help")
+            .param("format", format);
         
         // Start tracking sub-operation
-        String helpOperationId = metadataService.trackOperation("admin-recovery-help", helpData);
+        String helpOperationId = helpTracker.start();
         
         try {
             if ("json".equalsIgnoreCase(format)) {
@@ -595,42 +619,10 @@ public class AdminRecoveryCommand implements Callable<Integer> {
             Map<String, Object> resultData = new HashMap<>();
             resultData.put("success", true);
             resultData.put("format", format);
-            metadataService.completeOperation(helpOperationId, resultData);
+            errorHandler.handleSuccess(helpOperationId, resultData);
         } catch (Exception e) {
-            metadataService.failOperation(helpOperationId, e);
+            errorHandler.handleUnexpectedError(helpOperationId, "admin-recovery-help", e);
             throw e; // Rethrow to be caught by caller
-        }
-    }
-    
-    /**
-     * Outputs an error message in either JSON or text format.
-     *
-     * @param message the error message
-     */
-    private void outputError(String message) {
-        if ("json".equalsIgnoreCase(format)) {
-            Map<String, Object> errorData = new HashMap<>();
-            errorData.put("result", "error");
-            errorData.put("message", message);
-            System.out.println(OutputFormatter.toJson(errorData, verbose));
-        } else {
-            System.err.println("Error: " + message);
-        }
-    }
-    
-    /**
-     * Outputs a success message or data in either JSON or text format.
-     *
-     * @param message the success message or data
-     */
-    private void outputSuccess(String message) {
-        if ("json".equalsIgnoreCase(format)) {
-            Map<String, Object> successData = new HashMap<>();
-            successData.put("result", "success");
-            successData.put("message", message);
-            System.out.println(OutputFormatter.toJson(successData, verbose));
-        } else {
-            System.out.println(message);
         }
     }
     
