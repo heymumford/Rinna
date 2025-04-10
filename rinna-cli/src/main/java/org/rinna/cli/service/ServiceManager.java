@@ -106,7 +106,10 @@ public final class ServiceManager {
         this.auditService = new MockAuditService();
         this.backupService = new MockBackupService();
         this.complianceService = new MockComplianceService();
-        this.metadataService = MockMetadataService.getInstance();
+        
+        // Use the optimized metadata service for high-volume operation tracking
+        this.metadataService = OptimizedMetadataService.getInstance();
+        
         this.mockNotificationService = MockNotificationService.getInstance();
         this.projectContext = ProjectContext.getInstance();
         this.configurationService = ConfigurationService.getInstance();
@@ -405,8 +408,8 @@ public final class ServiceManager {
      *
      * @return the domain monitoring service
      */
-    public Object getMonitoringService() {
-        return monitoringService;
+    public MonitoringService getMonitoringService() {
+        return (MonitoringService) monitoringService;
     }
     
     /**
@@ -423,8 +426,8 @@ public final class ServiceManager {
      *
      * @return the domain recovery service
      */
-    public Object getRecoveryService() {
-        return recoveryService;
+    public RecoveryService getRecoveryService() {
+        return (RecoveryService) recoveryService;
     }
     
     /**

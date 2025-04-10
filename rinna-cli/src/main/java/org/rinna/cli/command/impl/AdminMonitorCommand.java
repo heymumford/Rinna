@@ -11,6 +11,9 @@ package org.rinna.cli.command.impl;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.cli.service.MonitoringService;
 import org.rinna.cli.service.MetadataService;
+import org.rinna.cli.util.ErrorHandler;
+import org.rinna.cli.util.MapConverter;
+import org.rinna.cli.util.OperationTracker;
 import org.rinna.cli.util.OutputFormatter;
 
 import java.util.ArrayList;
@@ -33,6 +36,8 @@ public class AdminMonitorCommand implements Callable<Integer> {
     private final ServiceManager serviceManager;
     private final Scanner scanner;
     private final MetadataService metadataService;
+    private final OperationTracker operationTracker;
+    private final ErrorHandlerExtension errorHandler;
     private String format = "text";
     private boolean verbose = false;
     
@@ -45,6 +50,10 @@ public class AdminMonitorCommand implements Callable<Integer> {
         this.serviceManager = serviceManager;
         this.metadataService = serviceManager.getMetadataService();
         this.scanner = new Scanner(System.in, java.nio.charset.StandardCharsets.UTF_8.name());
+        
+        // Initialize utility instances
+        this.operationTracker = new OperationTracker(metadataService);
+        this.errorHandler = new ErrorHandlerExtension(metadataService);
     }
     
     /**
@@ -72,6 +81,7 @@ public class AdminMonitorCommand implements Callable<Integer> {
      */
     public void setFormat(String format) {
         this.format = format;
+        this.errorHandler.outputFormat(format);
     }
     
     /**
@@ -81,6 +91,7 @@ public class AdminMonitorCommand implements Callable<Integer> {
      */
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
+        this.errorHandler.verbose(verbose);
     }
     
     /**
@@ -94,96 +105,109 @@ public class AdminMonitorCommand implements Callable<Integer> {
     
     @Override
     public Integer call() {
-        // Create operation parameters for tracking
-        Map<String, Object> params = new HashMap<>();
-        params.put("operation", operation != null ? operation : "help");
-        params.put("argsCount", args.length);
+        // Configure the operation tracker with command details
+        operationTracker
+            .command("admin-monitor")
+            .operationType("MONITOR")
+            .param("operation", operation != null ? operation : "help")
+            .param("argsCount", args.length)
+            .param("format", format)
+            .param("verbose", verbose);
+
+        // Add first argument if available
         if (args.length > 0) {
-            params.put("arg0", args[0]);
+            operationTracker.param("arg0", args[0]);
         }
-        params.put("format", format);
-        params.put("verbose", verbose);
-        
-        // Start tracking operation
-        String operationId = metadataService.startOperation("admin-monitor", "MONITOR", params);
         
         try {
-            if (operation == null || operation.isEmpty()) {
-                displayHelp(operationId);
-                return 1;
-            }
-            
-            // Get the monitoring service
-            MonitoringService monitoringService = serviceManager.getMonitoringService();
-            if (monitoringService == null) {
-                String errorMessage = "Monitoring service is not available.";
-                outputError(errorMessage);
-                metadataService.failOperation(operationId, new IllegalStateException(errorMessage));
-                return 1;
-            }
-            
-            // Delegate to the appropriate operation
-            int result;
-            switch (operation) {
-                case "dashboard":
-                    result = handleDashboardOperation(monitoringService, operationId);
-                    break;
+            // Execute the main operation with tracking
+            return operationTracker.execute(() -> {
+                // Handle missing operation
+                if (operation == null || operation.isEmpty()) {
+                    displayHelp(operationTracker.start());
+                    return 1;
+                }
                 
-                case "server":
-                    result = handleServerOperation(monitoringService, operationId);
-                    break;
+                // Get the monitoring service
+                MonitoringService monitoringService = serviceManager.getMonitoringService();
+                if (monitoringService == null) {
+                    String errorMessage = "Monitoring service is not available.";
+                    return errorHandler.handleError(
+                        operationTracker.start(),
+                        "admin-monitor", 
+                        errorMessage,
+                        new IllegalStateException(errorMessage)
+                    );
+                }
                 
-                case "configure":
-                    result = handleConfigureOperation(monitoringService, operationId);
-                    break;
+                // Delegate to the appropriate operation
+                String parentOperationId = operationTracker.start();
+                int result;
                 
-                case "report":
-                    result = handleReportOperation(monitoringService, operationId);
-                    break;
+                switch (operation) {
+                    case "dashboard":
+                        result = handleDashboardOperation(monitoringService, parentOperationId);
+                        break;
+                    
+                    case "server":
+                        result = handleServerOperation(monitoringService, parentOperationId);
+                        break;
+                    
+                    case "configure":
+                        result = handleConfigureOperation(monitoringService, parentOperationId);
+                        break;
+                    
+                    case "report":
+                        result = handleReportOperation(monitoringService, parentOperationId);
+                        break;
+                    
+                    case "alerts":
+                        result = handleAlertsOperation(monitoringService, parentOperationId);
+                        break;
+                    
+                    case "sessions":
+                        result = handleSessionsOperation(monitoringService, parentOperationId);
+                        break;
+                    
+                    case "thresholds":
+                        result = handleThresholdsOperation(monitoringService, parentOperationId);
+                        break;
+                    
+                    case "help":
+                        displayHelp(parentOperationId);
+                        result = 0;
+                        break;
+                    
+                    default:
+                        String errorMessage = "Unknown monitoring operation: " + operation;
+                        outputError(errorMessage);
+                        displayHelp(parentOperationId);
+                        return errorHandler.handleError(
+                            parentOperationId,
+                            "admin-monitor",
+                            errorMessage,
+                            new IllegalArgumentException(errorMessage)
+                        );
+                }
                 
-                case "alerts":
-                    result = handleAlertsOperation(monitoringService, operationId);
-                    break;
+                // If operation was successful, record the result
+                if (result == 0) {
+                    Map<String, Object> resultData = new HashMap<>();
+                    resultData.put("success", true);
+                    resultData.put("operation", operation);
+                    operationTracker.complete(parentOperationId, resultData);
+                }
                 
-                case "sessions":
-                    result = handleSessionsOperation(monitoringService, operationId);
-                    break;
-                
-                case "thresholds":
-                    result = handleThresholdsOperation(monitoringService, operationId);
-                    break;
-                
-                case "help":
-                    displayHelp(operationId);
-                    result = 0;
-                    break;
-                
-                default:
-                    String errorMessage = "Unknown monitoring operation: " + operation;
-                    outputError(errorMessage);
-                    displayHelp(operationId);
-                    metadataService.failOperation(operationId, new IllegalArgumentException(errorMessage));
-                    result = 1;
-                    break;
-            }
-            
-            // Complete operation if successful
-            if (result == 0) {
-                Map<String, Object> resultData = new HashMap<>();
-                resultData.put("success", true);
-                resultData.put("operation", operation);
-                metadataService.completeOperation(operationId, resultData);
-            }
-            
-            return result;
+                return result;
+            });
         } catch (Exception e) {
-            String errorMessage = e.getMessage();
-            outputError(errorMessage);
-            if (verbose) {
-                e.printStackTrace();
-            }
-            metadataService.failOperation(operationId, e);
-            return 1;
+            // Handle any unexpected errors using the error handler
+            String errorMessage = e.getMessage() != null ? e.getMessage() : "Unknown error";
+            return errorHandler.handleUnexpectedError(
+                operationTracker.start(),
+                "admin-monitor", 
+                e
+            );
         }
     }
     
@@ -195,42 +219,41 @@ public class AdminMonitorCommand implements Callable<Integer> {
      * @return the exit code
      */
     private int handleDashboardOperation(MonitoringService monitoringService, String parentOperationId) {
-        // Create operation parameters for tracking
-        Map<String, Object> params = new HashMap<>();
-        params.put("operation", "dashboard");
-        params.put("format", format);
-        
-        // Start tracking sub-operation
-        String dashboardOperationId = metadataService.trackOperation("admin-monitor-dashboard", params);
+        // Create a sub-tracker for the dashboard operation
+        OperationTracker dashboardTracker = operationTracker
+            .command("admin-monitor-dashboard")
+            .param("operation", "dashboard")
+            .param("format", format)
+            .parent(parentOperationId);
         
         try {
-            String dashboard = monitoringService.getDashboard();
-            
-            if ("json".equalsIgnoreCase(format)) {
-                Map<String, Object> resultData = new HashMap<>();
-                resultData.put("result", "success");
-                resultData.put("operation", "dashboard");
-                resultData.put("dashboard", dashboard);
+            // Execute the dashboard operation and return the result
+            return dashboardTracker.execute(() -> {
+                // Get the dashboard data
+                String dashboard = monitoringService.getDashboard();
                 
-                System.out.println(OutputFormatter.toJson(resultData, verbose));
-            } else {
-                System.out.println(dashboard);
-            }
-            
-            // Track operation success
-            Map<String, Object> resultData = new HashMap<>();
-            resultData.put("success", true);
-            metadataService.completeOperation(dashboardOperationId, resultData);
-            
-            return 0;
+                // Display the dashboard in the appropriate format
+                if ("json".equalsIgnoreCase(format)) {
+                    Map<String, Object> resultData = new HashMap<>();
+                    resultData.put("result", "success");
+                    resultData.put("operation", "dashboard");
+                    resultData.put("dashboard", dashboard);
+                    
+                    System.out.println(OutputFormatter.toJson(resultData, verbose));
+                } else {
+                    System.out.println(dashboard);
+                }
+                
+                // Return success result map for operation tracking
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("success", true);
+                
+                return 0;  // Success exit code
+            });
         } catch (Exception e) {
+            // Handle error using ErrorHandler for consistent error reporting
             String errorMessage = "Error displaying dashboard: " + e.getMessage();
-            outputError(errorMessage);
-            if (verbose) {
-                e.printStackTrace();
-            }
-            metadataService.failOperation(dashboardOperationId, e);
-            return 1;
+            return errorHandler.handleError(parentOperationId, "dashboard", errorMessage, e);
         }
     }
     
@@ -246,45 +269,44 @@ public class AdminMonitorCommand implements Callable<Integer> {
         Map<String, String> options = parseOptions(args);
         boolean detailed = options.containsKey("detailed");
         
-        // Create operation parameters for tracking
-        Map<String, Object> params = new HashMap<>();
-        params.put("operation", "server");
-        params.put("detailed", detailed);
-        params.put("format", format);
-        
-        // Start tracking sub-operation
-        String serverOperationId = metadataService.trackOperation("admin-monitor-server", params);
+        // Create a sub-tracker for the server operation
+        OperationTracker serverTracker = operationTracker
+            .command("admin-monitor-server")
+            .param("operation", "server")
+            .param("detailed", detailed)
+            .param("format", format)
+            .parent(parentOperationId);
         
         try {
-            String metrics = monitoringService.getServerMetrics(detailed);
-            
-            if ("json".equalsIgnoreCase(format)) {
-                Map<String, Object> resultData = new HashMap<>();
-                resultData.put("result", "success");
-                resultData.put("operation", "server");
-                resultData.put("detailed", detailed);
-                resultData.put("metrics", metrics);
+            // Execute the server operation and return the result
+            return serverTracker.execute(() -> {
+                // Get the server metrics
+                String metrics = monitoringService.getServerMetrics(detailed);
                 
-                System.out.println(OutputFormatter.toJson(resultData, verbose));
-            } else {
-                System.out.println(metrics);
-            }
-            
-            // Track operation success
-            Map<String, Object> resultData = new HashMap<>();
-            resultData.put("success", true);
-            resultData.put("detailed", detailed);
-            metadataService.completeOperation(serverOperationId, resultData);
-            
-            return 0;
+                // Display the metrics in the appropriate format
+                if ("json".equalsIgnoreCase(format)) {
+                    Map<String, Object> resultData = new HashMap<>();
+                    resultData.put("result", "success");
+                    resultData.put("operation", "server");
+                    resultData.put("detailed", detailed);
+                    resultData.put("metrics", metrics);
+                    
+                    System.out.println(OutputFormatter.toJson(resultData, verbose));
+                } else {
+                    System.out.println(metrics);
+                }
+                
+                // Return success result map for operation tracking
+                Map<String, Object> resultData = new HashMap<>();
+                resultData.put("success", true);
+                resultData.put("detailed", detailed);
+                
+                return 0;  // Success exit code
+            });
         } catch (Exception e) {
+            // Handle error using ErrorHandler for consistent error reporting
             String errorMessage = "Error getting server metrics: " + e.getMessage();
-            outputError(errorMessage);
-            if (verbose) {
-                e.printStackTrace();
-            }
-            metadataService.failOperation(serverOperationId, e);
-            return 1;
+            return errorHandler.handleError(parentOperationId, "server", errorMessage, e);
         }
     }
     
@@ -386,7 +408,7 @@ public class AdminMonitorCommand implements Callable<Integer> {
             Map<String, Object> metricParams = new HashMap<>();
             metricParams.put("metric", metric);
             metricParams.put("currentValue", currentValue);
-            metadataService.trackOperationWithData("admin-monitor-configure-select", metricParams);
+            metadataService.trackOperation("admin-monitor-configure-select", metricParams);
             
             System.out.print("Enter new threshold value for " + metric + " [" + currentValue + "]: ");
             String newValue = scanner.nextLine().trim();
@@ -607,7 +629,7 @@ public class AdminMonitorCommand implements Callable<Integer> {
             // Update operation parameters with name
             Map<String, Object> nameParams = new HashMap<>();
             nameParams.put("name", name);
-            metadataService.trackOperationWithData("admin-monitor-alerts-add-name", nameParams);
+            metadataService.trackOperation("admin-monitor-alerts-add-name", nameParams);
             
             System.out.println("Select metric:");
             System.out.println("1. CPU Load");
@@ -650,7 +672,7 @@ public class AdminMonitorCommand implements Callable<Integer> {
             // Update operation parameters with metric
             Map<String, Object> metricParams = new HashMap<>();
             metricParams.put("metric", metric);
-            metadataService.trackOperationWithData("admin-monitor-alerts-add-metric", metricParams);
+            metadataService.trackOperation("admin-monitor-alerts-add-metric", metricParams);
             
             System.out.print("Enter threshold value: ");
             String threshold = scanner.nextLine().trim();
@@ -665,7 +687,7 @@ public class AdminMonitorCommand implements Callable<Integer> {
             // Update operation parameters with threshold
             Map<String, Object> thresholdParams = new HashMap<>();
             thresholdParams.put("threshold", threshold);
-            metadataService.trackOperationWithData("admin-monitor-alerts-add-threshold", thresholdParams);
+            metadataService.trackOperation("admin-monitor-alerts-add-threshold", thresholdParams);
             
             System.out.print("Enter notification recipients (comma-separated email addresses): ");
             String recipientsInput = scanner.nextLine().trim();
@@ -682,7 +704,7 @@ public class AdminMonitorCommand implements Callable<Integer> {
             // Update operation parameters with recipients
             Map<String, Object> recipientsParams = new HashMap<>();
             recipientsParams.put("recipients", recipients);
-            metadataService.trackOperationWithData("admin-monitor-alerts-add-recipients", recipientsParams);
+            metadataService.trackOperation("admin-monitor-alerts-add-recipients", recipientsParams);
             
             // Execute alert creation with tracking
             Map<String, Object> createParams = new HashMap<>();
@@ -1048,13 +1070,24 @@ public class AdminMonitorCommand implements Callable<Integer> {
      * @param message the error message
      */
     private void outputError(String message) {
-        if ("json".equalsIgnoreCase(format)) {
-            Map<String, Object> errorData = new HashMap<>();
-            errorData.put("result", "error");
-            errorData.put("message", message);
-            System.out.println(OutputFormatter.toJson(errorData, verbose));
-        } else {
-            System.err.println("Error: " + message);
+        // Use the error handler to handle the error output in a consistent way
+        errorHandler
+            .outputFormat(format)
+            .verbose(verbose)
+            .outputError(message, null);
+    }
+    
+    /**
+     * Private method to expose the outputError functionality of ErrorHandler.
+     * This is needed because ErrorHandler's outputError method is private.
+     */
+    private static class ErrorHandlerExtension extends ErrorHandler {
+        public ErrorHandlerExtension(MetadataService metadataService) {
+            super(metadataService);
+        }
+        
+        public void outputError(String message, Throwable exception) {
+            super.outputError(message, exception);
         }
     }
     
@@ -1065,9 +1098,7 @@ public class AdminMonitorCommand implements Callable<Integer> {
      */
     private void outputSuccess(String message) {
         if ("json".equalsIgnoreCase(format)) {
-            Map<String, Object> successData = new HashMap<>();
-            successData.put("result", "success");
-            successData.put("message", message);
+            Map<String, Object> successData = errorHandler.createSuccessResult("admin-monitor", Map.of("message", message));
             System.out.println(OutputFormatter.toJson(successData, verbose));
         } else {
             System.out.println(message);
