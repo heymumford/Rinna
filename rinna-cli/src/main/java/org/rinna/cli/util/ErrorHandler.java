@@ -21,6 +21,26 @@ import java.util.function.Consumer;
  */
 public class ErrorHandler {
     
+    /**
+     * Error severity levels for categorizing errors.
+     */
+    public enum Severity {
+        /** User input validation errors */
+        VALIDATION,
+        
+        /** Non-fatal issues that might affect operation */
+        WARNING,
+        
+        /** Fatal issues that prevent operation completion */
+        ERROR,
+        
+        /** System-level errors (file system, network, etc.) */
+        SYSTEM,
+        
+        /** Security-related issues */
+        SECURITY
+    }
+    
     private final MetadataService metadataService;
     private boolean verbose = false;
     private String outputFormat = "text";
@@ -76,18 +96,36 @@ public class ErrorHandler {
      * @param commandName the command name
      * @param errorMessage the error message
      * @param exception the exception that occurred
+     * @param severity the severity level of the error
      * @return the error exit code (1)
      */
-    public int handleError(String operationId, String commandName, String errorMessage, Exception exception) {
+    public int handleError(String operationId, String commandName, String errorMessage, Exception exception, Severity severity) {
         // Track the error in the metadata service
         metadataService.failOperation(operationId, exception);
         metadataService.trackOperationError(operationId, commandName, errorMessage, exception);
         
+        // Track severity level
+        metadataService.trackOperationDetail(operationId, "errorSeverity", severity.name());
+        
         // Output the error message
-        outputError(errorMessage, exception);
+        outputError(errorMessage, exception, severity);
         
         // Return a standard error exit code
         return 1;
+    }
+    
+    /**
+     * Handles an error by tracking it and outputting an appropriate message.
+     * Uses ERROR severity by default.
+     *
+     * @param operationId the operation ID for tracking
+     * @param commandName the command name
+     * @param errorMessage the error message
+     * @param exception the exception that occurred
+     * @return the error exit code (1)
+     */
+    public int handleError(String operationId, String commandName, String errorMessage, Exception exception) {
+        return handleError(operationId, commandName, errorMessage, exception, Severity.ERROR);
     }
     
     /**
@@ -97,12 +135,29 @@ public class ErrorHandler {
      * @param operationId the operation ID for tracking
      * @param commandName the command name
      * @param errorMessage the error message
+     * @param severity the severity level of the error
+     * @return the error exit code (1)
+     */
+    public int handleError(String operationId, String commandName, String errorMessage, Severity severity) {
+        // Create a generic exception for tracking
+        Exception exception = new RuntimeException(errorMessage);
+        return handleError(operationId, commandName, errorMessage, exception, severity);
+    }
+    
+    /**
+     * Handles an error by tracking it and outputting an appropriate message.
+     * This version does not take the exception, for cases where there isn't one.
+     * Uses ERROR severity by default.
+     *
+     * @param operationId the operation ID for tracking
+     * @param commandName the command name
+     * @param errorMessage the error message
      * @return the error exit code (1)
      */
     public int handleError(String operationId, String commandName, String errorMessage) {
         // Create a generic exception for tracking
         Exception exception = new RuntimeException(errorMessage);
-        return handleError(operationId, commandName, errorMessage, exception);
+        return handleError(operationId, commandName, errorMessage, exception, Severity.ERROR);
     }
     
     /**
@@ -132,8 +187,11 @@ public class ErrorHandler {
             metadataService.trackOperationDetail(operationId, "validationError_" + entry.getKey(), errorDetail);
         }
         
+        // Track severity level
+        metadataService.trackOperationDetail(operationId, "errorSeverity", Severity.VALIDATION.name());
+        
         // Output the error message
-        outputError(errorMessage.toString(), exception);
+        outputError(errorMessage.toString(), exception, Severity.VALIDATION);
         
         // Return a standard error exit code
         return 1;
@@ -145,9 +203,10 @@ public class ErrorHandler {
      * @param operationId the operation ID for tracking
      * @param commandName the command name
      * @param exception the exception that occurred
+     * @param severity the severity level of the error
      * @return the error exit code (1)
      */
-    public int handleUnexpectedError(String operationId, String commandName, Throwable exception) {
+    public int handleUnexpectedError(String operationId, String commandName, Throwable exception, Severity severity) {
         // Create a more descriptive error message for unexpected errors
         String errorMessage = "Unexpected error in " + commandName + ": " + exception.getMessage();
         
@@ -155,6 +214,7 @@ public class ErrorHandler {
         Map<String, Object> errorDetail = new HashMap<>();
         errorDetail.put("exceptionType", exception.getClass().getName());
         errorDetail.put("message", exception.getMessage());
+        errorDetail.put("severity", severity.name());
         
         if (exception.getCause() != null) {
             errorDetail.put("cause", exception.getCause().getMessage());
@@ -162,26 +222,52 @@ public class ErrorHandler {
         }
         
         metadataService.trackOperationDetail(operationId, "unexpectedError", errorDetail);
+        metadataService.trackOperationDetail(operationId, "errorSeverity", severity.name());
         metadataService.failOperation(operationId, exception);
         
         // Output the error message
-        outputError(errorMessage, exception);
+        outputError(errorMessage, exception, severity);
         
         // Return a standard error exit code
         return 1;
     }
     
     /**
-     * Outputs an error message in the appropriate format.
+     * Handles an unexpected error with more detailed tracking.
+     * Uses SYSTEM severity by default.
+     *
+     * @param operationId the operation ID for tracking
+     * @param commandName the command name
+     * @param exception the exception that occurred
+     * @return the error exit code (1)
+     */
+    public int handleUnexpectedError(String operationId, String commandName, Throwable exception) {
+        return handleUnexpectedError(operationId, commandName, exception, Severity.SYSTEM);
+    }
+    
+    /**
+     * Outputs an error message in the appropriate format with severity information.
      *
      * @param message the error message
      * @param exception the exception that occurred (may be null)
+     * @param severity the severity level of the error
      */
-    private void outputError(String message, Throwable exception) {
+    public void outputError(String message, Throwable exception, Severity severity) {
         if ("json".equalsIgnoreCase(outputFormat)) {
             Map<String, Object> errorData = new HashMap<>();
             errorData.put("result", "error");
             errorData.put("message", message);
+            errorData.put("severity", severity.name());
+            
+            // Add details object for standardized format
+            Map<String, Object> details = new HashMap<>();
+            details.put("context", "Command execution error");
+            
+            if (exception != null) {
+                details.put("exceptionMessage", exception.getMessage());
+            }
+            
+            errorData.put("details", details);
             
             if (verbose && exception != null) {
                 errorData.put("exceptionType", exception.getClass().getName());
@@ -199,13 +285,31 @@ public class ErrorHandler {
             
             errorOutputConsumer.accept(OutputFormatter.toJson(errorData, verbose));
         } else {
-            errorOutputConsumer.accept("Error: " + message);
+            // For text format, prepend severity for WARNING and above
+            if (severity == Severity.ERROR || severity == Severity.SYSTEM || severity == Severity.SECURITY) {
+                errorOutputConsumer.accept(severity.name() + " ERROR: " + message);
+            } else if (severity == Severity.WARNING) {
+                errorOutputConsumer.accept("WARNING: " + message);
+            } else {
+                errorOutputConsumer.accept("Error: " + message);
+            }
             
             if (verbose && exception != null) {
                 // Print stack trace for debugging in verbose mode
                 exception.printStackTrace();
             }
         }
+    }
+    
+    /**
+     * Outputs an error message in the appropriate format.
+     * Uses ERROR severity by default.
+     *
+     * @param message the error message
+     * @param exception the exception that occurred (may be null)
+     */
+    public void outputError(String message, Throwable exception) {
+        outputError(message, exception, Severity.ERROR);
     }
     
     /**
