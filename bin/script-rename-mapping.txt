@@ -1,0 +1,28 @@
+# Main bin scripts
+bin/build.sh                               bin/new-structure/rin-build-main-all.sh
+bin/rinna-container.sh                     bin/new-structure/rin-infra-container-all.sh
+bin/test-rate-limiting.sh                  bin/new-structure/rin-api-test-rate-limiting.sh
+bin/test-oauth-integration.sh              bin/new-structure/rin-api-test-oauth.sh
+bin/test-failure-notify.sh                 bin/new-structure/rin-ci-notify-test-failures.sh
+bin/quality-thresholds.sh                  bin/new-structure/rin-quality-config-thresholds.sh
+bin/increment-build.sh                     bin/new-structure/rin-util-version-increment.sh
+bin/update-versions.sh                     bin/new-structure/rin-util-version-update.sh
+bin/setup-hooks.sh                         bin/new-structure/rin-git-setup-hooks.sh
+bin/run-security-tests.sh                  bin/new-structure/rin-security-test-all.sh
+bin/run-checks.sh                          bin/new-structure/rin-quality-check-all.sh
+bin/rinna-tests.sh                         bin/new-structure/rin-test-run-all.sh
+
+# Quality tool scripts
+bin/quality-tools/checkstyle.sh            bin/new-structure/rin-quality-check-java-style.sh
+bin/quality-tools/count-warnings.sh        bin/new-structure/rin-quality-analyze-warnings.sh
+bin/quality-tools/enforcer.sh              bin/new-structure/rin-quality-check-maven-rules.sh
+bin/quality-tools/fix-imports.sh           bin/new-structure/rin-quality-fix-java-imports.sh
+bin/quality-tools/owasp.sh                 bin/new-structure/rin-security-check-dependencies.sh
+bin/quality-tools/pmd.sh                   bin/new-structure/rin-quality-check-java-pmd.sh
+bin/quality-tools/run-all.sh               bin/new-structure/rin-quality-check-all.sh
+bin/quality-tools/spotbugs.sh              bin/new-structure/rin-quality-check-java-bugs.sh
+
+# XML tool scripts
+bin/xml-tools/pom-n-tag-fixer.sh           bin/new-structure/rin-xml-fix-pom-tags.sh
+bin/xml-tools/xml-cleanup-scheduler.sh     bin/new-structure/rin-xml-schedule-cleanup.sh
+bin/xml-tools/xml-cleanup.sh               bin/new-structure/rin-xml-format-all.sh

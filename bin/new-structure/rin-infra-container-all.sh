@@ -1,0 +1,855 @@
+#!/usr/bin/env bash
+#
+# rinna-container.sh - Universal container management script for Rinna
+#
+# PURPOSE: Manage Rinna containers consistently across Windows, WSL and Linux
+#
+# Copyright (c) 2025 Eric C. Mumford (@heymumford)
+# This file is subject to the terms and conditions defined in
+# the LICENSE file, which is part of this source code package.
+# (MIT License)
+#
+
+set -eo pipefail
+
+# Determine project directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+CONTAINER_ENGINE=""
+CONFIG_DIR="$PROJECT_ROOT/.rinna-containers"
+LOG_DIR="$PROJECT_ROOT/logs/containers"
+
+# Create required directories
+mkdir -p "$CONFIG_DIR" "$LOG_DIR"
+
+# Colors and formatting
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+# Configuration variables
+ACTION=""
+VERBOSE=false
+REBUILD=false
+CONTAINER_TYPE="all"
+COMPOSE_FILE="podman-compose.yml"
+AUTO_DETECT_WSL=true
+PLATFORM=""
+STORAGE_PATH=""
+ZERO_INSTALL=false
+ZERO_INSTALL_IMAGE="heymumford/rinna:latest"
+HEALTH_CHECK=true
+HEALTH_CHECK_INTERVAL=30
+
+# Display help text
+show_help() {
+    cat <<EOF
+${BLUE}rinna-container.sh${NC} - Universal container management for Rinna
+
+Usage: rinna-container.sh [options] ACTION
+
+Actions:
+  start             Start Rinna containers
+  stop              Stop Rinna containers  
+  restart           Restart Rinna containers
+  status            Check status of Rinna containers
+  logs              View container logs
+  health            Check container health
+  shell             Open shell in a container
+  build             Build container images
+  clean             Remove containers and optionally volumes
+
+Options:
+  -h, --help            Show this help message
+  -v, --verbose         Show detailed output
+  --rebuild             Force rebuild container images
+  --docker              Use Docker instead of automatic detection
+  --podman              Use Podman instead of automatic detection
+  --windows             Configure for Windows (Git Bash/PowerShell)
+  --wsl                 Configure for Windows Subsystem for Linux
+  --linux               Configure for native Linux
+  --type=TYPE           Container type: all, api, java, python, dev (default: all)
+  --compose=FILE        Custom compose file path
+  --storage=PATH        Custom storage path for volumes
+  --zero-install        Use prebuilt image without local build
+  --no-health           Disable automatic health checking
+  
+Examples:
+  ./bin/rinna-container.sh start                  # Start all containers
+  ./bin/rinna-container.sh --type=api start       # Start only API server
+  ./bin/rinna-container.sh --docker --wsl start   # Start with Docker on WSL
+  ./bin/rinna-container.sh logs                   # View all container logs
+  ./bin/rinna-container.sh --type=python logs     # View Python container logs
+  ./bin/rinna-container.sh shell                  # Open shell in the development container
+  ./bin/rinna-container.sh --zero-install start   # Use prebuilt image
+EOF
+}
+
+# Detect operating system and container runtime environment
+detect_environment() {
+    if [[ "$PLATFORM" != "" ]]; then
+        # Platform already specified via command line
+        return
+    fi
+    
+    # Detect Windows, WSL, or Linux
+    if [[ "$(uname -s)" == "Linux" ]]; then
+        if [[ "$AUTO_DETECT_WSL" == "true" && -f /proc/version && $(grep -i microsoft /proc/version) ]]; then
+            PLATFORM="wsl"
+            echo -e "${BLUE}Detected Windows Subsystem for Linux${NC}"
+        else
+            PLATFORM="linux"
+            echo -e "${BLUE}Detected native Linux${NC}"
+        fi
+    elif [[ "$(uname -s)" == MINGW* || "$(uname -s)" == MSYS* ]]; then
+        PLATFORM="windows"
+        echo -e "${BLUE}Detected Windows (Git Bash)${NC}"
+    else
+        # Default to Linux for unknown platforms
+        PLATFORM="linux"
+        echo -e "${YELLOW}Unknown platform, defaulting to Linux mode${NC}"
+    fi
+}
+
+# Check if podman is available, fallback to docker
+check_container_engine() {
+    if [[ "$1" == "docker" ]]; then
+        CONTAINER_ENGINE="docker"
+    elif [[ "$1" == "podman" ]]; then
+        CONTAINER_ENGINE="podman"
+    elif command -v podman &> /dev/null; then
+        CONTAINER_ENGINE="podman"
+    elif command -v docker &> /dev/null; then
+        CONTAINER_ENGINE="docker"
+    else
+        echo -e "${RED}Error: Neither podman nor docker found. Please install one of them.${NC}"
+        exit 1
+    fi
+    
+    echo -e "${BLUE}Using container engine: ${CONTAINER_ENGINE}${NC}"
+}
+
+# Set up environment-specific configurations
+configure_environment() {
+    local compose_file="$PROJECT_ROOT/$COMPOSE_FILE"
+    
+    # Create config file to store settings
+    cat > "$CONFIG_DIR/container-config.env" <<EOF
+# Rinna Container Configuration
+# Generated by rinna-container.sh
+CONTAINER_ENGINE=$CONTAINER_ENGINE
+PLATFORM=$PLATFORM
+COMPOSE_FILE=$compose_file
+STORAGE_PATH=${STORAGE_PATH:-$PROJECT_ROOT/container-data}
+ZERO_INSTALL=$ZERO_INSTALL
+ZERO_INSTALL_IMAGE=$ZERO_INSTALL_IMAGE
+HEALTH_CHECK=$HEALTH_CHECK
+HEALTH_CHECK_INTERVAL=$HEALTH_CHECK_INTERVAL
+EOF
+    
+    # Set user ID for container to match current user
+    export USER_ID=$(id -u)
+    export GROUP_ID=$(id -g)
+    
+    # Environment-specific configurations
+    case "$PLATFORM" in
+        windows)
+            # For Windows/Git Bash
+            if [[ -z "$STORAGE_PATH" ]]; then
+                STORAGE_PATH="$PROJECT_ROOT/container-data"
+            fi
+            # Convert Windows path format if needed
+            if command -v cygpath &> /dev/null; then
+                COMPOSE_FILE=$(cygpath -w "$compose_file")
+                STORAGE_PATH=$(cygpath -w "$STORAGE_PATH")
+            fi
+            
+            # Special configuration for Docker on Windows
+            if [[ "$CONTAINER_ENGINE" == "docker" ]]; then
+                export COMPOSE_CONVERT_WINDOWS_PATHS=1
+            fi
+            ;;
+        wsl)
+            # For WSL
+            if [[ -z "$STORAGE_PATH" ]]; then
+                STORAGE_PATH="$PROJECT_ROOT/container-data"
+            fi
+            # Ensure Docker socket is available if using Docker Desktop from WSL
+            if [[ "$CONTAINER_ENGINE" == "docker" ]]; then
+                if [[ ! -S /var/run/docker.sock && ! -S /mnt/wsl/docker-desktop/docker.sock ]]; then
+                    echo -e "${YELLOW}Docker socket not found at standard locations.${NC}"
+                    echo -e "${YELLOW}If using Docker Desktop, make sure integration with this WSL distro is enabled.${NC}"
+                    if [[ -n "$(command -v wsl.exe)" ]]; then
+                        # Check if Docker Desktop is running
+                        if ! wsl.exe -e sh -c "command -v docker >/dev/null 2>&1"; then
+                            echo -e "${YELLOW}Docker not found in path. Make sure Docker Desktop is running.${NC}"
+                        fi
+                    fi
+                fi
+            fi
+            ;;
+        linux)
+            # For native Linux
+            if [[ -z "$STORAGE_PATH" ]]; then
+                STORAGE_PATH="$PROJECT_ROOT/container-data"
+            fi
+            
+            # Setup permissions for Podman rootless mode
+            if [[ "$CONTAINER_ENGINE" == "podman" ]]; then
+                if ! podman info 2>/dev/null | grep -q "rootless: true"; then
+                    echo -e "${BLUE}Configuring permissions for rootless Podman${NC}"
+                    mkdir -p "$STORAGE_PATH"
+                    if command -v podman-unshare &> /dev/null; then
+                        podman-unshare chown -R $USER_ID:$GROUP_ID "$STORAGE_PATH"
+                    elif command -v podman &> /dev/null; then
+                        podman unshare chown -R $USER_ID:$GROUP_ID "$STORAGE_PATH"
+                    fi
+                fi
+            fi
+            ;;
+    esac
+    
+    # Save paths to config
+    cat >> "$CONFIG_DIR/container-config.env" <<EOF
+USER_ID=$USER_ID
+GROUP_ID=$GROUP_ID
+PROJECT_ROOT=$PROJECT_ROOT
+EOF
+}
+
+# Create Docker/Podman Compose file based on runtime environment
+create_compose_override() {
+    # Base override with volume mappings and environment configs
+    cat > "$CONFIG_DIR/docker-compose.override.yml" <<EOF
+version: '3.8'
+
+# Network configuration
+networks:
+  rinna-network:
+    name: rinna-network
+    
+# Volume configuration
+volumes:
+  go-api-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_PATH}/go-api-data
+  java-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_PATH}/java-data
+  python-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_PATH}/python-data
+  shared-storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_PATH}/shared-storage
+  test-output:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_PATH}/test-output
+  coverage-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_PATH}/coverage-data
+
+services:
+  # Common configurations for all services
+  api-server:
+    networks:
+      - rinna-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - PLATFORM=${PLATFORM}
+      
+  java-service:
+    networks:
+      - rinna-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - PLATFORM=${PLATFORM}
+      
+  python-service:
+    networks:
+      - rinna-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - PLATFORM=${PLATFORM}
+EOF
+
+    # Create directory structure for volumes
+    mkdir -p "${STORAGE_PATH}/go-api-data" \
+             "${STORAGE_PATH}/java-data" \
+             "${STORAGE_PATH}/python-data" \
+             "${STORAGE_PATH}/shared-storage" \
+             "${STORAGE_PATH}/test-output" \
+             "${STORAGE_PATH}/coverage-data"
+             
+    # Set correct permissions on volume directories
+    chmod 777 "${STORAGE_PATH}/go-api-data" \
+              "${STORAGE_PATH}/java-data" \
+              "${STORAGE_PATH}/python-data" \
+              "${STORAGE_PATH}/shared-storage" \
+              "${STORAGE_PATH}/test-output" \
+              "${STORAGE_PATH}/coverage-data"
+}
+
+# Start Rinna containers
+start_containers() {
+    # Create required directories and configurations
+    create_compose_override
+    
+    echo -e "${BLUE}Starting Rinna containers...${NC}"
+    
+    if [[ "$ZERO_INSTALL" == "true" ]]; then
+        echo -e "${BLUE}Using zero-install mode with prebuilt image: ${ZERO_INSTALL_IMAGE}${NC}"
+        
+        # Create a minimal compose file for zero-install mode
+        cat > "$CONFIG_DIR/zero-install-compose.yml" <<EOF
+version: '3.8'
+
+services:
+  rinna-all-in-one:
+    image: ${ZERO_INSTALL_IMAGE}
+    ports:
+      - "8080:8080"
+      - "8081:8081" 
+      - "5000:5000"
+    volumes:
+      - shared-storage:/shared
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  shared-storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${STORAGE_PATH}/shared-storage
+EOF
+        
+        $CONTAINER_ENGINE compose -f "$CONFIG_DIR/zero-install-compose.yml" up -d
+        
+        echo -e "${GREEN}Zero-install container started successfully${NC}"
+        echo -e "Access the system at: http://localhost:8080"
+        
+        # Start health monitoring if enabled
+        if [[ "$HEALTH_CHECK" == "true" ]]; then
+            start_health_monitoring "rinna-all-in-one"
+        fi
+        
+        return
+    fi
+    
+    # Determine which services to start based on container type
+    local services=""
+    case "$CONTAINER_TYPE" in
+        all)
+            # Start all services
+            $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" -f "$CONFIG_DIR/docker-compose.override.yml" up -d
+            ;;
+        api)
+            # Start API server only
+            $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" -f "$CONFIG_DIR/docker-compose.override.yml" up -d api-server
+            ;;
+        java)
+            # Start Java service only
+            $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" -f "$CONFIG_DIR/docker-compose.override.yml" up -d java-service
+            ;;
+        python)
+            # Start Python service only
+            $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" -f "$CONFIG_DIR/docker-compose.override.yml" up -d python-service
+            ;;
+        dev)
+            # Start development environment
+            $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" -f "$CONFIG_DIR/docker-compose.override.yml" --profile dev up -d
+            ;;
+        *)
+            echo -e "${RED}Unknown container type: $CONTAINER_TYPE${NC}"
+            return 1
+            ;;
+    esac
+    
+    echo -e "${GREEN}Containers started successfully${NC}"
+    
+    # Start health monitoring if enabled
+    if [[ "$HEALTH_CHECK" == "true" ]]; then
+        start_health_monitoring
+    fi
+}
+
+# Stop Rinna containers
+stop_containers() {
+    echo -e "${BLUE}Stopping Rinna containers...${NC}"
+    
+    # Stop health monitoring process if running
+    if [[ -f "$CONFIG_DIR/health-monitor.pid" ]]; then
+        local pid=$(cat "$CONFIG_DIR/health-monitor.pid")
+        if kill -0 $pid 2>/dev/null; then
+            kill $pid
+            echo -e "${BLUE}Stopped health monitoring process${NC}"
+        fi
+        rm -f "$CONFIG_DIR/health-monitor.pid"
+    fi
+    
+    if [[ "$ZERO_INSTALL" == "true" ]]; then
+        $CONTAINER_ENGINE compose -f "$CONFIG_DIR/zero-install-compose.yml" down
+    else
+        case "$CONTAINER_TYPE" in
+            all)
+                # Stop all services
+                $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" -f "$CONFIG_DIR/docker-compose.override.yml" down
+                ;;
+            api|java|python)
+                # Stop specific service
+                $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" -f "$CONFIG_DIR/docker-compose.override.yml" stop $CONTAINER_TYPE-service
+                ;;
+            dev)
+                # Stop development environment
+                $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" -f "$CONFIG_DIR/docker-compose.override.yml" --profile dev down
+                ;;
+            *)
+                echo -e "${RED}Unknown container type: $CONTAINER_TYPE${NC}"
+                return 1
+                ;;
+        esac
+    fi
+    
+    echo -e "${GREEN}Containers stopped successfully${NC}"
+}
+
+# Restart Rinna containers
+restart_containers() {
+    echo -e "${BLUE}Restarting Rinna containers...${NC}"
+    stop_containers
+    sleep 2
+    start_containers
+}
+
+# Check status of Rinna containers
+check_status() {
+    echo -e "${BLUE}Checking status of Rinna containers...${NC}"
+    
+    if [[ "$ZERO_INSTALL" == "true" ]]; then
+        $CONTAINER_ENGINE ps --filter "name=rinna-all-in-one"
+    else
+        case "$CONTAINER_TYPE" in
+            all)
+                # Check all services
+                $CONTAINER_ENGINE ps --filter "name=rinna"
+                ;;
+            api|java|python|dev)
+                # Check specific service
+                $CONTAINER_ENGINE ps --filter "name=rinna-$CONTAINER_TYPE"
+                ;;
+            *)
+                echo -e "${RED}Unknown container type: $CONTAINER_TYPE${NC}"
+                return 1
+                ;;
+        esac
+    fi
+    
+    # Show health status if available
+    if $CONTAINER_ENGINE ps --format "{{.Names}} {{.Status}}" 2>/dev/null | grep -q "health"; then
+        echo -e "\n${BLUE}Container Health Status:${NC}"
+        $CONTAINER_ENGINE ps --format "table {{.Names}}\t{{.Status}}" --filter "name=rinna"
+    fi
+}
+
+# View container logs
+view_logs() {
+    echo -e "${BLUE}Viewing logs for Rinna containers...${NC}"
+    
+    if [[ "$ZERO_INSTALL" == "true" ]]; then
+        $CONTAINER_ENGINE logs rinna-all-in-one
+    else
+        case "$CONTAINER_TYPE" in
+            all)
+                # View all logs
+                $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" logs --tail=100 -f
+                ;;
+            api|java|python)
+                # View specific service logs
+                $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" logs --tail=100 -f $CONTAINER_TYPE-service
+                ;;
+            dev)
+                # View development environment logs
+                $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" --profile dev logs --tail=100 -f
+                ;;
+            *)
+                echo -e "${RED}Unknown container type: $CONTAINER_TYPE${NC}"
+                return 1
+                ;;
+        esac
+    fi
+}
+
+# Check container health
+check_health() {
+    echo -e "${BLUE}Checking health of Rinna containers...${NC}"
+    
+    if [[ "$ZERO_INSTALL" == "true" ]]; then
+        $CONTAINER_ENGINE inspect --format "{{.State.Health.Status}}" rinna-all-in-one
+        
+        # If container has a health check defined
+        if [[ $? -eq 0 ]]; then
+            echo -e "\n${BLUE}Last health check:${NC}"
+            $CONTAINER_ENGINE inspect --format "{{json .State.Health.Log}}" rinna-all-in-one | jq
+        fi
+    else
+        $CONTAINER_ENGINE ps --format "table {{.Names}}\t{{.Status}}" --filter "name=rinna"
+        
+        # Check each container's health in more detail
+        for container in $($CONTAINER_ENGINE ps -q --filter "name=rinna"); do
+            local name=$($CONTAINER_ENGINE inspect --format "{{.Name}}" $container | sed 's/\///')
+            echo -e "\n${BLUE}Health details for $name:${NC}"
+            $CONTAINER_ENGINE inspect --format "{{if .State.Health}}{{.State.Health.Status}}{{else}}No health check{{end}}" $container
+            
+            # If container has a health check defined
+            if $CONTAINER_ENGINE inspect $container | grep -q "Health"; then
+                echo -e "${BLUE}Last health check:${NC}"
+                $CONTAINER_ENGINE inspect --format "{{json .State.Health.Log}}" $container | jq -r '.[-1].Output' 2>/dev/null || echo "No health check log available"
+            fi
+        done
+    fi
+}
+
+# Start health monitoring in background
+start_health_monitoring() {
+    local target_container="$1"
+    
+    # Create health monitoring script
+    cat > "$CONFIG_DIR/health-monitor.sh" <<EOF
+#!/usr/bin/env bash
+CONTAINER_ENGINE=$CONTAINER_ENGINE
+TARGET_CONTAINER=$target_container
+CONFIG_DIR=$CONFIG_DIR
+LOG_DIR=$LOG_DIR
+HEALTH_CHECK_INTERVAL=$HEALTH_CHECK_INTERVAL
+
+echo "Starting Rinna container health monitoring..."
+echo \$\$ > "\$CONFIG_DIR/health-monitor.pid"
+
+# Create log file for health monitoring
+mkdir -p "\$LOG_DIR"
+LOG_FILE="\$LOG_DIR/health-monitor-\$(date +%Y%m%d-%H%M%S).log"
+touch "\$LOG_FILE"
+
+echo "$(date): Health monitoring started. Interval: \$HEALTH_CHECK_INTERVAL seconds" >> "\$LOG_FILE"
+
+monitor_containers() {
+    local unhealthy_containers=()
+    
+    if [[ -n "\$TARGET_CONTAINER" ]]; then
+        # Monitor specific container
+        local status=\$(\$CONTAINER_ENGINE inspect --format "{{if .State.Health}}{{.State.Health.Status}}{{else}}No health check{{end}}" \$TARGET_CONTAINER 2>/dev/null)
+        if [[ "\$status" == "unhealthy" ]]; then
+            unhealthy_containers+=("\$TARGET_CONTAINER")
+        fi
+    else
+        # Monitor all Rinna containers
+        for container in \$(\$CONTAINER_ENGINE ps -q --filter "name=rinna" 2>/dev/null); do
+            local name=\$(\$CONTAINER_ENGINE inspect --format "{{.Name}}" \$container 2>/dev/null | sed 's/\///')
+            local status=\$(\$CONTAINER_ENGINE inspect --format "{{if .State.Health}}{{.State.Health.Status}}{{else}}No health check{{end}}" \$container 2>/dev/null)
+            
+            if [[ "\$status" == "unhealthy" ]]; then
+                unhealthy_containers+=("\$name")
+            fi
+        done
+    fi
+    
+    # Restart unhealthy containers
+    for container in "\${unhealthy_containers[@]}"; do
+        echo "$(date): Container \$container is unhealthy. Restarting..." >> "\$LOG_FILE"
+        \$CONTAINER_ENGINE restart \$container
+        echo "$(date): Container \$container restarted." >> "\$LOG_FILE"
+    done
+}
+
+# Main monitoring loop
+while true; do
+    monitor_containers
+    sleep \$HEALTH_CHECK_INTERVAL
+done
+EOF
+
+    chmod +x "$CONFIG_DIR/health-monitor.sh"
+    
+    # Start monitoring in background
+    "$CONFIG_DIR/health-monitor.sh" &
+    
+    echo -e "${GREEN}Health monitoring started in background${NC}"
+}
+
+# Open shell in a container
+open_shell() {
+    echo -e "${BLUE}Opening shell in container...${NC}"
+    
+    if [[ "$ZERO_INSTALL" == "true" ]]; then
+        $CONTAINER_ENGINE exec -it rinna-all-in-one /bin/bash
+    else
+        case "$CONTAINER_TYPE" in
+            all|dev)
+                # Default to dev container for shell
+                if $CONTAINER_ENGINE ps -q --filter "name=rinna-dev-environment" 2>/dev/null | grep -q .; then
+                    $CONTAINER_ENGINE exec -it rinna-dev-environment /bin/bash
+                else
+                    echo -e "${YELLOW}Dev environment not running. Starting it now...${NC}"
+                    $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" -f "$CONFIG_DIR/docker-compose.override.yml" --profile dev up -d
+                    sleep 2
+                    $CONTAINER_ENGINE exec -it rinna-dev-environment /bin/bash
+                fi
+                ;;
+            api)
+                $CONTAINER_ENGINE exec -it rinna-api-server /bin/bash
+                ;;
+            java)
+                $CONTAINER_ENGINE exec -it rinna-java-service /bin/bash
+                ;;
+            python)
+                $CONTAINER_ENGINE exec -it rinna-python-service /bin/bash
+                ;;
+            *)
+                echo -e "${RED}Unknown container type: $CONTAINER_TYPE${NC}"
+                return 1
+                ;;
+        esac
+    fi
+}
+
+# Build container images
+build_images() {
+    echo -e "${BLUE}Building Rinna container images...${NC}"
+    
+    if [[ "$ZERO_INSTALL" == "true" ]]; then
+        echo -e "${YELLOW}Zero-install mode uses prebuilt images. No build required.${NC}"
+        return
+    fi
+    
+    # Create required directories and configurations
+    create_compose_override
+    
+    case "$CONTAINER_TYPE" in
+        all)
+            # Build all images
+            $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" -f "$CONFIG_DIR/docker-compose.override.yml" build
+            ;;
+        api)
+            # Build API server only
+            $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" -f "$CONFIG_DIR/docker-compose.override.yml" build api-server
+            ;;
+        java)
+            # Build Java service only
+            $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" -f "$CONFIG_DIR/docker-compose.override.yml" build java-service
+            ;;
+        python)
+            # Build Python service only
+            $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" -f "$CONFIG_DIR/docker-compose.override.yml" build python-service
+            ;;
+        dev)
+            # Build development environment
+            $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" -f "$CONFIG_DIR/docker-compose.override.yml" --profile dev build
+            ;;
+        *)
+            echo -e "${RED}Unknown container type: $CONTAINER_TYPE${NC}"
+            return 1
+            ;;
+    esac
+    
+    echo -e "${GREEN}Container images built successfully${NC}"
+}
+
+# Clean containers and optionally volumes
+clean_containers() {
+    echo -e "${BLUE}Cleaning Rinna containers...${NC}"
+    
+    # Stop health monitoring process if running
+    if [[ -f "$CONFIG_DIR/health-monitor.pid" ]]; then
+        local pid=$(cat "$CONFIG_DIR/health-monitor.pid")
+        if kill -0 $pid 2>/dev/null; then
+            kill $pid
+            echo -e "${BLUE}Stopped health monitoring process${NC}"
+        fi
+        rm -f "$CONFIG_DIR/health-monitor.pid"
+    fi
+    
+    if [[ "$ZERO_INSTALL" == "true" ]]; then
+        $CONTAINER_ENGINE compose -f "$CONFIG_DIR/zero-install-compose.yml" down -v
+    else
+        # Remove containers and networks
+        $CONTAINER_ENGINE compose -f "$COMPOSE_FILE" -f "$CONFIG_DIR/docker-compose.override.yml" down -v
+    fi
+    
+    # Ask if user wants to remove volumes and cached images
+    read -p "Do you want to remove volume data? (y/N) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${YELLOW}Removing volume data...${NC}"
+        rm -rf "${STORAGE_PATH}"
+    fi
+    
+    echo -e "${GREEN}Cleanup completed successfully${NC}"
+}
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      show_help
+      exit 0
+      ;;
+    -v|--verbose)
+      VERBOSE=true
+      shift
+      ;;
+    --rebuild)
+      REBUILD=true
+      shift
+      ;;
+    --docker)
+      check_container_engine "docker"
+      shift
+      ;;
+    --podman)
+      check_container_engine "podman"
+      shift
+      ;;
+    --windows)
+      PLATFORM="windows"
+      AUTO_DETECT_WSL=false
+      shift
+      ;;
+    --wsl)
+      PLATFORM="wsl"
+      AUTO_DETECT_WSL=false
+      shift
+      ;;
+    --linux)
+      PLATFORM="linux" 
+      AUTO_DETECT_WSL=false
+      shift
+      ;;
+    --type=*)
+      CONTAINER_TYPE="${1#*=}"
+      shift
+      ;;
+    --compose=*)
+      COMPOSE_FILE="${1#*=}"
+      shift
+      ;;
+    --storage=*)
+      STORAGE_PATH="${1#*=}"
+      shift
+      ;;
+    --zero-install)
+      ZERO_INSTALL=true
+      shift
+      ;;
+    --no-health)
+      HEALTH_CHECK=false
+      shift
+      ;;
+    start|stop|restart|status|logs|health|shell|build|clean)
+      ACTION="$1"
+      shift
+      ;;
+    *)
+      echo -e "${RED}Unknown option: $1${NC}"
+      show_help
+      exit 1
+      ;;
+  esac
+done
+
+# Check for container engine if not already determined
+if [[ -z "$CONTAINER_ENGINE" ]]; then
+    check_container_engine
+fi
+
+# Detect environment if not specified
+detect_environment
+
+# Configure environment-specific settings
+configure_environment
+
+# Validate action
+if [[ -z "$ACTION" ]]; then
+    echo -e "${RED}Error: No action specified${NC}"
+    show_help
+    exit 1
+fi
+
+# Execute action
+case "$ACTION" in
+    start)
+        start_containers
+        ;;
+    stop)
+        stop_containers
+        ;;
+    restart)
+        restart_containers
+        ;;
+    status)
+        check_status
+        ;;
+    logs)
+        view_logs
+        ;;
+    health)
+        check_health
+        ;;
+    shell)
+        open_shell
+        ;;
+    build)
+        build_images
+        ;;
+    clean)
+        clean_containers
+        ;;
+    *)
+        echo -e "${RED}Unknown action: $ACTION${NC}"
+        show_help
+        exit 1
+        ;;
+esac

@@ -1,0 +1,1 @@
+/home/emumford/NativeLinuxProjects/Rinna/bin/new-structure/rin-quality-check-java-pmd.sh

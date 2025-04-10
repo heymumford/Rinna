@@ -1,0 +1,1 @@
+/home/emumford/NativeLinuxProjects/Rinna/bin/new-structure/rin-infra-container-all.sh
