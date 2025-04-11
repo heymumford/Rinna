@@ -72,7 +72,7 @@ public interface QueryService {
         private String sortBy = "created";
         private boolean ascending = false;
         
-        private QueryFilter() {}
+        private QueryFilter() { }
         
         /**
          * Creates a new query filter builder.
