@@ -17,8 +17,15 @@ import org.rinna.usecase.DocumentService;
  * Factory for creating document service instances.
  * This factory creates the appropriate document service based on configuration and available libraries.
  */
-public class DocumentServiceFactory {
+public final class DocumentServiceFactory {
     private static final Logger LOGGER = Logger.getLogger(DocumentServiceFactory.class.getName());
+    
+    /**
+     * Private constructor to prevent instantiation.
+     */
+    private DocumentServiceFactory() {
+        // This constructor is intentionally empty
+    }
     
     /**
      * Creates a document service with the given configuration.
