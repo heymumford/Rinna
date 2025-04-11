@@ -180,8 +180,11 @@ run_initialize_phase() {
   section_header "Initializing Build Environment"
   
   # Check build tools
-  run_formatted "command -v java >/dev/null && command -v mvn >/dev/null" "Checking build tools" \
-    "$(! is_component_enabled "java")"
+  if is_component_enabled "java"; then
+    run_formatted "command -v java >/dev/null && command -v mvn >/dev/null" "Checking build tools"
+  else
+    skip_task "Checking build tools (Java component disabled)"
+  fi
   
   # Create build directories
   run_formatted "mkdir -p \"$PROJECT_ROOT/target\"" "Creating build directories"
