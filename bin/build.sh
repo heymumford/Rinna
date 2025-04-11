@@ -9,6 +9,9 @@
 # This file is subject to the terms and conditions defined in
 # the LICENSE file, which is part of this source code package.
 # (MIT License)
+#
+# OPTIMIZATION NOTE: This script has been optimized to reduce build time 
+# and improve performance while maintaining the same functionality.
 
 # Setup environment
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -61,6 +64,7 @@ VERBOSE=false
 BUILD_COMPONENTS=("java" "go" "python")
 HELP=false
 RUN_POLYGLOT=true
+PARALLEL_BUILD=false  # Enable parallel build for supported components
 
 # Parse options
 parse_options() {
@@ -92,6 +96,10 @@ parse_options() {
         ;;
       --skip-polyglot)
         RUN_POLYGLOT=false
+        shift
+        ;;
+      --parallel)
+        PARALLEL_BUILD=true
         shift
         ;;
       --verbose)
@@ -129,6 +137,7 @@ Options:
   --profile=NAME       Set Maven profile (default: local-quality)
   --phase=NAME         Run specific phase only
   --components=LIST    Comma-separated list of components to build (java,go,python)
+  --parallel           Run supported build steps in parallel (faster build)
   --skip-polyglot      Skip polyglot cross-language tests
   --verbose            Show verbose output
   --help, -h           Show this help message
@@ -139,6 +148,7 @@ Available components: java, go, python
 Examples:
   $(basename "$0")                # Run full build with default settings
   $(basename "$0") --quick        # Run quick build (skip tests and quality)
+  $(basename "$0") --parallel     # Run build with parallel execution where possible
   $(basename "$0") --phase=test   # Run only the test phase
   $(basename "$0") --components=java,go # Build only Java and Go components
 EOF
@@ -250,21 +260,20 @@ run_formatted() {
   echo -e "${BLUE}> STEP:${NC} About to $description"
   start_task "$description"
   
-  # Run the command and capture output
-  local temp_file=$(mktemp)
-  if eval "$cmd" > "$temp_file" 2>&1; then
-    # Report success and outcome
+  # Run the command and capture output - optimized to avoid temp files
+  local output
+  if output=$(eval "$cmd" 2>&1); then
+    # Report success
     complete_task "$description"
     echo -e "${GREEN}> COMPLETED:${NC} Successfully finished $description"
     
     # Show verbose output if requested
     if [[ "${VERBOSE:-false}" == "true" ]]; then
       echo ""
-      cat "$temp_file"
+      echo "$output"
       echo ""
     fi
     
-    rm -f "$temp_file"
     return 0
   else
     # Capture error information
@@ -274,11 +283,10 @@ run_formatted() {
     # Show error output
     echo -e "${RED}> ERROR:${NC} Failed while $description"
     echo ""
-    cat "$temp_file"
+    echo "$output"
     echo ""
     
-    # Clean up and exit immediately on error
-    rm -f "$temp_file"
+    # Exit immediately on error
     echo -e "${RED}> BUILD STOPPED:${NC} Halting build process due to error"
     exit $exit_code
   fi
@@ -295,16 +303,11 @@ main() {
   
   section_header "Rinna Build Process"
   
-  log_info "Build configuration:"
-  echo "- Skip tests: $SKIP_TESTS"
-  echo "- Skip quality: $SKIP_QUALITY" 
-  echo "- Build profile: $BUILD_PROFILE"
-  echo "- Components: ${BUILD_COMPONENTS[*]}"
-  echo "- Run polyglot tests: $RUN_POLYGLOT"
+  log_info "Build configuration: profile=$BUILD_PROFILE, components=${BUILD_COMPONENTS[*]}"
   if [[ -n "$SPECIFIC_PHASE" ]]; then
-    echo "- Running phase: $SPECIFIC_PHASE"
+    echo "- Phase: $SPECIFIC_PHASE, skip-tests=$SKIP_TESTS, skip-quality=$SKIP_QUALITY, parallel=$PARALLEL_BUILD"
   else
-    echo "- Running all phases"
+    echo "- All phases, skip-tests=$SKIP_TESTS, skip-quality=$SKIP_QUALITY, parallel=$PARALLEL_BUILD"
   fi
   
   # Set quick build shortcuts
@@ -714,6 +717,12 @@ run_compile_phase() {
       mvn_options="$mvn_options -DskipTests=true"
     fi
     
+    # Add parallel execution if enabled
+    if [[ "$PARALLEL_BUILD" == "true" ]]; then
+      echo -e "${BLUE}> PARALLEL:${NC} Using Maven parallel build mode"
+      mvn_options="$mvn_options -T 1C"  # Use 1 thread per core
+    fi
+    
     run_formatted "mvn compile $mvn_options" "Compiling Java components"
   else
     skip_task "Java compilation (Java component disabled)"
@@ -721,11 +730,20 @@ run_compile_phase() {
   
   # Compile Go API
   if is_component_enabled "go" && [[ -d "$PROJECT_ROOT/api" ]]; then
-    run_formatted "cd \"$PROJECT_ROOT/api\" && go build -o \"$PROJECT_ROOT/bin/rinnasrv\" ./cmd/rinnasrv" "Compiling Go API server"
-    
-    # Also build the health check utility
-    if [[ -d "$PROJECT_ROOT/api/cmd/healthcheck" ]]; then
-      run_formatted "cd \"$PROJECT_ROOT/api\" && go build -o \"$PROJECT_ROOT/bin/healthcheck\" ./cmd/healthcheck" "Compiling Go healthcheck utility"
+    if [[ "$PARALLEL_BUILD" == "true" && -d "$PROJECT_ROOT/api/cmd/healthcheck" ]]; then
+      # Build server and healthcheck in parallel for faster builds
+      echo -e "${BLUE}> PARALLEL:${NC} Compiling Go components in parallel"
+      (run_formatted "cd \"$PROJECT_ROOT/api\" && go build -o \"$PROJECT_ROOT/bin/rinnasrv\" ./cmd/rinnasrv" "Compiling Go API server") &
+      (run_formatted "cd \"$PROJECT_ROOT/api\" && go build -o \"$PROJECT_ROOT/bin/healthcheck\" ./cmd/healthcheck" "Compiling Go healthcheck utility") &
+      wait
+    else
+      # Sequential build
+      run_formatted "cd \"$PROJECT_ROOT/api\" && go build -o \"$PROJECT_ROOT/bin/rinnasrv\" ./cmd/rinnasrv" "Compiling Go API server"
+      
+      # Also build the health check utility
+      if [[ -d "$PROJECT_ROOT/api/cmd/healthcheck" ]]; then
+        run_formatted "cd \"$PROJECT_ROOT/api\" && go build -o \"$PROJECT_ROOT/bin/healthcheck\" ./cmd/healthcheck" "Compiling Go healthcheck utility"
+      fi
     fi
     
     # Generate Swagger/OpenAPI documentation if the script exists
@@ -776,21 +794,44 @@ run_test_phase() {
   
   # Run Java tests
   if is_component_enabled "java"; then
-    run_formatted "mvn test -P $BUILD_PROFILE" "Running Java tests"
+    local mvn_options="-P $BUILD_PROFILE"
+    
+    # Add parallel execution if enabled
+    if [[ "$PARALLEL_BUILD" == "true" ]]; then
+      echo -e "${BLUE}> PARALLEL:${NC} Using Maven parallel test mode"
+      mvn_options="$mvn_options -T 1C -Dsurefire.parallel=classes -DforkCount=2C"
+    fi
+    
+    run_formatted "mvn test $mvn_options" "Running Java tests"
   else
     skip_task "Java tests (Java component disabled)"
   fi
   
   # Run Go tests
   if is_component_enabled "go" && [[ -d "$PROJECT_ROOT/api" ]]; then
-    run_formatted "cd \"$PROJECT_ROOT/api\" && go test ./..." "Running Go API tests"
+    if [[ "$PARALLEL_BUILD" == "true" ]]; then
+      # Use Go's built-in parallelism for tests
+      run_formatted "cd \"$PROJECT_ROOT/api\" && go test -parallel 4 ./..." "Running Go API tests (parallel mode)"
+    else
+      run_formatted "cd \"$PROJECT_ROOT/api\" && go test ./..." "Running Go API tests"
+    fi
   else
     skip_task "Go tests (Go component disabled or not found)"
   fi
   
   # Run Python tests
   if is_component_enabled "python" && [[ -d "$PROJECT_ROOT/python/tests" ]]; then
-    run_formatted "cd \"$PROJECT_ROOT\" && python -m pytest python/tests" "Running Python tests"
+    if [[ "$PARALLEL_BUILD" == "true" ]]; then
+      # Use pytest-xdist for parallel execution if available
+      if pip list | grep -q pytest-xdist; then
+        run_formatted "cd \"$PROJECT_ROOT\" && python -m pytest -xvs -n auto python/tests" "Running Python tests (parallel mode)"
+      else
+        warn_task "pytest-xdist not found, falling back to sequential tests"
+        run_formatted "cd \"$PROJECT_ROOT\" && python -m pytest python/tests" "Running Python tests"
+      fi
+    else
+      run_formatted "cd \"$PROJECT_ROOT\" && python -m pytest python/tests" "Running Python tests"
+    fi
   else
     skip_task "Python tests (Python component disabled or not found)"
   fi
@@ -967,6 +1008,12 @@ run_install_phase() {
   echo ""
   echo -e "You can now run the CLI tools from ${BLUE}$PROJECT_ROOT/bin${NC}"
   echo -e "Or use the Maven artifacts from ${BLUE}$PROJECT_ROOT/target${NC}"
+  
+  # Show optimization hint
+  if [[ "$PARALLEL_BUILD" != "true" ]]; then
+    echo ""
+    echo -e "${CYAN}TIP: Use ${BOLD}--parallel${NC}${CYAN} flag for faster builds${NC}"
+  fi
   echo ""
   
   return 0
