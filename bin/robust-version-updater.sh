@@ -207,6 +207,46 @@ update_venv_version() {
   fi
 }
 
+# Update README version badges
+update_readme_badges() {
+  local to_version="$1"
+  local readme_file="$RINNA_DIR/README.md"
+  local build_number=""
+  
+  # Get build number from version.properties
+  if [ -f "$VERSION_FILE" ]; then
+    build_number=$(grep -m 1 "^buildNumber=" "$VERSION_FILE" | cut -d'=' -f2)
+  fi
+  
+  if [ -z "$build_number" ]; then
+    log "WARNING" "Could not determine build number from version.properties"
+    return 1
+  fi
+  
+  if [ "$DRY_RUN" = true ]; then
+    log "INFO" "Would update README badges: version=$to_version, build=$build_number"
+    return 0
+  fi
+  
+  # Update version badge
+  if sed -i "s/\(version-\)[0-9]\+\.[0-9]\+\.[0-9]\+/\1$to_version/g" "$readme_file"; then
+    log "SUCCESS" "Updated version badge in README.md to $to_version"
+  else
+    log "ERROR" "Failed to update version badge in README.md"
+    return 1
+  fi
+  
+  # Update build badge
+  if sed -i "s/\(build-\)[0-9]\+/\1$build_number/g" "$readme_file"; then
+    log "SUCCESS" "Updated build badge in README.md to $build_number"
+  else
+    log "ERROR" "Failed to update build badge in README.md"
+    return 1
+  fi
+  
+  return 0
+}
+
 # Update all versions based on the file map
 update_all_versions() {
   local from_version="$1"
@@ -246,6 +286,12 @@ update_all_versions() {
   # Handle .venv/version special case
   update_venv_version "$to_version"
   
+  # Update README badges (version and build number)
+  if ! update_readme_badges "$to_version"; then
+    log "WARNING" "Failed to update README badges"
+    error_count=$((error_count + 1))
+  fi
+  
   # Update build timestamp in version.properties
   local current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
   if [ "$DRY_RUN" = false ]; then
@@ -275,6 +321,12 @@ verify_consistency() {
   local expected_major="$VERSION_MAJOR"
   local expected_minor="$VERSION_MINOR"
   local expected_patch="$VERSION_PATCH"
+  
+  # Get expected build number
+  local expected_build_number=""
+  if [ -f "$VERSION_FILE" ]; then
+    expected_build_number=$(grep -m 1 "^buildNumber=" "$VERSION_FILE" | cut -d'=' -f2)
+  fi
   
   log "INFO" "Verifying version consistency..."
   
@@ -315,6 +367,32 @@ verify_consistency() {
       log "SUCCESS" "Verified $file_path: $found_version"
     fi
   done
+  
+  # Verify README badges
+  local readme_file="$RINNA_DIR/README.md"
+  if [ -f "$readme_file" ]; then
+    # Check version badge
+    local readme_version=$(grep -m 1 "badge/version-" "$readme_file" | grep -o -E "version-[0-9.]*-" | sed -E 's/version-(.*)-.*/\1/')
+    if [[ "$readme_version" != "$expected_version" ]]; then
+      log "ERROR" "Version badge mismatch in README.md: found $readme_version, expected $expected_version"
+      inconsistencies=$((inconsistencies + 1))
+      echo "README.md version badge: expected $expected_version, found $readme_version" >> "$ERROR_SUMMARY"
+    else
+      log "SUCCESS" "Verified README.md version badge: $readme_version"
+    fi
+    
+    # Check build badge
+    if [[ -n "$expected_build_number" ]]; then
+      local readme_build=$(grep -m 1 "badge/build-" "$readme_file" | grep -o -E "build-[0-9]+-" | sed -E 's/build-(.*)-.*/\1/')
+      if [[ "$readme_build" != "$expected_build_number" ]]; then
+        log "ERROR" "Build badge mismatch in README.md: found $readme_build, expected $expected_build_number"
+        inconsistencies=$((inconsistencies + 1))
+        echo "README.md build badge: expected $expected_build_number, found $readme_build" >> "$ERROR_SUMMARY"
+      else
+        log "SUCCESS" "Verified README.md build badge: $readme_build"
+      fi
+    fi
+  fi
   
   log "INFO" "Version consistency check: $verified_files files checked, $inconsistencies inconsistencies found"
   

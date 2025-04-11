@@ -260,6 +260,12 @@ cmd_update() {
   echo "Updating all files to match version.properties ($current_version)"
   execute_version_update "$current_version" "$current_version" false "--verbose"
   
+  # Ensure README badges are updated
+  if [ -x "$RINNA_DIR/bin/update-version-badges.sh" ]; then
+    echo "Updating README badges..."
+    "$RINNA_DIR/bin/update-version-badges.sh"
+  fi
+  
   # Add all affected files to git
   echo "Adding updated files to git..."
   git add "$VERSION_FILE" $(find "$RINNA_DIR" -name "pom.xml") "$README_FILE" 
@@ -297,6 +303,9 @@ cmd_bump_version() {
   # Default to 1 if build number can't be found
   if [ -z "$current_build" ]; then
     current_build=1
+  else
+    # Increment the build number
+    current_build=$((current_build + 1))
   fi
 
   # Update version properties directly
@@ -311,6 +320,12 @@ cmd_bump_version() {
   
   # Execute the version update
   execute_version_update "$current_version" "$new_version" false "--verbose"
+  
+  # Ensure README badges are updated
+  if [ -x "$RINNA_DIR/bin/update-version-badges.sh" ]; then
+    echo "Updating README badges..."
+    "$RINNA_DIR/bin/update-version-badges.sh"
+  fi
   
   # Generate architecture diagrams for major or minor version bumps
   if [[ "$index" -eq 0 || "$index" -eq 1 ]]; then
@@ -408,6 +423,9 @@ cmd_set() {
   # Default to 1 if build number can't be found
   if [ -z "$current_build" ]; then
     current_build=1
+  else
+    # Increment the build number for new versions
+    current_build=$((current_build + 1))
   fi
 
   # Update version properties directly
@@ -422,6 +440,12 @@ cmd_set() {
   
   # Execute the version update
   execute_version_update "$current_version" "$new_version" false "--verbose"
+  
+  # Ensure README badges are updated
+  if [ -x "$RINNA_DIR/bin/update-version-badges.sh" ]; then
+    echo "Updating README badges..."
+    "$RINNA_DIR/bin/update-version-badges.sh"
+  fi
   
   # Generate architecture diagrams for major version changes or when changing to x.0.0 versions
   if [[ "${new_version%.*}" != "${current_version%.*}" ]] || [[ "${new_version}" =~ ^[0-9]+\.0\.0$ ]]; then
