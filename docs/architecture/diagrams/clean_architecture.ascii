@@ -1,0 +1,75 @@
+# Clean Architecture Diagram
+
+```
+                  +---------------------------------------------+
+                  |                                             |
+                  |  +-----------------------------------+      |
+                  |  |                                   |      |
+                  |  |  +---------------------------+    |      |
+                  |  |  |                           |    |      |
+                  |  |  |  +-------------------+    |    |      |
+                  |  |  |  |                   |    |    |      |
+                  |  |  |  |    ENTITIES       |    |    |      |
+                  |  |  |  |    (Domain)       |    |    |      |
+                  |  |  |  |                   |    |    |      |
+                  |  |  |  +-------------------+    |    |      |
+                  |  |  |                           |    |      |
+                  |  |  |      USE CASES            |    |      |
+                  |  |  |      (Application)        |    |      |
+                  |  |  |                           |    |      |
+                  |  |  +---------------------------+    |      |
+                  |  |                                   |      |
+                  |  |        INTERFACE ADAPTERS         |      |
+                  |  |        (Infrastructure)           |      |
+                  |  |                                   |      |
+                  |  +-----------------------------------+      |
+                  |                                             |
+                  |           FRAMEWORKS & DRIVERS              |
+                  |           (External Interfaces)             |
+                  |                                             |
+                  +---------------------------------------------+
+
+                      DEPENDENCY RULE: Dependencies point inward
+```
+
+## Rinna's Implementation of Clean Architecture
+
+```
++-----------------------+     +-----------------------+     +-----------------------+
+|                       |     |                       |     |                       |
+|  DOMAIN LAYER         |     |  APPLICATION LAYER    |     |  INFRASTRUCTURE LAYER |
+|                       |     |                       |     |                       |
+| +-------------------+ |     | +-------------------+ |     | +-------------------+ |
+| |                   | |     | |                   | |     | |                   | |
+| |  Domain Entities  | |     | |    Use Cases      | |     | |    Controllers    | |
+| |                   | |     | |                   | |     | |                   | |
+| | - WorkItem        | |     | | - ItemService     | |     | | - ItemController  | |
+| | - WorkflowState   | |     | | - WorkflowService | |     | | - APIController   | |
+| | - Priority        | |     | | - QueryService    | |     | | - CLICommand      | |
+| |                   | |     | |                   | |     | |                   | |
+| +-------------------+ |     | +-------------------+ |     | +-------------------+ |
+|                       |     |                       |     |                       |
+| +-------------------+ |     | +-------------------+ |     | +-------------------+ |
+| |                   | |     | |                   | |     | |                   | |
+| |  Value Objects    | |     | |  Service Interfaces| |     | | Repositories     | |
+| |                   | |     | |                   | |     | |                   | |
+| | - DateTime        | |     | | - Repository      | |     | | - FileRepo        | |
+| | - ID              | |     | | - Cache           | |     | | - DBRepo          | |
+| | - Email           | |     | | - EventBus        | |     | | - APIClient       | |
+| |                   | |     | |                   | |     | |                   | |
+| +-------------------+ |     | +-------------------+ |     | +-------------------+ |
+|                       |     |                       |     |                       |
++-----------------------+     +-----------------------+     +-----------------------+
+         ^                              ^                             |
+         |                              |                             |
+         +------------------------------+-----------------------------+
+                    Dependencies flow inward toward domain
+```
+
+## Benefits in Rinna
+
+- Domain logic is independent from UI, database, and frameworks
+- Business logic can be tested without external dependencies
+- Application can support different UIs (CLI, API, GUI) with same core logic
+- Easy to swap out infrastructure components (storage, protocols, services)
+- Promotes modular design and better maintainability

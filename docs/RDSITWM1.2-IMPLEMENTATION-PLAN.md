@@ -6,6 +6,44 @@ This document outlines a comprehensive implementation plan for bringing Rinna in
 
 The Ryōrin-dō RDSITWM1.2 standard represents a next-generation framework for managing IT work, integrating concepts from CYNEFIN complexity domains, clean architecture, cognitive science, modern management theories, and AI augmentation. This implementation plan outlines the steps necessary to enhance Rinna to meet these requirements while maintaining its core philosophy and existing functionality.
 
+## Iterative Work Process in Ryorin-Do
+
+In Ryorin-Do, it is well understood that the process of gaining understanding, establishing a plan, building a design, executing work, and managing work are not linear steps but continuously iterative processes. This iterative nature applies both:
+
+1. **Across the work lifecycle**: Each stage feeds back into previous stages, creating continuous refinement
+2. **Within each stage**: Every stage itself contains the complete Ryorin-Do cycle 
+
+```
+                      +----------------------------------+
+                      |                                  |
+                      v                                  |
++-------------+     +-------------+     +-------------+  |
+|             |     |             |     |             |  |
+| Understand  +---->+    Plan     +---->+   Design    +--+
+|             |     |             |     |             |  |
++------+------+     +------+------+     +------+------+  |
+       ^                   ^                   ^         |
+       |                   |                   |         |
+       |                   |                   |         |
++------+------+     +------+------+     +------+------+  |
+|             |     |             |     |             |  |
+|  Execute    +<----+   Check     +<----+   Manage    +<-+
+|             |     |             |     |             |
++-------------+     +-------------+     +-------------+
+```
+
+Within each of these stages, the Ryorin-Do cycle of **Intention** (Ishi), **Execution** (Jikko), **Verification** (Kakunin), and **Refinement** (Kairyo) is applied. This fractal-like recursive pattern means that even small work units follow the same pattern as larger initiatives.
+
+The key principles for this iterative approach:
+
+1. **Small Iterations**: Success in both work and life depends on small, rapid iterations with feedback loops at every level
+2. **Test-Driven Approach**: Tests drive work at every stage, ensuring clarity of expectations before execution begins
+3. **Continuous Refinement**: No stage is ever truly "complete" - all work remains open to refinement based on new insights
+4. **Feedback Integration**: Every step produces learning that must be integrated back into the process
+5. **Parallel Processing**: Multiple stages can and should proceed in parallel, with continuous cross-communication
+
+This mindset requires embracing complexity and uncertainty rather than fighting against it. By applying the same principles at every level of work, teams develop intuitive understanding that transcends formal process.
+
 ## Implementation Roadmap
 
 ### Phase 1: Foundation and Assessment (Immediate Priority)
@@ -102,7 +140,7 @@ The Ryōrin-dō RDSITWM1.2 standard represents a next-generation framework for m
 
 ## Integration with Rinna Kanban
 
-The following entries should be added to the central Rinna Kanban board to track RDSITWM1.2 implementation:
+The Ryorin-Do implementation plan will be fully integrated with the primary Kanban board, following the principle that all work should be managed through a unified system. The following entries have been added to the central Rinna Kanban board at `/docs/project-status/KANBAN.md`:
 
 ### To Do - Core Functionality (High Priority)
 
