@@ -2,8 +2,7 @@
 #
 # build.sh - Main entry point for Rinna build system
 #
-# This script is a simple wrapper around the unified build orchestrator
-# in util/build-orchestrator.sh. It passes all arguments to the orchestrator.
+# This script is a lightweight wrapper around the build orchestrator
 #
 # Copyright (c) 2025 Eric C. Mumford (@heymumford)
 # 
@@ -11,16 +10,14 @@
 # found in the LICENSE file in the root directory of this source tree.
 #
 
-# Determine script and project directories
-SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
-SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
-ORCHESTRATOR="$SCRIPT_DIR/util/build-orchestrator.sh"
+# Determine script directory using a POSIX-compatible approach
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ORCHESTRATOR="$SCRIPT_DIR/build-orchestrator.sh"
 
-# Check if the orchestrator exists
-if [[ ! -f "$ORCHESTRATOR" ]]; then
-  echo "ERROR: Build orchestrator not found at $ORCHESTRATOR"
+# Forward to the orchestrator
+if [[ -x "$ORCHESTRATOR" ]]; then
+  exec "$ORCHESTRATOR" "$@"
+else
+  echo "ERROR: Build orchestrator not executable at $ORCHESTRATOR"
   exit 1
 fi
-
-# Forward all arguments to the orchestrator
-exec "$ORCHESTRATOR" "$@"
