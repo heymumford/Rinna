@@ -5,6 +5,9 @@ This directory contains documentation related to the current status and ongoing 
 ## Contents
 
 - [Cleanup](./CLEANUP.md) - Project cleanup tasks and progress
+- [Implementation Summaries](./implementation-summaries/INDEX.md) - Summaries of implemented components
+- [Implementation Plans](./implementation-plans/INDEX.md) - Plans for upcoming implementations
+- [KANBAN](./KANBAN.md) - Current kanban board with work items
 
 ## Project Status Overview
 

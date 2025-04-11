@@ -2,6 +2,23 @@
 
 This document provides guidance for maintaining a clean codebase in the Rinna project.
 
+## Documentation Cleanup Progress
+
+### Completed Tasks
+- ✅ Removed temporary documentation files (e.g., tmp-docs-restructure-plan.md)
+- ✅ Removed `.bak` files from source code
+- ✅ Consolidated implementation summaries into structured directory
+- ✅ Consolidated implementation plans into structured directory
+- ✅ Created centralized index files for implementation documentation
+
+### Pending Tasks
+- Standardize README files across the codebase
+- Consolidate script directories (see [Script Organization](./implementation-summaries/script-organization.md))
+- Clean up duplicate script files between `/scripts/`, `/utils/`, and `/bin/`
+- Create standard templates for documentation
+- Improve API documentation consistency
+- Consolidate test documentation
+
 ## Regular Cleaning Tasks
 
 ### Java/Maven Artifacts
