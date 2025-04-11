@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.3] - 2025-04-11
+
+### Added
+- Parallel execution capabilities in build system
+- New `--parallel` flag to enable parallel builds
+- Optimized command output capturing to reduce build time
+
+### Changed
+- Enhanced build script to support parallel component compilation
+- Improved Maven builds with thread-per-core parallelism
+- Enhanced Go test execution with parallelism
+- Added Python parallel test execution with pytest-xdist
+- Simplified build configuration display for better readability
+- Added build optimization hints for developers
+
 ## [1.8.2] - 2025-04-11
 
 ### Added
