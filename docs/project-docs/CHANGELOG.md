@@ -5,6 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2025-04-11
+
+### Added
+- AI-Enhanced Smart Field Population feature
+- Intelligent prediction of field values with personalized user pattern recognition
+- Privacy-preserving local AI service with minimal resource usage
+- Memory monitoring with adaptive model selection
+- User feedback loop for continuous improvement of predictions
+- Field prioritization based on usage and importance
+- Multi-model prediction system for higher quality results
+- Context-aware suggestion system with evidence tracking
+- Confidence scoring with customizable thresholds
+- Comprehensive caching system for performance optimization
+
+## [1.11.0] - 2025-04-11
+
+### Added
+- Extension architecture for commercial feature integration
+- Base extension interface with specialized extension types
+- Extension registry with ServiceLoader discovery mechanism
+- Templates for commercial extension development
+- Sample implementation of template and AI service extensions
+- Clean separation between open source and commercial code
+- Architecture Decision Record (ADR) for extension architecture
+- Updated diagrams for container and component architecture
+- Comprehensive extension interface specifications
+- Commercial extension documentation
+- Script for migrating commercial code to separate repository
+- User guides for using and developing extensions
+
+### Changed
+- Improved code organization to support extension architecture
+- Updated build system to support extensions
+- Streamlined container diagram to reflect separation of concerns
+- Enhanced C4 diagram clarity with color coding for components
+- Consolidated extension-related documentation
+
+## [1.10.8] - 2025-04-11
+
+### Added
+- Cross-platform container enhancements with universal support for all environments
+- Zero-install option for running Rinna with minimal requirements (single command)
+- Advanced container health monitoring with self-healing capabilities
+- Intelligent recovery strategies with graduated severity response
+- Platform-specific optimizations for Windows, WSL1, WSL2, and Linux
+- SELinux integration with proper volume labeling
+- Podman rootless mode support with enhanced security
+- Performance metrics collection and visualization
+- Detailed resource usage monitoring for containers
+- Comprehensive platform compatibility testing
+
+## [1.10.7] - 2025-04-11
+
+### Added
+- Feature flag control system for enabling/disabling features at runtime
+- Persistent file-based feature flag storage with JSON serialization
+- Hierarchical feature flag relationships with parent-child dependencies
+- Feature flag integration with notification system components
+- Admin CLI commands for managing feature flags (list, get, enable, disable, create, delete)
+- Comprehensive feature flag documentation in admin guides
+- Thread-safe feature flag repository with read/write locks
+- Environment variable override support for feature flags
+- Default feature flags for notification system and integration features
+
 ## [1.10.6] - 2025-04-09
 
 ### Added
