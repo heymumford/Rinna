@@ -35,7 +35,7 @@ type VersionInfo struct {
 
 // Version information set during build process
 var (
-	Version   = "1.8.8"
+	Version   = "1.8.9"
 	CommitSHA = "runtime"
 	BuildTime = "2025-04-09T20:14:56Z"
 )
@@ -46,7 +46,7 @@ func NewVersionInfo() *VersionInfo {
 	return &VersionInfo{
 		Major:        1,
 		Minor:        8,
-		Patch:        8,
+		Patch:        9,
 		FullVersion:  Version,
 		LastUpdated:  "2025-04-11",
 		ReleaseType:  "RELEASE",

@@ -25,10 +25,10 @@ declare -a VERSION_FILE_PATTERNS=(
   "version.properties:^version.major=.*:version.major={major}"
   "version.properties:^version.minor=.*:version.minor={minor}" 
   "version.properties:^version.patch=.*:version.patch={patch}"
-  "pom.xml:<version>[0-9.]+</version>:<version>{version}</version>"
-  "rinna-core/pom.xml:<parent>.*<version>[0-9.]+</version>:<version>{version}</version>"
-  "rinna-cli/pom.xml:<parent>.*<version>[0-9.]+</version>:<version>{version}</version>"
-  "rinna-data-sqlite/pom.xml:<parent>.*<version>[0-9.]+</version>:<version>{version}</version>"
+  "pom.xml:<version>.*</version>:<version>{version}</version>"
+  "rinna-core/pom.xml:<version>.*</version>:</parent>:<version>{version}</version></parent>"
+  "rinna-cli/pom.xml:<version>.*</version>:</parent>:<version>{version}</version></parent>"
+  "rinna-data-sqlite/pom.xml:<version>.*</version>:</parent>:<version>{version}</version></parent>"
   "api/internal/version/version.go:Version\\s*=\\s*\"[0-9.]+\":Version = \"{version}\""
   "api/pkg/health/version.go:Version\\s*=\\s*\"[0-9.]+\":Version = \"{version}\""
   "version-service/core/version.go:Version\\s*=\\s*\"[0-9.]+\":Version = \"{version}\""
@@ -143,8 +143,21 @@ update_file_version() {
     processed_replacement=$(echo "$processed_replacement" | \
       sed -e "s|{build}|$build_number|g")
   fi
+
+  # Special handling for parent POM references
+  if [[ "$file_path" == *"pom.xml" ]] && [[ "$pattern" == *"</parent>"* ]]; then
+    # For parent POM references, use a different approach to find the version within parent tag
+    if grep -A 10 "<parent>" "$full_path" | grep -q "<version>"; then
+      sed -i "/<parent>/,/<\/parent>/s|<version>.*</version>|<version>$to_version</version>|g" "$full_path"
+      log_message "SUCCESS" "Updated parent version in $file_path to $to_version" "$VERBOSE"
+      return 0
+    else 
+      log_message "WARNING" "Parent version tag not found in $file_path" "$VERBOSE"
+      return 0
+    fi
+  fi
   
-  # Check if file contains pattern
+  # Default approach for other files
   if grep -q "$pattern" "$full_path"; then
     # For dry run mode, just show what would change
     if [ "$DRY_RUN" = true ]; then
@@ -161,6 +174,23 @@ update_file_version() {
       return 1
     fi
   else
+    # If main POM file, use a different pattern for the root version
+    if [[ "$file_path" == "pom.xml" ]] && [[ "$pattern" == "<version>.*</version>" ]]; then
+      # Use line-oriented approach for the root POM
+      if grep -q "<version>" "$full_path"; then
+        local line_num=$(grep -n "<version>" "$full_path" | head -1 | cut -d: -f1)
+        if [ -n "$line_num" ]; then
+          if [ "$DRY_RUN" = true ]; then
+            log_message "INFO" "Would update version in $file_path line $line_num to $to_version" true
+          else
+            sed -i "${line_num}s|<version>.*</version>|<version>$to_version</version>|" "$full_path"
+            log_message "SUCCESS" "Updated version in $file_path line $line_num to $to_version" "$VERBOSE"
+          fi
+          return 0
+        fi
+      fi
+    fi
+    
     log_message "WARNING" "Pattern not found in $file_path: $pattern" "$VERBOSE"
     return 0
   fi
@@ -210,8 +240,9 @@ update_badges() {
   fi
   
   if [ -f "$readme_file" ]; then
-    # Update badges using helper function
-    update_badges "$to_version" "$build_number" "$readme_file"
+    # Update badges using sed directly
+    sed -i "s/badge\/version-[0-9.]\+-blue/badge\/version-${to_version}-blue/g" "$readme_file"
+    sed -i "s/build-[0-9]\+/build-${build_number}/g" "$readme_file"
     log_message "SUCCESS" "Updated badges in README.md" "$VERBOSE"
   else
     log_message "WARNING" "README.md not found" "$VERBOSE"
