@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -24,6 +25,7 @@ import org.rinna.adapter.repository.ai.InMemoryAIModelConfigRepository;
 import org.rinna.adapter.repository.ai.InMemoryAIPredictionRepository;
 import org.rinna.adapter.service.ai.DefaultAIModelManagementService;
 import org.rinna.adapter.service.ai.DefaultAISmartFieldService;
+import org.rinna.domain.model.ai.AIModelConfig;
 import org.rinna.domain.repository.ai.AIFeedbackRepository;
 import org.rinna.domain.repository.ai.AIFieldConfidenceRepository;
 import org.rinna.domain.repository.ai.AIFieldPriorityRepository;
@@ -44,24 +46,24 @@ import org.rinna.usecase.ai.AISmartFieldService;
  */
 public final class AIServiceFactory {
     
-    private static final Logger logger = Logger.getLogger(AIServiceFactory.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(AIServiceFactory.class.getName());
     
-    private static final AIPredictionRepository predictionRepository = new InMemoryAIPredictionRepository();
-    private static final AIFeedbackRepository feedbackRepository = new InMemoryAIFeedbackRepository();
-    private static final AIFieldPriorityRepository fieldPriorityRepository = new InMemoryAIFieldPriorityRepository();
-    private static final AIFieldConfidenceRepository fieldConfidenceRepository = new InMemoryAIFieldConfidenceRepository();
-    private static final AIModelConfigRepository modelConfigRepository = new InMemoryAIModelConfigRepository();
+    private static final AIPredictionRepository PREDICTION_REPOSITORY = new InMemoryAIPredictionRepository();
+    private static final AIFeedbackRepository FEEDBACK_REPOSITORY = new InMemoryAIFeedbackRepository();
+    private static final AIFieldPriorityRepository FIELD_PRIORITY_REPOSITORY = new InMemoryAIFieldPriorityRepository();
+    private static final AIFieldConfidenceRepository FIELD_CONFIDENCE_REPOSITORY = new InMemoryAIFieldConfidenceRepository();
+    private static final AIModelConfigRepository MODEL_CONFIG_REPOSITORY = new InMemoryAIModelConfigRepository();
     
-    private static final AISmartFieldService smartFieldService = new DefaultAISmartFieldService(
-            predictionRepository,
-            feedbackRepository,
-            fieldPriorityRepository,
-            fieldConfidenceRepository,
-            modelConfigRepository);
+    private static final AISmartFieldService SMART_FIELD_SERVICE = new DefaultAISmartFieldService(
+            PREDICTION_REPOSITORY,
+            FEEDBACK_REPOSITORY,
+            FIELD_PRIORITY_REPOSITORY,
+            FIELD_CONFIDENCE_REPOSITORY,
+            MODEL_CONFIG_REPOSITORY);
     
-    private static final AIModelManagementService modelManagementService = new DefaultAIModelManagementService(
-            modelConfigRepository,
-            fieldConfidenceRepository);
+    private static final AIModelManagementService MODEL_MANAGEMENT_SERVICE = new DefaultAIModelManagementService(
+            MODEL_CONFIG_REPOSITORY,
+            FIELD_CONFIDENCE_REPOSITORY);
     
     // Tracks whether the Ryorin-Do knowledge has been loaded
     private static boolean isRyorinDoKnowledgeLoaded = false;
@@ -80,7 +82,7 @@ public final class AIServiceFactory {
      */
     public static AISmartFieldService getSmartFieldService() {
         ensureInitialized();
-        return smartFieldService;
+        return SMART_FIELD_SERVICE;
     }
     
     /**
@@ -90,7 +92,7 @@ public final class AIServiceFactory {
      */
     public static AIModelManagementService getModelManagementService() {
         ensureInitialized();
-        return modelManagementService;
+        return MODEL_MANAGEMENT_SERVICE;
     }
     
     /**
@@ -99,7 +101,7 @@ public final class AIServiceFactory {
      * @return The prediction repository
      */
     public static AIPredictionRepository getPredictionRepository() {
-        return predictionRepository;
+        return PREDICTION_REPOSITORY;
     }
     
     /**
@@ -108,7 +110,7 @@ public final class AIServiceFactory {
      * @return The feedback repository
      */
     public static AIFeedbackRepository getFeedbackRepository() {
-        return feedbackRepository;
+        return FEEDBACK_REPOSITORY;
     }
     
     /**
@@ -117,7 +119,7 @@ public final class AIServiceFactory {
      * @return The field priority repository
      */
     public static AIFieldPriorityRepository getFieldPriorityRepository() {
-        return fieldPriorityRepository;
+        return FIELD_PRIORITY_REPOSITORY;
     }
     
     /**
@@ -126,7 +128,7 @@ public final class AIServiceFactory {
      * @return The field confidence repository
      */
     public static AIFieldConfidenceRepository getFieldConfidenceRepository() {
-        return fieldConfidenceRepository;
+        return FIELD_CONFIDENCE_REPOSITORY;
     }
     
     /**
@@ -135,14 +137,14 @@ public final class AIServiceFactory {
      * @return The model configuration repository
      */
     public static AIModelConfigRepository getModelConfigRepository() {
-        return modelConfigRepository;
+        return MODEL_CONFIG_REPOSITORY;
     }
     
     /**
      * Ensures the AI services are initialized before use.
      */
     private static void ensureInitialized() {
-        if (modelConfigRepository.findAll().isEmpty()) {
+        if (MODEL_CONFIG_REPOSITORY.findAll().isEmpty()) {
             initialize();
         }
     }
@@ -153,10 +155,10 @@ public final class AIServiceFactory {
     public static void initialize() {
         // Check current memory usage
         long usedMemoryMB = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024;
-        logger.info("Current memory usage before AI initialization: " + usedMemoryMB + "MB");
+        LOGGER.info("Current memory usage before AI initialization: " + usedMemoryMB + "MB");
         
         if (usedMemoryMB > MAX_MEMORY_USAGE_MB) {
-            logger.warning("Memory usage exceeds threshold. Using minimal AI configuration.");
+            LOGGER.warning("Memory usage exceeds threshold. Using minimal AI configuration.");
             initializeMinimalModel();
         } else {
             initializeStandardModels();
@@ -165,7 +167,7 @@ public final class AIServiceFactory {
         
         // Log memory usage after initialization
         usedMemoryMB = (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024;
-        logger.info("Memory usage after AI initialization: " + usedMemoryMB + "MB");
+        LOGGER.info("Memory usage after AI initialization: " + usedMemoryMB + "MB");
     }
     
     /**
@@ -267,30 +269,30 @@ public final class AIServiceFactory {
             
             if (Files.exists(ryorinDoPath)) {
                 ryorinDoContent = Files.readString(ryorinDoPath);
-                logger.info("Loaded Ryorin-Do knowledge from main documentation file");
+                LOGGER.info("Loaded Ryorin-Do knowledge from main documentation file");
             } else {
-                logger.warning("Ryorin-Do main documentation file not found, using built-in knowledge");
+                LOGGER.warning("Ryorin-Do main documentation file not found, using built-in knowledge");
             }
             
             // Extract key concepts for the AI model to use in predictions
             Map<String, List<String>> ryorinDoKnowledgeMap = extractRyorinDoKnowledge(ryorinDoContent);
             
             // Update model parameters with the knowledge
-            AIModelConfig ryorinDoModel = modelConfigRepository.findById("ryorindo-model").orElse(null);
+            AIModelConfig ryorinDoModel = MODEL_CONFIG_REPOSITORY.findById("ryorindo-model").orElse(null);
             if (ryorinDoModel != null) {
                 Map<String, Object> updatedParams = new HashMap<>(ryorinDoModel.parameters());
                 updatedParams.put("cynefinDomains", ryorinDoKnowledgeMap.get("cynefinDomains"));
                 updatedParams.put("workParadigms", ryorinDoKnowledgeMap.get("workParadigms"));
                 updatedParams.put("cognitiveFactors", ryorinDoKnowledgeMap.get("cognitiveFactors"));
                 
-                modelManagementService.updateModelParameters("ryorindo-model", updatedParams);
-                logger.info("Updated Ryorin-Do model with extracted knowledge");
+                MODEL_MANAGEMENT_SERVICE.updateModelParameters("ryorindo-model", updatedParams);
+                LOGGER.info("Updated Ryorin-Do model with extracted knowledge");
             }
             
             isRyorinDoKnowledgeLoaded = true;
             
         } catch (IOException e) {
-            logger.log(Level.WARNING, "Error loading Ryorin-Do knowledge", e);
+            LOGGER.log(Level.WARNING, "Error loading Ryorin-Do knowledge", e);
         }
     }
     
@@ -334,11 +336,11 @@ public final class AIServiceFactory {
      * Resets the AI service state - primarily used for testing.
      */
     public static void reset() {
-        predictionRepository.clear();
-        feedbackRepository.clear();
-        fieldPriorityRepository.clear();
-        fieldConfidenceRepository.clear();
-        modelConfigRepository.clear();
+        PREDICTION_REPOSITORY.clear();
+        FEEDBACK_REPOSITORY.clear();
+        FIELD_PRIORITY_REPOSITORY.clear();
+        FIELD_CONFIDENCE_REPOSITORY.clear();
+        MODEL_CONFIG_REPOSITORY.clear();
         isRyorinDoKnowledgeLoaded = false;
     }
 }

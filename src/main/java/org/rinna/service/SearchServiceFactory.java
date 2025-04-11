@@ -16,7 +16,7 @@ import org.rinna.usecase.SearchService;
 /**
  * Factory for creating SearchService instances.
  */
-public class SearchServiceFactory {
+public final class SearchServiceFactory {
     
     /**
      * Creates a new SearchService instance.
@@ -29,5 +29,12 @@ public class SearchServiceFactory {
         
         // Create and return a DefaultSearchService
         return new DefaultSearchService(itemService);
+    }
+    
+    /**
+     * Private constructor to prevent instantiation.
+     */
+    private SearchServiceFactory() {
+        // This constructor is intentionally empty
     }
 }

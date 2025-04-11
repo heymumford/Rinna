@@ -8,7 +8,6 @@
 
 package org.rinna.service;
 
-import org.rinna.adapter.repository.InMemoryUnifiedWorkItemRepository;
 import org.rinna.adapter.service.DefaultUnifiedWorkItemService;
 import org.rinna.domain.repository.UnifiedWorkItemRepository;
 import org.rinna.usecase.UnifiedWorkItemService;
@@ -17,7 +16,7 @@ import org.rinna.usecase.UnifiedWorkItemService;
  * Factory for creating instances of UnifiedWorkItemService.
  * This class provides a centralized way to create and configure services.
  */
-public class UnifiedWorkItemServiceFactory {
+public final class UnifiedWorkItemServiceFactory {
     private static UnifiedWorkItemService instance;
     
     /**
@@ -25,16 +24,26 @@ public class UnifiedWorkItemServiceFactory {
      * 
      * @return the UnifiedWorkItemService instance
      */
-    public static synchronized UnifiedWorkItemService getInstance() {
+    public static synchronized UnifiedWorkItemService getUnifiedWorkItemService() {
         if (instance == null) {
-            // Create the repository
-            UnifiedWorkItemRepository repository = new InMemoryUnifiedWorkItemRepository();
+            // Use repository from factory for consistency
+            UnifiedWorkItemRepository repository = RepositoryFactory.getUnifiedWorkItemRepository();
             
             // Create the service with the repository
             instance = new DefaultUnifiedWorkItemService(repository);
         }
         
         return instance;
+    }
+    
+    /**
+     * Gets a singleton instance of UnifiedWorkItemService.
+     * @deprecated Use {@link #getUnifiedWorkItemService()} instead.
+     * @return the UnifiedWorkItemService instance
+     */
+    @Deprecated
+    public static synchronized UnifiedWorkItemService getInstance() {
+        return getUnifiedWorkItemService();
     }
     
     /**
