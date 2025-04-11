@@ -383,6 +383,7 @@ This document provides a consolidated view of all tasks across the Rinna project
     - Build comprehensive privacy controls with data minimization
     - Implement AI-driven insights for work-life balance optimization
     - Add natural language interface for task and goal management
+
 - **Digital Transformation Template System**
   - Design comprehensive template framework for modernizing legacy systems:
     - Create executive-friendly templates for DevOps best practices adoption
@@ -493,6 +494,20 @@ This document provides a consolidated view of all tasks across the Rinna project
   - Create reference implementations for popular systems (Jira, Azure DevOps, GitHub)
   - Implement adaptive data transformation layer for flexible integration
 
+- **Global Search Enhancements**
+  - Implement advanced search capabilities across all work items
+  - Enable users to quickly find items across projects and statuses
+  - Add full-text search capabilities with relevance ranking
+  - Implement saved searches for frequently used queries
+  - Create customizable search results display
+
+- **Rinna API Connector for External Systems**
+  - Create bidirectional connectors to external systems, starting with Jira integration
+  - Allow developers to use Rinna's TUI while seamlessly syncing with team's Jira instance
+  - Implement consistent mapping between systems
+  - Add configuration for field matching and synchronization frequency
+  - Create comprehensive logging for troubleshooting integration issues
+
 - **Unified Work Management System**
   - ✅ Build comprehensive documentation on unified work management approach (business, product, engineering, test)
   - ✅ Enhance work item model to better categorize items without requiring separate workflows
@@ -582,6 +597,20 @@ This document provides a consolidated view of all tasks across the Rinna project
     - Create permission mapping across different security models
     - Implement unified audit trails for all cross-system operations
     - Add anomaly detection for suspicious access patterns
+
+- **Multi-Project Dashboard**
+  - Create a configurable dashboard showing status across multiple projects
+  - Provide better oversight for managers and team leads
+  - Add customizable views based on user role and preferences
+  - Implement real-time updates for dashboard components
+  - Add export capabilities for reports and visualizations
+
+- **Admin Workflow State Mapping**
+  - Enable admin users to map external workflow states to Rinna's internal workflow
+  - Allow teams to work with familiar terminology while maintaining Rinna's consistent internal model
+  - Create flexible configuration system for state mappings
+  - Add validation to ensure mappings maintain workflow integrity
+  - Implement bidirectional updates with proper state transitions
 
 - **Documentation & Developer Experience**
   - ✅ Update API endpoint documentation with detailed formats
@@ -695,6 +724,27 @@ This document provides a consolidated view of all tasks across the Rinna project
   - Implement flexible workflow state mapping rules
   - Add support for custom workflow state transitions with validation
 
+- **Data Export/Import**
+  - Support for importing and exporting work items in standard formats
+  - Facilitate data migration and integration with other tools
+  - Add validation for imported data to ensure integrity
+  - Implement transformation rules for different data formats
+  - Create comprehensive error handling for import failures
+
+- **Custom Fields**
+  - Allow administrators to define custom fields for work items
+  - Enable organization-specific tracking of information
+  - Support different field types (text, numeric, date, select)
+  - Add validation rules for custom field values
+  - Create flexible UI rendering for custom fields
+
+- **Enhanced Reporting**
+  - Add configurable reports with charts and metrics
+  - Provide better insights into workflow efficiency and team performance
+  - Implement scheduled reports with email delivery
+  - Create customizable dashboards for different user roles
+  - Add export capabilities for reports and visualizations
+
 ### P3: Low Priority (Nice-to-Have)
 - **Advanced PUI Features**
   - Build pragmatic theming system with support for light/dark modes
@@ -773,6 +823,20 @@ This document provides a consolidated view of all tasks across the Rinna project
   - Implement feature impact assessment
   - Add user research integration
 
+- **Mobile Application**
+  - Native mobile applications for iOS and Android
+  - Enable workflow management from mobile devices
+  - Add notification support for important updates
+  - Implement secure authentication with biometrics
+  - Create offline mode with synchronization
+
+- **Email Notifications**
+  - Configurable email notifications for workflow events
+  - Keep team members informed without requiring them to check the system
+  - Add support for customizable notification templates
+  - Implement digest mode for batched notifications
+  - Create notification preferences for each user
+
 - **Deployment Environment Support**
   - Add PostgreSQL support for Azure deployment
   - Develop containerization with Docker for local and Azure environments
@@ -804,3 +868,27 @@ This document provides a consolidated view of all tasks across the Rinna project
   - Include best practices for managing complex dependency networks
   - Document parent-child relationships and constraints
   - Create more detailed documentation for the "Lota" concept
+
+## Version Management Tasks
+
+### Consolidate and optimize version maintenance scripts
+- Combine version-related scripts to reduce total lines of code to 400 lines
+- Maintain functionality including:
+  - Version number incrementing (patch, minor, major)
+  - Version synchronization across different file types
+  - Version consistency validation
+  - Build number management
+  - README badge updates
+- Ensure robust error handling and verification
+- Add documentation for the streamlined version management system
+
+## Feature Request Process
+
+To request a new feature:
+
+1. Create an issue in the project repository with the `feature-request` label
+2. Include clear user stories and acceptance criteria
+3. Provide context on why this feature would be valuable
+4. Tag relevant stakeholders for input
+
+Features will be evaluated and prioritized during quarterly planning sessions.
