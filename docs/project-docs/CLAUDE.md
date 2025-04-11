@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Key Commands
-- Build: `./bin/build.sh` or `mvn clean install`
+- Build: `./scripts/build.sh` or `mvn clean install`
 - Build specific components: `bin/rin build [java|go|python|all]`
 - Test: `./bin/rin-test [unit|component|integration|acceptance|performance]`
 - Run a single test: `mvn test -Dtest=TestClassName#testMethodName`
@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Linting: `./bin/run-quality-checks.sh` or `mvn checkstyle:check && mvn pmd:check`
 - CI verification: `./bin/run-checks.sh` (validates architecture and dependencies)
 - Version management: `bin/rin-version [current|patch|minor|verify|update]`
+- Activate environments: `./scripts/activate-rinna.sh`, `./scripts/activate-api.sh`, `./scripts/activate-python.sh`
 
 ## XML Manipulation
 **IMPORTANT**: For all XML files (especially POM files), ALWAYS use `bin/xml-tools.sh`. NEVER use text tools (grep, sed).
