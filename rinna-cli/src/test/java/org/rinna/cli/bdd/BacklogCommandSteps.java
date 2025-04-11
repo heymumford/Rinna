@@ -166,7 +166,7 @@ public class BacklogCommandSteps {
         item1.setTitle("Implement user authentication");
         item1.setType(WorkItemType.FEATURE);
         item1.setPriority(Priority.HIGH);
-        item1.setState(WorkflowState.OPEN);
+        item1.setState(WorkflowState.TO_DO);
         backlogItems.add(item1);
         
         WorkItem item2 = new WorkItem();
@@ -182,7 +182,7 @@ public class BacklogCommandSteps {
         item3.setTitle("Add export to CSV feature");
         item3.setType(WorkItemType.FEATURE);
         item3.setPriority(Priority.LOW);
-        item3.setState(WorkflowState.OPEN);
+        item3.setState(WorkflowState.TO_DO);
         backlogItems.add(item3);
         
         // Mock the backlog service to return these items
@@ -205,7 +205,7 @@ public class BacklogCommandSteps {
         item.setTitle("Sample Work Item");
         item.setType(WorkItemType.TASK);
         item.setPriority(Priority.MEDIUM);
-        item.setState(WorkflowState.OPEN);
+        item.setState(WorkflowState.TO_DO);
         
         // Mock the item service to return this item
         when(mockItemService.getItem(itemId)).thenReturn(item);
@@ -230,7 +230,7 @@ public class BacklogCommandSteps {
         item.setTitle("Sample Work Item");
         item.setType(WorkItemType.TASK);
         item.setPriority(Priority.MEDIUM);
-        item.setState(WorkflowState.OPEN);
+        item.setState(WorkflowState.TO_DO);
         
         // Mock the item service to return this item
         when(mockItemService.getItem(itemId)).thenReturn(item);

@@ -7,6 +7,9 @@
  */
 package org.rinna.cli.bdd;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -665,6 +668,26 @@ public class CommandProcessor {
             System.err.println("Error executing admin command: " + e.getMessage());
             e.printStackTrace();
             return 1;
+        }
+    }
+    
+    /**
+     * Execute a command with input.
+     * 
+     * @param commandLine the command line
+     * @param input the input to provide to the command
+     * @return the exit code
+     */
+    public int executeWithInput(String commandLine, String input) {
+        // Save the original System.in and replace it with our input
+        java.io.InputStream originalIn = System.in;
+        System.setIn(new ByteArrayInputStream(input.getBytes()));
+        
+        try {
+            return processCommand(commandLine);
+        } finally {
+            // Restore the original System.in
+            System.setIn(originalIn);
         }
     }
 }

@@ -10,8 +10,8 @@ Rinna liberates engineers from the tyranny of bloated workflow tools by bringing
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Java Version](https://img.shields.io/badge/java-21-orange.svg)](https://openjdk.java.net/projects/jdk/21/)
 [![Go Version](https://img.shields.io/badge/go-1.21-blue.svg)](https://golang.org/doc/go1.21)
-[![Version](https://img.shields.io/badge/version-1.9.0-blue.svg)](https://github.com/heymumford/Rinna/releases)
-[![Build](https://img.shields.io/badge/build-510-green.svg)](https://github.com/heymumford/Rinna/actions)
+[![Version](https://img.shields.io/badge/version-1.9.1-blue.svg)](https://github.com/heymumford/Rinna/releases)
+[![Build](https://img.shields.io/badge/build-511-green.svg)](https://github.com/heymumford/Rinna/actions)
 [![GitHub Stars](https://img.shields.io/github/stars/heymumford/Rinna?style=social)](https://github.com/heymumford/Rinna/stargazers)
 
 </div>

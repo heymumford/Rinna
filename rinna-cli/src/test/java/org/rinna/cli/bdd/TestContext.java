@@ -479,4 +479,32 @@ public class TestContext {
     public void setExitCode(int exitCode) {
         this.lastCommandExitCode = exitCode;
     }
+    
+    /**
+     * Sets a command object in the context.
+     */
+    public void setCommand(Object command) {
+        storeState("command", command);
+    }
+    
+    /**
+     * Sets a username in the context.
+     */
+    public void setUsername(String username) {
+        storeState("username", username);
+    }
+    
+    /**
+     * Gets the username from the context.
+     */
+    public String getUsername() {
+        return getState("username");
+    }
+    
+    /**
+     * Sets an attribute in the context.
+     */
+    public void setAttribute(String key, Object value) {
+        storeState(key, value);
+    }
 }
