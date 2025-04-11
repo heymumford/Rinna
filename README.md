@@ -40,9 +40,9 @@ Rinna liberates engineers from the tyranny of bloated workflow tools by bringing
 
 ## What Is Rinna?
 
-Rinna is a unified workflow management system built for software engineers that treats all types of work—business, product, engineering, and test—as part of a single coherent system. It minimizes process overhead and integrates directly into your development environment, providing clear visibility without excessive ceremony.
+Rinna is a unified workflow management system built on the philosophy of Ryorin-Do (The Way of Universal Work Management). It treats all types of work—business, product, engineering, and test—as part of a single coherent system, transcending artificial boundaries while respecting each domain's unique characteristics. It minimizes process overhead and integrates directly into your development environment, providing clear visibility without excessive ceremony.
 
-**Rinna doesn't replace enterprise tools – it makes workflow management work _for_ developers, not against them.**
+**Rinna doesn't replace enterprise tools – it makes workflow management work _for_ developers, not against them, embodying the Ryorin-Do principles of Flow Optimization and Mindful Simplicity.**
 
 ### The Problem
 
@@ -85,7 +85,7 @@ bin/rin-cli update WI-123 --status=DONE --assignee=developer1
 
 ```bash
 # Create work item via API
-curl -X POST "http://localhost:8080/api/v1/workitems" \
+curl -X POST "https://api.rinnacloud.io/api/v1/workitems" \
   -H "Authorization: Bearer ri-dev-token" \
   -H "Content-Type: application/json" \
   -d '{
@@ -107,6 +107,25 @@ bin/rin build
 # OR use containers (no build required)
 docker-compose up -d
 docker exec -it rinna-cli-1 /bin/bash
+```
+
+## Key Features
+
+- **Unified Work Management**: Comprehensive system for managing work items, bugs, tasks, and more
+- **Terminal-First Design**: CLI-centric workflow designed for where developers already work
+- **Clean Architecture**: Domain-driven design with clear separation of concerns
+- **Cross-Platform Containers**: Run the entire system in Docker, even on Windows
+- **Open API Interface Platform**: Seamlessly integrate with external work management systems
+- **Feature Flagging System**: Granular control over feature availability with admin-level management
+- **Multi-Channel Notifications**: Configurable notifications via in-app, CLI, email, Slack, webhooks
+- **Security-First Approach**: RBAC, audit logging, and comprehensive security controls
+- **Expertise Rating System**: "Baseball card" approach to skill certification with blockchain verification
+- **Multi-Language Support**: Equal focus on English, Spanish, French, Ukrainian, Hindi, Swedish, Norwegian, German, Portuguese, and Classical Latin
+- **Universal Test Automation Integration**: Standardized API for test frameworks with special Karate integration
+- **Digital Transformation Templates**: Executive-friendly templates for modernizing legacy systems with DevOps best practices
+- **Ryorin-Do Philosophy**: The Way of Universal Work Management, integrating all work types across domains
+
+```bash
 rin list
 ```
 
@@ -114,12 +133,15 @@ See [Cross-Platform Container Setup](docs/user-guide/cross-platform-container-se
 
 ## Core Features
 
-### Unified Work Model
+### Unified Work Model (Ryorin-Do)
 
-- **Work Items**: Business → Product → Engineering → Test
-- **Work Types**: Goals → Epics → Features → User Stories → Tasks → Bugs → Tests
+- **Work Items**: Business → Product → Engineering → Test, following Unity of Work (Ichi-no-Rodo)
+- **Origin Categories**: Product (PROD), Architecture (ARCH), Development (DEV), Testing (TEST), Operations (OPS), Documentation (DOC), Cross-Cutting (CROSS)
+- **Work Complexity Domains**: Simple (Tanjun), Complicated (Fukuzatsu), Complex (Fukuheisa), Chaotic (Konton), Disordered (Midare)
+- **Work Paradigms**: Project (Purojekuto), Operational (Unten), Exploratory (Tanken), Governance (Tōchi)
 - **Workflow**: Found → Triaged → To Do → In Progress → In Test → Done → Released
-- **No customization needed**: We've built what works based on experience
+- **Four Aspects of Work**: Intention (Ishi), Execution (Jikkō), Verification (Kakunin), Refinement (Kairyō)
+- **Mindful Simplicity**: Fixed workflow states that capture the essence without needless customization
 
 ### Testing as a First-Class Citizen
 
@@ -174,7 +196,11 @@ bin/rin version update    # Sync all files
 | **CLI** | Full-featured | No | Limited | No |
 | **Cross-language testing** | Comprehensive | No | No | No |
 | **Test automation** | Advanced | Plugin-dependent | Basic | Limited |
+| **External system integration** | Native | Limited | Limited | Via API |
 | **Learning curve** | Low | High | Medium | Medium |
+| **Multi-language support** | 10+ languages | Limited | Limited | Limited |
+| **Test automation integration** | Universal API | Limited | Via Actions | Limited |
+| **Expertise rating system** | Built-in | No | No | No |
 
 ## Requirements
 
