@@ -1,5 +1,7 @@
-[MAIN]
+[MASTER]
 extension-pkg-whitelist=pydantic
+ignore-missing-imports=yes
+max-complexity=10
 
 [MESSAGES CONTROL]
 disable=
@@ -20,7 +22,6 @@ good-names=i,j,k,ex,Run,_,id,f
 min-similarity-lines=8
 
 [TYPECHECK]
-ignore-missing-imports=yes
 ignored-modules=numpy,pandas,tensorflow,torch,sklearn
 
 [DESIGN]
@@ -32,7 +33,6 @@ max-locals=25
 max-returns=8
 max-statements=50
 max-parents=7
-max-complexity=10
 
 [IMPORTS]
 allow-wildcard-with-all=no
@@ -41,4 +41,4 @@ allow-wildcard-with-all=no
 valid-classmethod-first-arg=cls
 
 [EXCEPTIONS]
-overgeneral-exceptions=BaseException,Exception
+overgeneral-exceptions=builtins.BaseException,builtins.Exception

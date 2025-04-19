@@ -1,201 +1,29 @@
-# Build outputs
-## Java
+# Build artifacts
+build/
+
+# Java
+java/**/target/
 *.class
 *.jar
-*.war
-*.ear
-*.log
-hs_err_pid*
 
-## Maven
-target/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-pom.xml.backup
-release.properties
-dependency-reduced-pom.xml
-buildNumber.properties
-
-## Python
+# Python
 __pycache__/
 *.py[cod]
-*$py.class
+*.class
 *.so
 .Python
-
-# Python build artifacts only (not the source files)
-# Ensure we don't ignore actual Python modules and tests
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Explicitly include all Python modules and tests
-!python/
-!python/rinna/
-!python/tests/
-!python/**/*.py
-
-## Go
-/api/bin/
-/api/rinnasrv
-/api/test_health
-/api/test_health.go
-/api/cmd/healthcheck/healthcheck
-
-# Test outputs
-.pytest_cache/
+.env
+.venv
+env/
+venv/
 .coverage
 htmlcov/
-.ruff_cache/
-.mypy_cache/
-.test-tmp/
-test-output/
-surefire-reports/
-test-pyramid-report.json
-test-pyramid-report.txt
 
-# IDE and editors
-## IntelliJ IDEA
+# IDE files
 .idea/
-*.iml
-*.iws
-*.ipr
-out/
-
-## Eclipse
-.settings/
-.classpath
-.project
-.factorypath
-# Ensure bin directory and all scripts are tracked
-!bin/
-!bin/**/*.sh
-!bin/**/*.py
-tmp/
-*.tmp
-*.bak
-*.swp
-*~.nib
-local.properties
-
-## VSCode
 .vscode/
-*.code-workspace
+*.iml
 
-## NetBeans
-/nbproject/private/
-/build/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-# Environment and runtime
-## Environment files
-.env
-.env.*
-!.env.example
-env/
-.venv/
-venv/
-ENV/
-
-## Maven environment
-.mvn/timing.properties
-.mvn/wrapper/maven-wrapper.jar
-
-## Runtime files
-*.sqlite
-*.sqlite3
-*.db
-
-# OS specific
-.DS_Store
-Thumbs.db
-
-# Project specific
-## Temp/test files
-SimpleTest*.class
-SimpleTest.java
-engineering_spec_v0.3.md
-**/Demo.java
-**/DemoApp.java
-**/DemoTest.java
-/tmp/
-
-# Don't ignore actual test files - only simple example Test files
-!**/src/test/java/org/rinna/**/*Test.java
-!**/test/**/*Test.java
-
-## Scripts that should be in utils/
-activate-*.sh
-!utils/activate-*.sh
-
-## Binary files 
-/bin/rin-cli
-
-# Important bin scripts that should be tracked (ensure these are NOT ignored)
-!/bin/rin
-!/bin/rin-version 
-!/bin/rin-config
-!/bin/rin-setup
-!/bin/check-versions.sh
-!/bin/update-versions.sh
-!/bin/run-tests.sh
-!/bin/rinna-tests.sh
-!/bin/rinna_config.py
-!/bin/start-java-server.sh
-!/bin/start-services.sh
-!/bin/test-end-to-end.sh
-!/bin/maven-cross-tests.sh
-!/bin/c4_diagrams.py
-!/bin/test_c4_diagrams.py
-!/bin/test-pyramid-coverage.sh
-!/bin/checks/*.sh
-!/bin/scripts/*.sh
-
-## Build and test artifacts
-# Note: These are specifically excluded since they are auto-generated or temporary
-/bin/run-build.sh
-/bin/fix-java-files.sh
-/bin/restore-files.sh
-/bin/update-headers.sh
-
-## Backup directories
-backup/
-**/src-*/
-**/*.backup/
-
-# Generated diagram files only - not all docs
-/docs/architecture/diagrams/*.svg
-/docs/architecture/diagrams/*.png
-/docs/architecture/diagrams/*.jpg
-/docs/architecture/diagrams/*.pdf
-/docs/architecture/diagrams/build/
-
-# Ensure all documentation files are included
-!docs/
-!docs/**/*.md
-!docs/implementation/
-!docs/implementation/*.md
-!docs/standards/
-!docs/standards/*.md
-!docs/project-status/
-!docs/project-status/*.md
-!docs/**/*.txt
-
-# Allow specific files that would otherwise be ignored
-!CLAUDE.md
-**/CLAUDE.local.md
+# Logs
+logs/
+*.log

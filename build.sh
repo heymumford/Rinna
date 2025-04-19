@@ -1,622 +1,334 @@
-#!/usr/bin/env bash
-#
-# build.sh - Consolidated build script for Rinna
-#
-# PURPOSE: Efficiently orchestrates the entire build process with minimal verbosity
-#          and uses consolidated configuration files from the build/ directory
-#
-# Copyright (c) 2025 Eric C. Mumford (@heymumford)
-# 
-# This source code is licensed under the MIT License
-# found in the LICENSE file in the root directory of this source tree.
-#
+#!/bin/bash
 
-set -eo pipefail
+# Unified build script for Rinna polyglot application
+# Usage: ./build.sh [component]
+# component can be: all, java, python, go
 
-# Core variables - minimal and efficient
-SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
-RINNA_DIR="$(cd "$SCRIPT_DIR" && pwd)"
-BUILD_DIR="$RINNA_DIR/build"
-CONFIG_DIR="$BUILD_DIR/config"
-LOG_DIR="$RINNA_DIR/logs"
-VERSION_FILE="$RINNA_DIR/version.properties"
-VERSION_SERVICE_PROPS="$RINNA_DIR/build/version-service/version.properties"
-TARGET_DIR="$RINNA_DIR/target"
-DIST_DIR="$TARGET_DIR/distribution"
-TEST_RESULTS_DIR="$TARGET_DIR/test-results"
+set -e  # Exit immediately if a command exits with a non-zero status
 
-# Create required directories at once
-mkdir -p "$LOG_DIR" "$TARGET_DIR" "$DIST_DIR" "$TEST_RESULTS_DIR"
-
-# Set up logging - simplified
-BUILD_LOG="$LOG_DIR/build-$(date +%Y%m%d-%H%M%S).log"
-
-# Color codes
+# Define color codes for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
-BOLD='\033[1m'
-NC='\033[0m'
+PURPLE='\033[0;35m'
+NC='\033[0m' # No Color
 
-# Status emojis - kept for UX consistency
-SUCCESS="✅"
-FAILURE="❌"
-PENDING="🔄"
-SKIPPED="⏭️" 
-WARNING="⚠️"
+# Default build target
+BUILD_TARGET=${1:-"all"}
+BUILD_MODE=${2:-"dev"}
 
-# Default options
-SKIP_TESTS=false
-SKIP_QUALITY=false
-SKIP_VERSION_INCREMENT=false
-# Enable all components
-COMPONENTS=("java" "go" "python")
-VERBOSE=false
-HELP=false
-BUILD_ENV="local"
-RELEASE=false
-PUSH_VERSION=false
-QUICK=false
-PARALLEL_BUILD=true
+# Project root directory (location of this script)
+PROJECT_ROOT=$(pwd)
 
-# Begin tracking build time
-BUILD_START_TIME=$(date +%s)
+# Log file
+TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+LOG_DIR="${PROJECT_ROOT}/logs"
+LOG_FILE="${LOG_DIR}/build-${TIMESTAMP}.log"
+mkdir -p ${LOG_DIR}
 
-# Function to show usage - simplified but complete
-show_usage() {
-  cat << EOF
-${BOLD}Rinna Build Script${NC}
+# Log start of build
+log_header() {
+    echo -e "${BLUE}======================================================${NC}"
+    echo -e "${BLUE}= Rinna Build System                                 =${NC}"
+    echo -e "${BLUE}= Build Target: ${GREEN}$BUILD_TARGET${BLUE}                            =${NC}"
+    echo -e "${BLUE}= Build Mode: ${GREEN}$BUILD_MODE${BLUE}                               =${NC}"
+    echo -e "${BLUE}= Timestamp: ${GREEN}$(date)${BLUE}        =${NC}"
+    echo -e "${BLUE}======================================================${NC}"
+    echo ""
 
-USAGE: $(basename "$0") [options]
-
-OPTIONS:
-  --skip-tests              Skip all tests
-  --skip-quality            Skip quality checks
-  --skip-version-increment  Don't increment the build number
-  --components=LIST         Comma-separated list of components (java,go,python)
-  --env=ENV                 Environment: local, ci, prod [default: local]
-  --release                 Create a release build
-  --push-version            Push version changes to git
-  --quick                   Quick build (minimal checks)
-  --verbose                 Show verbose output
-  --help                    Show this help message
-EOF
+    # Log to file
+    echo "======================================================" > ${LOG_FILE}
+    echo "= Rinna Build System                                 =" >> ${LOG_FILE}
+    echo "= Build Target: $BUILD_TARGET                            =" >> ${LOG_FILE}
+    echo "= Build Mode: $BUILD_MODE                               =" >> ${LOG_FILE}
+    echo "= Timestamp: $(date)        =" >> ${LOG_FILE}
+    echo "======================================================" >> ${LOG_FILE}
+    echo "" >> ${LOG_FILE}
 }
 
-# Optimized command line argument parsing
-parse_options() {
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      --skip-tests) SKIP_TESTS=true; shift ;;
-      --skip-quality) SKIP_QUALITY=true; shift ;;
-      --skip-version-increment) SKIP_VERSION_INCREMENT=true; shift ;;
-      --components=*) IFS=',' read -r -a COMPONENTS <<< "${1#*=}"; shift ;;
-      --env=*) BUILD_ENV="${1#*=}"; shift ;;
-      --release) RELEASE=true; shift ;;
-      --push-version) PUSH_VERSION=true; shift ;;
-      --quick) QUICK=true; SKIP_TESTS=true; SKIP_QUALITY=true; shift ;;
-      --verbose) VERBOSE=true; shift ;;
-      --help|-h) HELP=true; shift ;;
-      *) echo -e "${RED}ERROR: Unknown option: $1${NC}" >&2; show_usage; exit 1 ;;
-    esac
-  done
+log_section() {
+    echo -e "${YELLOW}>>> $1${NC}"
+    echo ">>> $1" >> ${LOG_FILE}
 }
 
-# Simplified logging functions
-log() { echo -e "$1" | tee -a "$BUILD_LOG"; }
-log_info() { log "ℹ️ $1"; }
-log_error() { log "${RED}ERROR: $1${NC}" >&2; }
-log_warning() { log "${YELLOW}WARNING: $1${NC}" >&2; }
-log_success() { log "${GREEN}$1${NC}"; }
-
-# Task status functions - streamlined
-start_task() {
-  echo -e "${PENDING} ${BOLD}$1...${NC}" | tee -a "$BUILD_LOG"
-  TASK_START_TIME=$(date +%s)
+log_success() {
+    echo -e "${GREEN}✓ $1${NC}"
+    echo "✓ $1" >> ${LOG_FILE}
 }
 
-complete_task() {
-  local elapsed=""
-  if [[ -n "$TASK_START_TIME" ]]; then
-    local duration=$(($(date +%s) - TASK_START_TIME))
-    elapsed=" (${duration}s)"
-    TASK_START_TIME=0
-  fi
-  echo -e "\r\033[K${SUCCESS} $1${elapsed}" | tee -a "$BUILD_LOG"
-}
-
-fail_task() {
-  local elapsed=""
-  if [[ -n "$TASK_START_TIME" ]]; then
-    local duration=$(($(date +%s) - TASK_START_TIME))
-    elapsed=" (${duration}s)"
-    TASK_START_TIME=0
-  fi
-  echo -e "\r\033[K${FAILURE} $1${elapsed}" | tee -a "$BUILD_LOG"
-  [[ -n "$2" ]] && echo -e "   ${RED}$2${NC}" | tee -a "$BUILD_LOG"
-}
-
-skip_task() {
-  echo -e "${SKIPPED} $1 - skipped" | tee -a "$BUILD_LOG"
-}
-
-# Section headers - minimal but clear
-section_header() {
-  echo -e "\n${BLUE}${BOLD}== $1 ==${NC}\n" | tee -a "$BUILD_LOG"
-}
-
-# Optimized command runner
-run_command() {
-  local cmd="$1"
-  local description="$2"
-  local skip_flag="${3:-false}"
-  local allow_fail="${4:-false}"
-
-  [[ "$skip_flag" == "true" ]] && { skip_task "$description"; return 0; }
-
-  start_task "$description"
-
-  # Run command and capture output directly without temp files
-  if output=$(eval "$cmd" 2>&1); then
-    complete_task "$description"
-    [[ "${VERBOSE}" == "true" ]] && echo "$output" | tee -a "$BUILD_LOG"
-    return 0
-  else
-    local exit_code=$?
-    fail_task "$description" "Failed with code $exit_code"
-    echo "$output" | tee -a "$BUILD_LOG"
-
-    [[ "$allow_fail" == "true" ]] && return 0
-    return $exit_code
-  fi
-}
-
-# Efficient component check
-is_component_enabled() {
-  local component=$(echo "$1" | tr '[:upper:]' '[:lower:]')
-  for c in "${COMPONENTS[@]}"; do
-    [[ "$(echo "$c" | tr '[:upper:]' '[:lower:]')" == "$component" ]] && return 0
-  done
-  return 1
-}
-
-# Optimized version information reading
-read_version() {
-  section_header "Version Information"
-
-  if [[ ! -f "$VERSION_FILE" ]]; then
-    log_error "Version file not found: $VERSION_FILE"
+log_error() {
+    echo -e "${RED}✗ $1${NC}"
+    echo "✗ $1" >> ${LOG_FILE}
     exit 1
-  fi
-
-  # Read version data in one pass to avoid multiple file reads
-  VERSION_MAJOR=$(grep "^version.major=" "$VERSION_FILE" | cut -d= -f2)
-  VERSION_MINOR=$(grep "^version.minor=" "$VERSION_FILE" | cut -d= -f2)
-  VERSION_PATCH=$(grep "^version.patch=" "$VERSION_FILE" | cut -d= -f2)
-  VERSION_QUALIFIER=$(grep "^version.qualifier=" "$VERSION_FILE" | cut -d= -f2)
-  BUILD_NUMBER=$(grep "^buildNumber=" "$VERSION_FILE" | cut -d= -f2)
-
-  # Validate version information
-  if [[ -z "$VERSION_MAJOR" || -z "$VERSION_MINOR" || -z "$VERSION_PATCH" ]]; then
-    log_error "Could not read version information"
-    exit 1
-  fi
-
-  # Get Git information efficiently
-  GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-  GIT_RELEASE=$(git describe --tags --always 2>/dev/null || echo "unknown")
-
-  log_info "Version: ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}${VERSION_QUALIFIER} (Build ${BUILD_NUMBER})"
-  log_info "Git: ${GIT_COMMIT} / ${GIT_RELEASE}"
 }
 
-# Increment build number
-increment_build_number() {
-  [[ "$SKIP_VERSION_INCREMENT" == "true" ]] && return 0
-
-  section_header "Incrementing Build Number"
-
-  # Read current build number
-  local current_build_number=$BUILD_NUMBER
-  local new_build_number=$((current_build_number + 1))
-
-  log_info "Incrementing build: $current_build_number → $new_build_number"
-
-  # Update version files in a single operation if possible
-  if [[ -f "$VERSION_FILE" ]]; then
-    local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-    local today=$(date +"%Y-%m-%d")
-
-    # Update multiple properties at once to reduce file operations
-    # Use a more compatible approach for sed across different platforms
-    if [[ "$(uname)" == "Darwin" ]]; then
-      # macOS requires an extension argument for -i
-      sed -i '' "s/^buildNumber=.*/buildNumber=$new_build_number/" "$VERSION_FILE"
-      sed -i '' "s/^build.timestamp=.*/build.timestamp=$timestamp/" "$VERSION_FILE"
-      sed -i '' "s/^build.git.commit=.*/build.git.commit=$GIT_COMMIT/" "$VERSION_FILE"
-      sed -i '' "s/^lastUpdated=.*/lastUpdated=$today/" "$VERSION_FILE"
-    else
-      # Linux version
-      sed -i "s/^buildNumber=.*/buildNumber=$new_build_number/" "$VERSION_FILE"
-      sed -i "s/^build.timestamp=.*/build.timestamp=$timestamp/" "$VERSION_FILE"
-      sed -i "s/^build.git.commit=.*/build.git.commit=$GIT_COMMIT/" "$VERSION_FILE"
-      sed -i "s/^lastUpdated=.*/lastUpdated=$today/" "$VERSION_FILE"
-    fi
-
-    BUILD_NUMBER="$new_build_number"
-    log_success "Updated build number in $VERSION_FILE"
-  fi
-
-  # Update version service properties if it exists
-  if [[ -f "$VERSION_SERVICE_PROPS" ]]; then
-    if [[ "$(uname)" == "Darwin" ]]; then
-      # macOS requires an extension argument for -i
-      sed -i '' "s/^buildNumber=.*/buildNumber=$new_build_number/" "$VERSION_SERVICE_PROPS"
-    else
-      # Linux version
-      sed -i "s/^buildNumber=.*/buildNumber=$new_build_number/" "$VERSION_SERVICE_PROPS"
-    fi
-  fi
+log_info() {
+    echo -e "${PURPLE}ℹ $1${NC}"
+    echo "ℹ $1" >> ${LOG_FILE}
 }
 
-# Initialize build environment
-initialize_build() {
-  section_header "Build Environment"
-
-  # Check for required tools based on enabled components
-  local missing_tools=false
-
-  is_component_enabled "java" && {
-    # Extract Java version number for comparison
-    if ! command -v mvn &>/dev/null; then
-      log_error "Maven is required"
-      missing_tools=true
-    elif ! java -version &>/dev/null; then
-      log_error "Java is required"
-      missing_tools=true
-    else
-      # Extract major version number and compare
-      java_version=$(java -version 2>&1 | head -1 | awk -F '"' '{print $2}' | awk -F '.' '{print $1}')
-      if [[ -n "$java_version" ]] && [[ "$java_version" -lt 21 ]]; then
-        log_error "Java 21 or higher is required (found version $java_version)"
-        missing_tools=true
-      else
-        log_info "Java: $(java -version 2>&1 | head -1)"
-      fi
+check_requirements() {
+    log_section "Checking build requirements"
+    
+    # Check Java
+    if ! command -v java &> /dev/null; then
+        log_error "Java not found, please install JDK"
     fi
-  }
-
-  is_component_enabled "go" && {
-    if ! command -v go &>/dev/null; then
-      log_error "Go is required"
-      missing_tools=true
-    else
-      log_info "Go: $(go version | awk '{print $3}')"
+    
+    # Check Maven
+    if ! command -v mvn &> /dev/null; then
+        log_error "Maven not found, please install Maven"
     fi
-  }
-
-  is_component_enabled "python" && {
-    if ! command -v python3 &>/dev/null; then
-      log_error "Python 3 is required"
-      missing_tools=true
-    else
-      log_info "Python: $(python3 --version 2>&1)"
+    
+    # Check Go
+    if [[ "$BUILD_TARGET" == "all" || "$BUILD_TARGET" == "go" ]]; then
+        if ! command -v go &> /dev/null; then
+            log_error "Go not found, please install Go"
+        fi
     fi
-  }
-
-  [[ "$missing_tools" == "true" ]] && { log_error "Missing required tools"; exit 1; }
-
-  # Activate environment if available
-  [[ -f "$RINNA_DIR/activate-rinna.sh" ]] && \
-    run_command "source \"$RINNA_DIR/activate-rinna.sh\"" "Activating environment"
+    
+    # Check Python
+    if [[ "$BUILD_TARGET" == "all" || "$BUILD_TARGET" == "python" ]]; then
+        if ! command -v python3 &> /dev/null; then
+            log_error "Python not found, please install Python 3"
+        fi
+        
+        if ! command -v poetry &> /dev/null; then
+            log_error "Poetry not found, please install Poetry"
+        fi
+    fi
+    
+    log_success "All required tools found"
 }
 
-# Build Java components efficiently
 build_java() {
-  is_component_enabled "java" || return 0
-
-  section_header "Java Build"
-
-  # Determine Maven profile based on environment
-  local mvn_profile
-  case "$BUILD_ENV" in
-    local) mvn_profile="local-quality" ;;
-    ci) mvn_profile="ci" ;;
-    prod) mvn_profile="production" ;;
-  esac
-
-  # Optimize Maven command options
-  local mvn_options="-P $mvn_profile"
-  [[ "$SKIP_TESTS" == "true" ]] && mvn_options="$mvn_options -DskipTests=true"
-  [[ "$SKIP_QUALITY" == "true" ]] && mvn_options="$mvn_options -P skip-quality"
-  [[ "$RELEASE" == "true" ]] && mvn_options="$mvn_options -P release"
-
-  # Use parallel build for better performance
-  mvn_options="$mvn_options -T 1C"
-
-  # Set Checkstyle configuration to use the consolidated location
-  mvn_options="$mvn_options -Dcheckstyle.config.location=$CONFIG_DIR/java/checkstyle.xml"
-  mvn_options="$mvn_options -Dcheckstyle.suppressions.location=$CONFIG_DIR/java/checkstyle-suppressions.xml"
-
-  # Integrated Maven build process (clean+compile+package in one command)
-  run_command "mvn clean compile package $mvn_options" "Building Java project"
-
-  # Run tests if not skipped
-  if [[ "$SKIP_TESTS" != "true" ]]; then
-    run_command "mvn test $mvn_options" "Running Java tests"
-
-    # Collect test statistics efficiently
-    if [[ -d "$RINNA_DIR/target/surefire-reports" ]]; then
-      local total=$(find "$RINNA_DIR" -name "TEST-*.xml" | wc -l)
-      local failed=$(find "$RINNA_DIR" -name "TEST-*.xml" | xargs grep -l "failures=\"[1-9]" | wc -l)
-      local passed=$((total - failed))
-
-      log_info "Tests: $passed passed, $failed failed, $total total"
-
-      # Copy test results
-      mkdir -p "$TEST_RESULTS_DIR/java"
-      cp -r "$RINNA_DIR/target/surefire-reports" "$TEST_RESULTS_DIR/java/"
+    log_section "Building Java components"
+    
+    cd ${PROJECT_ROOT}/java
+    
+    # Check if we have a pom.xml
+    if [ ! -f "pom.xml" ]; then
+        log_error "No pom.xml found in java directory"
     fi
-  fi
-
-  # Run verification if quality checks are enabled
-  [[ "$SKIP_QUALITY" != "true" ]] && \
-    run_command "mvn verify $mvn_options" "Verifying Java project"
-
-  # Copy JARs to distribution directory
-  mkdir -p "$DIST_DIR/lib"
-  find "$RINNA_DIR" -name "*.jar" -not -path "*/target/classes/*" -not -path "*/test-classes/*" \
-    -exec cp {} "$DIST_DIR/lib/" \; 2>/dev/null || true
-}
-
-# Build Go components
-build_go() {
-  is_component_enabled "go" || return 0
-
-  section_header "Go Build"
-
-  # Change to the API directory
-  cd "$RINNA_DIR/api"
-
-  # Run linting if quality checks are enabled
-  if [[ "$SKIP_QUALITY" != "true" ]]; then
-    if command -v golangci-lint &> /dev/null; then
-      run_command "golangci-lint run --config=$CONFIG_DIR/go/.golangci.yml" "Running Go linting"
+    
+    # Determine Maven arguments based on build mode
+    MVN_ARGS=""
+    if [ "$BUILD_MODE" == "prod" ]; then
+        MVN_ARGS="-P production"
+    elif [ "$BUILD_MODE" == "test" ]; then
+        MVN_ARGS="-P test"
+    fi
+    
+    # Run Maven build
+    log_info "Running Maven build..."
+    mvn clean install $MVN_ARGS -DskipTests=false
+    
+    if [ $? -eq 0 ]; then
+        log_success "Java build completed successfully"
     else
-      log_warning "golangci-lint not found, skipping Go linting"
+        log_error "Java build failed"
     fi
-  fi
-
-  # Set version flags
-  local version="${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
-  local build_flags="-X github.com/heymumford/rinna/api/pkg/health.Version=$version \
-                    -X github.com/heymumford/rinna/api/pkg/health.BuildNumber=$BUILD_NUMBER \
-                    -X github.com/heymumford/rinna/api/pkg/health.CommitSHA=$GIT_COMMIT"
-
-  # Build components in parallel for efficiency when possible
-  if [[ -d "./cmd/healthcheck" ]]; then
-    echo "Building Go components in parallel..."
-    {
-      go build -ldflags="$build_flags" -o "$RINNA_DIR/bin/rinnasrv" ./cmd/rinnasrv &&
-      echo -e "${SUCCESS} Built API server"
-    } &
-    {
-      go build -ldflags="$build_flags" -o "$RINNA_DIR/bin/healthcheck" ./cmd/healthcheck &&
-      echo -e "${SUCCESS} Built healthcheck utility"
-    } &
-    wait
-  else
-    run_command "go build -ldflags=\"$build_flags\" -o \"$RINNA_DIR/bin/rinnasrv\" ./cmd/rinnasrv" "Building Go API server"
-  fi
-
-  # Run tests if enabled
-  if [[ "$SKIP_TESTS" != "true" ]]; then
-    run_command "go test -v ./..." "Running Go tests"
-
-    # Copy binaries to distribution directory
-    mkdir -p "$DIST_DIR/bin"
-    cp "$RINNA_DIR/bin/rinnasrv" "$DIST_DIR/bin/" 2>/dev/null || true
-    cp "$RINNA_DIR/bin/healthcheck" "$DIST_DIR/bin/" 2>/dev/null || true
-  fi
-
-  # Return to project root
-  cd "$RINNA_DIR"
+    
+    cd ${PROJECT_ROOT}
 }
 
-# Build Python components
 build_python() {
-  is_component_enabled "python" || return 0
-
-  section_header "Python Build"
-
-  # Quick check for Python directory
-  [[ ! -d "$RINNA_DIR/python" ]] && { log_warning "Python directory not found"; return 0; }
-
-  # Change to Python directory
-  cd "$RINNA_DIR/python"
-
-  # Install package in development mode
-  run_command "pip install -e ." "Installing Python package"
-
-  # Run linting if quality checks are enabled
-  if [[ "$SKIP_QUALITY" != "true" ]]; then
-    # Run mypy for type checking
-    if command -v mypy &> /dev/null; then
-      run_command "mypy --config-file=$CONFIG_DIR/python/python-linting.toml ." "Running Python type checking (mypy)"
-    else
-      log_warning "mypy not found, skipping Python type checking"
+    log_section "Building Python components"
+    
+    cd ${PROJECT_ROOT}/python
+    
+    # Check if we have a pyproject.toml
+    if [ ! -f "pyproject.toml" ]; then
+        log_error "No pyproject.toml found in python directory"
     fi
-
-    # Run ruff for linting
-    if command -v ruff &> /dev/null; then
-      run_command "ruff --config=$CONFIG_DIR/python/python-linting.toml check ." "Running Python linting (ruff)"
-    else
-      log_warning "ruff not found, skipping Python linting"
+    
+    # Install dependencies and build
+    log_info "Setting up Python environment..."
+    
+    # Determine Poetry arguments based on build mode
+    POETRY_ARGS=""
+    if [ "$BUILD_MODE" == "prod" ]; then
+        POETRY_ARGS="--extras 'all'"
+    elif [ "$BUILD_MODE" == "test" ]; then
+        POETRY_ARGS="--with dev"
     fi
-
-    # Run black for code formatting check
-    if command -v black &> /dev/null; then
-      run_command "black --config=$CONFIG_DIR/python/python-linting.toml --check ." "Checking Python code formatting (black)"
+    
+    # Install dependencies using Poetry
+    poetry install $POETRY_ARGS
+    
+    if [ $? -eq 0 ]; then
+        log_success "Python dependencies installed successfully"
     else
-      log_warning "black not found, skipping Python formatting check"
+        log_error "Python dependency installation failed"
     fi
-
-    # Run isort for import sorting check
-    if command -v isort &> /dev/null; then
-      run_command "isort --settings-file=$CONFIG_DIR/python/python-linting.toml --check ." "Checking Python import sorting (isort)"
-    else
-      log_warning "isort not found, skipping Python import sorting check"
+    
+    # Run tests if in test mode
+    if [ "$BUILD_MODE" == "test" ]; then
+        log_info "Running Python tests..."
+        poetry run pytest
+        
+        if [ $? -eq 0 ]; then
+            log_success "Python tests passed"
+        else
+            log_error "Python tests failed"
+        fi
     fi
-  fi
-
-  # Run tests if enabled
-  if [[ "$SKIP_TESTS" != "true" && -d "$RINNA_DIR/python/tests" ]]; then
-    run_command "python -m pytest tests" "Running Python tests"
-
-    # Copy Python packages to distribution directory
-    mkdir -p "$DIST_DIR/python"
-    run_command "python setup.py sdist bdist_wheel" "Creating Python distribution"
-    cp -r dist/* "$DIST_DIR/python/" 2>/dev/null || true
-  fi
-
-  # Return to project root
-  cd "$RINNA_DIR"
+    
+    log_success "Python build completed successfully"
+    cd ${PROJECT_ROOT}
 }
 
-# Create distribution package
-create_distribution() {
-  section_header "Distribution Package"
-
-  # Create bin directory and copy scripts
-  mkdir -p "$DIST_DIR/bin"
-  cp "$RINNA_DIR/bin/rin"* "$DIST_DIR/bin/" 2>/dev/null || true
-  chmod +x "$DIST_DIR/bin/"* 2>/dev/null || true
-
-  # Copy configuration files
-  mkdir -p "$DIST_DIR/config"
-  cp -r "$CONFIG_DIR"/* "$DIST_DIR/config/" 2>/dev/null || true
-
-  # Copy version file
-  cp "$VERSION_FILE" "$DIST_DIR/" 2>/dev/null || true
-
-  # Build simplified README
-  cat > "$DIST_DIR/README.md" << EOF
-# Rinna ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH} (Build ${BUILD_NUMBER})
-
-Built: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-Git: ${GIT_COMMIT}
-
-## Components
-$(is_component_enabled "java" && echo "- Java: Included" || echo "- Java: Not included")
-$(is_component_enabled "go" && echo "- Go: Included" || echo "- Go: Not included")
-$(is_component_enabled "python" && echo "- Python: Included" || echo "- Python: Not included")
-EOF
-
-  # Create the distribution archive efficiently
-  local dist_name="rinna-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}-b${BUILD_NUMBER}"
-  local dist_archive="$TARGET_DIR/${dist_name}.tar.gz"
-
-  run_command "tar -czf \"$dist_archive\" -C \"$TARGET_DIR\" distribution" "Creating archive: $(basename "$dist_archive")"
-  log_success "Distribution package: $dist_archive"
+build_go() {
+    log_section "Building Go components"
+    
+    cd ${PROJECT_ROOT}/go
+    
+    # Check if we have a go.mod file
+    if [ ! -f "go.mod" ]; then
+        log_error "No go.mod found in go directory"
+    fi
+    
+    # Download dependencies
+    log_info "Downloading Go dependencies..."
+    go mod download
+    
+    if [ $? -ne 0 ]; then
+        log_error "Failed to download Go dependencies"
+    fi
+    
+    # Build Go components
+    log_info "Building Go binaries..."
+    
+    # Determine build flags based on mode
+    GO_BUILD_FLAGS=""
+    if [ "$BUILD_MODE" == "prod" ]; then
+        GO_BUILD_FLAGS="-ldflags=-s -ldflags=-w"
+    fi
+    
+    # Create output directory
+    mkdir -p bin
+    
+    # Find all main packages and build them
+    go_packages=$(find ./src -name "main.go" -exec dirname {} \;)
+    
+    for pkg in $go_packages; do
+        binary_name=$(basename $pkg)
+        log_info "Building $binary_name..."
+        go build $GO_BUILD_FLAGS -o bin/$binary_name $pkg
+        
+        if [ $? -eq 0 ]; then
+            log_success "Built $binary_name successfully"
+        else
+            log_error "Failed to build $binary_name"
+        fi
+    done
+    
+    # Run tests if in test mode
+    if [ "$BUILD_MODE" == "test" ]; then
+        log_info "Running Go tests..."
+        go test ./...
+        
+        if [ $? -eq 0 ]; then
+            log_success "Go tests passed"
+        else
+            log_error "Go tests failed"
+        fi
+    fi
+    
+    log_success "Go build completed successfully"
+    cd ${PROJECT_ROOT}
 }
 
-# Push version changes to git if requested
-push_version_changes() {
-  [[ "$PUSH_VERSION" != "true" ]] && return 0
-
-  section_header "Git Operations"
-
-  # Add and commit version files
-  run_command "git add \"$VERSION_FILE\" \"$VERSION_SERVICE_PROPS\"" "Adding version files to git"
-
-  # Commit changes
-  local commit_message="Build ${BUILD_NUMBER}: Version ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
-  run_command "git commit -m \"$commit_message\"" "Committing version changes" true
-
-  # Push changes if commit succeeded
-  [[ $? -eq 0 ]] && run_command "git push" "Pushing version changes" true
-
-  # Create tag for releases
-  if [[ "$RELEASE" == "true" ]]; then
-    local tag="v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
-    run_command "git tag -a \"$tag\" -m \"Release ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH} (Build ${BUILD_NUMBER})\"" \
-      "Creating release tag: $tag" true
-
-    [[ $? -eq 0 ]] && run_command "git push origin \"$tag\"" "Pushing release tag" true
-  fi
+build_api_specs() {
+    log_section "Processing API specifications"
+    
+    cd ${PROJECT_ROOT}/api-specs
+    
+    # Check if we have any API specs
+    if [ ! -d "swagger" ] && [ ! -d "openapi" ]; then
+        log_info "No API specifications found, skipping"
+        cd ${PROJECT_ROOT}
+        return 0
+    fi
+    
+    # Process OpenAPI specs (if any tools are installed)
+    if command -v swagger &> /dev/null; then
+        log_info "Validating Swagger specs..."
+        for spec in $(find ./swagger -name "*.yaml" -o -name "*.json"); do
+            swagger validate $spec
+            if [ $? -eq 0 ]; then
+                log_success "Validated $spec successfully"
+            else
+                log_error "Failed to validate $spec"
+            fi
+        done
+    else
+        log_info "Swagger tools not installed, skipping validation"
+    fi
+    
+    log_success "API specifications processed successfully"
+    cd ${PROJECT_ROOT}
 }
 
-# Generate build summary
-generate_summary() {
-  section_header "Build Summary"
-
-  # Calculate build duration
-  local build_end_time=$(date +%s)
-  local build_duration=$((build_end_time - BUILD_START_TIME))
-  local duration_min=$((build_duration / 60))
-  local duration_sec=$((build_duration % 60))
-
-  # Print compact summary to console
-  log_success "Build completed in ${duration_min}m ${duration_sec}s"
-  log_info "Version: ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH} (Build ${BUILD_NUMBER})"
-  log_info "Components: ${COMPONENTS[*]}"
-
-  # Create detailed summary file for reference
-  local summary_file="$LOG_DIR/build-summary-latest.log"
-  cat > "$summary_file" << EOF
-# Rinna Build Summary
-
-- **Version**: ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH} (Build ${BUILD_NUMBER})
-- **Git**: ${GIT_COMMIT}
-- **Build Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-- **Build Duration**: ${duration_min}m ${duration_sec}s
-- **Components**: ${COMPONENTS[*]}
-- **Environment**: ${BUILD_ENV}
-- **Config**: Tests: $([ "$SKIP_TESTS" == "true" ] && echo "Skipped" || echo "Run"), Quality: $([ "$SKIP_QUALITY" == "true" ] && echo "Skipped" || echo "Run")
-
-## Artifacts
-- Distribution: ${TARGET_DIR}/rinna-${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}-b${BUILD_NUMBER}.tar.gz
-- Logs: ${BUILD_LOG}
-EOF
-
-  echo ""
-  log_info "Detailed summary: $summary_file"
+create_build_summary() {
+    log_section "Creating build summary"
+    
+    SUMMARY_FILE="${LOG_DIR}/build-summary-latest.log"
+    
+    # Extract key information from log
+    echo "Build Summary for ${TIMESTAMP}" > ${SUMMARY_FILE}
+    echo "=========================" >> ${SUMMARY_FILE}
+    echo "Build target: ${BUILD_TARGET}" >> ${SUMMARY_FILE}
+    echo "Build mode: ${BUILD_MODE}" >> ${SUMMARY_FILE}
+    echo "=========================" >> ${SUMMARY_FILE}
+    echo "" >> ${SUMMARY_FILE}
+    
+    # Extract success messages
+    grep "✓" ${LOG_FILE} >> ${SUMMARY_FILE}
+    
+    # Extract error messages if any
+    if grep -q "✗" ${LOG_FILE}; then
+        echo "" >> ${SUMMARY_FILE}
+        echo "ERRORS:" >> ${SUMMARY_FILE}
+        grep "✗" ${LOG_FILE} >> ${SUMMARY_FILE}
+    fi
+    
+    log_success "Build summary created at ${SUMMARY_FILE}"
 }
 
-# Main function
+# Main build logic
 main() {
-  # Parse command line options
-  parse_options "$@"
-
-  # Show help and exit if requested
-  [[ "$HELP" == "true" ]] && { show_usage; exit 0; }
-
-  # Print build configuration
-  section_header "Rinna Build"
-  log_info "Starting build with config:"
-  log_info "- Environment: $BUILD_ENV"
-  log_info "- Components: ${COMPONENTS[*]}"
-  log_info "- Options: Tests: $([ "$SKIP_TESTS" == "true" ] && echo "Skip" || echo "Run"), Quality: $([ "$SKIP_QUALITY" == "true" ] && echo "Skip" || echo "Run")"
-
-  # Core build pipeline - sequential but efficient
-  read_version
-  initialize_build
-  increment_build_number
-
-  # Build components - each function checks if its component is enabled
-  build_java
-  build_go
-  build_python
-
-  # Create distribution and finalize
-  create_distribution
-  push_version_changes
-  generate_summary
-
-  echo -e "\n${GREEN}${BOLD}Build completed successfully!${NC}\n"
-  return 0
+    log_header
+    check_requirements
+    
+    case ${BUILD_TARGET} in
+        all)
+            build_java
+            build_python
+            build_go
+            build_api_specs
+            ;;
+        java)
+            build_java
+            ;;
+        python)
+            build_python
+            ;;
+        go)
+            build_go
+            ;;
+        api-specs)
+            build_api_specs
+            ;;
+        *)
+            log_error "Unknown build target: ${BUILD_TARGET}. Valid targets are: all, java, python, go, api-specs"
+            ;;
+    esac
+    
+    create_build_summary
+    log_success "Build completed successfully"
 }
 
-# Run the main function with all arguments
-main "$@"
+# Execute main function
+main

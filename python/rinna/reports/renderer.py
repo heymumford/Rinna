@@ -49,6 +49,7 @@ class ReportTemplate:
         self,
         template_id: str,
         path: Union[str, Path],
+        *,
         title: str,
         description: str,
         engine: RenderingEngine,
@@ -107,11 +108,11 @@ class TemplateManager:
         catalog_path = self.templates_dir / "catalog.json"
 
         if not catalog_path.exists():
-            logger.info(f"Templates catalog not found at {catalog_path}")
+            logger.info("Templates catalog not found at %s", catalog_path)
             return
 
         try:
-            with open(catalog_path, "r") as f:
+            with open(catalog_path, "r", encoding="utf-8") as f:
                 catalog = json.load(f)
 
             for template_data in catalog.get("templates", []):
@@ -132,10 +133,10 @@ class TemplateManager:
                     metadata=template_data.get("metadata", {}),
                 )
 
-            logger.info(f"Loaded {len(self.templates)} templates from catalog")
+            logger.info("Loaded %d templates from catalog", len(self.templates))
 
         except (json.JSONDecodeError, IOError) as e:
-            logger.error(f"Error loading templates catalog: {e}")
+            logger.error("Error loading templates catalog: %s", e)
 
     def get_template(self, template_id: str) -> Optional[ReportTemplate]:
         """
@@ -201,7 +202,6 @@ class ReportRenderer(ABC):
         Raises:
             ValueError: If template not found or rendering fails
         """
-        pass
 
     def render_to_file(
         self,
@@ -331,24 +331,23 @@ def create_renderer(
             )
         return WeasyPrintRenderer(template_manager)
 
-    elif engine == RenderingEngine.REPORTLAB:
+    if engine == RenderingEngine.REPORTLAB:
         if not REPORTLAB_AVAILABLE:
             raise ValueError(
                 "ReportLab is not available. Install with 'pip install reportlab'"
             )
         return ReportLabRenderer(template_manager)
 
-    elif engine == RenderingEngine.XHTML2PDF:
+    if engine == RenderingEngine.XHTML2PDF:
         if not XHTML2PDF_AVAILABLE:
             raise ValueError(
                 "XHTML2PDF is not available. Install with 'pip install xhtml2pdf'"
             )
         return XHTML2PDFRenderer(template_manager)
 
-    elif engine == RenderingEngine.DOCMOSIS:
+    if engine == RenderingEngine.DOCMOSIS:
         if not DOCMOSIS_AVAILABLE:
             raise ValueError("Docmosis renderer is not available.")
         return DocmosisRenderer(template_manager)
 
-    else:
-        raise ValueError(f"Unknown rendering engine: {engine}")
+    raise ValueError(f"Unknown rendering engine: {engine}")

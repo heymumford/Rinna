@@ -85,7 +85,7 @@ class ReportService:
             try:
                 self._renderers[engine] = create_renderer(engine, self.template_manager)
             except ValueError as e:
-                logger.warning(f"Failed to create renderer for {engine}: {e}")
+                logger.warning("Failed to create renderer for %s: %s", engine, e)
                 # Fall back to default engine if available
                 if engine != self.default_engine:
                     if self.default_engine not in self._renderers:
@@ -128,6 +128,7 @@ class ReportService:
         self,
         template_id: str,
         data: Dict[str, Any],
+        *,
         output_format: Union[str, ReportFormat] = ReportFormat.PDF,
         engine: Optional[Union[str, RenderingEngine]] = None,
         filename: Optional[str] = None,
@@ -199,7 +200,7 @@ class ReportService:
                 with open(file_path, "wb") as f:
                     f.write(content)
 
-                logger.info(f"Report saved to {file_path}")
+                logger.info("Report saved to %s", file_path)
 
             # Return report information
             return {
@@ -215,7 +216,7 @@ class ReportService:
             }
 
         except Exception as e:
-            logger.error(f"Error generating report with template {template_id}: {e}")
+            logger.error("Error generating report with template %s: %s", template_id, e)
             return {
                 "report_id": report_id,
                 "template_id": template_id,
@@ -230,6 +231,7 @@ class ReportService:
         self,
         title: str,
         metrics_data: Dict[str, Any],
+        *,
         template_id: str = "metrics_default",
         output_format: Union[str, ReportFormat] = ReportFormat.PDF,
         engine: Optional[Union[str, RenderingEngine]] = None,

@@ -46,9 +46,9 @@ class DocmosisRenderer(ReportRenderer):
                 self._load_config()
                 self.is_available = True
             except Exception as e:
-                logger.warning(f"Failed to load Docmosis configuration: {e}")
+                logger.warning("Failed to load Docmosis configuration: %s", e)
         else:
-            logger.info(f"Docmosis configuration not found at {self.config_path}")
+            logger.info("Docmosis configuration not found at %s", self.config_path)
 
     def _load_config(self) -> None:
         """
@@ -65,7 +65,7 @@ class DocmosisRenderer(ReportRenderer):
 
         # Parse properties file
         properties = {}
-        with open(self.config_path, "r") as f:
+        with open(self.config_path, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line or line.startswith("#"):
@@ -125,13 +125,13 @@ class DocmosisRenderer(ReportRenderer):
         # For now, just return a placeholder message
         message = f"""
         Docmosis renderer stub for template: {template_id}
-        
+
         This is a placeholder for the Docmosis integration.
         Configure Docmosis in {self.config_path} to enable this renderer.
-        
+
         Data:
         {json.dumps(data, indent=2)}
-        
+
         Output format: {output_format}
         """
 

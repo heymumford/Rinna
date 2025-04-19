@@ -8,15 +8,22 @@ import os
 import tempfile
 from typing import Any, Dict, List, Optional
 
+# Import uvicorn at the top level
+try:
+    import uvicorn
+except ImportError:
+    uvicorn = None
+
+# Import report service at the top level
+try:
+    from rinna.reports.service import default_service
+except ImportError:
+    default_service = None
+
 try:
     from fastapi import (
-        BackgroundTasks,
         FastAPI,
-        File,
-        Form,
         HTTPException,
-        Query,
-        UploadFile,
     )
     from fastapi.responses import FileResponse
     from pydantic import BaseModel, Field
@@ -26,13 +33,13 @@ except ImportError:
         def __init__(self, *args, **kwargs):
             pass
 
-        def get(self, *args, **kwargs):
+        def get(self, path):
             def decorator(func):
                 return func
 
             return decorator
 
-        def post(self, *args, **kwargs):
+        def post(self, path):
             def decorator(func):
                 return func
 
@@ -46,18 +53,26 @@ except ImportError:
     class BaseModel:
         pass
 
-    def Field(*args, **kwargs):
-        return None
+    def Field(default=None, **kwargs):
+        return default
 
     class BackgroundTasks:
         def add_task(self, func, *args, **kwargs):
             pass
 
     FileResponse = dict
-    File = lambda *args, **kwargs: None
-    UploadFile = type("UploadFile", (), {})
-    Form = lambda *args, **kwargs: None
-    Query = lambda *args, **kwargs: None
+
+    def File(default=None, **kwargs):
+        return default
+
+    class UploadFile:
+        pass
+
+    def Form(default=None, **kwargs):
+        return default
+
+    def Query(default=None, **kwargs):
+        return default
 
 # Create FastAPI app
 app = FastAPI(
@@ -144,11 +159,11 @@ async def generate_report(request: ReportRequest) -> Dict[str, Any]:
     except ImportError as e:
         raise HTTPException(
             status_code=501, detail=f"Report generation service not available: {e}"
-        )
+        ) from e
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to generate report: {str(e)}"
-        )
+        ) from e
 
 
 class MetricsReportRequest(BaseModel):
@@ -204,11 +219,11 @@ async def generate_metrics_report(request: MetricsReportRequest) -> Dict[str, An
     except ImportError as e:
         raise HTTPException(
             status_code=501, detail=f"Report generation service not available: {e}"
-        )
+        ) from e
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to generate metrics report: {str(e)}"
-        )
+        ) from e
 
 
 @app.get("/api/v1/reports/{report_id}/download")
@@ -255,11 +270,11 @@ async def download_report(report_id: str):
     except ImportError as e:
         raise HTTPException(
             status_code=501, detail=f"Report service not available: {e}"
-        )
+        ) from e
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to download report: {str(e)}"
-        )
+        ) from e
 
 
 class TemplateInfo(BaseModel):
@@ -289,11 +304,11 @@ async def list_templates() -> List[Dict[str, Any]]:
     except ImportError as e:
         raise HTTPException(
             status_code=501, detail=f"Report service not available: {e}"
-        )
+        ) from e
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to list templates: {str(e)}"
-        )
+        ) from e
 
 
 @app.get("/api/v1/metrics/sample", response_model=Dict[str, Any])
@@ -315,14 +330,15 @@ async def get_sample_metrics() -> Dict[str, Any]:
     except ImportError as e:
         raise HTTPException(
             status_code=501, detail=f"Report service not available: {e}"
-        )
+        ) from e
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Failed to get sample metrics: {str(e)}"
-        )
+        ) from e
 
 
 if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    if uvicorn:
+        uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    else:
+        print("Error: uvicorn is not installed. Cannot run the API server.")

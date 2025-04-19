@@ -1,1 +1,0 @@
-/home/emumford/NativeLinuxProjects/Rinna/bin/new-structure/rin-quality-check-all.sh

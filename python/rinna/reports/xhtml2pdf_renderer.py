@@ -66,14 +66,14 @@ class XHTML2PDFRenderer(ReportRenderer):
                 height: 1cm;
             }
         }
-        
+
         body {
             font-family: Helvetica, Arial, sans-serif;
             font-size: 11pt;
             line-height: 1.4;
             color: #333;
         }
-        
+
         h1 {
             color: #224870;
             font-size: 20pt;
@@ -81,51 +81,51 @@ class XHTML2PDFRenderer(ReportRenderer):
             margin-bottom: 0.5cm;
             page-break-before: always;
         }
-        
+
         h1:first-of-type {
             page-break-before: avoid;
         }
-        
+
         h2 {
             color: #224870;
             font-size: 16pt;
             margin-top: 0.8cm;
             margin-bottom: 0.3cm;
         }
-        
+
         h3 {
             color: #366092;
             font-size: 13pt;
             margin-top: 0.6cm;
             margin-bottom: 0.3cm;
         }
-        
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 0.5cm 0;
         }
-        
+
         th, td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
         }
-        
+
         th {
             background-color: #f2f2f2;
             color: #224870;
         }
-        
+
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
-        
+
         .chart {
             page-break-inside: avoid;
             margin: 0.5cm 0;
         }
-        
+
         .metrics-card {
             border: 1px solid #ddd;
             border-radius: 5px;
@@ -133,18 +133,18 @@ class XHTML2PDFRenderer(ReportRenderer):
             margin: 0.5cm 0;
             page-break-inside: avoid;
         }
-        
+
         .metrics-card h3 {
             margin-top: 0;
             color: #224870;
         }
-        
+
         .metrics-grid {
             display: flex;
             flex-wrap: wrap;
             gap: 15px;
         }
-        
+
         .metric-item {
             flex: 1 0 calc(33% - 15px);
             min-width: 200px;
@@ -152,49 +152,49 @@ class XHTML2PDFRenderer(ReportRenderer):
             border-radius: 5px;
             padding: 10px;
         }
-        
+
         .metric-title {
             font-size: 12pt;
             color: #666;
             margin-bottom: 5px;
         }
-        
+
         .metric-value {
             font-size: 18pt;
             font-weight: bold;
             color: #224870;
         }
-        
+
         .metric-description {
             font-size: 9pt;
             color: #888;
             margin-top: 5px;
         }
-        
+
         /* Cover page styling */
         .cover {
             text-align: center;
             padding-top: 5cm;
             height: 25cm;
         }
-        
+
         .cover h1 {
             font-size: 28pt;
             color: #224870;
             margin-bottom: 1cm;
         }
-        
+
         .cover .subtitle {
             font-size: 16pt;
             color: #666;
             margin-bottom: 2cm;
         }
-        
+
         .cover .date {
             font-size: 14pt;
             color: #333;
         }
-        
+
         /* Status indicators */
         .status {
             display: inline-block;
@@ -202,27 +202,27 @@ class XHTML2PDFRenderer(ReportRenderer):
             border-radius: 3px;
             font-weight: bold;
         }
-        
+
         .status-completed {
             background-color: #dff0d8;
             color: #3c763d;
         }
-        
+
         .status-in-progress {
             background-color: #fcf8e3;
             color: #8a6d3b;
         }
-        
+
         .status-blocked {
             background-color: #f2dede;
             color: #a94442;
         }
-        
+
         .status-not-started {
             background-color: #f5f5f5;
             color: #777;
         }
-        
+
         /* Priority indicators */
         .priority {
             display: inline-block;
@@ -231,24 +231,24 @@ class XHTML2PDFRenderer(ReportRenderer):
             border-radius: 50%;
             margin-right: 5px;
         }
-        
+
         .priority-high {
             background-color: #d9534f;
         }
-        
+
         .priority-medium {
             background-color: #f0ad4e;
         }
-        
+
         .priority-low {
             background-color: #5bc0de;
         }
         """
 
-        with open(self.default_css_path, "w") as f:
+        with open(self.default_css_path, "w", encoding="utf-8") as f:
             f.write(default_css)
 
-        logger.info(f"Created default XHTML2PDF CSS file at {self.default_css_path}")
+        logger.info("Created default XHTML2PDF CSS file at %s", self.default_css_path)
 
     def render(
         self,
@@ -326,7 +326,7 @@ class XHTML2PDFRenderer(ReportRenderer):
                     )
 
         except Exception as e:
-            logger.error(f"Error rendering template {template_id}: {e}")
+            logger.error("Error rendering template %s: %s", template_id, e)
             raise ValueError(f"Failed to render template {template_id}: {e}") from e
 
         # Generate output based on format
