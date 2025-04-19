@@ -1,1 +1,37 @@
-config/maven/test-profiles.xml
+<!-- Test profiles for the unified test approach -->
+<profile>
+  <id>unit-tests</id>
+  <properties>
+    <test.groups>unit</test.groups>
+  </properties>
+</profile>
+<profile>
+  <id>component-tests</id>
+  <properties>
+    <test.groups>component</test.groups>
+  </properties>
+</profile>
+<profile>
+  <id>integration-tests</id>
+  <properties>
+    <test.groups>integration</test.groups>
+  </properties>
+</profile>
+<profile>
+  <id>acceptance-tests</id>
+  <properties>
+    <test.groups>acceptance</test.groups>
+  </properties>
+</profile>
+<profile>
+  <id>performance-tests</id>
+  <properties>
+    <test.groups>performance</test.groups>
+  </properties>
+</profile>
+<profile>
+  <id>fast-tests</id>
+  <properties>
+    <test.groups>unit | component</test.groups>
+  </properties>
+</profile>

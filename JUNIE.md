@@ -1,6 +1,6 @@
-# CLAUDE.md
+# JUNIE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Junie when working with code in this repository.
 
 ## Key Commands
 - Build: `./build.sh` or `mvn clean install`
@@ -49,3 +49,10 @@ xml_format_pom "pom.xml"
 - CLI Commands: `rinna-cli/src/main/java/org/rinna/cli/command`
 - API Server: `api/` (Go implementation)
 - Python Components: `python/rinna/`
+
+## Junie-Specific Guidelines
+- When analyzing code, prioritize clean architecture principles
+- For refactoring suggestions, focus on maintainability and testability
+- When generating new code, follow the established patterns in the codebase
+- Respect the polyglot nature of the project when suggesting cross-component changes
+- Consider performance implications for operations on large datasets

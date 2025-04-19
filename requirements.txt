@@ -1,1 +1,44 @@
-config/python/requirements.txt
+# Core dependencies
+pyyaml>=6.0      # For YAML configuration
+pytest>=7.0.0    # For running tests
+mypy>=1.0.0      # For type checking
+requests>=2.28.0 # For HTTP requests
+
+# Diagram generation
+diagrams>=0.23.3  # For generating architecture diagrams
+graphviz>=0.20.1  # Needed for diagrams library
+
+# Report generation
+weasyprint>=53.0    # HTML/CSS to PDF converter
+reportlab>=3.6.0    # PDF generation library
+jinja2>=3.0.0       # Template engine
+pillow>=9.0.0       # Image processing
+pdf2image>=1.16.0   # Convert PDF to images
+xhtml2pdf>=0.2.8    # HTML to PDF converter (alternative)
+
+# Optional integrations (optional)
+lucidchart-py>=0.1.0  # For uploading diagrams to LucidChart (optional)
+
+# Development tools
+black>=23.0.0   # Code formatting
+flake8>=6.0.0   # Linting
+isort>=5.12.0   # Import sorting
+pylint>=2.17.0  # Static code analysis
+
+# Command line tools
+typer>=0.9.0    # CLI argument parsing
+rich>=13.4.1    # Rich terminal output
+tqdm>=4.65.0    # Progress bars
+
+# Documentation (optional)
+sphinx>=7.0.0   # Documentation generation (optional)
+mkdocs>=1.5.0   # Documentation site generation (optional)
+
+# CI/CD integration
+pytest-cov>=4.1.0  # Test coverage reporting
+pre-commit>=3.3.1  # Pre-commit hooks
+
+# Web framework dependencies
+fastapi>=0.95.0    # API framework
+uvicorn>=0.21.0    # ASGI server
+pydantic>=1.10.7   # Data validation

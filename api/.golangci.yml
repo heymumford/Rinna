@@ -1,0 +1,229 @@
+# .golangci.yml for Rinna API
+# This configuration is optimized for the Go API server component of Rinna
+
+# Options for analysis running
+run:
+  # Timeout for analysis, e.g. 30s, 5m, default is 1m
+  timeout: 5m
+  
+  # Include test files or not, default is true
+  tests: true
+  
+  # Default concurrency is a available CPU number
+  concurrency: 4
+  
+  # Allow multiple parallel golangci-lint instances running
+  allow-parallel-runners: true
+  
+  # Which dirs to skip: issues from them won't be reported
+  skip-dirs:
+    - vendor
+    - test/fixtures
+
+# Output configuration options
+output:
+  # Format: colored-line-number|line-number|json|tab|checkstyle|code-climate, default is "colored-line-number"
+  format: colored-line-number
+  
+  # Print lines of code with issue, default is true
+  print-issued-lines: true
+  
+  # Print linter name in the end of issue text, default is true
+  print-linter-name: true
+
+# All available settings of specific linters
+linters-settings:
+  errcheck:
+    # Report about not checking of errors in type assertions: `a := b.(MyStruct)`;
+    # default is false: such cases aren't reported by default.
+    check-type-assertions: true
+    
+    # Report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`;
+    # default is false: such cases aren't reported by default.
+    check-blank: true
+    
+  funlen:
+    lines: 100
+    statements: 50
+    
+  gocognit:
+    # Minimal code complexity to report, 30 by default
+    min-complexity: 20
+    
+  goconst:
+    # Minimal length of string constant, 3 by default
+    min-len: 3
+    # Minimal occurrences count to trigger, 3 by default
+    min-occurrences: 3
+    
+  gocritic:
+    # Enable specific checkers
+    enabled-checks:
+      - appendAssign
+      - appendCombine
+      - assignOp
+      - captLocal
+      - caseOrder
+      - defaultCaseOrder
+      - dupArg
+      - dupBranchBody
+      - dupCase
+      - elseif
+      - emptyFallthrough
+      - hexLiteral
+      - ifElseChain
+      - rangeValCopy
+      - regexpMust
+      - sloppyLen
+      - switchTrue
+      - typeSwitchVar
+      - underef
+      - unlambda
+      - unslice
+      
+  gocyclo:
+    # Minimal code complexity to report, 30 by default
+    min-complexity: 15
+    
+  godot:
+    # Check all top-level comments, not only declarations
+    check-all: true
+    
+  gofmt:
+    # Simplify code: gofmt with `-s` option, true by default
+    simplify: true
+    
+  goimports:
+    # Put imports beginning with prefix after 3rd-party packages
+    local-prefixes: github.com/heymumford/rinna
+    
+  golint:
+    # Minimal confidence for issues, default is 0.8
+    min-confidence: 0.8
+    
+  gomnd:
+    settings:
+      mnd:
+        # The list of enabled checks, see https://github.com/tommy-muehle/go-mnd/#checks for description.
+        checks: argument,case,condition,operation,return,assign
+        
+  govet:
+    # Report about shadowed variables
+    check-shadowing: true
+    
+    # Enable all analyzers
+    enable-all: true
+    
+  lll:
+    # Max line length, lines longer will be reported. Default is 120.
+    line-length: 120
+    
+  misspell:
+    # Correct spellings using locale preferences for US or UK.
+    locale: US
+    
+  nakedret:
+    # Make an issue if func has more lines of code than this setting and it has naked returns; default is 30
+    max-func-lines: 30
+    
+  prealloc:
+    # Report preallocation suggestions only on simple loops that have no returns/breaks/continues/gotos in them.
+    simple: true
+    range-loops: true # Report preallocation suggestions on range loops
+    for-loops: true # Report preallocation suggestions on for loops
+    
+  unparam:
+    # Inspect exported functions, default is false
+    check-exported: false
+    
+  unused:
+    # Treat code as a program (not a library) and report unused exported identifiers
+    check-exported: false
+    
+  whitespace:
+    multi-if: false   # Enforces newlines (or comments) after every multi-line if statement
+    multi-func: false # Enforces newlines (or comments) after every multi-line function signature
+
+# Enable or disable specific linters
+linters:
+  enable:
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - dupl
+    - errcheck
+    - funlen
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - golint
+    - gomnd
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - prealloc
+    - rowserrcheck
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - whitespace
+  disable:
+    - maligned
+    - wsl
+  # Presets are groups of linters
+  presets:
+    - bugs
+    - complexity
+    - format
+    - performance
+    - style
+  fast: false
+
+# Issues configuration
+issues:
+  # Maximum count of issues with the same text
+  max-same-issues: 3
+  
+  # Maximum issues count per one linter
+  max-issues-per-linter: 50
+  
+  # Excluding configuration
+  exclude-rules:
+    # Exclude some linters from running on tests files.
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        
+    # Exclude known linters from partially hard-vendored code,
+    # which is impossible to exclude via "nolint" comments.
+    - path: internal/hmac/
+      text: "weak cryptographic primitive"
+      linters:
+        - gosec
+        
+    # Exclude some packages from specific linters
+    - path: pkg/health/
+      linters:
+        - golint
+        
+    # Exclude some messages from specific linters
+    - linters:
+        - golint
+      text: "should have comment or be unexported"

@@ -38,10 +38,10 @@ init_log() {
 log() {
   local level="$1"
   local message="$2"
-  
+
   # Log to file
   echo "[$(date +"%Y-%m-%d %H:%M:%S")] [${level}] ${message}" >> "${LOG_FILE}"
-  
+
   # Print to console with appropriate formatting
   case "${level}" in
     INFO)
@@ -64,7 +64,7 @@ backup_file() {
   local file="$1"
   local rel_path="${file#$PROJECT_ROOT/}"
   local backup_path="${BACKUP_DIR}/${rel_path}"
-  
+
   mkdir -p "$(dirname "${backup_path}")"
   cp "${file}" "${backup_path}"
   log "INFO" "Created backup: ${rel_path}"
@@ -76,7 +76,7 @@ get_current_version() {
     log "ERROR" "Version file not found: ${VERSION_FILE}"
     return 1
   fi
-  
+
   grep -m 1 "^version=" "${VERSION_FILE}" | cut -d'=' -f2
 }
 
@@ -86,19 +86,19 @@ get_build_number() {
     log "ERROR" "Version file not found: ${VERSION_FILE}"
     return 1
   fi
-  
+
   grep -m 1 "^buildNumber=" "${VERSION_FILE}" | cut -d'=' -f2
 }
 
 # Parse version into components and export them
 parse_version() {
   local version="$1"
-  
+
   if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9._-]+)?$ ]]; then
     log "ERROR" "Invalid version format: ${version} (should be x.y.z or x.y.z-qualifier)"
     return 1
   fi
-  
+
   # Parse components
   VERSION_MAJOR=$(echo "${version}" | cut -d. -f1)
   VERSION_MINOR=$(echo "${version}" | cut -d. -f2)
@@ -107,12 +107,12 @@ parse_version() {
   if [[ "${version}" == *-* ]]; then
     VERSION_QUALIFIER=$(echo "${version}" | cut -d- -f2-)
   fi
-  
+
   export VERSION_MAJOR
   export VERSION_MINOR
   export VERSION_PATCH
   export VERSION_QUALIFIER
-  
+
   return 0
 }
 
@@ -122,13 +122,13 @@ update_version_properties() {
   local build_number="$2"
   local current_timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
   local today=$(date +%Y-%m-%d)
-  
+
   # Ensure version is parsed
   parse_version "${version}"
-  
+
   # Backup the file
   backup_file "${VERSION_FILE}"
-  
+
   # Update core version information
   sed -i "s/^version=.*/version=${version}/" "${VERSION_FILE}"
   sed -i "s/^version.full=.*/version.full=${version}/" "${VERSION_FILE}"
@@ -136,29 +136,29 @@ update_version_properties() {
   sed -i "s/^version.minor=.*/version.minor=${VERSION_MINOR}/" "${VERSION_FILE}"
   sed -i "s/^version.patch=.*/version.patch=${VERSION_PATCH}/" "${VERSION_FILE}"
   sed -i "s/^version.qualifier=.*/version.qualifier=${VERSION_QUALIFIER}/" "${VERSION_FILE}"
-  
+
   # Update release information
   sed -i "s/^lastUpdated=.*/lastUpdated=${today}/" "${VERSION_FILE}"
   sed -i "s/^buildNumber=.*/buildNumber=${build_number}/" "${VERSION_FILE}"
-  
+
   # Update build information
   sed -i "s/^build.timestamp=.*/build.timestamp=${current_timestamp}/" "${VERSION_FILE}"
-  
+
   # Copy to version-service if it exists
-  local version_service_file="${PROJECT_ROOT}/version-service/version.properties"
+  local version_service_file="${PROJECT_ROOT}/build/version-service/version.properties"
   if [ -f "${version_service_file}" ]; then
     backup_file "${version_service_file}"
     cp "${VERSION_FILE}" "${version_service_file}"
     log "SUCCESS" "Updated version-service/version.properties to ${version} (build ${build_number})"
   fi
-  
+
   log "SUCCESS" "Updated version.properties to ${version} (build ${build_number})"
 }
 
 # Update POM files using XMLStarlet
 update_pom_files() {
   local version="$1"
-  
+
   # Update parent POM
   local parent_pom="${PROJECT_ROOT}/pom.xml"
   if [ -f "${parent_pom}" ]; then
@@ -169,17 +169,17 @@ update_pom_files() {
       log "ERROR" "Failed to update parent POM version"
     fi
   fi
-  
+
   # Update module POMs
   for module_pom in "${PROJECT_ROOT}"/*/pom.xml; do
     if [ -f "${module_pom}" ]; then
       backup_file "${module_pom}"
-      
+
       # Update the module's own version if it has one
       if xml_set_version "${module_pom}" "${version}" 2>/dev/null; then
         log "INFO" "Updated module POM version in $(basename $(dirname "${module_pom}"))"
       fi
-      
+
       # Update the parent reference version
       if xmlstarlet ed -N "pom=http://maven.apache.org/POM/4.0.0" \
           -u "/pom:project/pom:parent/pom:version" -v "${version}" \
@@ -198,16 +198,16 @@ update_pom_files() {
 update_go_version_files() {
   local version="$1"
   local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-  
+
   # Update API version files
-  for version_file in "${PROJECT_ROOT}/api/internal/version/version.go" "${PROJECT_ROOT}/api/pkg/health/version.go" "${PROJECT_ROOT}/version-service/core/version.go"; do
+  for version_file in "${PROJECT_ROOT}/api/internal/version/version.go" "${PROJECT_ROOT}/api/pkg/health/version.go" "${PROJECT_ROOT}/build/version-service/core/version.go"; do
     if [ -f "${version_file}" ]; then
       backup_file "${version_file}"
-      
+
       # Use sed to update version and build time
       sed -i "s/Version\s*=\s*\"[0-9.]\+\"/Version   = \"${version}\"/" "${version_file}"
       sed -i "s/BuildTime\s*=\s*\"[0-9TZ:-]\+\"/BuildTime = \"${timestamp}\"/" "${version_file}"
-      
+
       log "SUCCESS" "Updated $(basename "${version_file}") to version ${version}"
     fi
   done
@@ -216,14 +216,14 @@ update_go_version_files() {
 # Update test scripts that have hardcoded versions
 update_test_scripts() {
   local version="$1"
-  
+
   # Find shell scripts with version references
   local test_scripts=($(grep -l "version.*=.*[0-9]\\.[0-9]\\.[0-9]" "${PROJECT_ROOT}"/bin/*.sh))
-  
+
   for script in "${test_scripts[@]}"; do
     if [ -f "${script}" ]; then
       backup_file "${script}"
-      
+
       # Check for temporary pom creation blocks and update versions there
       if grep -q "cat > temp-pom.xml << EOF" "${script}"; then
         sed -i -E "s|<version>[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9._-]+)?</version>|<version>${version}</version>|g" "${script}"
@@ -240,13 +240,13 @@ increment_build() {
     log "ERROR" "Could not determine current build number"
     return 1
   fi
-  
+
   local new_build=$((current_build + 1))
   local current_version=$(get_current_version)
-  
+
   update_version_properties "${current_version}" "${new_build}"
   log "SUCCESS" "Incremented build number from ${current_build} to ${new_build}"
-  
+
   return 0
 }
 
@@ -254,19 +254,19 @@ increment_build() {
 bump_major() {
   local current_version=$(get_current_version)
   local build_number=$(get_build_number)
-  
+
   parse_version "${current_version}"
   local new_major=$((VERSION_MAJOR + 1))
   local new_version="${new_major}.0.0"
-  
+
   log "INFO" "Bumping major version: ${current_version} -> ${new_version}"
-  
+
   # Update all version references
   update_version_properties "${new_version}" "${build_number}"
   update_pom_files "${new_version}"
   update_go_version_files "${new_version}"
   update_test_scripts "${new_version}"
-  
+
   log "SUCCESS" "Bumped major version to ${new_version}"
   return 0
 }
@@ -275,19 +275,19 @@ bump_major() {
 bump_minor() {
   local current_version=$(get_current_version)
   local build_number=$(get_build_number)
-  
+
   parse_version "${current_version}"
   local new_minor=$((VERSION_MINOR + 1))
   local new_version="${VERSION_MAJOR}.${new_minor}.0"
-  
+
   log "INFO" "Bumping minor version: ${current_version} -> ${new_version}"
-  
+
   # Update all version references
   update_version_properties "${new_version}" "${build_number}"
   update_pom_files "${new_version}"
   update_go_version_files "${new_version}"
   update_test_scripts "${new_version}"
-  
+
   log "SUCCESS" "Bumped minor version to ${new_version}"
   return 0
 }
@@ -296,24 +296,24 @@ bump_minor() {
 bump_patch() {
   local current_version=$(get_current_version)
   local build_number=$(get_build_number)
-  
+
   parse_version "${current_version}"
   local new_patch=$((VERSION_PATCH + 1))
   local new_version="${VERSION_MAJOR}.${VERSION_MINOR}.${new_patch}"
-  
+
   # Preserve qualifier if it exists
   if [ -n "${VERSION_QUALIFIER}" ]; then
     new_version="${new_version}-${VERSION_QUALIFIER}"
   fi
-  
+
   log "INFO" "Bumping patch version: ${current_version} -> ${new_version}"
-  
+
   # Update all version references
   update_version_properties "${new_version}" "${build_number}"
   update_pom_files "${new_version}"
   update_go_version_files "${new_version}"
   update_test_scripts "${new_version}"
-  
+
   log "SUCCESS" "Bumped patch version to ${new_version}"
   return 0
 }
@@ -322,20 +322,20 @@ bump_patch() {
 set_version() {
   local new_version="$1"
   local build_number=$(get_build_number)
-  
+
   if ! parse_version "${new_version}"; then
     return 1
   fi
-  
+
   local current_version=$(get_current_version)
   log "INFO" "Setting version: ${current_version} -> ${new_version}"
-  
+
   # Update all version references
   update_version_properties "${new_version}" "${build_number}"
   update_pom_files "${new_version}"
   update_go_version_files "${new_version}"
   update_test_scripts "${new_version}"
-  
+
   log "SUCCESS" "Set version to ${new_version}"
   return 0
 }
@@ -344,17 +344,17 @@ set_version() {
 set_build() {
   local new_build="$1"
   local current_version=$(get_current_version)
-  
+
   if [[ ! "${new_build}" =~ ^[0-9]+$ ]]; then
     log "ERROR" "Invalid build number: ${new_build}"
     return 1
   fi
-  
+
   log "INFO" "Setting build number to ${new_build}"
-  
+
   # Update all version references
   update_version_properties "${current_version}" "${new_build}"
-  
+
   log "SUCCESS" "Set build number to ${new_build}"
   return 0
 }
@@ -363,9 +363,9 @@ set_build() {
 verify_consistency() {
   local expected_version=$(get_current_version)
   local inconsistencies=0
-  
+
   log "INFO" "Verifying version consistency..."
-  
+
   # Check POM files
   # First check parent POM
   if [ -f "${PROJECT_ROOT}/pom.xml" ]; then
@@ -377,7 +377,7 @@ verify_consistency() {
       log "SUCCESS" "Verified ${PROJECT_ROOT}/pom.xml: ${pom_version}"
     fi
   fi
-  
+
   # Then check module POMs (only checking parent references, as modules might not have their own version element)
   for pom_file in "${PROJECT_ROOT}"/*/pom.xml; do
     if [ -f "${pom_file}" ]; then
@@ -390,7 +390,7 @@ verify_consistency() {
       else
         log "SUCCESS" "Verified parent reference in ${pom_file}: ${parent_version}"
       fi
-      
+
       # Only check module's own version if it has one (many module POMs inherit version from parent)
       if xmlstarlet sel -N "pom=http://maven.apache.org/POM/4.0.0" -t -v "/pom:project/pom:version" "${pom_file}" &>/dev/null; then
         local pom_version=$(xml_get_version "${pom_file}")
@@ -403,9 +403,9 @@ verify_consistency() {
       fi
     fi
   done
-  
+
   # Check Go version files
-  for version_file in "${PROJECT_ROOT}/api/internal/version/version.go" "${PROJECT_ROOT}/api/pkg/health/version.go" "${PROJECT_ROOT}/version-service/core/version.go"; do
+  for version_file in "${PROJECT_ROOT}/api/internal/version/version.go" "${PROJECT_ROOT}/api/pkg/health/version.go" "${PROJECT_ROOT}/build/version-service/core/version.go"; do
     if [ -f "${version_file}" ]; then
       if grep -q 'Version\s*=\s*"[0-9.]\+"' "${version_file}"; then
         local go_version=$(grep -o 'Version\s*=\s*"[0-9.]\+"' "${version_file}" | grep -o '[0-9.]\+')
@@ -422,9 +422,9 @@ verify_consistency() {
       log "INFO" "Go version file not found: ${version_file}"
     fi
   done
-  
+
   # Check version-service properties file
-  local version_service_file="${PROJECT_ROOT}/version-service/version.properties"
+  local version_service_file="${PROJECT_ROOT}/build/version-service/version.properties"
   if [ -f "${version_service_file}" ]; then
     local service_version=$(grep -m 1 "^version=" "${version_service_file}" | cut -d'=' -f2)
     if [ "${service_version}" != "${expected_version}" ]; then
@@ -434,7 +434,7 @@ verify_consistency() {
       log "SUCCESS" "Verified ${version_service_file}: ${service_version}"
     fi
   fi
-  
+
   if [ ${inconsistencies} -eq 0 ]; then
     log "SUCCESS" "All version references are consistent with version.properties (${expected_version})"
     return 0
@@ -448,18 +448,18 @@ verify_consistency() {
 commit_changes() {
   local version=$(get_current_version)
   local build_number=$(get_build_number)
-  
+
   log "INFO" "Creating git commit for version ${version} (build ${build_number})..."
-  
+
   # Add version files to git
   git add "${VERSION_FILE}" \
-         "${PROJECT_ROOT}/version-service/version.properties" \
+         "${PROJECT_ROOT}/build/version-service/version.properties" \
          "${PROJECT_ROOT}/pom.xml" \
          "${PROJECT_ROOT}/"*/pom.xml \
          "${PROJECT_ROOT}/api/internal/version/version.go" \
          "${PROJECT_ROOT}/api/pkg/health/version.go" \
-         "${PROJECT_ROOT}/version-service/core/version.go" 2>/dev/null
-  
+         "${PROJECT_ROOT}/build/version-service/core/version.go" 2>/dev/null
+
   # Create commit
   if git commit -m "Update version to ${version} (build ${build_number})" --no-verify; then
     log "SUCCESS" "Created commit for version ${version} (build ${build_number})"
@@ -484,7 +484,7 @@ Commands:
   increment-build       Increment build number by 1
   set [version]         Set specific version (e.g., 1.2.3)
   set-build [number]    Set specific build number
-  
+
 Options:
   --no-commit           Don't create a git commit with the changes
   --help                Show this help message
@@ -502,21 +502,21 @@ EOF
 # Main function
 main() {
   init_log "$@"
-  
+
   # Default option
   local NO_COMMIT=false
-  
+
   # Parse command
   local COMMAND=""
   local COMMAND_ARG=""
-  
+
   if [ $# -eq 0 ]; then
     COMMAND="current"
   else
     COMMAND="$1"
     shift
   fi
-  
+
   # Parse options
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -534,7 +534,7 @@ main() {
         ;;
     esac
   done
-  
+
   # Execute command
   case "${COMMAND}" in
     current)
@@ -562,14 +562,14 @@ main() {
           exit 1
           ;;
       esac
-      
+
       if [ "${NO_COMMIT}" = false ]; then
         commit_changes
       fi
       ;;
     increment-build)
       increment_build
-      
+
       if [ "${NO_COMMIT}" = false ]; then
         commit_changes
       fi
@@ -580,9 +580,9 @@ main() {
         show_help
         exit 1
       fi
-      
+
       set_version "${COMMAND_ARG}"
-      
+
       if [ "${NO_COMMIT}" = false ]; then
         commit_changes
       fi
@@ -593,9 +593,9 @@ main() {
         show_help
         exit 1
       fi
-      
+
       set_build "${COMMAND_ARG}"
-      
+
       if [ "${NO_COMMIT}" = false ]; then
         commit_changes
       fi
@@ -606,7 +606,7 @@ main() {
       exit 1
       ;;
   esac
-  
+
   log "INFO" "Operation completed successfully"
   exit 0
 }

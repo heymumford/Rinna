@@ -1,1 +1,67 @@
-config/python/pyproject.toml
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest]
+testpaths = ["python/tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+markers = [
+    "unit: mark a test as a unit test",
+    "component: mark a test as a component test",
+    "integration: mark a test as an integration test",
+    "acceptance: mark a test as an acceptance test",
+    "performance: mark a test as a performance test",
+    "benchmark: mark a test for performance benchmarking",
+]
+
+[tool.mypy]
+python_version = "1.6.3"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+# Ignore import errors for external libraries
+[[tool.mypy.overrides]]
+module = [
+    "weasyprint.*",
+    "reportlab.*",
+    "xhtml2pdf.*",
+    "pdf2image.*",
+    "PIL.*"
+]
+ignore_missing_imports = true
+
+# Ignore specific files for now that need deeper type fixing
+[[tool.mypy.overrides]]
+module = [
+    "rinna.reports.reportlab_renderer",
+    "rinna.reports.service"
+]
+ignore_errors = true
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "S", "I"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101"]  # Allow assertions in tests
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+tests = ["B201", "B301"]

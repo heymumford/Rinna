@@ -134,6 +134,8 @@ source activate-api.sh
 3. Enable annotation processing
 4. Install the Go plugin if working on Go code
 
+For detailed instructions on setting up IntelliJ IDEA on a Mac Studio, see the [IntelliJ Mac Setup Guide](intellij-mac-setup.md).
+
 ### Visual Studio Code
 
 1. Install the following extensions:
@@ -204,4 +206,5 @@ After setting up your environment:
 1. Read the [Architecture Guide](architecture.md)
 2. Explore the [Testing Strategy](../testing/TESTING_STRATEGY.md)
 3. Review [Clean Architecture Principles](../architecture/decisions/0003-adopt-clean-architecture-for-system-design.md)
-4. Follow the [Contribution Guidelines](../../CONTRIBUTING.md)
+4. Review the [Linting and Build Procedure](../../build/README.md) for all components
+5. Follow the [Contribution Guidelines](../../CONTRIBUTING.md)
