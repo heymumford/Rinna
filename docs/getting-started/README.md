@@ -200,10 +200,10 @@ String getItemSummary(WorkItem item) {
 
 ## Next Steps
 
-1. Read the [User Guide](../user-guide/README.md) for more commands and options
-2. Explore the [CLI Documentation](../user-guide/rin-cli.md) for detailed command reference
-3. Learn about [Test-Driven Development](../testing/TEST_PYRAMID.md) in Rinna
-4. Set up [Document Generation](../user-guide/documents.md) for reports and documentation
-5. Understand the [Architecture](../development/architecture.md) for extending Rinna
+1. Read the [User Guide](/docs/user-guide/README.md) for more commands and options
+2. Explore the [CLI Documentation](/docs/user-guide/rin-cli.md) for detailed command reference
+3. Learn about [Test-Driven Development](/docs/testing/TEST_PYRAMID.md) in Rinna
+4. Set up [Document Generation](/docs/user-guide/documents.md) for reports and documentation
+5. Understand the [Architecture](/docs/development/architecture.md) for extending Rinna
 
-For developers wanting to contribute to Rinna, see our [Development Guide](../development/README.md) for details on our architecture, build system, and development workflow.
+For developers wanting to contribute to Rinna, see our [Development Guide](/docs/development/DEVELOPER.md) for details on our architecture, build system, and development workflow.

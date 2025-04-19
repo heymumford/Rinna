@@ -131,7 +131,7 @@ RUN mkdir -p /app/bin /app/lib /app/data /app/logs /app/shared /app/config
 COPY --from=java-builder /app/rinna-cli/target/rinna-cli-*.jar /app/lib/rinna-cli.jar
 COPY --from=java-builder /app/rinna-core/target/rinna-core-*.jar /app/lib/rinna-core.jar
 COPY --from=go-builder /go/bin/rinna-api /app/bin/rinna-api
-COPY --from=python-builder /usr/local/lib/python3.10/dist-packages /usr/local/lib/python3.10/dist-packages
+COPY --from=python-builder /usr/local/lib/python3.13/dist-packages /usr/local/lib/python3.13/dist-packages
 COPY --from=python-builder /app/python /app/python
 
 # Copy configuration files

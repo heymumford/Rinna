@@ -18,7 +18,6 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts.FontName;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
@@ -33,7 +32,28 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Default document service implementation that uses Apache POI and PDFBox.
- * This is a fallback service when Docmosis is not available.
+ * <p>
+ * This implementation provides standard document generation capabilities for work items,
+ * projects, and releases in various formats (PDF, DOCX, HTML). It serves as a fallback
+ * service when the primary Docmosis document generation service is not available.
+ * </p>
+ * <p>
+ * The service supports multiple output formats:
+ * <ul>
+ *   <li>PDF - Generated using Apache PDFBox</li>
+ *   <li>DOCX - Generated using Apache POI</li>
+ *   <li>HTML - Generated using simple markup conversion</li>
+ * </ul>
+ * </p>
+ * <p>
+ * The content is formatted using a simple Markdown-like syntax before being converted to
+ * the requested output format. The service can accept template paths and data maps for
+ * more advanced document generation scenarios.
+ * </p>
+ * <p>
+ * For large-scale document generation or complex templates, consider using the Docmosis service
+ * instead of this default implementation, which is primarily intended for basic document needs.
+ * </p>
  */
 public class DefaultDocumentService implements DocumentService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultDocumentService.class);
@@ -148,6 +168,17 @@ public class DefaultDocumentService implements DocumentService {
 
     /**
      * Generates a document in the requested format.
+     * <p>
+     * This utility method routes the document generation request to the appropriate
+     * format-specific method based on the requested output format. It handles the conversion
+     * of the content string (which uses a simple Markdown-like syntax) into the appropriate
+     * format.
+     * </p>
+     *
+     * @param content the document content in Markdown-like format
+     * @param format the desired output format (PDF, DOCX, or HTML)
+     * @param output the output stream where the generated document will be written
+     * @throws IOException if an I/O error occurs during document generation
      */
     private void generateDocument(String content, Format format, OutputStream output) throws IOException {
         switch (format) {
@@ -158,7 +189,28 @@ public class DefaultDocumentService implements DocumentService {
     }
 
     /**
-     * Generates a PDF document.
+     * Generates a PDF document from the provided content.
+     * <p>
+     * This method uses Apache PDFBox to create a PDF document with formatted text.
+     * The content is parsed as Markdown-like syntax with special handling for headers,
+     * which are rendered with larger font sizes.
+     * </p>
+     * <p>
+     * Current formatting supported:
+     * <ul>
+     *   <li># Header 1 - rendered in 16pt font</li>
+     *   <li>## Header 2 - rendered in 14pt font</li>
+     *   <li>Regular text - rendered in 12pt font</li>
+     * </ul>
+     * </p>
+     * <p>
+     * The implementation is basic and handles only simple line-by-line rendering.
+     * Complex layouts, tables, or images are not supported in this implementation.
+     * </p>
+     *
+     * @param content the document content in Markdown-like format
+     * @param output the output stream where the PDF will be written
+     * @throws IOException if an I/O error occurs during PDF generation
      */
     private void generatePdf(String content, OutputStream output) throws IOException {
         try (PDDocument document = new PDDocument()) {
@@ -200,7 +252,28 @@ public class DefaultDocumentService implements DocumentService {
     }
 
     /**
-     * Generates a DOCX document.
+     * Generates a DOCX document from the provided content.
+     * <p>
+     * This method uses Apache POI to create a Word document with formatted text.
+     * The content is parsed as Markdown-like syntax with special handling for headers,
+     * which are rendered with different font sizes and styles.
+     * </p>
+     * <p>
+     * Current formatting supported:
+     * <ul>
+     *   <li># Header 1 - rendered as 16pt bold text</li>
+     *   <li>## Header 2 - rendered as 14pt bold text</li>
+     *   <li>Regular text - rendered as 12pt normal text</li>
+     * </ul>
+     * </p>
+     * <p>
+     * Each line in the input content is rendered as a separate paragraph in the Word document.
+     * Complex formatting, tables, or images are not supported in this implementation.
+     * </p>
+     *
+     * @param content the document content in Markdown-like format
+     * @param output the output stream where the DOCX will be written
+     * @throws IOException if an I/O error occurs during DOCX generation
      */
     private void generateDocx(String content, OutputStream output) throws IOException {
         try (XWPFDocument document = new XWPFDocument()) {
@@ -230,7 +303,30 @@ public class DefaultDocumentService implements DocumentService {
     }
 
     /**
-     * Generates an HTML document.
+     * Generates an HTML document from the provided content.
+     * <p>
+     * This method converts the Markdown-like syntax to HTML with appropriate markup.
+     * The HTML includes a basic style sheet for consistent rendering across browsers,
+     * with responsive layout and modern typography.
+     * </p>
+     * <p>
+     * Current formatting supported:
+     * <ul>
+     *   <li># Header 1 - converted to &lt;h1&gt; tags</li>
+     *   <li>## Header 2 - converted to &lt;h2&gt; tags</li>
+     *   <li>- Bullet points - converted to paragraphs with bullet characters</li>
+     *   <li>Blank lines - converted to paragraph breaks</li>
+     *   <li>Regular text - wrapped in paragraph tags</li>
+     * </ul>
+     * </p>
+     * <p>
+     * The HTML includes a complete document structure with DOCTYPE, head, and body elements,
+     * making it ready for direct display in a browser.
+     * </p>
+     *
+     * @param content the document content in Markdown-like format
+     * @param output the output stream where the HTML will be written
+     * @throws IOException if an I/O error occurs during HTML generation
      */
     private void generateHtml(String content, OutputStream output) throws IOException {
         StringBuilder html = new StringBuilder("""

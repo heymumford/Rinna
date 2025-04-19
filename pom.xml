@@ -374,7 +374,7 @@
             <attach>true</attach>
             <descriptorSourceDirectory>${project.basedir}/src/assembly</descriptorSourceDirectory>
             <!-- Skip parent project assembly as it's a POM-only project -->
-            <skipAssembly>${project.packaging == 'pom'}</skipAssembly>
+            <skipAssembly>true</skipAssembly>
           </configuration>
         </plugin>
         <!-- Quality checks plugins in pluginManagement section -->
@@ -412,8 +412,8 @@
             <rulesets>
               <ruleset>${project.basedir}/config/pmd/pmd-ruleset.xml</ruleset>
             </rulesets>
-            <!-- Use JDK 22 target language to handle string templates -->
-            <targetJdk>22</targetJdk>
+            <!-- Use JDK 21 for PMD analysis while keeping Java 23 for compilation -->
+            <targetJdk>21</targetJdk>
           </configuration>
         </plugin>
         <plugin>
@@ -425,15 +425,9 @@
             <suppressionFile>config/owasp/suppressions.xml</suppressionFile>
             <!-- Better performance settings -->
             <nvdApiDelay>1000</nvdApiDelay>
-            <skipUpdateCheck>false</skipUpdateCheck>
             <retireJsAnalyzerEnabled>false</retireJsAnalyzerEnabled>
             <nodeAuditAnalyzerEnabled>false</nodeAuditAnalyzerEnabled>
-            <nodejsAuditAnalyzerEnabled>false</nodejsAuditAnalyzerEnabled>
             <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
-            <!-- Cache settings -->
-            <cacheFolder>${user.home}/.dependency-check/data</cacheFolder>
-            <dataMirroringEnabled>true</dataMirroringEnabled>
-            <dataMirroringRetentionDays>30</dataMirroringRetentionDays>
             <!-- Output settings -->
             <formats>
               <format>HTML</format>
@@ -492,7 +486,6 @@
           <release>${java.version}</release>
           <compilerArgs>
             <arg>-Xlint:all</arg>
-            <arg>--enable-preview</arg>
           </compilerArgs>
           <showWarnings>true</showWarnings>
           <showDeprecation>true</showDeprecation>
@@ -509,7 +502,6 @@
             </goals>
             <configuration>
               <skip>true</skip>
-              <skipTests>true</skipTests>
               <testExcludes>
                 <exclude>**/*.java</exclude>
               </testExcludes>
@@ -611,12 +603,12 @@
           <properties>
             <!-- Parallel execution for JUnit Jupiter tests -->
             <configurationParameters>
-                            junit.jupiter.execution.parallel.enabled=true
-                            junit.jupiter.execution.parallel.mode.default=same_thread
-                            junit.jupiter.execution.parallel.mode.classes.default=concurrent
-                            junit.jupiter.execution.parallel.config.strategy=dynamic
-                            junit.jupiter.execution.parallel.config.dynamic.factor=0.5
-                        </configurationParameters>
+              junit.jupiter.execution.parallel.enabled=true
+              junit.jupiter.execution.parallel.mode.default=same_thread
+              junit.jupiter.execution.parallel.mode.classes.default=concurrent
+              junit.jupiter.execution.parallel.config.strategy=dynamic
+              junit.jupiter.execution.parallel.config.dynamic.factor=0.5
+            </configurationParameters>
           </properties>
           <systemPropertyVariables>
             <java.awt.headless>true</java.awt.headless>
@@ -625,7 +617,7 @@
             <cucumber.glue>org.rinna.acceptance.bdd,org.rinna.bdd</cucumber.glue>
             <junit.jupiter.extensions.autodetection.enabled>true</junit.jupiter.extensions.autodetection.enabled>
           </systemPropertyVariables>
-          <argLine>-XX:+EnableDynamicAgentLoading --enable-preview</argLine>
+          <argLine>-XX:+EnableDynamicAgentLoading</argLine>
           <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
         </configuration>
         <dependencies>

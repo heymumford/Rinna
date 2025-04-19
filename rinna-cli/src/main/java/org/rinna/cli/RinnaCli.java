@@ -25,7 +25,26 @@ import org.rinna.cli.service.ConfigurationService;
 import org.rinna.cli.service.ServiceManager;
 
 /**
- * Main entry point for the Rinna CLI.
+ * Main entry point for the Rinna CLI (Command Line Interface).
+ * <p>
+ * This class provides a command router that parses user commands and delegates to specific
+ * command handler classes. It follows a command pattern where each command is implemented
+ * as a separate class that handles its own argument parsing and execution logic.
+ * </p>
+ * <p>
+ * The CLI supports a wide range of commands for workflow management, including:
+ * <ul>
+ *   <li>Work item management (add, view, list, update)</li>
+ *   <li>Workflow state transitions (done, test)</li>
+ *   <li>Reporting and statistics</li>
+ *   <li>User and access management</li>
+ *   <li>Linux-style commands (ls, grep, cat, find)</li>
+ *   <li>Administrative operations</li>
+ * </ul>
+ * </p>
+ * <p>
+ * Each command handler parses its own specific arguments and options.
+ * </p>
  */
 public class RinnaCli implements Callable<Integer> {
     
@@ -1312,9 +1331,22 @@ public class RinnaCli implements Callable<Integer> {
     }
     
     /**
-     * Main method to start the CLI.
+     * Main method to start the CLI application.
+     * <p>
+     * This method serves as the entry point for the Rinna CLI application. It processes the command-line arguments
+     * and routes them to the appropriate command handler. Before executing any command, it checks for unread
+     * messages and notifications to display to the user if they are authenticated.
+     * </p>
+     * <p>
+     * The method uses a command routing pattern where the first argument specifies the command to execute,
+     * and the remaining arguments are passed to the specific command handler. If no arguments are provided,
+     * the help information is displayed.
+     * </p>
+     * <p>
+     * Each command handler returns an exit code that is used as the process exit code.
+     * </p>
      *
-     * @param args command line arguments
+     * @param args command line arguments where args[0] is the command name and the rest are command-specific arguments
      */
     public static void main(String[] args) {
         // Simple command router without using Picocli

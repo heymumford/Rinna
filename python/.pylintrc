@@ -1,0 +1,44 @@
+[MAIN]
+extension-pkg-whitelist=pydantic
+
+[MESSAGES CONTROL]
+disable=
+    C0103, # invalid-name
+    C0111, # missing-docstring
+    R0903, # too-few-public-methods
+    R0913, # too-many-arguments
+    W0511, # fixme
+    C0301, # line-too-long (handled by black)
+
+[FORMAT]
+max-line-length=88
+
+[BASIC]
+good-names=i,j,k,ex,Run,_,id,f
+
+[SIMILARITIES]
+min-similarity-lines=8
+
+[TYPECHECK]
+ignore-missing-imports=yes
+ignored-modules=numpy,pandas,tensorflow,torch,sklearn
+
+[DESIGN]
+max-args=8
+max-attributes=15
+max-bool-expr=5
+max-branches=15
+max-locals=25
+max-returns=8
+max-statements=50
+max-parents=7
+max-complexity=10
+
+[IMPORTS]
+allow-wildcard-with-all=no
+
+[CLASSES]
+valid-classmethod-first-arg=cls
+
+[EXCEPTIONS]
+overgeneral-exceptions=BaseException,Exception

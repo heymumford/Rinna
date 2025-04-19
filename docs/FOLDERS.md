@@ -72,7 +72,7 @@ org.rinna.adapter.repository → Repository implementations
 | API | ✅ Complete | Package structure aligned with core |
 | CLI | ⚠️ Disabled | Temporarily disabled due to type incompatibilities |
 
-The CLI module is currently disabled in the build process. See [package-refactoring.md](docs/development/package-refactoring.md) for more details and migration guidance.
+The CLI module is currently disabled in the build process. See [package-refactoring.md](/docs/development/package-refactoring.md) for more details and migration guidance.
 
 ## Guidelines for Code Organization
 
@@ -140,4 +140,4 @@ Several tools are available to help maintain the directory structure and ensure 
 ./bin/test-pyramid-coverage.sh
 ```
 
-For detailed information on package dependencies and architectural rules, see the `docs/development/package-structure.md` document.
+For detailed information on package dependencies and architectural rules, see the `/docs/development/package-structure.md` document.

@@ -27,12 +27,12 @@ Rinna liberates engineers from the tyranny of bloated workflow tools by bringing
 *Actively developed and on track for beta release. Join us!*
 
 [📥 Download](https://github.com/heymumford/Rinna/releases) • 
-[📚 User Guide](docs/user-guide/README.md) • 
-[👩‍💻 Developer Guide](docs/development/DEVELOPER.md) • 
-[🚀 Getting Started](docs/getting-started/README.md) • 
-[🧪 TDD Guide](rinna-cli/TDD_GUIDE.md) • 
-[🤝 Contribute](docs/CONTRIBUTING.md) • 
-[📋 Changelog](docs/project-docs/CHANGELOG.md)
+[📚 User Guide](/docs/user-guide/README.md) • 
+[👩‍💻 Developer Guide](/docs/development/DEVELOPER.md) • 
+[🚀 Getting Started](/docs/getting-started/README.md) • 
+[🧪 TDD Guide](/rinna-cli/TDD_GUIDE.md) • 
+[🤝 Contribute](/docs/CONTRIBUTING.md) • 
+[📋 Changelog](/CHANGELOG.md)
 
 </div>
 
@@ -151,7 +151,7 @@ docker exec -it rinna-cli-1 /bin/bash
 rin list
 ```
 
-See [Cross-Platform Container Setup](docs/user-guide/cross-platform-container-setup.md) for detailed instructions.
+See [Cross-Platform Container Setup](/docs/user-guide/cross-platform-container-setup.md) for detailed instructions.
 
 ## Core Features
 
@@ -318,21 +318,21 @@ bin/rin version update    # Sync all files
 ## Documentation
 
 ### For Users
-- [📚 User Guide](docs/user-guide/README.md) - Complete guide for using Rinna
-- [🚀 Getting Started](docs/getting-started/README.md) - Quick start guide
-- [📄 Documentation Generation](docs/user-guide/documents.md) - Generate documentation
+- [📚 User Guide](/docs/user-guide/README.md) - Complete guide for using Rinna
+- [🚀 Getting Started](/docs/getting-started/README.md) - Quick start guide
+- [📄 Documentation Generation](/docs/user-guide/documents.md) - Generate documentation
 
 ### For Developers
-- [👩‍💻 Developer Guide](docs/development/DEVELOPER.md) - Complete guide for developing Rinna
-- [🤝 Contribution Guidelines](docs/CONTRIBUTING.md) - How to contribute
-- [🧪 Testing Strategy](docs/testing/TESTING_STRATEGY.md) - Comprehensive testing approach
-- [🏗️ Architecture](docs/architecture/README.md) - System architecture
-- [🔧 Build System](docs/development/build-system.md) - Build and development workflow
-- [📘 API Reference](docs/user-guide/api/README.md) - API documentation
+- [👩‍💻 Developer Guide](/docs/development/DEVELOPER.md) - Complete guide for developing Rinna
+- [🤝 Contribution Guidelines](/docs/CONTRIBUTING.md) - How to contribute
+- [🧪 Testing Strategy](/docs/testing/TESTING_STRATEGY.md) - Comprehensive testing approach
+- [🏗️ Architecture](/docs/architecture/README.md) - System architecture
+- [🔧 Build System](/docs/development/build-system.md) - Build and development workflow
+- [📘 API Reference](/api/docs/README.md) - API documentation
 
 ### API Documentation
 The API is documented using OpenAPI/Swagger. You can:
-- View the [API Reference](docs/user-guide/api/README.md) in any Swagger UI compatible viewer
+- View the [API Reference](/api/docs/README.md) in any Swagger UI compatible viewer
 - Run `python3 api/bin/sync-swagger.py` to synchronize YAML and JSON formats
 - Access the documentation at `http://localhost:8080/api/docs` when the server is running
 

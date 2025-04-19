@@ -4,7 +4,7 @@
 # -----------------------------------------------------------------------------
 # BASE STAGE - Common dependencies and setup
 # -----------------------------------------------------------------------------
-FROM python:3.10-slim AS base
+FROM python:3.13-slim AS base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \

@@ -1,6 +1,7 @@
-from setuptools import setup, find_packages
 import os
 import sys
+
+from setuptools import find_packages, setup
 
 # Determine which package to install based on environment
 package_name = os.environ.get("SETUP_PACKAGE", "rinna")
@@ -23,7 +24,7 @@ if package_name == "rinna":
             "License :: OSI Approved :: MIT License",
             "Operating System :: OS Independent",
         ],
-        python_requires=">=3.8",
+        python_requires=">=3.13.3",
     )
 elif package_name == "lucidchart-py":
     # Mock Lucidchart API client for diagram integrations
@@ -40,7 +41,7 @@ elif package_name == "lucidchart-py":
             "License :: OSI Approved :: MIT License",
             "Operating System :: OS Independent",
         ],
-        python_requires=">=3.8",
+        python_requires=">=3.13.3",
     )
 else:
     print(f"Unknown package: {package_name}")

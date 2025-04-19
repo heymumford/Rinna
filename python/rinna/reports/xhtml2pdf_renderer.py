@@ -19,31 +19,31 @@ logger = logging.getLogger(__name__)
 
 class XHTML2PDFRenderer(ReportRenderer):
     """XHTML2PDF-based report renderer."""
-    
+
     def __init__(self, template_manager: Optional[TemplateManager] = None):
         """
         Initialize the XHTML2PDF renderer.
-        
+
         Args:
             template_manager: Template manager instance
         """
         super().__init__(template_manager)
-        
+
         # Set up Jinja2 template environment
         self.jinja_env = Environment(
             loader=FileSystemLoader(str(self.template_manager.templates_dir)),
-            autoescape=True
+            autoescape=True,
         )
-        
+
         # Create CSS directory
         self.css_dir = self.template_manager.templates_dir / "css"
         os.makedirs(self.css_dir, exist_ok=True)
-        
+
         # Default CSS file for XHTML2PDF
         self.default_css_path = self.css_dir / "xhtml2pdf_default.css"
         if not self.default_css_path.exists():
             self._create_default_css()
-    
+
     def _create_default_css(self) -> None:
         """Create a default CSS file for XHTML2PDF if none exists."""
         default_css = """
@@ -244,29 +244,29 @@ class XHTML2PDFRenderer(ReportRenderer):
             background-color: #5bc0de;
         }
         """
-        
+
         with open(self.default_css_path, "w") as f:
             f.write(default_css)
-        
+
         logger.info(f"Created default XHTML2PDF CSS file at {self.default_css_path}")
-    
+
     def render(
         self,
         template_id: str,
         data: Dict[str, Any],
-        output_format: ReportFormat = ReportFormat.PDF
+        output_format: ReportFormat = ReportFormat.PDF,
     ) -> bytes:
         """
         Render a report using XHTML2PDF.
-        
+
         Args:
             template_id: Template identifier
             data: Data to render in the template
             output_format: Output format
-            
+
         Returns:
             The rendered report as bytes
-            
+
         Raises:
             ValueError: If template not found or rendering fails
         """
@@ -274,24 +274,24 @@ class XHTML2PDFRenderer(ReportRenderer):
         template = self.template_manager.get_template(template_id)
         if not template:
             raise ValueError(f"Template not found: {template_id}")
-        
+
         if not template.exists:
             raise ValueError(f"Template file does not exist: {template.path}")
-        
+
         # Generate HTML from template
         try:
             jinja_template = self.jinja_env.get_template(template.path.name)
-            
+
             # Add title and header/footer for PDF generation
             html_data = dict(data)
             html_data["report_title"] = data.get("title", "Report")
-            
+
             html_content = jinja_template.render(**html_data)
-            
+
             # Add XHTML2PDF-specific headers and footers
             if output_format == ReportFormat.PDF:
                 # Add header and footer divs if not present
-                if "<div id=\"headerContent\">" not in html_content:
+                if '<div id="headerContent">' not in html_content:
                     header_style = "text-align: right; font-size: 9pt; color: #666;"
                     header = f"""
                     <div id="headerContent" style="{header_style}">
@@ -309,29 +309,29 @@ class XHTML2PDFRenderer(ReportRenderer):
                         html_content = html_content.replace(
                             "<body>", f"<body>{header}{footer}"
                         )
-            
+
             # Add stylesheet reference
             if output_format == ReportFormat.PDF:
                 css_path_str = f'<link rel="stylesheet" href="{self.default_css_path}">'
-                
+
                 # Check for custom CSS
                 custom_css = self.css_dir / f"{template_id}_xhtml2pdf.css"
                 if custom_css.exists():
                     css_path_str += f'\n<link rel="stylesheet" href="{custom_css}">'
-                
+
                 # Add CSS to head if not already present
                 if "<head>" in html_content and css_path_str not in html_content:
                     html_content = html_content.replace(
                         "<head>", f"<head>\n{css_path_str}"
                     )
-            
+
         except Exception as e:
             logger.error(f"Error rendering template {template_id}: {e}")
             raise ValueError(f"Failed to render template {template_id}: {e}") from e
-        
+
         # Generate output based on format
         output = io.BytesIO()
-        
+
         if output_format == ReportFormat.PDF:
             # Lazy import to avoid dependency if not used
             try:
@@ -340,23 +340,25 @@ class XHTML2PDFRenderer(ReportRenderer):
                 raise ValueError(
                     "XHTML2PDF is not installed. Install with 'pip install xhtml2pdf'"
                 ) from import_err
-            
+
             # Convert HTML to PDF
             pisa_status = pisa.CreatePDF(
-                html_content,
-                dest=output,
-                path=str(self.template_manager.templates_dir)
+                html_content, dest=output, path=str(self.template_manager.templates_dir)
             )
-            
+
             if pisa_status.err:
                 raise ValueError(f"XHTML2PDF error: {pisa_status.err}")
-            
+
         elif output_format == ReportFormat.HTML:
             # Return HTML directly
             output.write(html_content.encode("utf-8"))
-            
+
         else:
-            output_type = output_format.value if hasattr(output_format, "value") else output_format
+            output_type = (
+                output_format.value
+                if hasattr(output_format, "value")
+                else output_format
+            )
             raise ValueError(f"Unsupported XHTML2PDF output: {output_type}")
-        
+
         return output.getvalue()

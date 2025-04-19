@@ -1,6 +1,6 @@
 # Rinna Developer Guide
 
-Welcome to the Rinna Developer Guide! This document is intended for developers who want to contribute to Rinna or extend its functionality. If you're looking for user documentation, please check the [User Guide](docs/user-guide/README.md).
+Welcome to the Rinna Developer Guide! This document is intended for developers who want to contribute to Rinna or extend its functionality. If you're looking for user documentation, please check the [User Guide](/docs/user-guide/README.md).
 
 ## Quick Start for Developers
 
@@ -24,10 +24,10 @@ bin/rin test
 Rinna is a polyglot project that uses:
 - Java 21+ (core domain logic)
 - Go 1.21+ (API and services)
-- Python 3.8+ (utilities and scripts)
+- Python 3.13.3 (utilities and scripts)
 - Bash (CLI tools and utilities)
 
-See the [Environment Setup](docs/development/environment-setup.md) guide for detailed instructions.
+See the [Environment Setup](/docs/development/environment-setup.md) guide for detailed instructions.
 
 ## Architecture
 
@@ -63,7 +63,7 @@ Rinna follows Clean Architecture principles:
 └────────────────────────────────────────────────────────────┘
 ```
 
-See [Architecture Documentation](docs/development/architecture.md) for details.
+See [Architecture Documentation](/docs/development/architecture.md) for details.
 
 ## Project Structure
 
@@ -84,7 +84,7 @@ rinna/
 └── version-service/   # Version management service
 ```
 
-See [Project Structure](docs/development/codebase-organization.md) for details.
+See [Project Structure](/docs/development/codebase-organization.md) for details.
 
 ## Developer Workflow
 
@@ -216,8 +216,10 @@ The build system incorporates various quality tools:
 - **SpotBugs**: Java static analysis
 - **PMD**: Additional Java code quality checks
 - **golangci-lint**: Go static analysis
-- **Ruff**: Python linting
+- **Pylint**: Python linting and static analysis
 - **Black**: Python formatting
+- **isort**: Python import sorting
+- **Flake8**: Python code style validation
 - **MyPy**: Python type checking
 
 See [Build System](docs/development/build-system.md) for complete documentation of our build infrastructure.
@@ -383,6 +385,79 @@ from rinna.common.logging import get_logger
 
 logger = get_logger(__name__)
 logger.debug(f"Processing data: {data}")
+```
+
+### Python Development
+
+Rinna's Python components use Poetry for dependency management, pytest for testing, and a comprehensive set of linting tools.
+
+#### Poetry Setup and Usage
+
+```bash
+# Ensure correct Python version (3.13.3)
+pyenv local 3.13.3
+python --version  # Should show Python 3.13.3
+
+# Install dependencies
+cd python
+poetry env use 3.13.3  # Explicitly set Poetry to use Python 3.13.3
+poetry install
+
+# Install with optional dependencies
+poetry install -E reports  # Install report generation dependencies
+poetry install -E web      # Install web API dependencies
+poetry install -E all      # Install all optional dependencies
+
+# Activate virtual environment
+poetry shell
+
+# Add a new dependency
+poetry add package-name
+
+# Add a development dependency
+poetry add --group dev package-name
+```
+
+#### Python Testing
+
+```bash
+# Run tests with Poetry
+cd python
+poetry run pytest
+
+# Run specific test categories
+poetry run pytest -m unit
+poetry run pytest -m integration
+
+# Run with coverage
+poetry run pytest --cov=rinna
+
+# Using the test script
+bin/run-python-tests.sh -u              # Run unit tests
+bin/run-python-tests.sh -C              # Run component tests
+bin/run-python-tests.sh -i              # Run integration tests
+bin/run-python-tests.sh -c              # Run tests with coverage
+bin/run-python-tests.sh -l              # Run pylint
+bin/run-python-tests.sh -f              # Run formatters (black and isort)
+bin/run-python-tests.sh -t              # Run type checking
+bin/run-python-tests.sh --all           # Run all checks
+```
+
+#### Python Code Quality
+
+```bash
+# Format code
+poetry run black .
+poetry run isort .
+
+# Lint code
+poetry run pylint rinna
+
+# Type check
+poetry run mypy rinna
+
+# Run pre-commit hooks
+poetry run pre-commit run --all-files
 ```
 
 See [Cross-Language Logging](docs/development/cross-language-logging.md) for comprehensive logging documentation.

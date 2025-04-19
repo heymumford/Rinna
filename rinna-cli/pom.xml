@@ -12,7 +12,6 @@
   <properties>
     <picocli.version>4.7.5</picocli.version>
     <rinna.version>${project.parent.version}</rinna.version>
-    <skipTests>true</skipTests>
   </properties>
   <dependencies>
     <!-- SLF4J Logging -->
@@ -174,6 +173,33 @@
           <threshold>High</threshold>
           <failOnError>true</failOnError>
         </configuration>
+      </plugin>
+      <!-- Override exec-maven-plugin to use correct path for polyglot-coverage.sh -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.1</version>
+        <executions>
+          <execution>
+            <id>polyglot-coverage-report</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>${project.parent.basedir}/bin/polyglot-coverage.sh</executable>
+              <arguments>
+                <argument>-o</argument>
+                <argument>html</argument>
+                <argument>-n</argument>
+              </arguments>
+              <successCodes>
+                <successCode>0</successCode>
+                <successCode>1</successCode>
+              </successCodes>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <!-- Properly configured maven-assembly-plugin -->
       <plugin>

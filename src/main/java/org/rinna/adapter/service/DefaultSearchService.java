@@ -107,13 +107,26 @@ public class DefaultSearchService implements SearchService {
     
     /**
      * Prepares a regex pattern based on search settings.
+     * Includes input validation and security measures to prevent ReDoS attacks.
      *
      * @param pattern the search pattern
      * @param caseSensitive true for case-sensitive search
      * @param exactMatch true for whole word matching
      * @return the compiled pattern
+     * @throws IllegalArgumentException if the pattern is null, empty, or exceeds length limits
      */
     private Pattern preparePattern(String pattern, boolean caseSensitive, boolean exactMatch) {
+        // Input validation
+        if (pattern == null) {
+            throw new IllegalArgumentException("Pattern cannot be null");
+        }
+        
+        // Limit pattern length to prevent DoS attacks
+        final int MAX_PATTERN_LENGTH = 1000;
+        if (pattern.length() > MAX_PATTERN_LENGTH) {
+            throw new IllegalArgumentException("Pattern too long (max " + MAX_PATTERN_LENGTH + " chars)");
+        }
+        
         String regex;
         
         if (exactMatch) {
@@ -127,7 +140,12 @@ public class DefaultSearchService implements SearchService {
         // Set case sensitivity flag
         int flags = caseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
         
-        return Pattern.compile(regex, flags);
+        try {
+            return Pattern.compile(regex, flags);
+        } catch (Exception e) {
+            // Handle potential regex compilation errors
+            throw new IllegalArgumentException("Invalid pattern: " + e.getMessage());
+        }
     }
     
     /**

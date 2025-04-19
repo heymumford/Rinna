@@ -14,7 +14,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayOutputStream;
-import org.mockito.MockedStatic;
 import java.io.PrintStream;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -28,6 +27,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 import org.rinna.cli.command.AddCommand;
 import org.rinna.cli.command.BugCommand;

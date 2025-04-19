@@ -19,11 +19,14 @@ This directory contains comprehensive documentation for the Rinna testing strate
 We have simplified our test organization to follow a consistent structure across all languages:
 
 1. **Unified Directory Structure**:
-   - `src/test/java/org/rinna/unit/` - Java unit tests
-   - `src/test/java/org/rinna/component/` - Java component tests
-   - `src/test/java/org/rinna/integration/` - Java integration tests
-   - `src/test/java/org/rinna/acceptance/` - Java acceptance tests
-   - `src/test/java/org/rinna/performance/` - Java performance tests
+   - `rinna-core/src/test/java/org/rinna/unit/` - Core Java unit tests
+   - `rinna-core/src/test/java/org/rinna/component/` - Core Java component tests
+   - `rinna-core/src/test/java/org/rinna/integration/` - Core Java integration tests
+   - `rinna-core/src/test/java/org/rinna/acceptance/` - Core Java acceptance tests
+   - `rinna-core/src/test/java/org/rinna/performance/` - Core Java performance tests
+   - `rinna-cli/src/test/java/org/rinna/cli/unit/` - CLI Java unit tests
+   - `rinna-cli/src/test/java/org/rinna/cli/component/` - CLI Java component tests
+   - `rinna-cli/src/test/java/org/rinna/cli/integration/` - CLI Java integration tests
    - `api/test/unit/` - Go unit tests
    - `api/test/component/` - Go component tests
    - `api/test/integration/` - Go integration tests

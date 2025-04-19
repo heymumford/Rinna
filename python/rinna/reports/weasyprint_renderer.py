@@ -19,31 +19,31 @@ logger = logging.getLogger(__name__)
 
 class WeasyPrintRenderer(ReportRenderer):
     """WeasyPrint-based report renderer."""
-    
+
     def __init__(self, template_manager: Optional[TemplateManager] = None):
         """
         Initialize the WeasyPrint renderer.
-        
+
         Args:
             template_manager: Template manager instance
         """
         super().__init__(template_manager)
-        
+
         # Set up Jinja2 template environment
         self.jinja_env = Environment(
             loader=FileSystemLoader(str(self.template_manager.templates_dir)),
-            autoescape=True
+            autoescape=True,
         )
-        
+
         # Load CSS
         self.css_dir = self.template_manager.templates_dir / "css"
         os.makedirs(self.css_dir, exist_ok=True)
-        
+
         # Default CSS file
         self.default_css_path = self.css_dir / "default.css"
         if not self.default_css_path.exists():
             self._create_default_css()
-    
+
     def _create_default_css(self) -> None:
         """Create a default CSS file if none exists."""
         default_css = """
@@ -245,29 +245,29 @@ class WeasyPrintRenderer(ReportRenderer):
             background-color: #5bc0de;
         }
         """
-        
+
         with open(self.default_css_path, "w") as f:
             f.write(default_css)
-        
+
         logger.info(f"Created default CSS file at {self.default_css_path}")
-    
+
     def render(
         self,
         template_id: str,
         data: Dict[str, Any],
-        output_format: ReportFormat = ReportFormat.PDF
+        output_format: ReportFormat = ReportFormat.PDF,
     ) -> bytes:
         """
         Render a report using WeasyPrint.
-        
+
         Args:
             template_id: Template identifier
             data: Data to render in the template
             output_format: Output format
-            
+
         Returns:
             The rendered report as bytes
-            
+
         Raises:
             ValueError: If template not found or rendering fails
         """
@@ -278,15 +278,15 @@ class WeasyPrintRenderer(ReportRenderer):
             raise ValueError(
                 "WeasyPrint is not installed. Install with 'pip install weasyprint'"
             ) from import_err
-        
+
         # Get template
         template = self.template_manager.get_template(template_id)
         if not template:
             raise ValueError(f"Template not found: {template_id}")
-        
+
         if not template.exists:
             raise ValueError(f"Template file does not exist: {template.path}")
-        
+
         # Generate HTML from template
         try:
             jinja_template = self.jinja_env.get_template(template.path.name)
@@ -294,43 +294,44 @@ class WeasyPrintRenderer(ReportRenderer):
         except Exception as e:
             logger.error(f"Error rendering template {template_id}: {e}")
             raise ValueError(f"Failed to render template {template_id}: {e}") from e
-        
+
         # Apply CSS
         css_files = [self.default_css_path]
         custom_css = self.css_dir / f"{template_id}.css"
         if custom_css.exists():
             css_files.append(custom_css)
-        
+
         # Load CSS
         css_list = [CSS(filename=str(css_file)) for css_file in css_files]
-        
+
         # Generate output based on format
         output = io.BytesIO()
-        
+
         if output_format == ReportFormat.PDF:
             # Generate PDF
-            HTML(string=html_content).write_pdf(
-                output,
-                stylesheets=css_list
-            )
+            HTML(string=html_content).write_pdf(output, stylesheets=css_list)
         elif output_format == ReportFormat.HTML:
             # Return HTML directly
             output.write(html_content.encode("utf-8"))
         elif output_format == ReportFormat.PNG:
             # For PNG, we need to render to a PDF then convert the first page
             from pdf2image import convert_from_bytes
-            
+
             temp_pdf = io.BytesIO()
             HTML(string=html_content).write_pdf(temp_pdf, stylesheets=css_list)
             temp_pdf.seek(0)
-            
+
             images = convert_from_bytes(temp_pdf.read(), dpi=300)
             if images:
                 images[0].save(output, format="PNG")
             else:
                 raise ValueError("Failed to convert PDF to PNG")
         else:
-            output_type = output_format.value if hasattr(output_format, "value") else output_format
+            output_type = (
+                output_format.value
+                if hasattr(output_format, "value")
+                else output_format
+            )
             raise ValueError(f"Unsupported WeasyPrint output: {output_type}")
-        
+
         return output.getvalue()

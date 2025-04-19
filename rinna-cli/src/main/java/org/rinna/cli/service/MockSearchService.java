@@ -209,10 +209,31 @@ public class MockSearchService implements SearchService {
     public List<WorkItem> findPattern(String pattern, boolean caseSensitive) {
         List<WorkItem> results = new ArrayList<>();
         
+        // Security check: Limit pattern length to prevent DoS attacks
+        if (pattern == null || pattern.length() > 1000) {
+            throw new IllegalArgumentException("Pattern is null or too long (max 1000 chars)");
+        }
+        
+        // Use Pattern.quote to escape the pattern and prevent ReDoS attacks
         int flags = caseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
-        Pattern regex = Pattern.compile(pattern, flags);
+        Pattern regex;
+        try {
+            // If the user needs actual regex functionality, we'd need additional validation here
+            // For now, we treat it as a literal pattern for security
+            regex = Pattern.compile(Pattern.quote(pattern), flags);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid pattern: " + e.getMessage());
+        }
+        
+        // Set a reasonable timeout in case of performance issues
+        long timeout = System.currentTimeMillis() + 5000; // 5 second timeout
         
         for (WorkItem item : getAllItems()) {
+            // Check for timeout to prevent long-running operations
+            if (System.currentTimeMillis() > timeout) {
+                throw new RuntimeException("Pattern matching timed out after 5 seconds");
+            }
+            
             String title = item.getTitle();
             String desc = item.getDescription();
             
