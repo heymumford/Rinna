@@ -17,7 +17,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/heymumford/rinna/api/pkg/config"
+	"github.com/heymumford/rinna/go/pkg/config"
 )
 
 // MockConfig creates a test configuration

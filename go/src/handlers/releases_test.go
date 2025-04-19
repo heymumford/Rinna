@@ -22,7 +22,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/heymumford/rinna/api/internal/models"
+	"github.com/heymumford/rinna/go/src/models"
 )
 
 // MockJavaClientForReleases is a mock implementation of the Java client for testing release handlers

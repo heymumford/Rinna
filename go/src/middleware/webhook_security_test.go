@@ -18,7 +18,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/heymumford/rinna/api/pkg/config"
+	"github.com/heymumford/rinna/go/pkg/config"
 )
 
 // MockJavaClient implements the JavaClientInterface for testing

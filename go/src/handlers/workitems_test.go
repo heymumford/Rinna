@@ -20,7 +20,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/heymumford/rinna/api/internal/models"
+	"github.com/heymumford/rinna/go/src/models"
 )
 
 // Define a client interface for the handlers

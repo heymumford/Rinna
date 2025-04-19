@@ -19,8 +19,8 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/heymumford/rinna/api/pkg/health"
-	"github.com/heymumford/rinna/api/pkg/logger"
+	"github.com/heymumford/rinna/go/pkg/health"
+	"github.com/heymumford/rinna/go/pkg/logger"
 )
 
 func main() {

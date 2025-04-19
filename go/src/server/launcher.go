@@ -21,8 +21,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/heymumford/rinna/api/pkg/config"
-	"github.com/heymumford/rinna/api/pkg/logger"
+	"github.com/heymumford/rinna/go/pkg/config"
+	"github.com/heymumford/rinna/go/pkg/logger"
 )
 
 // ServerLauncher manages the lifecycle of the local Rinna server

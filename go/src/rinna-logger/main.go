@@ -16,7 +16,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/heymumford/rinna/api/pkg/logger"
+	"github.com/heymumford/rinna/go/pkg/logger"
 )
 
 // isValidFieldKey checks if a field key is valid (alphanumeric with underscores)

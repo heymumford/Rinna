@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/heymumford/rinna/api/internal/auth"
-	"github.com/heymumford/rinna/api/internal/middleware"
-	"github.com/heymumford/rinna/api/pkg/logger"
+	"github.com/heymumford/rinna/go/src/auth"
+	"github.com/heymumford/rinna/go/src/middleware"
+	"github.com/heymumford/rinna/go/pkg/logger"
 )
 
 // OAuthHandler handles OAuth-related requests

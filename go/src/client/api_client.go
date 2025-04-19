@@ -14,8 +14,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/heymumford/rinna/api/internal/models"
-	"github.com/heymumford/rinna/api/pkg/config"
+	"github.com/heymumford/rinna/go/src/models"
+	"github.com/heymumford/rinna/go/pkg/config"
 )
 
 // ProjectIDKey is the context key for the project ID

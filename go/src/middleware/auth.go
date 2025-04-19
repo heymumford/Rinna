@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/heymumford/rinna/api/pkg/config"
+	"github.com/heymumford/rinna/go/pkg/config"
 )
 
 const (

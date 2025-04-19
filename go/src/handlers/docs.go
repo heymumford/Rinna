@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	
 	"github.com/gorilla/mux"
-	"github.com/heymumford/rinna/api/pkg/logger"
+	"github.com/heymumford/rinna/go/pkg/logger"
 )
 
 // RegisterDocumentationRoutes registers routes for API documentation

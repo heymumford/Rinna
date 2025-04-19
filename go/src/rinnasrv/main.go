@@ -20,14 +20,14 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/heymumford/rinna/api/internal/auth"
-	"github.com/heymumford/rinna/api/internal/client"
-	"github.com/heymumford/rinna/api/internal/handlers"
-	"github.com/heymumford/rinna/api/internal/middleware"
-	"github.com/heymumford/rinna/api/internal/server"
-	"github.com/heymumford/rinna/api/pkg/config"
-	"github.com/heymumford/rinna/api/pkg/health"
-	"github.com/heymumford/rinna/api/pkg/logger"
+	"github.com/heymumford/rinna/go/src/auth"
+	"github.com/heymumford/rinna/go/src/client"
+	"github.com/heymumford/rinna/go/src/handlers"
+	"github.com/heymumford/rinna/go/src/middleware"
+	"github.com/heymumford/rinna/go/src/server"
+	"github.com/heymumford/rinna/go/pkg/config"
+	"github.com/heymumford/rinna/go/pkg/health"
+	"github.com/heymumford/rinna/go/pkg/logger"
 )
 
 // JavaHealthChecker implements the health.DependencyChecker interface for Java service

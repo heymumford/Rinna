@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/heymumford/rinna/api/pkg/config"
-	"github.com/heymumford/rinna/api/pkg/logger"
+	"github.com/heymumford/rinna/go/pkg/config"
+	"github.com/heymumford/rinna/go/pkg/logger"
 )
 
 func TestRateLimiter(t *testing.T) {

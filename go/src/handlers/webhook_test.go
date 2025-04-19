@@ -24,9 +24,9 @@ import (
 	
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/heymumford/rinna/api/internal/middleware"
-	"github.com/heymumford/rinna/api/internal/models"
-	"github.com/heymumford/rinna/api/pkg/config"
+	"github.com/heymumford/rinna/go/src/middleware"
+	"github.com/heymumford/rinna/go/src/models"
+	"github.com/heymumford/rinna/go/pkg/config"
 )
 
 // WebhookClientInterface defines the methods required from the Java client for webhook handlers

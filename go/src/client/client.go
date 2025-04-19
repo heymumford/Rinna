@@ -18,8 +18,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/heymumford/rinna/api/internal/models"
-	"github.com/heymumford/rinna/api/pkg/config"
+	"github.com/heymumford/rinna/go/src/models"
+	"github.com/heymumford/rinna/go/pkg/config"
 )
 
 // JavaClient handles communication with the Java service

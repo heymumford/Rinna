@@ -15,8 +15,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/heymumford/rinna/api/internal/client"
-	"github.com/heymumford/rinna/api/pkg/config"
+	"github.com/heymumford/rinna/go/src/client"
+	"github.com/heymumford/rinna/go/pkg/config"
 )
 
 const helpText = `

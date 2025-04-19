@@ -16,8 +16,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/heymumford/rinna/api/pkg/config"
-	"github.com/heymumford/rinna/api/pkg/logger"
+	"github.com/heymumford/rinna/go/pkg/config"
+	"github.com/heymumford/rinna/go/pkg/logger"
 )
 
 // RequestIDKey is the context key for the request ID

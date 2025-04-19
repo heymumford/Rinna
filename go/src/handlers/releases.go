@@ -16,8 +16,8 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/heymumford/rinna/api/internal/client"
-	"github.com/heymumford/rinna/api/internal/models"
+	"github.com/heymumford/rinna/go/src/client"
+	"github.com/heymumford/rinna/go/src/models"
 )
 
 // ReleaseHandler handles release-related requests

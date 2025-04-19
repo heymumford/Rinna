@@ -21,7 +21,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	"github.com/heymumford/rinna/api/pkg/logger"
+	"github.com/heymumford/rinna/go/pkg/logger"
 )
 
 // loggerRecorder captures log output for testing
