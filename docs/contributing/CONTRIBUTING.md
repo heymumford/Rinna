@@ -1,80 +1,85 @@
 # Contributing to Rinna
 
-Thank you for your interest in contributing to Rinna! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to Rinna! This document provides guidelines and instructions for contributing.
 
-## 🌟 Developer Guide
+## 📚 Documentation Resources
 
-**For comprehensive developer documentation, start with the [Developer Guide](DEVELOPER.md)**, which includes:
+- **[Developer Guide](DEVELOPER.md)**: Complete documentation for setting up and development
+- **[Architecture Documentation](docs/architecture/README.md)**: Understanding system design
+- **[Testing Strategy](docs/testing/TESTING_STRATEGY.md)**: Our approach to testing
+- **[Coding Standards](docs/reference/standards/code-review-guidelines.md)**: Code quality guidelines
+- **[Documentation Requirements](docs/reference/standards/documentation-requirements.md)**: Standards for documentation
 
-- Setting up your development environment
-- Understanding the architecture
-- Development workflow
-- Build system usage
-- Testing guidelines
-- Version management
-- Reference documentation
+## 🚀 Contribution Workflow
 
-## 🚀 Quick Start for Contributors
+### 1. Set Up Your Environment
 
-1. **Fork and Clone**
-   ```bash
-   git clone https://github.com/your-username/Rinna.git
-   cd Rinna
-   ```
+```bash
+# Clone your fork
+git clone https://github.com/your-username/Rinna.git
+cd Rinna
 
-2. **Set Up Environment**
-   ```bash
-   bin/rin-setup-unified --developer
-   ```
+# Configure development environment
+bin/rin-setup-unified --developer
+```
 
-3. **Create Feature Branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+### 2. Development Process
 
-4. **Implement Changes**
-   - Follow our [Clean Architecture](docs/architecture/decisions/0003-adopt-clean-architecture-for-system-design.md) principles
-   - Add appropriate tests following our [Testing Strategy](docs/testing/TESTING_STRATEGY.md)
-   - Use our [Coding Standards](docs/reference/standards/code-review-guidelines.md)
+```bash
+# Create a feature branch
+git checkout -b feature/your-feature-name
 
-5. **Test Your Changes**
-   ```bash
-   bin/rin test
-   ```
+# Make your changes following our guidelines
+# Test your implementation
+bin/rin test
 
-6. **Submit Pull Request**
-   - Include a clear description of the changes
-   - Reference any related issues
-   - Ensure all tests pass
-   - Follow our [Documentation Requirements](docs/reference/standards/documentation-requirements.md)
+# Commit with meaningful messages
+git commit -m "Add feature: brief description"
+```
 
-## ⚖️ Intellectual Property
+### 3. Submit Your Contribution
 
-By contributing to this project, you confirm that your contributions are your 
-own original work. If you use AI assistance tools in creating your contribution, 
-please disclose this in your pull request description. Use of such tools does not 
-affect your ownership of your contribution, but transparency helps maintain clear 
-provenance of the project's intellectual property.
+- Open a pull request with a clear description
+- Reference any related issues (#123)
+- Ensure all CI checks pass
+- Be responsive to reviewer feedback
 
-## 📜 Code of Conduct
+## 🧪 Quality Standards
 
-We expect all contributors to follow our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a respectful and inclusive environment for everyone.
+- Follow [Clean Architecture](docs/architecture/decisions/0003-adopt-clean-architecture-for-system-design.md) principles
+- Write comprehensive tests for all changes
+- Update documentation as needed
+- Adhere to our code style guidelines
 
-## 🔍 Review Process
+## 👥 Review Process
 
-1. **Automated Checks**
-   - CI/CD pipeline will verify your changes
-   - Code style checks
+1. **Automated Verification**
+   - CI/CD pipeline checks
+   - Code style validation
    - Test coverage requirements
 
-2. **Peer Review**
-   - At least one maintainer will review your code
-   - Address any feedback or comments
+2. **Code Review**
+   - At least one maintainer will review
+   - Address feedback promptly
 
-3. **Acceptance and Merge**
-   - Once approved, a maintainer will merge your changes
-   - Your contribution will be included in the next release
+3. **Acceptance**
+   - Changes merged after approval
+   - Included in the next release
 
-## 📄 License
+## ⚖️ Intellectual Property & License
 
-By contributing to Rinna, you agree that your contributions will be licensed under the project's [MIT License](LICENSE).
+- Your contributions must be your original work
+- Disclose any AI assistance tools used
+- By contributing, you agree that your work will be licensed under our [MIT License](LICENSE)
+
+## 📜 Community Guidelines
+
+We maintain a welcoming community by following our [Code of Conduct](CODE_OF_CONDUCT.md). Please review it before contributing.
+
+## 🆘 Getting Help
+
+- Open an issue for bugs or feature requests
+- Join our community discussions
+- Reach out to maintainers if you're unsure about anything
+
+Thank you for helping improve Rinna!

@@ -1,188 +1,266 @@
-<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford] -->
+# Java 21 Features in Rinna
 
-# Java 21 Features for Rinna
+Rinna leverages modern Java 21 features to create more concise, readable, and maintainable code. This guide explains how these features are used throughout the codebase.
 
-This document outlines the Java 21 features that align with Rinna's architecture and design goals, and how we can leverage them to improve our codebase.
+## Key Java 21 Features
 
-## Key Java 21 Features for Rinna
+### 1. Record Classes
 
-### 1. Record Patterns (JEP 440)
+Records provide a compact syntax for classes that are primarily data carriers:
 
-**Benefit:** Enhanced pattern matching for records to simplify data extraction and transformation.
-
-**Applications in Rinna:**
-- Processing work item data across architectural boundaries
-- Simplifying data transformation in the adapter layer
-- Creating clean, concise DTO structures
-
-**Example:**
 ```java
 // Before Java 21
-if (item instanceof DefaultWorkItem) {
-    DefaultWorkItem defaultItem = (DefaultWorkItem) item;
-    UUID id = defaultItem.getId();
-    String title = defaultItem.getTitle();
-    // Use id and title
+public class WorkItemDTO {
+    private final UUID id;
+    private final String title;
+    private final WorkItemType type;
+    private final WorkflowState status;
+    
+    // Constructor, getters, equals, hashCode, toString...
 }
 
-// With Java 21 record patterns
-if (item instanceof DefaultWorkItem(UUID id, String title, var description, var type, var status, var priority, var assignee, var createdAt, var updatedAt, var parentId)) {
-    // Use id and title directly
+// With Java 21 records
+public record WorkItemDTO(
+    UUID id,
+    String title,
+    WorkItemType type,
+    WorkflowState status
+) {
+    // Factory methods and additional behavior only
 }
 ```
 
-### 2. Pattern Matching for Switch (JEP 441)
+Records are used for:
+- Data Transfer Objects (DTOs)
+- Value Objects
+- Command/Request Objects
+- Response Objects
 
-**Benefit:** More expressive, safer switch statements that work well with class hierarchies and reduce boilerplate.
+### 2. Pattern Matching for Switch
 
-**Applications in Rinna:**
-- Handling different work item types
-- Processing workflow state transitions
-- Implementing command pattern for CLI operations
+Pattern matching simplifies conditional logic by combining type checking and destructuring:
 
-**Example:**
 ```java
 // Before Java 21
-WorkflowState nextState;
-if (currentState == WorkflowState.FOUND) {
-    nextState = WorkflowState.TRIAGED;
-} else if (currentState == WorkflowState.TRIAGED) {
-    nextState = WorkflowState.TODO;
-} else if (currentState == WorkflowState.TODO) {
-    nextState = WorkflowState.IN_PROGRESS;
-} else {
-    nextState = currentState;
+String getWorkItemSummary(Object item) {
+    if (item instanceof DefaultWorkItem) {
+        DefaultWorkItem workItem = (DefaultWorkItem) item;
+        if (workItem.getType() == WorkItemType.BUG && workItem.getPriority() == Priority.HIGH) {
+            return "High priority bug: " + workItem.getTitle() + " (" + workItem.getId() + ")";
+        } else if (workItem.getType() == WorkItemType.FEATURE) {
+            return "Feature: " + workItem.getTitle() + " (" + workItem.getId() + ")";
+        } else {
+            return "Work item: " + workItem.getTitle() + " (" + workItem.getId() + ")";
+        }
+    }
+    return "Unknown item type";
 }
 
-// With Java 21 pattern matching for switch
-WorkflowState nextState = switch (currentState) {
-    case FOUND -> WorkflowState.TRIAGED;
-    case TRIAGED -> WorkflowState.TODO;
-    case TODO -> WorkflowState.IN_PROGRESS;
-    case IN_PROGRESS -> WorkflowState.IN_TEST;
-    case IN_TEST -> WorkflowState.DONE;
-    case DONE -> WorkflowState.DONE;
-};
+// With Java 21 pattern matching
+String getWorkItemSummary(Object item) {
+    return switch (item) {
+        case DefaultWorkItem(var id, var title, _, WorkItemType.BUG, var status, Priority.HIGH, var assignee, _, _, _) -> 
+            STR."High priority bug: \{title} (\{id}, assigned to \{assignee}, status: \{status})";
+            
+        case DefaultWorkItem(var id, var title, _, WorkItemType.FEATURE, _, _, var assignee, _, _, _) -> 
+            STR."Feature: \{title} (\{id}, assigned to \{assignee})";
+            
+        case DefaultWorkItem(var id, var title, _, _, _, _, _, _, _, _) -> 
+            STR."Work item: \{title} (\{id})";
+            
+        default -> "Unknown item type";
+    };
+}
 ```
 
-### 3. Virtual Threads (JEP 444)
+### 3. Virtual Threads
 
-**Benefit:** Lightweight concurrency with minimal resource usage, ideal for I/O-bound operations.
+Virtual threads enable high concurrency with minimal resources:
 
-**Applications in Rinna:**
-- Processing multiple work items concurrently
-- Handling parallel database operations
-- Improving CLI responsiveness
-
-**Example:**
 ```java
+// Before Java 21 (thread pools)
+ExecutorService executor = Executors.newFixedThreadPool(100);
+try {
+    for (UUID id : itemIds) {
+        executor.submit(() -> processWorkItem(id));
+    }
+} finally {
+    executor.shutdown();
+}
+
 // With Java 21 virtual threads
 try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-    for (WorkItem item : items) {
-        executor.submit(() -> {
-            processWorkItem(item);
-        });
+    for (UUID id : itemIds) {
+        executor.submit(() -> processWorkItem(id));
     }
 }
 ```
 
-### 4. Sequenced Collections (JEP 431)
+Virtual threads are used for:
+- Concurrent processing of work items
+- Asynchronous database operations
+- Parallel API calls
+- Background tasks
 
-**Benefit:** Unified API for working with collections that have a defined encounter order.
+### 4. String Templates
 
-**Applications in Rinna:**
-- Managing ordered lists of work items
-- Tracking workflow transition history
-- Implementing priority queues for work management
+String templates make text formatting more concise and readable:
 
-**Example:**
-```java
-// With Java 21 sequenced collections
-SequencedCollection<WorkItem> workItems = getWorkItemsInPriorityOrder();
-WorkItem highestPriority = workItems.getFirst();
-WorkItem lowestPriority = workItems.getLast();
-```
-
-### 5. String Templates (JEP 430)
-
-**Benefit:** More readable, maintainable string formatting with integrated expressions.
-
-**Applications in Rinna:**
-- CLI output formatting
-- Error message generation
-- Log message standardization
-
-**Example:**
 ```java
 // Before Java 21
-String message = String.format("Transitioned work item %s from %s to %s", 
-    item.getId(), currentState, targetState);
+String report = String.format("Daily Report\nTotal: %d\nCompleted: %d (%.1f%%)",
+    totalItems, completedItems, (double) completedItems / totalItems * 100);
 
 // With Java 21 string templates
-String message = STR."Transitioned work item \{item.getId()} from \{currentState} to \{targetState}";
+String report = STR."""
+    Daily Report
+    Total: \{totalItems}
+    Completed: \{completedItems} (\{(double) completedItems / totalItems * 100:.1f}%)
+    """;
 ```
 
-### 6. Unnamed Patterns and Variables (JEP 443)
+String templates are used for:
+- Logging messages
+- Report generation
+- Error messages
+- User-facing text
 
-**Benefit:** Reduced boilerplate when only some values are needed.
+### 5. Sealed Classes
 
-**Applications in Rinna:**
-- Simplifying data extraction
-- Cleaner pattern matching
-- Reduced noise in adapter layer code
+Sealed classes define closed hierarchies of types:
 
-**Example:**
 ```java
-// With Java 21 unnamed patterns
-if (item instanceof DefaultWorkItem(var id, var title, _, _, var status, _, _, _, _, _)) {
-    // Only use id, title, and status
+// With Java 21 sealed classes
+public sealed interface WorkflowCommand permits 
+    CreateWorkItemCommand, 
+    UpdateWorkItemCommand, 
+    TransitionWorkItemCommand, 
+    DeleteWorkItemCommand {
+    
+    UUID getItemId();
+}
+
+public record CreateWorkItemCommand(
+    UUID itemId,
+    String title,
+    WorkItemType type
+) implements WorkflowCommand {}
+
+// Other implementations...
+```
+
+Sealed classes are used for:
+- Command hierarchies
+- Event hierarchies
+- Domain-specific type hierarchies
+- State representations
+
+### 6. Sequenced Collections
+
+Sequenced collections provide a unified API for ordered collections:
+
+```java
+// With Java 21 sequenced collections
+SequencedSet<WorkflowTransition> transitions = new LinkedHashSet<>();
+
+// Get first and last elements
+WorkflowTransition first = transitions.getFirst();
+WorkflowTransition last = transitions.getLast();
+
+// Get reversed view
+SequencedSet<WorkflowTransition> reversed = transitions.reversed();
+```
+
+## Implementation Strategy
+
+### Phases of Adoption
+
+We're implementing Java 21 features in the following order:
+1. Records and Sealed Classes (immediate benefits for domain model)
+2. Pattern Matching (cleaner conditional logic)
+3. String Templates (improved formatting)
+4. Virtual Threads (performance improvements)
+5. Sequenced Collections (API enhancements)
+
+### Code Style Guidelines
+
+When using Java 21 features:
+1. Use records for immutable data carriers
+2. Prefer pattern matching for type-based conditionals
+3. Use string templates for complex text formatting
+4. Consider virtual threads for I/O-bound operations
+5. Use sealed interfaces/classes for closed type hierarchies
+
+## Examples from Rinna Codebase
+
+### Record-Based DTOs
+
+```java
+public record WorkItemDTO(
+    UUID id,
+    String title,
+    String description,
+    WorkItemType type,
+    WorkflowState status,
+    Priority priority,
+    String assignee,
+    Instant createdAt,
+    Instant updatedAt,
+    Optional<UUID> parentId
+) {
+    // Factory method to create from domain entity
+    public static WorkItemDTO fromEntity(WorkItem item) {
+        return new WorkItemDTO(
+            item.getId(),
+            item.getTitle(),
+            item.getDescription(),
+            item.getType(),
+            item.getStatus(),
+            item.getPriority(),
+            item.getAssignee(),
+            item.getCreatedAt(),
+            item.getUpdatedAt(),
+            item.getParentId()
+        );
+    }
+    
+    // Convert back to domain entity
+    public DefaultWorkItem toEntity() {
+        return new DefaultWorkItem(
+            id, title, description, type, status, 
+            priority, assignee, createdAt, updatedAt, parentId.orElse(null)
+        );
+    }
 }
 ```
 
-## Integration Strategy
+### Pattern Matching for Switch
 
-### 1. Phased Adoption
+```java
+public class WorkflowCommandHandler {
+    public WorkItem handleCommand(WorkflowCommand command) {
+        return switch (command) {
+            case CreateWorkItemCommand c -> 
+                itemService.createWorkItem(new WorkItemCreateRequest(
+                    c.title(), c.description(), c.type(), c.priority(), c.assignee()));
+                    
+            case UpdateWorkItemCommand u -> 
+                itemService.updateWorkItem(u.itemId(), 
+                    u.title().orElse(null), 
+                    u.description().orElse(null),
+                    u.priority().orElse(null),
+                    u.assignee().orElse(null));
+                    
+            case TransitionWorkItemCommand t -> 
+                workflowService.transition(t.itemId(), t.targetState());
+                
+            case DeleteWorkItemCommand d -> {
+                itemService.deleteWorkItem(d.itemId());
+                yield null;
+            }
+        };
+    }
+}
+```
 
-We'll implement Java 21 features in the following order:
-
-1. **Pattern Matching & Records:** Immediate adoption for cleaner code
-2. **Sequenced Collections:** Refactor collection handling
-3. **String Templates:** Improve output formatting
-4. **Virtual Threads:** Enhance concurrency where applicable
-
-### 2. Updates to Design and Implementation Guidelines
-
-- Document patterns for using these features consistently
-- Update code review guidelines
-- Create examples in documentation
-
-### 3. Testing Strategy
-
-- Unit tests with specific cases for pattern matching
-- Performance benchmarks for virtual threads
-- Comparative analysis before/after adoption
-
-## Alignment with Architecture
-
-These Java 21 features align perfectly with our Clean Architecture approach:
-
-- **Domain Layer:** Records for value objects, Sealed classes for clearer modeling
-- **Use Cases:** Pattern matching for business logic, Virtual threads for concurrent processing
-- **Adapters:** String templates for external interfaces, Records for DTOs
-- **Frameworks:** Virtual threads for I/O operations
-
-## Impact on Developer Experience
-
-Adopting these Java 21 features directly supports our developer-centric philosophy:
-
-1. **Less Boilerplate:** More focus on business logic
-2. **Clearer Intent:** Pattern matching makes code more readable
-3. **Enhanced Productivity:** Simplified syntax for common operations
-4. **Modern Codebase:** Attracts and retains talented developers
-
-## Next Steps
-
-1. Update code style guidelines to incorporate Java 21 features
-2. Create branch with example refactorings
-3. Prepare knowledge-sharing sessions on key features
-4. Incrementally adopt features in new code and refactorings
+These examples demonstrate how Java 21 features make Rinna's codebase more expressive, concise, and maintainable while adhering to Clean Architecture principles.

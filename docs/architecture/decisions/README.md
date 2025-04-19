@@ -43,6 +43,8 @@ Here's a chronological list of all ADRs:
 | [ADR-0006](0006-implement-comprehensive-testing-pyramid-strategy.md) | Implement Comprehensive Testing Pyramid Strategy | Accepted |
 | [ADR-0007](0007-establish-security-compliance-framework.md) | Establish Security Compliance Framework | Accepted |
 | [ADR-0008](0008-establish-task-prioritization-framework-with-tdd-first-approach.md) | Establish Task Prioritization Framework with TDD-First Approach | Proposed |
+| [ADR-0009](0009-implement-oauth-integration-for-third-party-services.md) | Implement OAuth Integration for Third-Party Services | Proposed |
+| [ADR-0010](0010-unified-work-management-for-all-work-types.md) | Unified Work Management for All Work Types | Proposed |
 
 ## Statuses
 
@@ -51,3 +53,20 @@ Here's a chronological list of all ADRs:
 - **Rejected**: The ADR was rejected, and the decision will not be implemented
 - **Deprecated**: The ADR was once accepted but is no longer relevant
 - **Superseded**: The ADR was accepted but has been replaced by a newer decision (link to the new ADR)
+
+## Directory Structure
+
+The Architecture Decision Records are part of the project documentation structure:
+
+```
+docs/
+├── architecture/
+│   ├── decisions/
+│   │   ├── 0001-record-architecture-decisions.md
+│   │   ├── 0002-automated-c4-architecture-diagrams.md
+│   │   └── ...
+│   └── ... (other architecture documentation)
+└── ... (other project documentation)
+```
+
+This structure aligns our documentation with standard practices for technical projects, placing architectural decisions within the broader context of our system architecture documentation.

@@ -1,0 +1,263 @@
+# Reporting and Analytics in Rinna
+
+This document covers Rinna's reporting and analytics capabilities, including built-in reports, dashboard features, and custom reporting options.
+
+## Basic Statistics
+
+View quick statistics about your project with the `stats` command:
+
+```bash
+# Show summary statistics
+rin stats
+
+# Show statistics dashboard with visualizations
+rin stats dashboard
+
+# Show all available statistics
+rin stats all
+```
+
+## Distribution Reports
+
+View the distribution of work items across different dimensions:
+
+```bash
+# Show item distributions with charts
+rin stats distribution
+
+# Show distribution by status
+rin stats distribution --by-status
+
+# Show distribution by type
+rin stats distribution --by-type
+
+# Show distribution by assignee
+rin stats distribution --by-assignee
+
+# Show distribution by priority
+rin stats distribution --by-priority
+```
+
+## Detailed Metrics
+
+Drill down into specific metric areas:
+
+```bash
+# Show detailed completion metrics
+rin stats detail completion
+
+# Show detailed workflow metrics
+rin stats detail workflow
+
+# Show detailed priority metrics
+rin stats detail priority
+
+# Show detailed assignment metrics
+rin stats detail assignments
+```
+
+## Performance Metrics
+
+Track velocity, throughput, and other performance indicators:
+
+```bash
+# View team velocity
+rin metrics velocity --team frontend-team
+
+# Track throughput over time
+rin metrics throughput --period last-30-days
+
+# View cycle time metrics
+rin metrics cycle-time
+
+# View lead time metrics
+rin metrics lead-time
+```
+
+## Report Generation
+
+Generate comprehensive reports for different stakeholders:
+
+```bash
+# Generate default report
+rin report generate
+
+# Generate specific report type
+rin report generate --type=summary
+rin report generate --type=burndown
+rin report generate --type=velocity
+rin report generate --type=backlog
+
+# Configure report format
+rin report generate --type=summary --format=pdf
+rin report generate --type=burndown --format=html
+```
+
+## Critical Path Analysis
+
+Analyze dependencies and critical paths in your project:
+
+```bash
+# View critical path for the project
+rin path
+
+# Identify bottlenecks
+rin path --bottlenecks
+
+# View critical path for a specific release
+rin path --release RELEASE-456
+
+# Generate critical path visualization
+rin path --graph --output critical-path.png
+```
+
+## Dashboards
+
+Rinna provides interactive dashboards for real-time monitoring:
+
+```bash
+# View default dashboard
+rin dashboard
+
+# View specialized dashboards
+rin dashboard project
+rin dashboard team --team frontend-team
+rin dashboard release --release RELEASE-456
+
+# Configure custom dashboard
+rin dashboard create my-dashboard \
+  --widgets "burndown,velocity,blockers,status-distribution"
+```
+
+## Scheduled Reports
+
+Configure reports to run automatically:
+
+```bash
+# Schedule a weekly report
+rin schedule report --type=weekly --day=friday --recipients "team@example.com"
+
+# Schedule a monthly report
+rin schedule report --type=monthly --day=1 --format=pdf
+```
+
+## Custom Reports
+
+Create tailored reports for your specific needs:
+
+```bash
+# Custom report with specific parameters
+rin report custom --filter "priority=HIGH" --group-by "type" --sort "state"
+
+# Custom report for a specific view
+rin report custom --view "high-priority-bugs" --format "excel"
+
+# Define a report template
+rin report template create weekly-status \
+  --query "SELECT type, state, COUNT(*) FROM workitems GROUP BY type, state"
+```
+
+## Export Options
+
+Export reports and data in various formats:
+
+```bash
+# Export report as PDF
+rin report generate --type=summary --format=pdf --output report.pdf
+
+# Export data as CSV
+rin report export --query "status=DONE" --format=csv --output done-items.csv
+
+# Export data as JSON
+rin report export --query "type=BUG" --format=json --output bugs.json
+```
+
+## Integration with External Tools
+
+Connect Rinna's reporting capabilities with external systems:
+
+```bash
+# Export to PowerBI
+rin report export --format=powerbi --connection "powerbi-connection"
+
+# Configure webhook for reports
+rin config reporting --webhook-url "https://example.com/reporting-webhook"
+```
+
+## Report Templates
+
+Rinna includes several predefined report templates:
+
+### Project Summary
+
+```bash
+rin report generate --type=summary
+```
+
+Provides an overview of the project including:
+- Total work items by type
+- Status distribution
+- Recent activity
+- Upcoming deadlines
+- Blocked items
+
+### Burndown Chart
+
+```bash
+rin report generate --type=burndown
+```
+
+Shows progress toward completion:
+- Remaining work over time
+- Ideal burndown line
+- Projection to completion
+- Scope changes
+
+### Velocity Report
+
+```bash
+rin report generate --type=velocity
+```
+
+Displays team velocity metrics:
+- Story points or items completed per period
+- Trend line
+- Comparison to previous periods
+- Capacity utilization
+
+### Backlog Health
+
+```bash
+rin report generate --type=backlog
+```
+
+Assesses backlog quality:
+- Prioritization level
+- Estimation completeness
+- Backlog depth
+- Item age analysis
+
+## Command-Line Interface Integration
+
+Reports can be integrated into CLI workflows:
+
+```bash
+# Generate a report and email it
+rin report generate --type=summary | rin email --to "team@example.com" --subject "Weekly Report"
+
+# Filter and report on specific items
+rin grep "payment" | rin report custom
+
+# Chain commands for complex reporting
+rin list --type=BUG | rin stats | rin report custom --format=md > bug-report.md
+```
+
+## Best Practices
+
+1. **Regular Reporting Cadence**: Establish a consistent schedule for generating and reviewing reports
+2. **Focus on Actionable Metrics**: Track metrics that drive actions and decisions
+3. **Combine Quantitative and Qualitative**: Use both numerical metrics and narrative context
+4. **Share Reports Widely**: Make reports accessible to all team members for transparency
+5. **Iterate on Metrics**: Continuously refine what you measure based on project needs
+
+For more advanced analytics on multi-team projects, see [Multi-Team Usage](multi-team.md).

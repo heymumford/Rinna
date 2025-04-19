@@ -11,11 +11,11 @@ The architecture is documented using the [C4 model](https://c4model.com/) approa
 3. **Component Diagram**: Shows how containers are composed of components
 4. **Code Diagram**: Shows how components are implemented as code
 
-These diagrams are automatically generated during the build process and stored in the [diagrams](../diagrams) directory.
+These diagrams are automatically generated during the build process and stored in the `diagrams` directory.
 
 ### Viewing the Latest Diagrams
 
-The latest generated diagrams can be found in the [diagrams directory](../diagrams/README.md).
+The latest generated diagrams can be found in the `diagrams/README.md` file.
 
 ### Generating Diagrams
 
@@ -39,7 +39,7 @@ For more options:
 
 ## Architecture Decision Records
 
-Important architectural decisions are documented as Architecture Decision Records (ADRs) in the [decisions](./decisions) directory.
+Important architectural decisions are documented as Architecture Decision Records (ADRs) in the `decisions` directory.
 
 Key architectural decisions:
 
@@ -68,6 +68,6 @@ The Rinna project follows these key design principles:
 
 For more detailed implementation information, see:
 
-- [Development Approach](../development/design-approach.md)
-- [Package Structure](../development/package-structure.md)
-- [API Design](../development/api-design.md)
+- [Development Approach](/docs/development/design-approach.md)
+- [Package Structure](/docs/development/package-structure.md)
+- [API Design](/docs/development/api-design.md)

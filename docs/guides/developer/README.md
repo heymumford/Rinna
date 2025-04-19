@@ -1,144 +1,45 @@
-<!-- Copyright (c) 2025 [Eric C. Mumford](https://github.com/heymumford) [@heymumford] -->
+# Rinna Developer Guide
 
-# Rinna Development Guide
+Welcome to the Rinna developer documentation! This guide will help you set up your development environment, understand the architecture, and contribute to the Rinna project.
 
-## Architecture and Design
+## Quick Links
 
-Rinna follows a clean architecture approach:
+- [Getting Started](getting-started.md) - Environment setup and first steps
+- [Architecture](architecture.md) - Clean Architecture implementation and design decisions
+- [Build System](build-system.md) - Understanding the build tools and workflows
+- [Testing](testing.md) - Testing strategies and running tests
+- [Java 21 Features](java21-features.md) - Modern Java features used in Rinna
+- [Version Management](version-management.md) - How versioning works across languages
+- [Contributing](contributing.md) - Guidelines for contributing to Rinna
 
-- **Core**: Domain logic and business rules
-- **Model**: Domain entities (Goal, Feature, Bug, Chore)
-- **Service**: Business services managing workflow and releases
-- **DB**: Data persistence layer
-- **CLI**: Command-line interface
-- **Util**: Utility classes
+## Key Concepts
 
-For our overall implementation approach and design decisions, see:
+Rinna is a polyglot workflow management system built on Clean Architecture principles:
 
-- [Design Approach](design-approach.md) - Our phased implementation strategy
-- [Architecture](architecture.md) - Detailed system architecture
-- [Package Refactoring](package-refactoring.md) - Guide for the com.rinna to org.rinna package migration
-- [Dependency Management](dependency-management.md) - How we prevent circular dependencies
+- **Polyglot Implementation**: Java (domain model), Go (API), and Python (utilities)
+- **Domain-Driven Design**: Focus on the core workflow domain model
+- **Clean Architecture**: Clear separation between domain, use cases, and infrastructure
+- **Developer-Centric**: Tools designed for software engineers' daily workflows
 
-## Java 21 Adoption
+## Development Philosophy
 
-Rinna leverages modern Java 21 features to enhance our codebase. See these resources:
+Rinna follows these core principles:
 
-- [Java 21 Features](java21-features.md) - Overview of Java 21 features we're using
-- [Java 21 Code Examples](java21-examples.md) - Concrete code examples using Java 21
-- [Java 21 Implementation Plan](java21-implementation-plan.md) - Our phased approach to Java 21 adoption
+1. **Developer-Centric**: Tools and workflows are optimized for the developer experience
+2. **Clarity**: All components and interfaces have clear, explicit definitions
+3. **Immutability**: Core entities follow immutable data patterns
+4. **Explicit Flow**: Workflow transitions are clearly defined and enforced
+5. **Modern Language Features**: Leveraging Java 21, Go, and Python for expressiveness
 
-## Development Setup
+## Getting Help
 
-```bash
-# Clone the repository
-git clone https://github.com/heymumford/rinna.git
+If you encounter issues or have questions:
 
-# Build the project
-cd rinna
-mvn clean install
+1. Check the existing documentation and troubleshooting guides
+2. Review GitHub Issues for similar problems
+3. Join our developer community on Discord
+4. Contact the maintainers via [support@rinnacloud.com](mailto:support@rinnacloud.com)
 
-# Make scripts executable
-chmod +x bin/rin bin/rin-version
-```
+## Next Steps
 
-## Code Style Guidelines
-
-- **Java**: Follow Oracle Java style guide
-- **Naming**: CamelCase for classes, lowerCamelCase for methods/variables
-- **Imports**: Group and order: java.*, javax.*, org.*, com.*
-- **Formatting**: 4-space indentation, 100 char line limit
-- **Error Handling**: Use explicit exceptions with meaningful messages
-- **Types**: Prefer immutable objects, use interfaces for declarations
-- **Documentation**: JavaDoc for all public methods and classes
-- **Testing**: BDD tests for high-level features, JUnit for unit tests
-- **Java 21 Features**:
-  - Use records for DTOs and value objects
-  - Prefer pattern matching for type-based conditionals
-  - Use sealed classes for closed hierarchies
-  - Apply string templates for complex string formatting
-  - Utilize virtual threads for I/O-bound operations
-
-## Development Workflow
-
-Use the Rinna CLI tool for simplified build and test management:
-
-```bash
-# Clean, build, and test the project
-bin/rin all
-
-# Run tests with verbose output
-bin/rin -v test
-
-# Build with errors-only output
-bin/rin -e build
-```
-
-### Version Management
-
-Rinna uses semantic versioning and provides a comprehensive version management system via the `bin/rin-version` tool:
-
-```bash
-# Display version information
-bin/rin-version current
-
-# Bump version after bug fixes
-bin/rin-version patch
-
-# Bump version after adding features
-bin/rin-version minor
-
-# Verify version consistency
-bin/rin-version verify
-```
-
-For detailed information about our versioning strategy and workflows, see:
-- [Version Management Guide](version-management.md) - Complete documentation of our versioning approach
-
-### Common Build Operations
-
-Our project uses Maven for build operations. The `bin/rin` tool provides a convenient interface to these commands:
-
-| Operation | Rin Command | Maven Command |
-|-----------|-------------|---------------|
-| Clean | `bin/rin clean` | `mvn clean` |
-| Compile | `bin/rin build` | `mvn compile` |
-| Test | `bin/rin test` | `mvn test` |
-| Package | `bin/rin build` | `mvn package` |
-| Run all checks | `bin/rin all` | `mvn verify` |
-| Generate docs | - | `mvn site` |
-| Static analysis | - | `mvn verify` |
-
-## Adding Features
-
-1. Create domain models in `org.rinna.model`
-2. Implement business logic in `org.rinna.service`
-3. Add persistence in `org.rinna.db`
-4. Extend CLI commands in `org.rinna.cli`
-5. Write tests in `src/test/java/org/rinna`
-6. Add Cucumber scenarios in `src/test/resources/features`
-
-## Testing
-
-We use both JUnit and Cucumber for testing:
-
-```bash
-# Run all tests
-bin/rin test
-
-# Run tests with full output
-bin/rin -v test
-```
-
-## Contributing
-
-Before submitting your code:
-
-1. Ensure all tests pass
-2. Verify code follows the style guidelines
-3. Run static analysis tools
-   ```bash
-   ./mvnw verify
-   ```
-4. Add appropriate documentation
-5. Create a detailed pull request
+Start with the [Getting Started](getting-started.md) guide to set up your development environment, then explore the architecture and key components to understand how Rinna works.
