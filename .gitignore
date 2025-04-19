@@ -6,10 +6,33 @@
 *.log
 
 ### Node.js/Antora ###
+# Dependencies
 node_modules/
-npm-debug.log
-yarn-error.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.pnp/
+.pnp.js
+package-lock.json
+yarn.lock
+.npm
+
+# Antora specific
 .cache/
+build/site/
+public/
+_site/
+.DS_Store
+
+# Antora runtime and logs
+.yarnrc
+.github/.DS_Store
+.anthology
+.asciidoctor/
+.eslintcache
+.node-version
+.tool-versions
 
 ### Java ###
 # Compiled class files
@@ -123,6 +146,17 @@ out/
 
 # Mac OS
 .DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
 
 # Windows
 Thumbs.db
