@@ -29,6 +29,10 @@ if [ ! -d "node_modules" ]; then
     npm install
 fi
 
+# Copy branding assets
+echo "Copying branding assets..."
+./copy-branding.sh
+
 # Build documentation
 echo "Building documentation..."
 npm run docs
@@ -46,4 +50,3 @@ echo "Rinna branding has been integrated into all documentation components."
 echo "Press Ctrl+C to stop the server"
 
 npm run docs:serve
-

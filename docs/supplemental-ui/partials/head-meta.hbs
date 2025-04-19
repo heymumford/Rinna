@@ -1,0 +1,13 @@
+<link rel="icon" href="{{siteRootPath}}/_/img/rinna-favicon.png" type="image/png">
+
+<!-- Fix search functionality errors -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Add safety wrapper for null element errors
+  window.antoraSearch = window.antoraSearch || {};
+  window.antoraSearch.initSearch = window.antoraSearch.initSearch || function(lunr, data) {
+    console.log('Search initialization defined');
+    window.antoraLunrIndex = data;
+  };
+});
+</script>

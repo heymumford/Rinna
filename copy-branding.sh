@@ -5,23 +5,33 @@ mkdir -p docs/antora/modules/ROOT/assets/images
 mkdir -p java/docs/antora/modules/ROOT/assets/images
 mkdir -p python/docs/antora/modules/ROOT/assets/images
 mkdir -p go/docs/antora/modules/ROOT/assets/images
+mkdir -p docs/supplemental-ui/img
 
-# Copy logo files
-cp "creative/assets/PNG Logo Files/Transparent Logo.png" docs/antora/modules/ROOT/assets/images/rinna-logo.png
-cp "creative/assets/PNG Logo Files/Original Logo Symbol.png" docs/antora/modules/ROOT/assets/images/rinna-symbol.png
-cp "creative/assets/Favicon/Wordpress Transparent.png" docs/antora/modules/ROOT/assets/images/rinna-favicon.png
+# Copy logo files to supplemental UI (don't use symlinks)
+cp "$(pwd)/creative/assets/PNG Logo Files/Transparent Logo.png" docs/supplemental-ui/img/rinna-logo.png
+cp "$(pwd)/creative/assets/PNG Logo Files/Original Logo Symbol.png" docs/supplemental-ui/img/rinna-symbol.png
+cp "$(pwd)/creative/assets/Favicon/Wordpress Transparent.png" docs/supplemental-ui/img/rinna-favicon.png
 
-# Copy to component directories
-cp docs/antora/modules/ROOT/assets/images/rinna-logo.png java/docs/antora/modules/ROOT/assets/images/
-cp docs/antora/modules/ROOT/assets/images/rinna-symbol.png java/docs/antora/modules/ROOT/assets/images/
-cp docs/antora/modules/ROOT/assets/images/rinna-favicon.png java/docs/antora/modules/ROOT/assets/images/
+# Create symbolic links to logo files in module directories
+ln -sf "$(pwd)/creative/assets/PNG Logo Files/Transparent Logo.png" docs/antora/modules/ROOT/assets/images/rinna-logo.png
+ln -sf "$(pwd)/creative/assets/PNG Logo Files/Transparent Logo.png" docs/antora/modules/ROOT/assets/images/rinna_logo.png
+ln -sf "$(pwd)/creative/assets/PNG Logo Files/Original Logo Symbol.png" docs/antora/modules/ROOT/assets/images/rinna-symbol.png
+ln -sf "$(pwd)/creative/assets/Favicon/Wordpress Transparent.png" docs/antora/modules/ROOT/assets/images/rinna-favicon.png
 
-cp docs/antora/modules/ROOT/assets/images/rinna-logo.png python/docs/antora/modules/ROOT/assets/images/
-cp docs/antora/modules/ROOT/assets/images/rinna-symbol.png python/docs/antora/modules/ROOT/assets/images/
-cp docs/antora/modules/ROOT/assets/images/rinna-favicon.png python/docs/antora/modules/ROOT/assets/images/
+# Create symbolic links to component directories
+ln -sf "$(pwd)/creative/assets/PNG Logo Files/Transparent Logo.png" java/docs/antora/modules/ROOT/assets/images/rinna-logo.png
+ln -sf "$(pwd)/creative/assets/PNG Logo Files/Transparent Logo.png" java/docs/antora/modules/ROOT/assets/images/rinna_logo.png
+ln -sf "$(pwd)/creative/assets/PNG Logo Files/Original Logo Symbol.png" java/docs/antora/modules/ROOT/assets/images/rinna-symbol.png
+ln -sf "$(pwd)/creative/assets/Favicon/Wordpress Transparent.png" java/docs/antora/modules/ROOT/assets/images/rinna-favicon.png
 
-cp docs/antora/modules/ROOT/assets/images/rinna-logo.png go/docs/antora/modules/ROOT/assets/images/
-cp docs/antora/modules/ROOT/assets/images/rinna-symbol.png go/docs/antora/modules/ROOT/assets/images/
-cp docs/antora/modules/ROOT/assets/images/rinna-favicon.png go/docs/antora/modules/ROOT/assets/images/
+ln -sf "$(pwd)/creative/assets/PNG Logo Files/Transparent Logo.png" python/docs/antora/modules/ROOT/assets/images/rinna-logo.png
+ln -sf "$(pwd)/creative/assets/PNG Logo Files/Transparent Logo.png" python/docs/antora/modules/ROOT/assets/images/rinna_logo.png
+ln -sf "$(pwd)/creative/assets/PNG Logo Files/Original Logo Symbol.png" python/docs/antora/modules/ROOT/assets/images/rinna-symbol.png
+ln -sf "$(pwd)/creative/assets/Favicon/Wordpress Transparent.png" python/docs/antora/modules/ROOT/assets/images/rinna-favicon.png
 
-echo "Branding assets copied successfully!"
+ln -sf "$(pwd)/creative/assets/PNG Logo Files/Transparent Logo.png" go/docs/antora/modules/ROOT/assets/images/rinna-logo.png
+ln -sf "$(pwd)/creative/assets/PNG Logo Files/Transparent Logo.png" go/docs/antora/modules/ROOT/assets/images/rinna_logo.png
+ln -sf "$(pwd)/creative/assets/PNG Logo Files/Original Logo Symbol.png" go/docs/antora/modules/ROOT/assets/images/rinna-symbol.png
+ln -sf "$(pwd)/creative/assets/Favicon/Wordpress Transparent.png" go/docs/antora/modules/ROOT/assets/images/rinna-favicon.png
+
+echo "Branding assets linked successfully!"

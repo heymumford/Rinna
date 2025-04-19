@@ -11,7 +11,7 @@ asciidoc:
     idprefix: ''
     idseparator: '-'
     experimental: ''
-    rinna-logo: image:rinna-logo.png[Rinna,200]
+    rinna-logo: image:rinna_logo.png[Rinna,width=200]
     rinna-symbol: image:rinna-symbol.png[Rinna Symbol,50]
     id: ''
     env-site: 'true'
