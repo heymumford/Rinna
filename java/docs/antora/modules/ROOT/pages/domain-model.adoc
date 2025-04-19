@@ -1,0 +1,257 @@
+= Domain Model
+:description: Domain model of the Java component in Rinna
+
+This document describes the domain model implemented in the Java component of Rinna.
+
+== Core Entities
+
+=== Work Item
+
+The `WorkItem` is the central entity representing a unit of work:
+
+[source,java]
+----
+public class WorkItem {
+    private final String id;
+    private final String title;
+    private final WorkItemType type;
+    private WorkflowState state;
+    private Priority priority;
+    private String assignee;
+    private String description;
+    private List<Comment> comments;
+    private Map<String, String> metadata;
+    
+    // Constructor, methods...
+}
+----
+
+=== Project
+
+The `Project` entity represents a collection of work items:
+
+[source,java]
+----
+public class Project {
+    private final String id;
+    private final String key;
+    private String name;
+    private String description;
+    private Set<String> workItemIds;
+    
+    // Constructor, methods...
+}
+----
+
+=== Release
+
+The `Release` entity represents a version of the software:
+
+[source,java]
+----
+public class Release {
+    private final String id;
+    private final String version;
+    private LocalDate releaseDate;
+    private ReleaseStatus status;
+    private Set<String> workItemIds;
+    
+    // Constructor, methods...
+}
+----
+
+== Value Objects
+
+=== Work Item Type
+
+[source,java]
+----
+public enum WorkItemType {
+    FEATURE,
+    BUG,
+    TASK,
+    EPIC
+}
+----
+
+=== Workflow State
+
+[source,java]
+----
+public enum WorkflowState {
+    BACKLOG,
+    TRIAGE,
+    TO_DO,
+    IN_PROGRESS,
+    IN_TEST,
+    DONE,
+    BLOCKED,
+    RELEASED
+}
+----
+
+=== Priority
+
+[source,java]
+----
+public enum Priority {
+    LOW,
+    MEDIUM,
+    HIGH,
+    CRITICAL
+}
+----
+
+=== Comment
+
+[source,java]
+----
+public class Comment {
+    private final String id;
+    private final String author;
+    private final LocalDateTime timestamp;
+    private final String text;
+    
+    // Constructor, methods...
+}
+----
+
+== Domain Services
+
+=== Work Item Service
+
+[source,java]
+----
+public interface ItemService {
+    WorkItem createWorkItem(WorkItemCreateRequest request);
+    WorkItem updateWorkItem(String id, WorkItemUpdateRequest request);
+    void deleteWorkItem(String id);
+    WorkItem getWorkItem(String id);
+    List<WorkItem> findWorkItems(WorkItemQuery query);
+}
+----
+
+=== Workflow Service
+
+[source,java]
+----
+public interface WorkflowService {
+    WorkItem transitionWorkItem(String id, WorkflowState targetState);
+    boolean canTransition(String id, WorkflowState targetState);
+    List<WorkflowState> getAvailableTransitions(String id);
+}
+----
+
+== Data Transfer Objects
+
+=== Work Item Create Request
+
+[source,java]
+----
+public class WorkItemCreateRequest {
+    private final String title;
+    private final WorkItemType type;
+    private Priority priority;
+    private String description;
+    private String assignee;
+    private Map<String, String> metadata;
+    
+    // Constructor, getters...
+}
+----
+
+=== Work Item Update Request
+
+[source,java]
+----
+public class WorkItemUpdateRequest {
+    private Optional<String> title;
+    private Optional<WorkItemType> type;
+    private Optional<Priority> priority;
+    private Optional<String> description;
+    private Optional<String> assignee;
+    private Optional<Map<String, String>> metadata;
+    
+    // Constructor, getters...
+}
+----
+
+== Repositories
+
+=== Item Repository
+
+[source,java]
+----
+public interface ItemRepository {
+    WorkItem findById(String id);
+    List<WorkItem> findAll(WorkItemQuery query);
+    WorkItem save(WorkItem item);
+    void delete(String id);
+}
+----
+
+=== Project Repository
+
+[source,java]
+----
+public interface ProjectRepository {
+    Project findById(String id);
+    Project findByKey(String key);
+    List<Project> findAll();
+    Project save(Project project);
+    void delete(String id);
+}
+----
+
+== Domain Events
+
+=== Work Item Created Event
+
+[source,java]
+----
+public class WorkItemCreatedEvent {
+    private final String workItemId;
+    private final String title;
+    private final WorkItemType type;
+    private final LocalDateTime timestamp;
+    
+    // Constructor, getters...
+}
+----
+
+=== Work Item State Changed Event
+
+[source,java]
+----
+public class WorkItemStateChangedEvent {
+    private final String workItemId;
+    private final WorkflowState oldState;
+    private final WorkflowState newState;
+    private final LocalDateTime timestamp;
+    private final String triggeredBy;
+    
+    // Constructor, getters...
+}
+----
+
+== Domain Relationships
+
+=== Work Item to Project
+
+* Each Work Item can belong to one Project
+* A Project can contain many Work Items
+
+=== Work Item to Release
+
+* Each Work Item can be assigned to one Release
+* A Release can contain many Work Items
+
+=== Work Item Dependencies
+
+* Work Items can have dependencies on other Work Items
+* Dependencies can be of different types (blocks, relates to, etc.)
+
+== See Also
+
+* xref:architecture.adoc[Architecture]
+* xref:api-reference.adoc[API Reference]

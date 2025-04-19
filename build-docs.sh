@@ -42,6 +42,8 @@ fi
 # Start server
 echo "Starting documentation server..."
 echo "Documentation will be available at: http://localhost:3000"
+echo "Rinna branding has been integrated into all documentation components."
 echo "Press Ctrl+C to stop the server"
 
 npm run docs:serve
+

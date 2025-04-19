@@ -1,0 +1,286 @@
+= Python Component Architecture
+:description: Architecture of the Python component in Rinna
+
+This document describes the architecture of the Python component in Rinna.
+
+== Overview
+
+The Python component provides data processing, report generation, and visualization capabilities for the Rinna system. It is designed to handle complex data analysis and produce rich reports in various formats.
+
+== Component Structure
+
+[source]
+----
+/python
+  /rinna              # Main package
+    /api              # API interfaces
+    /reports          # Report generators
+    /scripts          # Utility scripts
+----
+
+== Architecture
+
+The Python component follows a clean architecture pattern:
+
+[source]
+----
+                  +-------------------+
+                  |                   |
+                  |  External APIs    |
+                  |                   |
+                  +--------+----------+
+                           |
+                           v
+       +------------------+-----------------+
+       |                                    |
+       |            Services                |
+       | (Report Generation, Data Analysis) |
+       |                                    |
+       +------------------+-----------------+
+                          |
+                          v
+       +------------------+-----------------+
+       |                                    |
+       |            Adapters                |
+       | (Data Access, Formatters)          |
+       |                                    |
+       +------------------+-----------------+
+                          |
+                          v
+       +------------------+-----------------+
+       |                                    |
+       |          Infrastructure            |
+       | (Templating, Chart Generation)     |
+       |                                    |
+       +------------------+-----------------+
+----
+
+== Key Components
+
+=== Report Generation
+
+The report generation module creates reports in various formats:
+
+[source,python]
+----
+class ReportGenerator:
+    def __init__(self, template_engine, data_source):
+        self.template_engine = template_engine
+        self.data_source = data_source
+    
+    def generate_report(self, report_type, parameters, output_format='html'):
+        """
+        Generate a report of the specified type with the given parameters.
+        
+        Args:
+            report_type: Type of report to generate
+            parameters: Parameters for the report
+            output_format: Output format (html, pdf, docx)
+            
+        Returns:
+            The generated report content
+        """
+        # Get data for the report
+        data = self.data_source.get_data(report_type, parameters)
+        
+        # Get template for the report
+        template = self.template_engine.get_template(f"{report_type}.{output_format}.template")
+        
+        # Render the report
+        return template.render(data=data)
+----
+
+=== Data Analysis
+
+The data analysis module processes and analyzes data:
+
+[source,python]
+----
+class DataAnalyzer:
+    def __init__(self, data_source):
+        self.data_source = data_source
+    
+    def calculate_metrics(self, metric_type, parameters):
+        """
+        Calculate metrics based on the data.
+        
+        Args:
+            metric_type: Type of metric to calculate
+            parameters: Parameters for the calculation
+            
+        Returns:
+            The calculated metrics
+        """
+        # Get raw data
+        data = self.data_source.get_data(metric_type, parameters)
+        
+        # Calculate metrics
+        if metric_type == 'velocity':
+            return self._calculate_velocity(data)
+        elif metric_type == 'burndown':
+            return self._calculate_burndown(data)
+        elif metric_type == 'distribution':
+            return self._calculate_distribution(data)
+        else:
+            raise ValueError(f"Unknown metric type: {metric_type}")
+    
+    def _calculate_velocity(self, data):
+        # Implementation
+        pass
+    
+    def _calculate_burndown(self, data):
+        # Implementation
+        pass
+    
+    def _calculate_distribution(self, data):
+        # Implementation
+        pass
+----
+
+=== Visualization
+
+The visualization module creates charts and diagrams:
+
+[source,python]
+----
+class ChartGenerator:
+    def generate_chart(self, chart_type, data, parameters):
+        """
+        Generate a chart of the specified type.
+        
+        Args:
+            chart_type: Type of chart to generate
+            data: Data for the chart
+            parameters: Parameters for the chart
+            
+        Returns:
+            The generated chart as a PNG image
+        """
+        if chart_type == 'line':
+            return self._generate_line_chart(data, parameters)
+        elif chart_type == 'bar':
+            return self._generate_bar_chart(data, parameters)
+        elif chart_type == 'pie':
+            return self._generate_pie_chart(data, parameters)
+        else:
+            raise ValueError(f"Unknown chart type: {chart_type}")
+    
+    def _generate_line_chart(self, data, parameters):
+        # Implementation using matplotlib
+        pass
+    
+    def _generate_bar_chart(self, data, parameters):
+        # Implementation using matplotlib
+        pass
+    
+    def _generate_pie_chart(self, data, parameters):
+        # Implementation using matplotlib
+        pass
+----
+
+=== API Interface
+
+The API interface module provides a REST API for accessing reports:
+
+[source,python]
+----
+from fastapi import FastAPI, Depends, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class ReportRequest(BaseModel):
+    report_type: str
+    parameters: dict
+    output_format: str = "html"
+
+@app.post("/api/reports")
+def generate_report(request: ReportRequest):
+    try:
+        report_generator = get_report_generator()
+        report = report_generator.generate_report(
+            request.report_type,
+            request.parameters,
+            request.output_format
+        )
+        return {"content": report}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+----
+
+== Report Types
+
+The Python component supports various report types:
+
+=== Burndown Chart
+
+A chart showing the remaining work over time:
+
+[source]
+----
+     ^
+     |
+  W  |
+  o  |   \
+  r  |    \
+  k  |     \
+     |      \
+     |       \
+     |        \
+     +----------->
+       Time
+----
+
+=== Velocity Chart
+
+A chart showing the amount of work completed in each sprint:
+
+[source]
+----
+     ^
+     |
+  V  |
+  e  |         |-|
+  l  |    |-|  | |
+  o  |    | |  | |
+  c  ||-| | |  | |
+  i  || | | |  | |
+  t  || | | |  | |
+  y  || | | |  | |
+     +------------->
+       Sprints
+----
+
+=== Distribution Chart
+
+A chart showing the distribution of work items by type, status, or other attributes:
+
+[source]
+----
+     ^
+     |
+  C  |
+  o  ||-|
+  u  || |
+  n  || |   |-|
+  t  || |   | |   |-|
+     || |   | |   | |
+     +-------------------->
+      Feature Bug  Task
+----
+
+== Output Formats
+
+The Python component supports multiple output formats:
+
+- HTML: For web viewing
+- PDF: For printing
+- DOCX: For Microsoft Word
+- XLSX: For Microsoft Excel
+- PNG/SVG: For chart images
+
+== See Also
+
+* xref:modules.adoc[Modules]
+* xref:api-reference.adoc[API Reference]
+* xref:testing.adoc[Testing]

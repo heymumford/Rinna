@@ -108,5 +108,5 @@ rin done WI-123
 Now that you have Rinna running, explore these topics:
 
 * xref:../reference/cli.adoc[CLI Reference] - Complete command reference
-* xref:user-guide.adoc[User Guide] - Detailed usage information
+* xref:guides/user-guide.adoc[User Guide] - Detailed usage information
 * xref:../architecture/clean-architecture.adoc[Architecture] - Understanding the system architecture

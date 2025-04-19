@@ -1,0 +1,576 @@
+= Python API Reference
+:description: API reference for the Python component in Rinna
+
+This document provides reference documentation for the Python APIs in Rinna.
+
+== Report Generation
+
+=== ReportGenerator
+
+The `ReportGenerator` class generates reports in various formats:
+
+[source,python]
+----
+class ReportGenerator:
+    """
+    Generates reports in various formats.
+    """
+    
+    def __init__(self, template_engine, data_source):
+        """
+        Initialize the report generator.
+        
+        Args:
+            template_engine: The template engine to use
+            data_source: The data source to use
+        """
+        self.template_engine = template_engine
+        self.data_source = data_source
+    
+    def generate_report(self, report_type, parameters, output_format='html'):
+        """
+        Generate a report of the specified type with the given parameters.
+        
+        Args:
+            report_type: Type of report to generate
+            parameters: Parameters for the report
+            output_format: Output format (html, pdf, docx)
+            
+        Returns:
+            The generated report content
+        """
+----
+
+Example usage:
+
+[source,python]
+----
+from rinna.reports import ReportGenerator
+from rinna.reports.renderers import HTMLRenderer
+from rinna.data import APIDataSource
+
+# Create data source
+data_source = APIDataSource(api_client)
+
+# Create template engine
+template_engine = HTMLRenderer()
+
+# Create report generator
+report_generator = ReportGenerator(template_engine, data_source)
+
+# Generate report
+report = report_generator.generate_report(
+    report_type="burndown",
+    parameters={"project": "RINNA"},
+    output_format="html"
+)
+----
+
+=== Renderers
+
+==== HTMLRenderer
+
+The `HTMLRenderer` class renders reports as HTML:
+
+[source,python]
+----
+class HTMLRenderer:
+    """
+    Renders reports as HTML.
+    """
+    
+    def get_template(self, template_name):
+        """
+        Get a template by name.
+        
+        Args:
+            template_name: The name of the template
+            
+        Returns:
+            The template
+        """
+----
+
+==== PDFRenderer
+
+The `PDFRenderer` class renders reports as PDF:
+
+[source,python]
+----
+class PDFRenderer:
+    """
+    Renders reports as PDF.
+    """
+    
+    def get_template(self, template_name):
+        """
+        Get a template by name.
+        
+        Args:
+            template_name: The name of the template
+            
+        Returns:
+            The template
+        """
+----
+
+==== DOCXRenderer
+
+The `DOCXRenderer` class renders reports as DOCX:
+
+[source,python]
+----
+class DOCXRenderer:
+    """
+    Renders reports as DOCX.
+    """
+    
+    def get_template(self, template_name):
+        """
+        Get a template by name.
+        
+        Args:
+            template_name: The name of the template
+            
+        Returns:
+            The template
+        """
+----
+
+== Data Analysis
+
+=== DataAnalyzer
+
+The `DataAnalyzer` class provides data analysis functionality:
+
+[source,python]
+----
+class DataAnalyzer:
+    """
+    Analyzes data and calculates metrics.
+    """
+    
+    def __init__(self, data_source):
+        """
+        Initialize the data analyzer.
+        
+        Args:
+            data_source: The data source to use
+        """
+        self.data_source = data_source
+    
+    def calculate_metrics(self, metric_type, parameters):
+        """
+        Calculate metrics based on the data.
+        
+        Args:
+            metric_type: Type of metric to calculate
+            parameters: Parameters for the calculation
+            
+        Returns:
+            The calculated metrics
+        """
+----
+
+Example usage:
+
+[source,python]
+----
+from rinna.analysis import DataAnalyzer
+from rinna.data import APIDataSource
+
+# Create data source
+data_source = APIDataSource(api_client)
+
+# Create data analyzer
+analyzer = DataAnalyzer(data_source)
+
+# Calculate metrics
+metrics = analyzer.calculate_metrics(
+    metric_type="velocity",
+    parameters={"project": "RINNA", "sprints": 5}
+)
+----
+
+=== Metric Types
+
+==== Velocity
+
+Calculates the velocity of a team:
+
+[source,python]
+----
+def _calculate_velocity(self, data):
+    """
+    Calculate velocity metrics.
+    
+    Args:
+        data: The data to analyze
+        
+    Returns:
+        The velocity metrics
+    """
+----
+
+==== Burndown
+
+Calculates the burndown metrics:
+
+[source,python]
+----
+def _calculate_burndown(self, data):
+    """
+    Calculate burndown metrics.
+    
+    Args:
+        data: The data to analyze
+        
+    Returns:
+        The burndown metrics
+    """
+----
+
+==== Distribution
+
+Calculates the distribution metrics:
+
+[source,python]
+----
+def _calculate_distribution(self, data):
+    """
+    Calculate distribution metrics.
+    
+    Args:
+        data: The data to analyze
+        
+    Returns:
+        The distribution metrics
+    """
+----
+
+== Data Visualization
+
+=== ChartGenerator
+
+The `ChartGenerator` class generates charts and visualizations:
+
+[source,python]
+----
+class ChartGenerator:
+    """
+    Generates charts and visualizations.
+    """
+    
+    def generate_chart(self, chart_type, data, parameters):
+        """
+        Generate a chart of the specified type.
+        
+        Args:
+            chart_type: Type of chart to generate
+            data: Data for the chart
+            parameters: Parameters for the chart
+            
+        Returns:
+            The generated chart as a PNG image
+        """
+----
+
+Example usage:
+
+[source,python]
+----
+from rinna.visualization import ChartGenerator
+
+# Create chart generator
+chart_generator = ChartGenerator()
+
+# Generate chart
+chart = chart_generator.generate_chart(
+    chart_type="line",
+    data=metrics,
+    parameters={"title": "Velocity Chart", "x_axis": "Sprint", "y_axis": "Points"}
+)
+----
+
+=== Chart Types
+
+==== Line Chart
+
+Generates a line chart:
+
+[source,python]
+----
+def _generate_line_chart(self, data, parameters):
+    """
+    Generate a line chart.
+    
+    Args:
+        data: Data for the chart
+        parameters: Parameters for the chart
+        
+    Returns:
+        The generated chart as a PNG image
+    """
+----
+
+==== Bar Chart
+
+Generates a bar chart:
+
+[source,python]
+----
+def _generate_bar_chart(self, data, parameters):
+    """
+    Generate a bar chart.
+    
+    Args:
+        data: Data for the chart
+        parameters: Parameters for the chart
+        
+    Returns:
+        The generated chart as a PNG image
+    """
+----
+
+==== Pie Chart
+
+Generates a pie chart:
+
+[source,python]
+----
+def _generate_pie_chart(self, data, parameters):
+    """
+    Generate a pie chart.
+    
+    Args:
+        data: Data for the chart
+        parameters: Parameters for the chart
+        
+    Returns:
+        The generated chart as a PNG image
+    """
+----
+
+== Web API
+
+=== FastAPI Application
+
+The Python component provides a FastAPI application for accessing reports:
+
+[source,python]
+----
+from fastapi import FastAPI, Depends, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+----
+
+=== Endpoints
+
+==== Generate Report
+
+[source,python]
+----
+class ReportRequest(BaseModel):
+    report_type: str
+    parameters: dict
+    output_format: str = "html"
+
+@app.post("/api/reports")
+def generate_report(request: ReportRequest):
+    """
+    Generate a report with the specified parameters.
+    
+    Args:
+        request: The report request
+        
+    Returns:
+        The generated report
+    """
+----
+
+==== Get Report
+
+[source,python]
+----
+@app.get("/api/reports/{report_id}")
+def get_report(report_id: str):
+    """
+    Get a previously generated report.
+    
+    Args:
+        report_id: The ID of the report
+        
+    Returns:
+        The report
+    """
+----
+
+==== Generate Chart
+
+[source,python]
+----
+class ChartRequest(BaseModel):
+    chart_type: str
+    data: dict
+    parameters: dict
+
+@app.post("/api/charts")
+def generate_chart(request: ChartRequest):
+    """
+    Generate a chart with the specified parameters.
+    
+    Args:
+        request: The chart request
+        
+    Returns:
+        The generated chart
+    """
+----
+
+== Utility Scripts
+
+=== C4 Diagrams
+
+The `c4_diagrams.py` script generates C4 model diagrams:
+
+[source,python]
+----
+def generate_c4_diagrams():
+    """
+    Generate C4 model diagrams.
+    """
+----
+
+=== API Diagram
+
+The `generate-api-diagram.py` script generates an API diagram:
+
+[source,python]
+----
+def generate_api_diagram():
+    """
+    Generate an API diagram using the Swagger specification.
+    """
+----
+
+=== Logging
+
+The `log_python.py` script provides logging functionality:
+
+[source,python]
+----
+def log_python():
+    """
+    Log messages from the Python component.
+    """
+----
+
+== Configuration
+
+=== Config
+
+The `Config` class handles configuration:
+
+[source,python]
+----
+class Config:
+    """
+    Configuration for the Python component.
+    """
+    
+    def __init__(self, config_file=None):
+        """
+        Initialize the configuration.
+        
+        Args:
+            config_file: Path to a configuration file
+        """
+    
+    def get(self, key, default=None):
+        """
+        Get a configuration value.
+        
+        Args:
+            key: The configuration key
+            default: Default value if the key is not found
+            
+        Returns:
+            The configuration value
+        """
+----
+
+Example usage:
+
+[source,python]
+----
+from rinna.config import Config
+
+# Create config
+config = Config("config.yaml")
+
+# Get configuration value
+api_host = config.get("api.host", "localhost")
+api_port = config.get("api.port", 8000)
+----
+
+== Logging
+
+=== JSONFormatter
+
+The `JSONFormatter` class formats log records as JSON:
+
+[source,python]
+----
+class JSONFormatter(logging.Formatter):
+    """
+    Formatter that outputs JSON strings.
+    """
+    
+    def format(self, record):
+        """
+        Format the record as a JSON string.
+        
+        Args:
+            record: The log record
+            
+        Returns:
+            The formatted log record
+        """
+----
+
+=== configure_logging
+
+The `configure_logging` function configures logging:
+
+[source,python]
+----
+def configure_logging(level='INFO', file=None):
+    """
+    Configure logging.
+    
+    Args:
+        level: The log level
+        file: The log file
+    """
+----
+
+Example usage:
+
+[source,python]
+----
+from rinna.logging import configure_logging
+
+# Configure logging
+logger = configure_logging(level='DEBUG', file='app.log')
+
+# Log messages
+logger.info("Application started")
+logger.error("An error occurred", exc_info=True)
+----
+
+== See Also
+
+* xref:architecture.adoc[Architecture]
+* xref:modules.adoc[Modules]
+* xref:testing.adoc[Testing]

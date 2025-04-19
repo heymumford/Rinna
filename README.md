@@ -48,7 +48,7 @@ This project follows a clean polyglot architecture pattern with clear language b
 
 ## Documentation
 
-Rinna uses [Antora](https://antora.org/) to provide comprehensive documentation across all components.
+Rinna uses [Antora](https://antora.org/) to provide comprehensive documentation across all components with full branding integration.
 
 ### Viewing Documentation
 
@@ -59,7 +59,15 @@ To build and view the documentation:
 ./build-docs.sh
 ```
 
-This will open your browser to the documentation site.
+This will build the documentation site and start a local server at http://localhost:3000.
+
+### Documentation Features
+
+- **Component-based Structure**: Separate documentation for Java, Python, and Go components
+- **Integrated Branding**: Consistent Rinna branding across all documentation
+- **Unified Navigation**: Cross-component navigation and search
+- **Modern Interface**: Clean, responsive design with syntax highlighting
+- **Single Source of Truth**: All documentation lives with the code it documents
 
 ### Documentation Content
 

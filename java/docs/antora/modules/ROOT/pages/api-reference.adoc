@@ -1,0 +1,309 @@
+= Java API Reference
+:description: API reference for the Java component in Rinna
+
+This document provides reference documentation for the Java APIs in Rinna.
+
+== Domain APIs
+
+=== WorkItem
+
+The core entity representing a unit of work:
+
+[source,java]
+----
+public class WorkItem {
+    // Constructor
+    public WorkItem(String id, String title, WorkItemType type, WorkflowState state);
+    
+    // Getters
+    public String getId();
+    public String getTitle();
+    public WorkItemType getType();
+    public WorkflowState getState();
+    public Priority getPriority();
+    public String getAssignee();
+    public String getDescription();
+    public List<Comment> getComments();
+    public Map<String, String> getMetadata();
+    
+    // State management
+    public void transitionTo(WorkflowState state);
+    public boolean canTransitionTo(WorkflowState state);
+    
+    // Assignment
+    public void assignTo(String userId);
+    
+    // Comments
+    public void addComment(String author, String text);
+    
+    // Metadata
+    public void addMetadata(String key, String value);
+    public String getMetadataValue(String key);
+}
+----
+
+=== Project
+
+Represents a collection of work items:
+
+[source,java]
+----
+public class Project {
+    // Constructor
+    public Project(String id, String key, String name);
+    
+    // Getters
+    public String getId();
+    public String getKey();
+    public String getName();
+    public String getDescription();
+    public Set<String> getWorkItemIds();
+    
+    // Work item management
+    public void addWorkItem(String workItemId);
+    public void removeWorkItem(String workItemId);
+    public boolean containsWorkItem(String workItemId);
+}
+----
+
+=== Release
+
+Represents a version of the software:
+
+[source,java]
+----
+public class Release {
+    // Constructor
+    public Release(String id, String version, LocalDate releaseDate);
+    
+    // Getters
+    public String getId();
+    public String getVersion();
+    public LocalDate getReleaseDate();
+    public ReleaseStatus getStatus();
+    public Set<String> getWorkItemIds();
+    
+    // Work item management
+    public void addWorkItem(String workItemId);
+    public void removeWorkItem(String workItemId);
+    
+    // Status management
+    public void complete();
+    public void cancel();
+}
+----
+
+== Service APIs
+
+=== ItemService
+
+Service for managing work items:
+
+[source,java]
+----
+public interface ItemService {
+    // CRUD operations
+    WorkItem createWorkItem(WorkItemCreateRequest request);
+    WorkItem updateWorkItem(String id, WorkItemUpdateRequest request);
+    void deleteWorkItem(String id);
+    WorkItem getWorkItem(String id);
+    List<WorkItem> findWorkItems(WorkItemQuery query);
+    
+    // Comments
+    void addComment(String id, CommentRequest request);
+    
+    // Metadata
+    void updateMetadata(String id, String key, String value);
+}
+----
+
+=== ProjectService
+
+Service for managing projects:
+
+[source,java]
+----
+public interface ProjectService {
+    // CRUD operations
+    Project createProject(ProjectCreateRequest request);
+    Project updateProject(String id, ProjectUpdateRequest request);
+    void deleteProject(String id);
+    Project getProject(String id);
+    Project getProjectByKey(String key);
+    List<Project> findProjects(ProjectQuery query);
+    
+    // Work item management
+    void addWorkItemToProject(String projectId, String workItemId);
+    void removeWorkItemFromProject(String projectId, String workItemId);
+}
+----
+
+=== WorkflowService
+
+Service for managing workflow state transitions:
+
+[source,java]
+----
+public interface WorkflowService {
+    // State transitions
+    WorkItem transitionWorkItem(String id, WorkflowState targetState);
+    boolean canTransition(String id, WorkflowState targetState);
+    List<WorkflowState> getAvailableTransitions(String id);
+    
+    // Quality gates
+    boolean checkQualityGate(String id, WorkflowState targetState);
+    List<QualityGateResult> evaluateQualityGates(String id, WorkflowState targetState);
+}
+----
+
+== Repository APIs
+
+=== ItemRepository
+
+Repository for work item persistence:
+
+[source,java]
+----
+public interface ItemRepository {
+    WorkItem findById(String id);
+    List<WorkItem> findAll(WorkItemQuery query);
+    WorkItem save(WorkItem item);
+    void delete(String id);
+}
+----
+
+=== ProjectRepository
+
+Repository for project persistence:
+
+[source,java]
+----
+public interface ProjectRepository {
+    Project findById(String id);
+    Project findByKey(String key);
+    List<Project> findAll();
+    Project save(Project project);
+    void delete(String id);
+}
+----
+
+=== ReleaseRepository
+
+Repository for release persistence:
+
+[source,java]
+----
+public interface ReleaseRepository {
+    Release findById(String id);
+    Release findByVersion(String version);
+    List<Release> findAll();
+    Release save(Release release);
+    void delete(String id);
+}
+----
+
+== DTO APIs
+
+=== WorkItemCreateRequest
+
+DTO for creating a work item:
+
+[source,java]
+----
+public class WorkItemCreateRequest {
+    // Constructor
+    public WorkItemCreateRequest(String title, WorkItemType type);
+    
+    // Getters
+    public String getTitle();
+    public WorkItemType getType();
+    public Priority getPriority();
+    public String getDescription();
+    public String getAssignee();
+    public Map<String, String> getMetadata();
+    
+    // Builder pattern
+    public static class Builder {
+        public Builder title(String title);
+        public Builder type(WorkItemType type);
+        public Builder priority(Priority priority);
+        public Builder description(String description);
+        public Builder assignee(String assignee);
+        public Builder metadata(Map<String, String> metadata);
+        public WorkItemCreateRequest build();
+    }
+}
+----
+
+=== WorkItemUpdateRequest
+
+DTO for updating a work item:
+
+[source,java]
+----
+public class WorkItemUpdateRequest {
+    // Getters
+    public Optional<String> getTitle();
+    public Optional<WorkItemType> getType();
+    public Optional<Priority> getPriority();
+    public Optional<String> getDescription();
+    public Optional<String> getAssignee();
+    public Optional<Map<String, String>> getMetadata();
+    
+    // Builder pattern
+    public static class Builder {
+        public Builder title(String title);
+        public Builder type(WorkItemType type);
+        public Builder priority(Priority priority);
+        public Builder description(String description);
+        public Builder assignee(String assignee);
+        public Builder metadata(Map<String, String> metadata);
+        public WorkItemUpdateRequest build();
+    }
+}
+----
+
+== Event APIs
+
+=== WorkItemCreatedEvent
+
+Event fired when a work item is created:
+
+[source,java]
+----
+public class WorkItemCreatedEvent {
+    // Constructor
+    public WorkItemCreatedEvent(String workItemId, String title, WorkItemType type);
+    
+    // Getters
+    public String getWorkItemId();
+    public String getTitle();
+    public WorkItemType getType();
+    public LocalDateTime getTimestamp();
+}
+----
+
+=== WorkItemStateChangedEvent
+
+Event fired when a work item changes state:
+
+[source,java]
+----
+public class WorkItemStateChangedEvent {
+    // Constructor
+    public WorkItemStateChangedEvent(String workItemId, WorkflowState oldState, WorkflowState newState, String triggeredBy);
+    
+    // Getters
+    public String getWorkItemId();
+    public WorkflowState getOldState();
+    public WorkflowState getNewState();
+    public LocalDateTime getTimestamp();
+    public String getTriggeredBy();
+}
+----
+
+== See Also
+
+* xref:architecture.adoc[Architecture]
+* xref:domain-model.adoc[Domain Model]
+* xref:testing.adoc[Testing]

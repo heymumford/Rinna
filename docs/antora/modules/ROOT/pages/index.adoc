@@ -1,6 +1,11 @@
 = Rinna Documentation
 :description: Rinna workflow management system documentation
 
+{rinna-logo}
+
+[.lead]
+Documentation for the Rinna workflow management system.
+
 Rinna is a polyglot workflow management system designed for efficient cross-language communication and unified workflow management, with a focus on clean architecture principles and high-performance execution.
 
 == Quick Start

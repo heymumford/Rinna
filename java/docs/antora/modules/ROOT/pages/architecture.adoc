@@ -1,0 +1,177 @@
+= Java Component Architecture
+:description: Architecture of the Java component in Rinna
+
+This document describes the architecture of the Java component in Rinna.
+
+== Overview
+
+The Java component implements the core domain model, business logic, and use cases for Rinna. It follows Clean Architecture principles with a clear separation between layers.
+
+== Component Structure
+
+[source]
+----
+/java
+  /rinna-core          # Core domain and business rules
+  /rinna-cli           # CLI adapter 
+  /rinna-data          # Data persistence adapters
+----
+
+== Architecture Layers
+
+=== Domain Layer
+
+The innermost layer contains the core domain model:
+
+[source,java]
+----
+// Core domain entities
+public class WorkItem {
+    private final String id;
+    private final String title;
+    private final WorkItemType type;
+    private final WorkflowState state;
+    
+    // Constructor, getters, business methods
+}
+
+// Value objects
+public enum WorkItemType {
+    FEATURE,
+    BUG,
+    TASK,
+    EPIC
+}
+----
+
+=== Use Case Layer
+
+This layer contains application-specific business rules:
+
+[source,java]
+----
+// Use case interfaces
+public interface ItemService {
+    WorkItem createWorkItem(WorkItemCreateRequest request);
+    WorkItem updateWorkItem(String id, WorkItemUpdateRequest request);
+    void deleteWorkItem(String id);
+    // ...
+}
+
+// Use case implementations
+public class DefaultItemService implements ItemService {
+    private final ItemRepository repository;
+    
+    public DefaultItemService(ItemRepository repository) {
+        this.repository = repository;
+    }
+    
+    @Override
+    public WorkItem createWorkItem(WorkItemCreateRequest request) {
+        // Validation, business rules
+        WorkItem item = new WorkItem(/* ... */);
+        return repository.save(item);
+    }
+    
+    // Other methods
+}
+----
+
+=== Adapter Layer
+
+This layer contains adapters for external interfaces:
+
+[source,java]
+----
+// Repository interfaces
+public interface ItemRepository {
+    WorkItem findById(String id);
+    List<WorkItem> findAll(WorkItemQuery query);
+    WorkItem save(WorkItem item);
+    void delete(String id);
+}
+
+// CLI adapters
+public class RinnaCli {
+    private final ItemService itemService;
+    
+    public RinnaCli(ItemService itemService) {
+        this.itemService = itemService;
+    }
+    
+    public void processCommand(String[] args) {
+        // Parse command line, call appropriate service
+    }
+}
+----
+
+=== Infrastructure Layer
+
+This layer contains implementations of external interfaces:
+
+[source,java]
+----
+// Repository implementations
+public class InMemoryItemRepository implements ItemRepository {
+    private final Map<String, WorkItem> items = new ConcurrentHashMap<>();
+    
+    @Override
+    public WorkItem findById(String id) {
+        return items.get(id);
+    }
+    
+    // Other methods
+}
+
+// Database adapter
+public class JdbcItemRepository implements ItemRepository {
+    private final JdbcTemplate jdbcTemplate;
+    
+    public JdbcItemRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+    
+    // Implementation
+}
+----
+
+== Dependencies
+
+The Java component has the following key dependencies:
+
+* Java 21: For language features like records and pattern matching
+* Spring Boot: For dependency injection and configuration
+* JUnit 5: For testing
+* AssertJ: For fluent assertions
+* Mockito: For mocking
+* Cucumber: For BDD testing
+
+== Building and Running
+
+=== Building
+
+[source,bash]
+----
+cd java
+mvn clean install
+----
+
+=== Running Tests
+
+[source,bash]
+----
+# Run all tests
+mvn test
+
+# Run specific test category
+mvn test -Dgroups="unit,component"
+
+# Run BDD tests
+mvn test -P bdd-only
+----
+
+== See Also
+
+* xref:domain-model.adoc[Domain Model]
+* xref:api-reference.adoc[API Reference]
+* xref:testing.adoc[Testing]

@@ -1,0 +1,280 @@
+= User Guide
+:description: User guide for the Rinna workflow management system
+
+This guide provides detailed information on using Rinna for workflow management.
+
+== Core Concepts
+
+=== Work Items
+
+Work items are the fundamental units of work in Rinna. Each work item has:
+
+* A unique identifier (e.g., WI-123)
+* A title
+* A type (Feature, Bug, Task, Epic)
+* A status (e.g., To Do, In Progress, Done)
+* A priority
+* An assignee (optional)
+* A description
+* Comments
+* Metadata
+
+=== Workflow
+
+Workflow defines the states that work items progress through:
+
+[ditaa]
+----
+                             +-----------+
+                             |           |
+                   +-------->| BACKLOG   +-----+
+                   |         |           |     |
+                   |         +-----------+     |
+                   |                           | Prioritized
+                   |                           v
+                   |         +-----------+     |
+                   |         |           |     |
+                   +-------->|  TRIAGE   +-----+
+                   |         |           |     |
+                   |         +-----------+     |
+                   |                           | Accepted
+                   |                           v
+                   |         +-----------+     |
+                   |         |           |     |
+                   +-------->|  TO_DO    +-----+
+                   |         |           |     |
+                   |         +-----------+     |
+                   |                           | Started
+                   |                           v
+  Blocked          |         +-----------+     |
+  +----------------+         |           |     |
+  |                +-------->| IN_PROGRESS +---+
+  |                |         |           |     |
+  |                |         +-----------+     |
+  |                |                           | Completed
+  |                |                           v
+  |  Blocked       |         +-----------+     |
+  +----------------+         |           |     |
+  |                +-------->|  IN_TEST  +-----+
+  |                |         |           |     |
+  |                |         +-----------+     |
+  |                |                           | Verified
+  |                |                           v
+  v                |         +-----------+     |
++-----------+      |         |           |     |
+|           |      +-------->|  DONE     +-----+
+| BLOCKED   |                |           |     |
+|           |                +-----------+     |
++-----------+                                  | Deployed
+     ^                                         v
+     |                       +-----------+     |
+     |                       |           |     |
+     +-----------------------+ RELEASED  +<----+
+                             |           |
+                             +-----------+
+----
+
+== Using the CLI
+
+=== Creating Work Items
+
+[source,bash]
+----
+# Create a feature
+rin add "Implement login page" --type=FEATURE --priority=HIGH
+
+# Create a bug
+rin bug "Login button misaligned" --priority=MEDIUM
+
+# Create a task
+rin add "Update documentation" --type=TASK
+----
+
+=== Viewing Work Items
+
+[source,bash]
+----
+# List all work items
+rin list
+
+# List work items with filtering
+rin list --type=BUG --status=IN_PROGRESS
+
+# View a specific work item
+rin view WI-123
+----
+
+=== Managing Workflow
+
+[source,bash]
+----
+# Start working on an item
+rin update WI-123 --status=IN_PROGRESS
+
+# Mark an item as ready for testing
+rin update WI-123 --status=IN_TEST
+
+# Mark an item as done
+rin done WI-123
+
+# Mark an item as blocked
+rin update WI-123 --status=BLOCKED --comment="Waiting for API changes"
+----
+
+=== Working with Projects
+
+[source,bash]
+----
+# Create a project
+rin project create "Mobile App" --key=MAPP
+
+# List projects
+rin project list
+
+# View project details
+rin project view MAPP
+
+# List work items in a project
+rin list --project=MAPP
+----
+
+=== Working with Releases
+
+[source,bash]
+----
+# Create a release
+rin release create "1.0.0" --date=2023-12-01
+
+# Add work items to a release
+rin release add 1.0.0 WI-123 WI-124
+
+# View release details
+rin release view 1.0.0
+
+# Mark a release as complete
+rin release complete 1.0.0
+----
+
+== Advanced Features
+
+=== Custom Workflows
+
+Rinna supports custom workflows for different project types:
+
+[source,bash]
+----
+# List available workflow templates
+rin workflow templates
+
+# Apply a workflow template to a project
+rin project update MAPP --workflow=agile-scrum
+
+# Define a custom workflow
+rin workflow create my-workflow --from=agile-scrum
+----
+
+=== Quality Gates
+
+Quality gates enforce standards before work items can transition to certain states:
+
+[source,bash]
+----
+# List quality gates for a workflow
+rin workflow quality-gates --workflow=agile-scrum
+
+# Add a quality gate
+rin workflow add-quality-gate --state=IN_TEST --rule="has-tests"
+----
+
+=== Reporting
+
+Rinna provides built-in reporting capabilities:
+
+[source,bash]
+----
+# Generate a burndown chart
+rin report burndown --project=MAPP
+
+# Generate a velocity report
+rin report velocity --last=3
+
+# Generate a work item distribution report
+rin report distribution --by=type
+----
+
+=== Advanced Search
+
+[source,bash]
+----
+# Search for work items
+rin find "login page" --type=FEATURE
+
+# Advanced query syntax
+rin find "priority:HIGH status:IN_PROGRESS assignee:john"
+
+# Regular expression search
+rin grep "login.*error"
+----
+
+== Best Practices
+
+=== Work Item Management
+
+1. **Clear Titles**: Use concise, specific titles
+2. **Detailed Descriptions**: Include acceptance criteria
+3. **Appropriate Sizing**: Break large items into smaller ones
+4. **Regular Updates**: Keep status and comments current
+5. **Link Related Items**: Use dependencies to show relationships
+
+=== Workflow Management
+
+1. **Consistent States**: Use workflow states consistently
+2. **Timely Transitions**: Move items through workflow promptly
+3. **Quality Gates**: Use quality gates to enforce standards
+4. **Avoid Bottlenecks**: Address blocked items quickly
+5. **Regular Reviews**: Clean up and prioritize regularly
+
+=== Project Organization
+
+1. **Logical Grouping**: Group related work in projects
+2. **Clear Boundaries**: Define clear project scope
+3. **Consistent Naming**: Use consistent naming conventions
+4. **Regular Planning**: Plan and review projects regularly
+5. **Appropriate Metrics**: Track relevant project metrics
+
+== Troubleshooting
+
+=== Common Issues
+
+[cols="1,3"]
+|===
+|Issue |Solution
+
+|CLI commands failing
+|Check server status with `rin server status`
+
+|Work item state transition failing
+|Check quality gates with `rin workflow quality-gates`
+
+|Slow performance
+|Check server logs with `rin server logs`
+|===
+
+=== Getting Help
+
+[source,bash]
+----
+# Get help on a specific command
+rin help <command>
+
+# Check server status
+rin server status
+
+# View logs
+rin server logs
+----
+
+== See Also
+
+* xref:guides/getting-started.adoc[Getting Started Guide]
+* xref:../reference/cli.adoc[CLI Reference]

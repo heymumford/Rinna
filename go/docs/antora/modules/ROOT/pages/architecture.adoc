@@ -1,0 +1,263 @@
+= Go Component Architecture
+:description: Architecture of the Go component in Rinna
+
+This document describes the architecture of the Go component in Rinna.
+
+== Overview
+
+The Go component of Rinna provides high-performance API services and server implementations. It focuses on speed, scalability, and reliability for the external interfaces of the system.
+
+== Component Structure
+
+[source]
+----
+/go
+  /src
+    /auth           # Authentication and authorization
+    /client         # API client implementation
+    /handlers       # API endpoint handlers
+    /middleware     # Security and rate limiting middleware
+    /models         # Data transfer objects
+    /server         # Server implementation
+    /version        # Version management
+----
+
+== Architecture
+
+The Go component follows a layered architecture pattern:
+
+[source]
+----
+                  +-------------------+
+                  |                   |
+                  |    HTTP Server    |
+                  |                   |
+                  +--------+----------+
+                           |
+                           v
+       +------------------+-----------------+
+       |                                    |
+       |            Middleware              |
+       | (Auth, Logging, Rate Limiting, etc)|
+       |                                    |
+       +------------------+-----------------+
+                          |
+                          v
+       +------------------+-----------------+
+       |                                    |
+       |            Handlers                |
+       | (REST API Endpoints)               |
+       |                                    |
+       +------------------+-----------------+
+                          |
+                          v
+       +------------------+-----------------+
+       |                                    |
+       |            Services                |
+       | (Business Logic)                   |
+       |                                    |
+       +------------------+-----------------+
+                          |
+                          v
+       +------------------+-----------------+
+       |                                    |
+       |            Client                  |
+       | (Java Component API Client)        |
+       |                                    |
+       +------------------+-----------------+
+----
+
+== Key Components
+
+=== HTTP Server
+
+The HTTP server handles incoming requests using the `net/http` package and the `chi` router:
+
+[source,go]
+----
+func setupRouter() *chi.Mux {
+    r := chi.NewRouter()
+    
+    // Middleware
+    r.Use(middleware.RequestID)
+    r.Use(middleware.RealIP)
+    r.Use(middleware.Logger)
+    r.Use(middleware.Recoverer)
+    r.Use(middleware.Timeout(60 * time.Second))
+    
+    // Routes
+    r.Mount("/api/v1/workitems", handlers.WorkItemRoutes())
+    r.Mount("/api/v1/projects", handlers.ProjectRoutes())
+    r.Mount("/api/v1/releases", handlers.ReleaseRoutes())
+    
+    return r
+}
+----
+
+=== Middleware
+
+The middleware layer handles cross-cutting concerns:
+
+[source,go]
+----
+// Authentication middleware
+func Authentication(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        token := extractToken(r)
+        if token == "" {
+            http.Error(w, "Unauthorized", http.StatusUnauthorized)
+            return
+        }
+        
+        if !validateToken(token) {
+            http.Error(w, "Forbidden", http.StatusForbidden)
+            return
+        }
+        
+        ctx := context.WithValue(r.Context(), "user", getUserFromToken(token))
+        next.ServeHTTP(w, r.WithContext(ctx))
+    })
+}
+
+// Rate limiting middleware
+func RateLimit(next http.Handler) http.Handler {
+    // Implementation
+}
+----
+
+=== Handlers
+
+The handlers layer implements the REST API endpoints:
+
+[source,go]
+----
+// Work item handler
+func (h *WorkItemHandler) GetWorkItem(w http.ResponseWriter, r *http.Request) {
+    id := chi.URLParam(r, "id")
+    
+    workItem, err := h.service.GetWorkItem(id)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    
+    if workItem == nil {
+        http.Error(w, "Work item not found", http.StatusNotFound)
+        return
+    }
+    
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(workItem)
+}
+----
+
+=== Services
+
+The services layer implements business logic:
+
+[source,go]
+----
+// Work item service
+type WorkItemService struct {
+    client *client.APIClient
+}
+
+func (s *WorkItemService) GetWorkItem(id string) (*models.WorkItem, error) {
+    return s.client.GetWorkItem(id)
+}
+
+func (s *WorkItemService) CreateWorkItem(request *models.WorkItemCreateRequest) (*models.WorkItem, error) {
+    return s.client.CreateWorkItem(request)
+}
+----
+
+=== Client
+
+The client layer communicates with the Java component:
+
+[source,go]
+----
+// API client
+type APIClient struct {
+    baseURL    string
+    httpClient *http.Client
+    token      string
+}
+
+func (c *APIClient) GetWorkItem(id string) (*models.WorkItem, error) {
+    url := fmt.Sprintf("%s/api/v1/workitems/%s", c.baseURL, id)
+    
+    req, err := http.NewRequest("GET", url, nil)
+    if err != nil {
+        return nil, err
+    }
+    
+    req.Header.Set("Authorization", "Bearer "+c.token)
+    
+    resp, err := c.httpClient.Do(req)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+    
+    if resp.StatusCode != http.StatusOK {
+        return nil, fmt.Errorf("API returned status code %d", resp.StatusCode)
+    }
+    
+    var workItem models.WorkItem
+    err = json.NewDecoder(resp.Body).Decode(&workItem)
+    if err != nil {
+        return nil, err
+    }
+    
+    return &workItem, nil
+}
+----
+
+== API Documentation
+
+The API is documented using Swagger/OpenAPI:
+
+[source,go]
+----
+// @title Rinna API
+// @version 1.0
+// @description API for the Rinna workflow management system
+// @host api.rinnacloud.com
+// @BasePath /api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+
+// @Summary Get a work item
+// @Description Get a work item by ID
+// @Tags work-items
+// @Accept json
+// @Produce json
+// @Param id path string true "Work Item ID"
+// @Success 200 {object} models.WorkItem
+// @Failure 404 {object} models.Error
+// @Failure 500 {object} models.Error
+// @Security BearerAuth
+// @Router /workitems/{id} [get]
+func (h *WorkItemHandler) GetWorkItem(w http.ResponseWriter, r *http.Request) {
+    // Implementation
+}
+----
+
+== Performance Considerations
+
+The Go component is optimized for high performance:
+
+- Connection pooling for client connections
+- Efficient JSON serialization/deserialization
+- Request timeouts to prevent resource exhaustion
+- Concurrent request handling
+- Caching for frequently accessed resources
+- Resource pooling for database connections
+
+== See Also
+
+* xref:packages.adoc[Packages]
+* xref:api-reference.adoc[API Reference]
+* xref:testing.adoc[Testing]

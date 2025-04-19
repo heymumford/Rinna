@@ -1,5 +1,17 @@
 name: rinna
 title: Rinna Documentation
 version: ~
+start_page: ROOT:index.adoc
 nav:
   - modules/ROOT/nav.adoc
+  
+asciidoc:
+  attributes:
+    page-pagination: ''
+    idprefix: ''
+    idseparator: '-'
+    experimental: ''
+    rinna-logo: image:rinna-logo.png[Rinna,200]
+    rinna-symbol: image:rinna-symbol.png[Rinna Symbol,50]
+    id: ''
+    env-site: 'true'

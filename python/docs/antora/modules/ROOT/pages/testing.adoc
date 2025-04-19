@@ -1,0 +1,347 @@
+= Testing
+:description: Testing approach for the Python component in Rinna
+
+This document describes the testing approach for the Python component in Rinna.
+
+== Testing Philosophy
+
+The Python component follows a comprehensive testing strategy:
+
+* Unit tests for individual modules and functions
+* Integration tests for component integration
+* Functional tests for user scenarios
+* Performance tests for critical paths
+
+The tests are organized following the testing pyramid, with more unit tests at the bottom and fewer integration and functional tests at the top.
+
+== Test Categories
+
+=== Unit Tests
+
+Unit tests focus on testing individual functions and classes:
+
+[source,python]
+----
+import unittest
+from unittest.mock import Mock, patch
+
+from rinna.reports import ReportGenerator
+
+class TestReportGenerator(unittest.TestCase):
+    def setUp(self):
+        self.template_engine = Mock()
+        self.data_source = Mock()
+        self.generator = ReportGenerator(self.template_engine, self.data_source)
+    
+    def test_generate_report(self):
+        # Set up mocks
+        self.data_source.get_data.return_value = {"data": "test_data"}
+        self.template_engine.get_template.return_value.render.return_value = "rendered_report"
+        
+        # Call the method
+        result = self.generator.generate_report("test_report", {"param": "value"}, "html")
+        
+        # Verify the result
+        self.assertEqual(result, "rendered_report")
+        
+        # Verify the mock calls
+        self.data_source.get_data.assert_called_once_with("test_report", {"param": "value"})
+        self.template_engine.get_template.assert_called_once_with("test_report.html.template")
+        self.template_engine.get_template.return_value.render.assert_called_once_with(data={"data": "test_data"})
+    
+    def test_generate_report_with_pdf_format(self):
+        # Set up mocks
+        self.data_source.get_data.return_value = {"data": "test_data"}
+        self.template_engine.get_template.return_value.render.return_value = "rendered_report"
+        
+        # Call the method
+        result = self.generator.generate_report("test_report", {"param": "value"}, "pdf")
+        
+        # Verify the result
+        self.assertEqual(result, "rendered_report")
+        
+        # Verify the mock calls
+        self.data_source.get_data.assert_called_once_with("test_report", {"param": "value"})
+        self.template_engine.get_template.assert_called_once_with("test_report.pdf.template")
+        self.template_engine.get_template.return_value.render.assert_called_once_with(data={"data": "test_data"})
+----
+
+=== Integration Tests
+
+Integration tests focus on testing the integration between components:
+
+[source,python]
+----
+import unittest
+from unittest.mock import Mock, patch
+
+from rinna.api import app
+from fastapi.testclient import TestClient
+
+class TestAPI(unittest.TestCase):
+    def setUp(self):
+        self.client = TestClient(app)
+    
+    @patch('rinna.api.get_report_generator')
+    def test_generate_report(self, mock_get_report_generator):
+        # Set up mocks
+        mock_generator = Mock()
+        mock_generator.generate_report.return_value = "rendered_report"
+        mock_get_report_generator.return_value = mock_generator
+        
+        # Make request
+        response = self.client.post(
+            "/api/reports",
+            json={
+                "report_type": "test_report",
+                "parameters": {"param": "value"},
+                "output_format": "html"
+            }
+        )
+        
+        # Verify the response
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"content": "rendered_report"})
+        
+        # Verify the mock calls
+        mock_get_report_generator.assert_called_once()
+        mock_generator.generate_report.assert_called_once_with(
+            "test_report",
+            {"param": "value"},
+            "html"
+        )
+    
+    @patch('rinna.api.get_report_generator')
+    def test_generate_report_error(self, mock_get_report_generator):
+        # Set up mocks
+        mock_generator = Mock()
+        mock_generator.generate_report.side_effect = Exception("Test error")
+        mock_get_report_generator.return_value = mock_generator
+        
+        # Make request
+        response = self.client.post(
+            "/api/reports",
+            json={
+                "report_type": "test_report",
+                "parameters": {"param": "value"},
+                "output_format": "html"
+            }
+        )
+        
+        # Verify the response
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.json(), {"detail": "Test error"})
+----
+
+=== Functional Tests
+
+Functional tests focus on testing user scenarios:
+
+[source,python]
+----
+import unittest
+import requests
+from unittest.mock import Mock, patch
+
+class TestReporting(unittest.TestCase):
+    def setUp(self):
+        self.base_url = "http://localhost:8000"
+    
+    def test_generate_and_view_report(self):
+        # Generate a report
+        response = requests.post(
+            f"{self.base_url}/api/reports",
+            json={
+                "report_type": "burndown",
+                "parameters": {"project": "RINNA"},
+                "output_format": "html"
+            }
+        )
+        
+        # Verify the response
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("content", data)
+        
+        # View the report
+        report_id = data.get("report_id")
+        response = requests.get(f"{self.base_url}/api/reports/{report_id}")
+        
+        # Verify the response
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("content", response.json())
+----
+
+=== Performance Tests
+
+Performance tests focus on measuring the performance of critical operations:
+
+[source,python]
+----
+import unittest
+import time
+import statistics
+
+from rinna.reports import ReportGenerator
+from rinna.data import DataSource
+
+class TestReportGeneratorPerformance(unittest.TestCase):
+    def setUp(self):
+        self.template_engine = Mock()
+        self.data_source = Mock()
+        self.generator = ReportGenerator(self.template_engine, self.data_source)
+    
+    def test_report_generation_performance(self):
+        # Set up mocks
+        self.data_source.get_data.return_value = {"data": "test_data"}
+        self.template_engine.get_template.return_value.render.return_value = "rendered_report"
+        
+        # Run the test multiple times to get average performance
+        iterations = 100
+        times = []
+        
+        for _ in range(iterations):
+            start_time = time.time()
+            self.generator.generate_report("test_report", {"param": "value"}, "html")
+            end_time = time.time()
+            times.append(end_time - start_time)
+        
+        # Calculate statistics
+        avg_time = statistics.mean(times)
+        max_time = max(times)
+        min_time = min(times)
+        
+        # Assert performance requirements
+        self.assertLess(avg_time, 0.01, f"Average time {avg_time} exceeds threshold of 0.01 seconds")
+        self.assertLess(max_time, 0.05, f"Maximum time {max_time} exceeds threshold of 0.05 seconds")
+----
+
+== Running Tests
+
+=== Running All Tests
+
+[source,bash]
+----
+cd python
+poetry run pytest
+----
+
+=== Running Specific Tests
+
+[source,bash]
+----
+# Run a specific test file
+poetry run pytest tests/unit/test_report_generation.py
+
+# Run a specific test class
+poetry run pytest tests/unit/test_report_generation.py::TestReportGenerator
+
+# Run a specific test method
+poetry run pytest tests/unit/test_report_generation.py::TestReportGenerator::test_generate_report
+----
+
+=== Running Tests by Category
+
+[source,bash]
+----
+# Run unit tests
+poetry run pytest tests/unit/
+
+# Run integration tests
+poetry run pytest tests/integration/
+
+# Run performance tests
+poetry run pytest tests/performance/
+----
+
+=== Running with Coverage
+
+[source,bash]
+----
+# Run tests with coverage
+poetry run pytest --cov=rinna
+
+# Generate HTML coverage report
+poetry run pytest --cov=rinna --cov-report=html
+----
+
+== Test Configuration
+
+=== pytest.ini
+
+[source,ini]
+----
+[pytest]
+testpaths = tests
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+addopts = --verbose
+markers =
+    unit: Unit tests
+    integration: Integration tests
+    performance: Performance tests
+----
+
+=== conftest.py
+
+[source,python]
+----
+import pytest
+import os
+import tempfile
+
+@pytest.fixture
+def temp_dir():
+    """Provide a temporary directory for tests."""
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        yield tmpdirname
+
+@pytest.fixture
+def mock_data_source():
+    """Provide a mock data source for tests."""
+    class MockDataSource:
+        def get_data(self, data_type, parameters):
+            return {
+                "data": "mock_data",
+                "type": data_type,
+                "parameters": parameters
+            }
+    
+    return MockDataSource()
+
+@pytest.fixture
+def mock_template_engine():
+    """Provide a mock template engine for tests."""
+    class MockTemplateEngine:
+        def get_template(self, template_name):
+            class MockTemplate:
+                def render(self, **kwargs):
+                    return f"Rendered template {template_name} with {kwargs}"
+            return MockTemplate()
+    
+    return MockTemplateEngine()
+----
+
+== Code Coverage
+
+Code coverage is measured using pytest-cov:
+
+[source,bash]
+----
+# Run tests with coverage
+poetry run pytest --cov=rinna
+
+# Generate HTML coverage report
+poetry run pytest --cov=rinna --cov-report=html
+----
+
+Coverage goals:
+* Unit tests: >80% for modules and >70% for lines
+* All tests: >90% for modules and >85% for lines
+
+== See Also
+
+* xref:architecture.adoc[Architecture]
+* xref:modules.adoc[Modules]
+* xref:api-reference.adoc[API Reference]

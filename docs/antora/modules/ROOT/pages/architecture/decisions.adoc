@@ -1,0 +1,83 @@
+= Architecture Decisions
+:description: Architecture Decision Records for the Rinna project
+
+This document provides an overview of the key architecture decisions made for the Rinna project.
+
+== Architecture Decision Records (ADRs)
+
+Architecture Decision Records (ADRs) document important architectural decisions made along with their context and consequences. They provide a historical record of the technical choices made during the project development.
+
+Each ADR describes:
+
+* The architectural decision that was made
+* The context and forces that led to the decision
+* The rationale behind the decision
+* The consequences and trade-offs of the decision
+
+== Key Decisions
+
+=== ADR-0001: Record Architecture Decisions
+
+**Status**: Accepted
+
+**Context**: We need to record the architectural decisions made on this project.
+
+**Decision**: We will use Architecture Decision Records, as described by Michael Nygard.
+
+**Consequences**: 
+* Team members can see the motivation behind architectural decisions
+* Future team members can understand historical context
+* Decisions are documented with their trade-offs
+
+=== ADR-0003: Adopt Clean Architecture for System Design
+
+**Status**: Accepted
+
+**Context**: We need a consistent architectural approach that supports our polyglot implementation.
+
+**Decision**: We will adopt Clean Architecture principles with clear separation between domain, use cases, and infrastructure.
+
+**Consequences**:
+* Clear separation of concerns
+* Testability of business rules
+* Independence from frameworks and UI
+* Ability to use multiple languages for different components
+
+=== ADR-0005: Adopt Multi-Language Approach for System Components
+
+**Status**: Accepted
+
+**Context**: Different parts of the system have different performance and expressiveness requirements.
+
+**Decision**: We will use a polyglot approach, using:
+* Java for core domain model and business logic
+* Go for high-performance APIs and services
+* Python for data processing and reporting
+
+**Consequences**:
+* Ability to use the right language for each component
+* Need for clear interfaces between components
+* More complex build and deployment process
+
+=== ADR-0006: Implement Comprehensive Testing Pyramid Strategy
+
+**Status**: Accepted
+
+**Context**: We need a testing strategy that provides confidence in our polyglot system.
+
+**Decision**: We will implement a comprehensive testing pyramid with:
+* Unit tests for business logic
+* Component tests for component integration
+* Integration tests for cross-language integration
+* Acceptance tests for user-facing functionality
+* Performance tests for critical paths
+
+**Consequences**:
+* High confidence in system behavior
+* Fast feedback from unit tests
+* Comprehensive coverage across all components
+* Ability to refactor with confidence
+
+== Additional Decisions
+
+For a complete list of architecture decisions, see the full ADR documents in the `/docs/architecture/decisions/` directory.

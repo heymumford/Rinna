@@ -1,0 +1,270 @@
+= Developer Guide
+:description: Guide for developers working on the Rinna project
+
+This guide is intended for developers who are working on the Rinna project codebase.
+
+== Getting Started
+
+=== Prerequisites
+
+Before you begin development on Rinna, ensure you have the following installed:
+
+* Java 21 or higher
+* Go 1.20 or higher
+* Python 3.10 or higher
+* Node.js 16 or higher
+* Maven 3.8 or higher
+* Git
+
+=== Clone the Repository
+
+[source,bash]
+----
+git clone https://github.com/heymumford/Rinna.git
+cd Rinna
+----
+
+=== Build the Project
+
+[source,bash]
+----
+# Build all components
+./build.sh all
+
+# Build specific components
+./build.sh java
+./build.sh python
+./build.sh go
+----
+
+== Project Structure
+
+Rinna follows a polyglot architecture with clear separation between components:
+
+[source]
+----
+/
+├── java/                     # Java components (core domain models)
+├── python/                   # Python components (data processing)
+├── go/                       # Go components (high-performance APIs)
+├── api-specs/                # API definition files
+├── config/                   # Configuration files
+├── docs/                     # Documentation
+├── scripts/                  # Build and utility scripts
+----
+
+== Java Development
+
+=== Core Domain
+
+The Java components implement the core domain model and business logic:
+
+[source,java]
+----
+// Example domain entity
+public class WorkItem {
+    private final String id;
+    private final String title;
+    private final WorkItemType type;
+    private final WorkflowState state;
+    
+    // Constructor, getters, business methods
+}
+----
+
+=== Building Java Components
+
+[source,bash]
+----
+cd java
+mvn clean install
+----
+
+=== Running Java Tests
+
+[source,bash]
+----
+# Run all tests
+cd java
+mvn test
+
+# Run a specific test
+mvn test -Dtest=WorkItemTest
+
+# Run tests by category
+mvn test -Dgroups="unit,component"
+
+# Run BDD tests
+mvn test -P bdd-only -Dcucumber.filter.tags="@feature-tag"
+----
+
+== Go Development
+
+=== API Implementation
+
+The Go components implement the REST API and high-performance services:
+
+[source,go]
+----
+// Example API handler
+func (h *WorkItemHandler) GetWorkItem(w http.ResponseWriter, r *http.Request) {
+    id := chi.URLParam(r, "id")
+    item, err := h.service.GetWorkItem(id)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
+    json.NewEncoder(w).Encode(item)
+}
+----
+
+=== Building Go Components
+
+[source,bash]
+----
+cd go
+go build ./...
+----
+
+=== Running Go Tests
+
+[source,bash]
+----
+# Run all tests
+cd go
+go test ./...
+
+# Run a specific test
+go test ./src/handlers -run TestWorkItemHandler_GetWorkItem
+
+# Run with coverage
+go test ./... -cover
+----
+
+== Python Development
+
+=== Report Generation
+
+The Python components implement data processing and report generation:
+
+[source,python]
+----
+# Example report generator
+def generate_workitem_report(workitems, format="html"):
+    template = env.get_template("workitem_report.html")
+    return template.render(workitems=workitems)
+----
+
+=== Setting Up Python Environment
+
+[source,bash]
+----
+cd python
+poetry install
+----
+
+=== Running Python Tests
+
+[source,bash]
+----
+# Run all tests
+cd python
+poetry run pytest
+
+# Run a specific test
+poetry run pytest tests/unit/test_report_generation.py
+
+# Run with coverage
+poetry run pytest --cov=rinna
+----
+
+== Documentation
+
+=== Building Documentation
+
+[source,bash]
+----
+# Build the documentation
+./build-docs.sh
+----
+
+=== Viewing Documentation
+
+The documentation can be viewed in your browser at http://localhost:3000.
+
+== Code Style and Linting
+
+=== Java
+
+[source,bash]
+----
+# Run checkstyle
+cd java
+mvn checkstyle:check
+
+# Run spotbugs
+mvn spotbugs:check
+
+# Run all quality checks
+mvn checkstyle:check pmd:check spotbugs:check
+----
+
+=== Go
+
+[source,bash]
+----
+# Run golint
+cd go
+golint ./...
+
+# Run go fmt
+go fmt ./...
+----
+
+=== Python
+
+[source,bash]
+----
+# Run pylint
+cd python
+poetry run pylint rinna
+
+# Run black
+poetry run black .
+
+# Run isort
+poetry run isort .
+----
+
+== Pull Request Process
+
+1. Create a feature branch
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. Make your changes and commit them
+   ```bash
+   git commit -m "Add feature: brief description"
+   ```
+
+3. Push your branch
+   ```bash
+   git push -u origin feature/your-feature-name
+   ```
+
+4. Create a pull request with a clear description
+
+5. Ensure all CI checks pass
+
+6. Request a code review
+
+7. Address any feedback
+
+8. Merge the pull request
+
+== Additional Resources
+
+* xref:../architecture/clean-architecture.adoc[Clean Architecture]
+* xref:../reference/api.adoc[API Reference]
+* xref:../reference/cli.adoc[CLI Reference]

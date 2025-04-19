@@ -1,0 +1,145 @@
+= Clean Architecture
+:description: Clean Architecture implementation in Rinna
+
+This document describes how Rinna implements Clean Architecture principles.
+
+== Overview
+
+Rinna follows the Clean Architecture approach as described by Robert C. Martin, organizing the system into concentric layers with dependencies pointing inward.
+
+[source]
+----
+                          +---------------------------------------------+
+                          |                                             |
+                          |  +-----------------------------------+      |
+                          |  |                                   |      |
+                          |  |  +---------------------------+    |      |
+                          |  |  |                           |    |      |
+                          |  |  |  +-------------------+    |    |      |
+                          |  |  |  |                   |    |    |      |
+                          |  |  |  |    ENTITIES       |    |    |      |
+                          |  |  |  |    (Domain)       |    |    |      |
+                          |  |  |  |                   |    |    |      |
+                          |  |  |  +-------------------+    |    |      |
+                          |  |  |                           |    |      |
+                          |  |  |      USE CASES            |    |      |
+                          |  |  |      (Application)        |    |      |
+                          |  |  |                           |    |      |
+                          |  |  +---------------------------+    |      |
+                          |  |                                   |      |
+                          |  |        INTERFACE ADAPTERS         |      |
+                          |  |        (Infrastructure)           |      |
+                          |  |                                   |      |
+                          |  +-----------------------------------+      |
+                          |                                             |
+                          |           FRAMEWORKS & DRIVERS              |
+                          |           (External Interfaces)             |
+                          |                                             |
+                          +---------------------------------------------+
+
+                              DEPENDENCY RULE: Dependencies point inward
+----
+
+== Core Principles
+
+1. **Independence of Frameworks**: The architecture does not depend on the existence of any library or framework
+2. **Testability**: Business rules can be tested without the UI, database, or any external element
+3. **Independence of UI**: The UI can change without affecting the rest of the system
+4. **Independence of Database**: The business rules don't depend on any specific database
+5. **Independence of External Agencies**: Business rules don't know anything about outside interfaces
+
+== Architecture Layers
+
+=== Entities (Domain)
+
+The innermost layer contains enterprise-wide business rules and entities:
+
+* `WorkItem`: Core workflow item entity
+* `Project`: Project entity
+* `Release`: Release entity
+* `Workflow`: Workflow definitions and states
+
+=== Use Cases (Application)
+
+This layer contains application-specific business rules:
+
+* `ItemService`: Work item management
+* `WorkflowService`: Workflow state transitions
+* `ProjectService`: Project management
+* `ReleaseService`: Release management
+
+=== Interface Adapters
+
+This layer contains adapters that convert data from external agencies to internal format:
+
+* `CLIAdapter`: Command-line interface adapter
+* `APIAdapter`: API interface adapter
+* `RepositoryAdapter`: Database adapter
+
+=== Frameworks & Drivers
+
+The outermost layer contains frameworks and tools:
+
+* Web frameworks
+* Database technologies
+* Delivery mechanisms
+
+== Implementation Details
+
+=== Java Implementation
+
+Java components primarily implement the Domain and Use Case layers:
+
+[source,java]
+----
+// Domain entity
+public class WorkItem {
+    private final String id;
+    private final String title;
+    private final WorkItemType type;
+    private final WorkflowState state;
+    
+    // Constructor, getters, business methods
+}
+
+// Use case
+public interface ItemService {
+    WorkItem createWorkItem(WorkItemCreateRequest request);
+    WorkItem updateWorkItem(String id, WorkItemUpdateRequest request);
+    void deleteWorkItem(String id);
+    // ...
+}
+----
+
+=== Go Implementation
+
+Go components primarily implement the Interface Adapters and Frameworks & Drivers layers:
+
+[source,go]
+----
+// API handler (Interface Adapter)
+func (h *WorkItemHandler) CreateWorkItem(w http.ResponseWriter, r *http.Request) {
+    // Validate input, call domain service, format response
+}
+----
+
+=== Python Implementation
+
+Python components primarily implement reporting and analytical services:
+
+[source,python]
+----
+# Report generator
+def generate_workitem_report(workitems, format="html"):
+    # Generate report based on workitems data
+----
+
+== Benefits
+
+The Clean Architecture approach provides Rinna with several benefits:
+
+1. **Maintainability**: Clear separation of concerns makes the code easier to maintain
+2. **Testability**: Business rules can be tested without external dependencies
+3. **Flexibility**: UI and infrastructure can change without affecting business rules
+4. **Polyglot Friendly**: Different languages can be used for different layers
+5. **Independence**: Components can be developed and deployed independently

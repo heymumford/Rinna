@@ -1,0 +1,329 @@
+= Go Packages
+:description: Package documentation for the Go component in Rinna
+
+This document describes the packages in the Go component of Rinna.
+
+== Core Packages
+
+=== auth
+
+The `auth` package handles authentication and authorization:
+
+[source,go]
+----
+package auth
+
+// Authenticate validates the provided credentials
+func Authenticate(username, password string) (string, error) {
+    // Implementation
+}
+
+// ValidateToken validates the provided JWT token
+func ValidateToken(token string) (bool, error) {
+    // Implementation
+}
+
+// GetUserFromToken extracts user information from a JWT token
+func GetUserFromToken(token string) (*User, error) {
+    // Implementation
+}
+----
+
+=== client
+
+The `client` package provides a client for the Java component API:
+
+[source,go]
+----
+package client
+
+// APIClient provides methods for accessing the API
+type APIClient struct {
+    baseURL    string
+    httpClient *http.Client
+    token      string
+}
+
+// NewAPIClient creates a new API client
+func NewAPIClient(baseURL, token string) *APIClient {
+    // Implementation
+}
+
+// GetWorkItem retrieves a work item by ID
+func (c *APIClient) GetWorkItem(id string) (*models.WorkItem, error) {
+    // Implementation
+}
+
+// CreateWorkItem creates a new work item
+func (c *APIClient) CreateWorkItem(request *models.WorkItemCreateRequest) (*models.WorkItem, error) {
+    // Implementation
+}
+----
+
+=== handlers
+
+The `handlers` package implements the REST API endpoints:
+
+[source,go]
+----
+package handlers
+
+// WorkItemHandler handles work item API requests
+type WorkItemHandler struct {
+    service *services.WorkItemService
+}
+
+// NewWorkItemHandler creates a new work item handler
+func NewWorkItemHandler(service *services.WorkItemService) *WorkItemHandler {
+    // Implementation
+}
+
+// GetWorkItem handles requests to get a work item
+func (h *WorkItemHandler) GetWorkItem(w http.ResponseWriter, r *http.Request) {
+    // Implementation
+}
+
+// CreateWorkItem handles requests to create a work item
+func (h *WorkItemHandler) CreateWorkItem(w http.ResponseWriter, r *http.Request) {
+    // Implementation
+}
+----
+
+=== middleware
+
+The `middleware` package provides HTTP middleware:
+
+[source,go]
+----
+package middleware
+
+// Authentication middleware for authenticating requests
+func Authentication(next http.Handler) http.Handler {
+    // Implementation
+}
+
+// RateLimit middleware for rate limiting requests
+func RateLimit(next http.Handler) http.Handler {
+    // Implementation
+}
+
+// Logging middleware for logging requests
+func Logging(next http.Handler) http.Handler {
+    // Implementation
+}
+----
+
+=== models
+
+The `models` package defines data transfer objects:
+
+[source,go]
+----
+package models
+
+// WorkItem represents a work item
+type WorkItem struct {
+    ID          string       `json:"id"`
+    Title       string       `json:"title"`
+    Type        string       `json:"type"`
+    State       string       `json:"state"`
+    Priority    string       `json:"priority,omitempty"`
+    Assignee    string       `json:"assignee,omitempty"`
+    Description string       `json:"description,omitempty"`
+    Comments    []Comment    `json:"comments,omitempty"`
+    Metadata    map[string]string `json:"metadata,omitempty"`
+}
+
+// WorkItemCreateRequest represents a request to create a work item
+type WorkItemCreateRequest struct {
+    Title       string       `json:"title"`
+    Type        string       `json:"type"`
+    Priority    string       `json:"priority,omitempty"`
+    Description string       `json:"description,omitempty"`
+    Assignee    string       `json:"assignee,omitempty"`
+    Metadata    map[string]string `json:"metadata,omitempty"`
+}
+----
+
+=== server
+
+The `server` package implements the HTTP server:
+
+[source,go]
+----
+package server
+
+// Server represents the HTTP server
+type Server struct {
+    router *chi.Mux
+    port   string
+}
+
+// NewServer creates a new server
+func NewServer(port string) *Server {
+    // Implementation
+}
+
+// Start starts the server
+func (s *Server) Start() error {
+    // Implementation
+}
+
+// Stop stops the server
+func (s *Server) Stop() error {
+    // Implementation
+}
+----
+
+=== version
+
+The `version` package provides version information:
+
+[source,go]
+----
+package version
+
+// Version information
+var (
+    Version   string
+    GitCommit string
+    BuildTime string
+)
+
+// GetVersion returns the version information
+func GetVersion() string {
+    // Implementation
+}
+----
+
+== Utility Packages
+
+=== config
+
+The `config` package handles configuration:
+
+[source,go]
+----
+package config
+
+// Config represents the application configuration
+type Config struct {
+    Server   ServerConfig
+    Database DatabaseConfig
+    Auth     AuthConfig
+}
+
+// LoadConfig loads the configuration from environment variables and config files
+func LoadConfig() (*Config, error) {
+    // Implementation
+}
+----
+
+=== logger
+
+The `logger` package provides logging functionality:
+
+[source,go]
+----
+package logger
+
+// Logger represents a logger
+type Logger struct {
+    // Implementation
+}
+
+// New creates a new logger
+func New(level string) *Logger {
+    // Implementation
+}
+
+// Info logs an informational message
+func (l *Logger) Info(msg string, fields ...Field) {
+    // Implementation
+}
+
+// Error logs an error message
+func (l *Logger) Error(msg string, fields ...Field) {
+    // Implementation
+}
+----
+
+=== errors
+
+The `errors` package provides error handling:
+
+[source,go]
+----
+package errors
+
+// ErrorType represents the type of an error
+type ErrorType string
+
+// Error types
+const (
+    BadRequest       ErrorType = "BadRequest"
+    Unauthorized     ErrorType = "Unauthorized"
+    Forbidden        ErrorType = "Forbidden"
+    NotFound         ErrorType = "NotFound"
+    InternalServer   ErrorType = "InternalServer"
+)
+
+// Error represents an application error
+type Error struct {
+    Type    ErrorType
+    Message string
+    Cause   error
+}
+
+// New creates a new error
+func New(errorType ErrorType, message string, cause error) *Error {
+    // Implementation
+}
+----
+
+== Package Dependencies
+
+The package dependencies are organized as follows:
+
+[source]
+----
+       +-------------+
+       |             |
+       |    main     |
+       |             |
+       +------+------+
+              |
+              v
+       +------+------+
+       |             |
+       |   server    |
+       |             |
+       +------+------+
+              |
+              v
+       +------+------+
+       |             |
+       |  handlers   |
+       |             |
+       +------+------+
+              |
+              v
+       +------+------+
+       |             |
+       |  services   |
+       |             |
+       +------+------+
+              |
+              v
+       +------+------+
+       |             |
+       |   client    |
+       |             |
+       +-------------+
+----
+
+== See Also
+
+* xref:architecture.adoc[Architecture]
+* xref:api-reference.adoc[API Reference]
+* xref:testing.adoc[Testing]

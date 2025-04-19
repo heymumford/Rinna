@@ -1,6 +1,11 @@
 = Java Component
 :description: Rinna Java Component documentation
 
+{rinna-logo}
+
+[.lead]
+Java component documentation for the Rinna workflow management system.
+
 The Java component forms the core of Rinna, implementing the domain model and business logic in a clean, maintainable way.
 
 == Overview

@@ -1,6 +1,11 @@
 = Python Component
 :description: Rinna Python Component documentation
 
+{rinna-logo}
+
+[.lead]
+Python component documentation for the Rinna workflow management system.
+
 The Python component of Rinna provides data processing, reporting, and visualization capabilities.
 
 == Overview

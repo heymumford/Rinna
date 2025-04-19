@@ -1,0 +1,285 @@
+= Testing
+:description: Testing approach for the Java component in Rinna
+
+This document describes the testing approach for the Java component in Rinna.
+
+== Testing Philosophy
+
+Rinna follows a comprehensive testing strategy based on the testing pyramid:
+
+* Many unit tests at the bottom
+* Fewer component tests in the middle
+* Fewer integration tests
+* Few end-to-end tests at the top
+
+This approach provides fast feedback from unit tests while ensuring system correctness with higher-level tests.
+
+== Test Categories
+
+=== Unit Tests
+
+Unit tests focus on testing individual classes in isolation:
+
+[source,java]
+----
+@Tag("unit")
+class WorkItemTest {
+    @Test
+    void shouldCreateWorkItemWithCorrectValues() {
+        // Given
+        String id = "WI-123";
+        String title = "Test Work Item";
+        WorkItemType type = WorkItemType.FEATURE;
+        WorkflowState state = WorkflowState.TO_DO;
+        
+        // When
+        WorkItem workItem = new WorkItem(id, title, type, state);
+        
+        // Then
+        assertEquals(id, workItem.getId());
+        assertEquals(title, workItem.getTitle());
+        assertEquals(type, workItem.getType());
+        assertEquals(state, workItem.getState());
+    }
+    
+    @Test
+    void shouldThrowExceptionWhenTransitioningToInvalidState() {
+        // Given
+        WorkItem workItem = new WorkItem("WI-123", "Test", WorkItemType.FEATURE, WorkflowState.TO_DO);
+        
+        // When/Then
+        assertThrows(InvalidTransitionException.class, () -> {
+            workItem.transitionTo(WorkflowState.DONE);
+        });
+    }
+}
+----
+
+=== Component Tests
+
+Component tests focus on testing components within the Java codebase:
+
+[source,java]
+----
+@Tag("component")
+class ItemServiceComponentTest {
+    private ItemRepository repository;
+    private ItemService service;
+    
+    @BeforeEach
+    void setUp() {
+        repository = new InMemoryItemRepository();
+        service = new DefaultItemService(repository);
+    }
+    
+    @Test
+    void shouldCreateAndRetrieveWorkItem() {
+        // Given
+        WorkItemCreateRequest request = new WorkItemCreateRequest.Builder()
+            .title("Test Work Item")
+            .type(WorkItemType.FEATURE)
+            .build();
+            
+        // When
+        WorkItem created = service.createWorkItem(request);
+        WorkItem retrieved = service.getWorkItem(created.getId());
+        
+        // Then
+        assertEquals(created.getId(), retrieved.getId());
+        assertEquals(created.getTitle(), retrieved.getTitle());
+        assertEquals(created.getType(), retrieved.getType());
+    }
+    
+    @Test
+    void shouldUpdateWorkItemProperties() {
+        // Given
+        WorkItem workItem = service.createWorkItem(new WorkItemCreateRequest.Builder()
+            .title("Original Title")
+            .type(WorkItemType.TASK)
+            .build());
+            
+        WorkItemUpdateRequest updateRequest = new WorkItemUpdateRequest.Builder()
+            .title("Updated Title")
+            .priority(Priority.HIGH)
+            .build();
+            
+        // When
+        WorkItem updated = service.updateWorkItem(workItem.getId(), updateRequest);
+        
+        // Then
+        assertEquals("Updated Title", updated.getTitle());
+        assertEquals(Priority.HIGH, updated.getPriority());
+        assertEquals(WorkItemType.TASK, updated.getType()); // Unchanged
+    }
+}
+----
+
+=== Integration Tests
+
+Integration tests focus on testing interactions between components:
+
+[source,java]
+----
+@Tag("integration")
+class WorkflowServiceIntegrationTest {
+    private ItemRepository itemRepository;
+    private ItemService itemService;
+    private WorkflowService workflowService;
+    
+    @BeforeEach
+    void setUp() {
+        itemRepository = new JdbcItemRepository(/* ... */);
+        itemService = new DefaultItemService(itemRepository);
+        workflowService = new DefaultWorkflowService(itemRepository);
+    }
+    
+    @Test
+    void shouldTransitionWorkItemThroughWorkflow() {
+        // Given
+        WorkItem workItem = itemService.createWorkItem(/* ... */);
+        
+        // When
+        workflowService.transitionWorkItem(workItem.getId(), WorkflowState.IN_PROGRESS);
+        workflowService.transitionWorkItem(workItem.getId(), WorkflowState.IN_TEST);
+        workflowService.transitionWorkItem(workItem.getId(), WorkflowState.DONE);
+        
+        // Then
+        WorkItem updated = itemService.getWorkItem(workItem.getId());
+        assertEquals(WorkflowState.DONE, updated.getState());
+    }
+}
+----
+
+=== Acceptance Tests
+
+Acceptance tests focus on validating user scenarios using BDD:
+
+[source,java]
+----
+@Tag("acceptance")
+class WorkItemManagementSteps {
+    private WorkItem workItem;
+    private ItemService itemService;
+    
+    @Given("a new {string} work item with title {string}")
+    public void aNewWorkItemWithTitle(String type, String title) {
+        workItem = itemService.createWorkItem(new WorkItemCreateRequest.Builder()
+            .title(title)
+            .type(WorkItemType.valueOf(type))
+            .build());
+    }
+    
+    @When("I transition the work item to {string} state")
+    public void iTransitionTheWorkItemToState(String state) {
+        workflowService.transitionWorkItem(workItem.getId(), WorkflowState.valueOf(state));
+    }
+    
+    @Then("the work item should be in {string} state")
+    public void theWorkItemShouldBeInState(String state) {
+        WorkItem updated = itemService.getWorkItem(workItem.getId());
+        assertEquals(WorkflowState.valueOf(state), updated.getState());
+    }
+}
+----
+
+=== Performance Tests
+
+Performance tests focus on validating system performance:
+
+[source,java]
+----
+@Tag("performance")
+class ItemServicePerformanceTest {
+    private ItemService itemService;
+    
+    @Test
+    void shouldHandleHighVolumeOfWorkItems() {
+        // Given
+        int count = 1000;
+        
+        // When
+        long startTime = System.currentTimeMillis();
+        for (int i = 0; i < count; i++) {
+            itemService.createWorkItem(/* ... */);
+        }
+        long endTime = System.currentTimeMillis();
+        
+        // Then
+        long duration = endTime - startTime;
+        assertTrue(duration < 5000, "Creating " + count + " work items took too long: " + duration + "ms");
+    }
+}
+----
+
+== Running Tests
+
+=== Running All Tests
+
+[source,bash]
+----
+cd java
+mvn test
+----
+
+=== Running by Category
+
+[source,bash]
+----
+# Run unit tests
+mvn test -Dgroups="unit"
+
+# Run component tests
+mvn test -Dgroups="component"
+
+# Run multiple categories
+mvn test -Dgroups="unit,component"
+----
+
+=== Running Specific Tests
+
+[source,bash]
+----
+# Run a specific test class
+mvn test -Dtest=WorkItemTest
+
+# Run a specific test method
+mvn test -Dtest=WorkItemTest#shouldCreateWorkItemWithCorrectValues
+----
+
+=== Running BDD Tests
+
+[source,bash]
+----
+# Run all BDD tests
+mvn test -P bdd-only
+
+# Run specific feature
+mvn test -P bdd-only -Dcucumber.filter.tags="@work-item-management"
+----
+
+== Test Reporting
+
+Test reports are generated in the `target/site` directory:
+
+* JUnit XML reports: `target/surefire-reports`
+* HTML reports: `target/site/surefire-report.html`
+* Coverage reports: `target/site/jacoco`
+
+== Code Coverage
+
+Code coverage is measured using JaCoCo:
+
+[source,bash]
+----
+# Generate coverage report
+mvn clean test jacoco:report
+----
+
+Coverage goals:
+* Unit tests: >80% class, >70% method, >60% line
+* All tests: >90% class, >85% method, >80% line
+
+== See Also
+
+* xref:architecture.adoc[Architecture]
+* xref:api-reference.adoc[API Reference]

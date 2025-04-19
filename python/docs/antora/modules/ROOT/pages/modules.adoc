@@ -1,0 +1,555 @@
+= Python Modules
+:description: Module documentation for the Python component in Rinna
+
+This document describes the modules in the Python component of Rinna.
+
+== Core Modules
+
+=== rinna.api
+
+The `rinna.api` module provides API interfaces:
+
+[source,python]
+----
+from fastapi import FastAPI, Depends, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class ReportRequest(BaseModel):
+    report_type: str
+    parameters: dict
+    output_format: str = "html"
+
+@app.post("/api/reports")
+def generate_report(request: ReportRequest):
+    """
+    Generate a report with the specified parameters.
+    
+    Args:
+        request: The report request
+        
+    Returns:
+        The generated report
+    """
+    try:
+        report_generator = get_report_generator()
+        report = report_generator.generate_report(
+            request.report_type,
+            request.parameters,
+            request.output_format
+        )
+        return {"content": report}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+----
+
+=== rinna.reports
+
+The `rinna.reports` module handles report generation:
+
+[source,python]
+----
+class ReportGenerator:
+    """
+    Generates reports in various formats.
+    """
+    
+    def __init__(self, template_engine, data_source):
+        """
+        Initialize the report generator.
+        
+        Args:
+            template_engine: The template engine to use
+            data_source: The data source to use
+        """
+        self.template_engine = template_engine
+        self.data_source = data_source
+    
+    def generate_report(self, report_type, parameters, output_format='html'):
+        """
+        Generate a report of the specified type with the given parameters.
+        
+        Args:
+            report_type: Type of report to generate
+            parameters: Parameters for the report
+            output_format: Output format (html, pdf, docx)
+            
+        Returns:
+            The generated report content
+        """
+        # Get data for the report
+        data = self.data_source.get_data(report_type, parameters)
+        
+        # Get template for the report
+        template = self.template_engine.get_template(f"{report_type}.{output_format}.template")
+        
+        # Render the report
+        return template.render(data=data)
+----
+
+=== rinna.reports.renderers
+
+The `rinna.reports.renderers` module provides report rendering implementations:
+
+[source,python]
+----
+class Renderer:
+    """
+    Base class for report renderers.
+    """
+    
+    def render(self, template, data):
+        """
+        Render a report using the specified template and data.
+        
+        Args:
+            template: The template to use
+            data: The data to render
+            
+        Returns:
+            The rendered report
+        """
+        raise NotImplementedError("Subclasses must implement render")
+
+class HTMLRenderer(Renderer):
+    """
+    Renders reports as HTML.
+    """
+    
+    def render(self, template, data):
+        """
+        Render a report as HTML.
+        
+        Args:
+            template: The template to use
+            data: The data to render
+            
+        Returns:
+            The rendered HTML
+        """
+        # Implementation
+        pass
+
+class PDFRenderer(Renderer):
+    """
+    Renders reports as PDF.
+    """
+    
+    def render(self, template, data):
+        """
+        Render a report as PDF.
+        
+        Args:
+            template: The template to use
+            data: The data to render
+            
+        Returns:
+            The rendered PDF
+        """
+        # Implementation
+        pass
+----
+
+=== rinna.scripts
+
+The `rinna.scripts` module provides utility scripts:
+
+[source,python]
+----
+def generate_api_diagram():
+    """
+    Generate an API diagram using the Swagger specification.
+    """
+    # Implementation
+    pass
+
+def log_python():
+    """
+    Log messages from the Python component.
+    """
+    # Implementation
+    pass
+
+def test_version():
+    """
+    Test the version compatibility.
+    """
+    # Implementation
+    pass
+----
+
+== Data Analysis
+
+=== rinna.data
+
+The `rinna.data` module handles data access and processing:
+
+[source,python]
+----
+class DataSource:
+    """
+    Base class for data sources.
+    """
+    
+    def get_data(self, data_type, parameters):
+        """
+        Get data of the specified type with the given parameters.
+        
+        Args:
+            data_type: Type of data to get
+            parameters: Parameters for the data
+            
+        Returns:
+            The data
+        """
+        raise NotImplementedError("Subclasses must implement get_data")
+
+class APIDataSource(DataSource):
+    """
+    Data source that gets data from the API.
+    """
+    
+    def __init__(self, api_client):
+        """
+        Initialize the API data source.
+        
+        Args:
+            api_client: The API client to use
+        """
+        self.api_client = api_client
+    
+    def get_data(self, data_type, parameters):
+        """
+        Get data from the API.
+        
+        Args:
+            data_type: Type of data to get
+            parameters: Parameters for the data
+            
+        Returns:
+            The data
+        """
+        # Implementation
+        pass
+----
+
+=== rinna.analysis
+
+The `rinna.analysis` module provides data analysis functionality:
+
+[source,python]
+----
+class DataAnalyzer:
+    """
+    Analyzes data and calculates metrics.
+    """
+    
+    def __init__(self, data_source):
+        """
+        Initialize the data analyzer.
+        
+        Args:
+            data_source: The data source to use
+        """
+        self.data_source = data_source
+    
+    def calculate_metrics(self, metric_type, parameters):
+        """
+        Calculate metrics based on the data.
+        
+        Args:
+            metric_type: Type of metric to calculate
+            parameters: Parameters for the calculation
+            
+        Returns:
+            The calculated metrics
+        """
+        # Get raw data
+        data = self.data_source.get_data(metric_type, parameters)
+        
+        # Calculate metrics
+        if metric_type == 'velocity':
+            return self._calculate_velocity(data)
+        elif metric_type == 'burndown':
+            return self._calculate_burndown(data)
+        elif metric_type == 'distribution':
+            return self._calculate_distribution(data)
+        else:
+            raise ValueError(f"Unknown metric type: {metric_type}")
+    
+    def _calculate_velocity(self, data):
+        """
+        Calculate velocity metrics.
+        
+        Args:
+            data: The data to analyze
+            
+        Returns:
+            The velocity metrics
+        """
+        # Implementation
+        pass
+    
+    def _calculate_burndown(self, data):
+        """
+        Calculate burndown metrics.
+        
+        Args:
+            data: The data to analyze
+            
+        Returns:
+            The burndown metrics
+        """
+        # Implementation
+        pass
+    
+    def _calculate_distribution(self, data):
+        """
+        Calculate distribution metrics.
+        
+        Args:
+            data: The data to analyze
+            
+        Returns:
+            The distribution metrics
+        """
+        # Implementation
+        pass
+----
+
+=== rinna.visualization
+
+The `rinna.visualization` module provides data visualization:
+
+[source,python]
+----
+class ChartGenerator:
+    """
+    Generates charts and visualizations.
+    """
+    
+    def generate_chart(self, chart_type, data, parameters):
+        """
+        Generate a chart of the specified type.
+        
+        Args:
+            chart_type: Type of chart to generate
+            data: Data for the chart
+            parameters: Parameters for the chart
+            
+        Returns:
+            The generated chart as a PNG image
+        """
+        if chart_type == 'line':
+            return self._generate_line_chart(data, parameters)
+        elif chart_type == 'bar':
+            return self._generate_bar_chart(data, parameters)
+        elif chart_type == 'pie':
+            return self._generate_pie_chart(data, parameters)
+        else:
+            raise ValueError(f"Unknown chart type: {chart_type}")
+    
+    def _generate_line_chart(self, data, parameters):
+        """
+        Generate a line chart.
+        
+        Args:
+            data: Data for the chart
+            parameters: Parameters for the chart
+            
+        Returns:
+            The generated chart as a PNG image
+        """
+        # Implementation using matplotlib
+        pass
+    
+    def _generate_bar_chart(self, data, parameters):
+        """
+        Generate a bar chart.
+        
+        Args:
+            data: Data for the chart
+            parameters: Parameters for the chart
+            
+        Returns:
+            The generated chart as a PNG image
+        """
+        # Implementation using matplotlib
+        pass
+    
+    def _generate_pie_chart(self, data, parameters):
+        """
+        Generate a pie chart.
+        
+        Args:
+            data: Data for the chart
+            parameters: Parameters for the chart
+            
+        Returns:
+            The generated chart as a PNG image
+        """
+        # Implementation using matplotlib
+        pass
+----
+
+== Configuration
+
+=== rinna.config
+
+The `rinna.config` module handles configuration:
+
+[source,python]
+----
+class Config:
+    """
+    Configuration for the Python component.
+    """
+    
+    def __init__(self, config_file=None):
+        """
+        Initialize the configuration.
+        
+        Args:
+            config_file: Path to a configuration file
+        """
+        self.config = {}
+        
+        # Load default configuration
+        self._load_defaults()
+        
+        # Load configuration from file
+        if config_file:
+            self._load_from_file(config_file)
+        
+        # Load configuration from environment variables
+        self._load_from_env()
+    
+    def _load_defaults(self):
+        """
+        Load default configuration values.
+        """
+        self.config = {
+            'api': {
+                'host': 'localhost',
+                'port': 8000,
+            },
+            'templates': {
+                'path': './templates',
+            },
+            'logging': {
+                'level': 'INFO',
+                'file': './logs/rinna.log',
+            },
+        }
+    
+    def _load_from_file(self, config_file):
+        """
+        Load configuration from a file.
+        
+        Args:
+            config_file: Path to the configuration file
+        """
+        # Implementation
+        pass
+    
+    def _load_from_env(self):
+        """
+        Load configuration from environment variables.
+        """
+        # Implementation
+        pass
+    
+    def get(self, key, default=None):
+        """
+        Get a configuration value.
+        
+        Args:
+            key: The configuration key
+            default: Default value if the key is not found
+            
+        Returns:
+            The configuration value
+        """
+        # Implementation
+        pass
+----
+
+== Logging
+
+=== rinna.logging
+
+The `rinna.logging` module provides logging functionality:
+
+[source,python]
+----
+import logging
+import json
+import uuid
+from datetime import datetime
+
+class JSONFormatter(logging.Formatter):
+    """
+    Formatter that outputs JSON strings.
+    """
+    
+    def format(self, record):
+        """
+        Format the record as a JSON string.
+        
+        Args:
+            record: The log record
+            
+        Returns:
+            The formatted log record
+        """
+        log_data = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'level': record.levelname,
+            'message': record.getMessage(),
+            'module': record.module,
+            'function': record.funcName,
+            'line': record.lineno,
+        }
+        
+        if hasattr(record, 'correlation_id'):
+            log_data['correlation_id'] = record.correlation_id
+        
+        if record.exc_info:
+            log_data['exception'] = self.formatException(record.exc_info)
+        
+        return json.dumps(log_data)
+
+def configure_logging(level='INFO', file=None):
+    """
+    Configure logging.
+    
+    Args:
+        level: The log level
+        file: The log file
+    """
+    logger = logging.getLogger('rinna')
+    logger.setLevel(level)
+    
+    # Create formatter
+    formatter = JSONFormatter()
+    
+    # Create console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    
+    # Create file handler if specified
+    if file:
+        file_handler = logging.FileHandler(file)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+    
+    return logger
+----
+
+== See Also
+
+* xref:architecture.adoc[Architecture]
+* xref:api-reference.adoc[API Reference]
+* xref:testing.adoc[Testing]

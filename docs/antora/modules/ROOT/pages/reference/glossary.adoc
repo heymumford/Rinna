@@ -1,0 +1,79 @@
+= Glossary
+:description: Terminology and definitions for the Rinna project
+
+This document provides definitions for the key terms used in the Rinna project.
+
+== Work Management Terms
+
+[glossary]
+Work Item:: A discrete unit of work that can be tracked and managed. Examples include features, bugs, tasks, and epics.
+
+Feature:: A new capability or functionality added to the system.
+
+Bug:: A defect or issue in the system that needs to be fixed.
+
+Task:: A small, well-defined unit of work that contributes to a larger goal.
+
+Epic:: A large body of work that can be broken down into smaller work items.
+
+Workflow:: A defined sequence of states that work items progress through.
+
+State:: A stage in the workflow process, such as "To Do", "In Progress", or "Done".
+
+Transition:: The movement of a work item from one state to another.
+
+Quality Gate:: A checkpoint with defined criteria that must be met before a work item can progress.
+
+Project:: A collection of work items organized toward a common goal.
+
+Release:: A version of the software that is deployed to users.
+
+Sprint:: A time-boxed period during which specific work is completed and ready for review.
+
+Backlog:: A prioritized list of work items to be addressed.
+
+Priority:: The relative importance of a work item compared to others.
+
+== Technical Terms
+
+[glossary]
+Clean Architecture:: An architectural approach that separates software into concentric layers with dependencies pointing inward.
+
+Domain Model:: The representation of concepts, relationships, and rules in the problem domain.
+
+Use Case:: A specific business rule or application behavior.
+
+Interface Adapter:: A component that converts data between the format most convenient for use cases and external agencies.
+
+External Interface:: A component that interacts with external systems or users.
+
+Polyglot:: Using multiple programming languages in a single system.
+
+Test Pyramid:: A testing strategy with many unit tests, fewer integration tests, and even fewer end-to-end tests.
+
+API:: Application Programming Interface, a set of rules for interacting with software components.
+
+CLI:: Command-Line Interface, a text-based interface for interacting with software.
+
+REST:: Representational State Transfer, an architectural style for designing networked applications.
+
+OAuth:: An open standard for token-based authentication and authorization.
+
+Webhook:: A mechanism for sending real-time notifications to external systems when events occur.
+
+Rate Limiting:: The practice of limiting the number of API requests a user can make in a given time period.
+
+== Rinna-Specific Terms
+
+[glossary]
+Rinna CLI:: The command-line interface for Rinna, accessed using the `rin` command.
+
+Work Queue:: A collection of work items organized by workflow state.
+
+Critical Path:: The sequence of work items that determines the shortest possible project duration.
+
+Quality Rule:: A specific criterion that must be satisfied as part of a quality gate.
+
+Workflow Template:: A predefined workflow configuration that can be applied to projects.
+
+Canonical Model:: The core domain model that all external representations map to and from.

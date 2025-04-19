@@ -1,0 +1,316 @@
+= CLI Reference
+:description: Command-line interface reference for the Rinna CLI
+
+This document provides a comprehensive reference for the Rinna command-line interface (`rin`).
+
+== Installation
+
+The Rinna CLI is installed as part of the Rinna system:
+
+[source,bash]
+----
+# Install Rinna
+./install.sh
+
+# Verify installation
+rin --version
+----
+
+== Command Structure
+
+The CLI uses a hierarchical command structure:
+
+[source]
+----
+rin <command> [subcommand] [options] [arguments]
+----
+
+== Global Options
+
+[cols="1,3"]
+|===
+|Option |Description
+
+|`-h, --help`
+|Show help information
+
+|`-v, --verbose`
+|Enable verbose output
+
+|`-t, --terse`
+|Enable terse output (minimal)
+
+|`-e, --errors`
+|Show only errors
+
+|`--no-color`
+|Disable colored output
+
+|`-c, --config <path>`
+|Use a specific config file
+
+|`--format <format>`
+|Output format (json, yaml, table)
+|===
+
+== Work Item Commands
+
+=== Creating Work Items
+
+[source,bash]
+----
+# Create a feature
+rin add "Implement login page" --type=FEATURE --priority=HIGH
+
+# Create a bug
+rin bug "Login button misaligned" --priority=MEDIUM
+----
+
+==== Options
+
+[cols="1,3"]
+|===
+|Option |Description
+
+|`--type=TYPE`
+|Work item type (FEATURE, BUG, TASK, EPIC)
+
+|`--priority=PRIORITY`
+|Priority (HIGH, MEDIUM, LOW)
+
+|`--project=PROJECT`
+|Project key or ID
+
+|`--description=DESC`
+|Detailed description
+
+|`--assigned=USER`
+|Assign to a user
+|===
+
+=== Viewing Work Items
+
+[source,bash]
+----
+# List all work items
+rin list
+
+# List work items with filtering
+rin list --type=BUG --status=IN_PROGRESS
+
+# View a specific work item
+rin view WI-123
+----
+
+==== Options
+
+[cols="1,3"]
+|===
+|Option |Description
+
+|`--type=TYPE`
+|Filter by type
+
+|`--status=STATUS`
+|Filter by status
+
+|`--assigned=USER`
+|Filter by assignee
+
+|`--sort=FIELD`
+|Sort by field
+
+|`--reverse`
+|Reverse sort order
+|===
+
+=== Updating Work Items
+
+[source,bash]
+----
+# Update work item status
+rin update WI-123 --status=IN_PROGRESS
+
+# Assign a work item
+rin update WI-123 --assigned=john
+
+# Update multiple fields
+rin update WI-123 --priority=HIGH --description="Updated description"
+----
+
+==== Options
+
+[cols="1,3"]
+|===
+|Option |Description
+
+|`--status=STATUS`
+|Update status
+
+|`--priority=PRIORITY`
+|Update priority
+
+|`--assigned=USER`
+|Assign to user
+
+|`--title=TITLE`
+|Update title
+
+|`--description=DESC`
+|Update description
+|===
+
+=== Completing Work Items
+
+[source,bash]
+----
+# Mark a work item as done
+rin done WI-123
+
+# Add a comment when completing
+rin done WI-123 --comment="Fixed in v1.2.0"
+----
+
+== Project Commands
+
+[source,bash]
+----
+# List projects
+rin project list
+
+# Create a project
+rin project create "My Project" --key=MP
+
+# View project details
+rin project view MP
+----
+
+== Release Commands
+
+[source,bash]
+----
+# List releases
+rin release list
+
+# Create a release
+rin release create "1.0.0" --date=2023-12-01
+
+# View release details
+rin release view 1.0.0
+----
+
+== Workflow Commands
+
+[source,bash]
+----
+# List workflow states
+rin workflow states
+
+# Transition a work item
+rin workflow transition WI-123 --to-state=IN_PROGRESS
+----
+
+== Server Commands
+
+[source,bash]
+----
+# Start the Rinna server
+rin server start
+
+# Stop the server
+rin server stop
+
+# Check server status
+rin server status
+----
+
+== Report Commands
+
+[source,bash]
+----
+# Generate a burndown report
+rin report burndown --project=MP
+
+# Generate a velocity report
+rin report velocity --last=3
+----
+
+== Advanced Commands
+
+=== Command Aliases
+
+[cols="1,3"]
+|===
+|Alias |Equivalent
+
+|`rin ls`
+|`rin list`
+
+|`rin cat WI-123`
+|`rin view WI-123`
+
+|`rin grep "login"`
+|`rin list --search="login"`
+|===
+
+=== Command Composition
+
+Commands can be composed with pipes:
+
+[source,bash]
+----
+# List bugs and generate a CSV
+rin list --type=BUG --format=csv > bugs.csv
+
+# Find high priority items and update them
+rin list --priority=HIGH --format=json | jq '.[].id' | xargs -I{} rin update {} --assigned=john
+----
+
+== Environment Variables
+
+[cols="1,3"]
+|===
+|Variable |Description
+
+|`RINNA_CONFIG`
+|Path to config file
+
+|`RINNA_TOKEN`
+|Authentication token
+
+|`RINNA_SERVER`
+|Server URL
+
+|`RINNA_FORMAT`
+|Default output format
+|===
+
+== Exit Codes
+
+[cols="1,3"]
+|===
+|Code |Description
+
+|0
+|Success
+
+|1
+|General error
+
+|2
+|Command line parsing error
+
+|3
+|API error
+
+|4
+|Authentication error
+
+|5
+|File I/O error
+|===
+
+== See Also
+
+* xref:guides/getting-started.adoc[Getting Started Guide]
+* xref:guides/user-guide.adoc[User Guide]

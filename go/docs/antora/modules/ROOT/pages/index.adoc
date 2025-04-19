@@ -1,6 +1,11 @@
 = Go Component
 :description: Rinna Go Component documentation
 
+{rinna-logo}
+
+[.lead]
+Go component documentation for the Rinna workflow management system.
+
 The Go component of Rinna provides high-performance APIs and server implementations.
 
 == Overview

@@ -1,0 +1,204 @@
+= API Reference
+:description: API reference documentation for the Rinna API
+
+This document provides reference documentation for the Rinna API.
+
+== API Overview
+
+Rinna provides a comprehensive RESTful API for integration with external systems. The API is implemented in Go for high performance and follows standard REST conventions.
+
+== Authentication
+
+=== OAuth 2.0
+
+The API uses OAuth 2.0 for authentication and authorization. Both client credentials and authorization code flows are supported.
+
+[source,bash]
+----
+# Request an access token using client credentials
+curl -X POST \
+  https://api.rinnacloud.com/oauth/token \
+  -d "grant_type=client_credentials" \
+  -d "client_id=YOUR_CLIENT_ID" \
+  -d "client_secret=YOUR_CLIENT_SECRET"
+----
+
+=== API Keys
+
+For simpler use cases, API keys can be used:
+
+[source,bash]
+----
+# Using API key in header
+curl -X GET \
+  https://api.rinnacloud.com/api/v1/workitems \
+  -H "X-API-Key: YOUR_API_KEY"
+----
+
+== Core Endpoints
+
+=== Work Items
+
+[cols="1,3,2"]
+|===
+|Method |Endpoint |Description
+
+|`GET`
+|/api/v1/workitems
+|List work items with filtering and pagination
+
+|`GET`
+|/api/v1/workitems/{id}
+|Get a specific work item by ID
+
+|`POST`
+|/api/v1/workitems
+|Create a new work item
+
+|`PUT`
+|/api/v1/workitems/{id}
+|Update a work item
+
+|`DELETE`
+|/api/v1/workitems/{id}
+|Delete a work item
+|===
+
+==== Example: Creating a Work Item
+
+[source,bash]
+----
+curl -X POST \
+  https://api.rinnacloud.com/api/v1/workitems \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Implement login page",
+    "type": "FEATURE",
+    "priority": "HIGH",
+    "description": "Create a secure login page with OAuth support"
+  }'
+----
+
+=== Projects
+
+[cols="1,3,2"]
+|===
+|Method |Endpoint |Description
+
+|`GET`
+|/api/v1/projects
+|List projects
+
+|`GET`
+|/api/v1/projects/{id}
+|Get a specific project
+
+|`POST`
+|/api/v1/projects
+|Create a new project
+
+|`PUT`
+|/api/v1/projects/{id}
+|Update a project
+
+|`DELETE`
+|/api/v1/projects/{id}
+|Delete a project
+|===
+
+=== Releases
+
+[cols="1,3,2"]
+|===
+|Method |Endpoint |Description
+
+|`GET`
+|/api/v1/releases
+|List releases
+
+|`GET`
+|/api/v1/releases/{id}
+|Get a specific release
+
+|`POST`
+|/api/v1/releases
+|Create a new release
+
+|`PUT`
+|/api/v1/releases/{id}
+|Update a release
+
+|`DELETE`
+|/api/v1/releases/{id}
+|Delete a release
+|===
+
+=== Workflow
+
+[cols="1,3,2"]
+|===
+|Method |Endpoint |Description
+
+|`GET`
+|/api/v1/workflow/states
+|List workflow states
+
+|`POST`
+|/api/v1/workflow/transition
+|Transition a work item to a new state
+|===
+
+== Rate Limiting
+
+The API implements rate limiting to prevent abuse:
+
+* 60 requests per minute for authenticated users
+* 30 requests per minute for unauthenticated users
+
+Rate limit headers are included in responses:
+
+[source]
+----
+X-Rate-Limit-Limit: 60
+X-Rate-Limit-Remaining: 45
+X-Rate-Limit-Reset: 1609459200
+----
+
+== Webhooks
+
+Rinna supports webhooks for event notifications:
+
+[source,bash]
+----
+# Register a webhook
+curl -X POST \
+  https://api.rinnacloud.com/api/v1/webhooks \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://your-server.com/webhook",
+    "events": ["workitem.created", "workitem.updated"],
+    "secret": "your-webhook-secret"
+  }'
+----
+
+== Error Handling
+
+The API uses standard HTTP status codes and returns error details in JSON format:
+
+[source,json]
+----
+{
+  "error": {
+    "code": "invalid_request",
+    "message": "The request is missing a required parameter",
+    "details": "The 'title' field is required"
+  }
+}
+----
+
+== Additional Resources
+
+* xref:../guides/user-guide.adoc[User Guide]
+* OpenAPI Specification: https://api.rinnacloud.com/docs/openapi.yaml

@@ -1,0 +1,438 @@
+= Testing
+:description: Testing approach for the Go component in Rinna
+
+This document describes the testing approach for the Go component in Rinna.
+
+== Testing Philosophy
+
+The Go component follows a comprehensive testing strategy:
+
+* Unit tests for individual packages and functions
+* Integration tests for API endpoints
+* Performance tests for critical paths
+* HTTP tests for API contracts
+
+== Test Categories
+
+=== Unit Tests
+
+Unit tests focus on testing individual functions and packages:
+
+[source,go]
+----
+package handlers
+
+import (
+    "testing"
+    "net/http"
+    "net/http/httptest"
+    "encoding/json"
+    "bytes"
+    
+    "github.com/heymumford/rinna/models"
+    "github.com/heymumford/rinna/services"
+    "github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/mock"
+)
+
+// MockWorkItemService is a mock implementation of WorkItemService
+type MockWorkItemService struct {
+    mock.Mock
+}
+
+func (m *MockWorkItemService) GetWorkItem(id string) (*models.WorkItem, error) {
+    args := m.Called(id)
+    return args.Get(0).(*models.WorkItem), args.Error(1)
+}
+
+func TestGetWorkItem(t *testing.T) {
+    // Create mock service
+    mockService := new(MockWorkItemService)
+    
+    // Create test work item
+    workItem := &models.WorkItem{
+        ID: "WI-123",
+        Title: "Test Work Item",
+        Type: "FEATURE",
+        State: "TO_DO",
+    }
+    
+    // Set up expectations
+    mockService.On("GetWorkItem", "WI-123").Return(workItem, nil)
+    
+    // Create handler with mock service
+    handler := NewWorkItemHandler(mockService)
+    
+    // Create test request
+    req, err := http.NewRequest("GET", "/api/v1/workitems/WI-123", nil)
+    if err != nil {
+        t.Fatal(err)
+    }
+    
+    // Create response recorder
+    rr := httptest.NewRecorder()
+    
+    // Create HTTP handler function
+    http.HandlerFunc(handler.GetWorkItem).ServeHTTP(rr, req)
+    
+    // Check status code
+    assert.Equal(t, http.StatusOK, rr.Code)
+    
+    // Parse response
+    var response models.WorkItem
+    err = json.Unmarshal(rr.Body.Bytes(), &response)
+    if err != nil {
+        t.Fatal(err)
+    }
+    
+    // Check response
+    assert.Equal(t, workItem.ID, response.ID)
+    assert.Equal(t, workItem.Title, response.Title)
+    assert.Equal(t, workItem.Type, response.Type)
+    assert.Equal(t, workItem.State, response.State)
+    
+    // Verify expectations
+    mockService.AssertExpectations(t)
+}
+----
+
+=== Integration Tests
+
+Integration tests focus on testing the API as a whole:
+
+[source,go]
+----
+package integration
+
+import (
+    "testing"
+    "net/http"
+    "net/http/httptest"
+    "encoding/json"
+    "bytes"
+    
+    "github.com/heymumford/rinna/models"
+    "github.com/heymumford/rinna/server"
+    "github.com/stretchr/testify/assert"
+)
+
+func TestWorkItemAPI(t *testing.T) {
+    // Create server
+    s := server.NewTestServer()
+    
+    // Start server
+    testServer := httptest.NewServer(s.Router())
+    defer testServer.Close()
+    
+    // Create work item
+    workItem := models.WorkItemCreateRequest{
+        Title: "Test Work Item",
+        Type: "FEATURE",
+        Priority: "HIGH",
+    }
+    
+    // Marshal work item to JSON
+    workItemJSON, err := json.Marshal(workItem)
+    if err != nil {
+        t.Fatal(err)
+    }
+    
+    // Create request
+    req, err := http.NewRequest("POST", testServer.URL+"/api/v1/workitems", bytes.NewBuffer(workItemJSON))
+    if err != nil {
+        t.Fatal(err)
+    }
+    req.Header.Set("Content-Type", "application/json")
+    
+    // Send request
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        t.Fatal(err)
+    }
+    defer resp.Body.Close()
+    
+    // Check status code
+    assert.Equal(t, http.StatusCreated, resp.StatusCode)
+    
+    // Parse response
+    var createdWorkItem models.WorkItem
+    err = json.NewDecoder(resp.Body).Decode(&createdWorkItem)
+    if err != nil {
+        t.Fatal(err)
+    }
+    
+    // Check response
+    assert.NotEmpty(t, createdWorkItem.ID)
+    assert.Equal(t, workItem.Title, createdWorkItem.Title)
+    assert.Equal(t, workItem.Type, createdWorkItem.Type)
+    assert.Equal(t, workItem.Priority, createdWorkItem.Priority)
+    assert.Equal(t, "TO_DO", createdWorkItem.State)
+    
+    // Get the created work item
+    req, err = http.NewRequest("GET", testServer.URL+"/api/v1/workitems/"+createdWorkItem.ID, nil)
+    if err != nil {
+        t.Fatal(err)
+    }
+    
+    // Send request
+    resp, err = client.Do(req)
+    if err != nil {
+        t.Fatal(err)
+    }
+    defer resp.Body.Close()
+    
+    // Check status code
+    assert.Equal(t, http.StatusOK, resp.StatusCode)
+    
+    // Parse response
+    var retrievedWorkItem models.WorkItem
+    err = json.NewDecoder(resp.Body).Decode(&retrievedWorkItem)
+    if err != nil {
+        t.Fatal(err)
+    }
+    
+    // Check response
+    assert.Equal(t, createdWorkItem.ID, retrievedWorkItem.ID)
+    assert.Equal(t, createdWorkItem.Title, retrievedWorkItem.Title)
+    assert.Equal(t, createdWorkItem.Type, retrievedWorkItem.Type)
+    assert.Equal(t, createdWorkItem.Priority, retrievedWorkItem.Priority)
+    assert.Equal(t, createdWorkItem.State, retrievedWorkItem.State)
+}
+----
+
+=== Performance Tests
+
+Performance tests focus on testing the performance of critical paths:
+
+[source,go]
+----
+package performance
+
+import (
+    "testing"
+    "time"
+    "net/http"
+    "net/http/httptest"
+    "sync"
+    
+    "github.com/heymumford/rinna/server"
+)
+
+func BenchmarkGetWorkItems(b *testing.B) {
+    // Create server
+    s := server.NewTestServer()
+    
+    // Start server
+    testServer := httptest.NewServer(s.Router())
+    defer testServer.Close()
+    
+    // Create HTTP client
+    client := &http.Client{}
+    
+    // Run benchmark
+    b.ResetTimer()
+    for i := 0; i < b.N; i++ {
+        // Create request
+        req, err := http.NewRequest("GET", testServer.URL+"/api/v1/workitems", nil)
+        if err != nil {
+            b.Fatal(err)
+        }
+        
+        // Send request
+        resp, err := client.Do(req)
+        if err != nil {
+            b.Fatal(err)
+        }
+        resp.Body.Close()
+    }
+}
+
+func TestConcurrentRequests(t *testing.T) {
+    // Create server
+    s := server.NewTestServer()
+    
+    // Start server
+    testServer := httptest.NewServer(s.Router())
+    defer testServer.Close()
+    
+    // Number of concurrent requests
+    concurrentRequests := 100
+    
+    // Create wait group
+    var wg sync.WaitGroup
+    wg.Add(concurrentRequests)
+    
+    // Create HTTP client
+    client := &http.Client{}
+    
+    // Start timer
+    startTime := time.Now()
+    
+    // Send concurrent requests
+    for i := 0; i < concurrentRequests; i++ {
+        go func() {
+            defer wg.Done()
+            
+            // Create request
+            req, err := http.NewRequest("GET", testServer.URL+"/api/v1/workitems", nil)
+            if err != nil {
+                t.Error(err)
+                return
+            }
+            
+            // Send request
+            resp, err := client.Do(req)
+            if err != nil {
+                t.Error(err)
+                return
+            }
+            resp.Body.Close()
+            
+            // Check status code
+            if resp.StatusCode != http.StatusOK {
+                t.Errorf("Expected status code %d, got %d", http.StatusOK, resp.StatusCode)
+            }
+        }()
+    }
+    
+    // Wait for all requests to complete
+    wg.Wait()
+    
+    // Calculate elapsed time
+    elapsedTime := time.Since(startTime)
+    
+    // Check if elapsed time is less than threshold
+    threshold := 5 * time.Second
+    if elapsedTime > threshold {
+        t.Errorf("Expected all requests to complete in less than %s, took %s", threshold, elapsedTime)
+    }
+}
+----
+
+== Running Tests
+
+=== Running All Tests
+
+[source,bash]
+----
+cd go
+go test ./...
+----
+
+=== Running Package Tests
+
+[source,bash]
+----
+go test ./src/handlers
+----
+
+=== Running Specific Tests
+
+[source,bash]
+----
+go test ./src/handlers -run TestGetWorkItem
+----
+
+=== Running Benchmarks
+
+[source,bash]
+----
+go test ./src/performance -bench=.
+----
+
+=== Running with Coverage
+
+[source,bash]
+----
+go test ./... -cover
+----
+
+=== Generating Coverage Report
+
+[source,bash]
+----
+go test ./... -coverprofile=coverage.out
+go tool cover -html=coverage.out
+----
+
+== Test Helpers
+
+=== Mock HTTP Server
+
+[source,go]
+----
+// NewTestServer creates a new test server
+func NewTestServer() *httptest.Server {
+    handler := setupTestRouter()
+    return httptest.NewServer(handler)
+}
+
+// setupTestRouter sets up the router for testing
+func setupTestRouter() http.Handler {
+    r := chi.NewRouter()
+    
+    // Add routes
+    r.Mount("/api/v1/workitems", handlers.WorkItemRoutes())
+    
+    return r
+}
+----
+
+=== Mock Services
+
+[source,go]
+----
+// MockWorkItemService is a mock implementation of WorkItemService
+type MockWorkItemService struct {
+    mock.Mock
+}
+
+func (m *MockWorkItemService) GetWorkItem(id string) (*models.WorkItem, error) {
+    args := m.Called(id)
+    return args.Get(0).(*models.WorkItem), args.Error(1)
+}
+
+func (m *MockWorkItemService) CreateWorkItem(request *models.WorkItemCreateRequest) (*models.WorkItem, error) {
+    args := m.Called(request)
+    return args.Get(0).(*models.WorkItem), args.Error(1)
+}
+----
+
+=== Test Utilities
+
+[source,go]
+----
+// CreateTestWorkItem creates a test work item
+func CreateTestWorkItem() *models.WorkItem {
+    return &models.WorkItem{
+        ID:          "WI-123",
+        Title:       "Test Work Item",
+        Type:        "FEATURE",
+        State:       "TO_DO",
+        Priority:    "HIGH",
+        Assignee:    "john",
+        Description: "This is a test work item",
+        Comments:    []models.Comment{},
+        Metadata:    map[string]string{},
+    }
+}
+
+// CreateTestWorkItemRequest creates a test work item request
+func CreateTestWorkItemRequest() *models.WorkItemCreateRequest {
+    return &models.WorkItemCreateRequest{
+        Title:       "Test Work Item",
+        Type:        "FEATURE",
+        Priority:    "HIGH",
+        Description: "This is a test work item",
+        Assignee:    "john",
+        Metadata:    map[string]string{},
+    }
+}
+----
+
+== See Also
+
+* xref:architecture.adoc[Architecture]
+* xref:packages.adoc[Packages]
+* xref:api-reference.adoc[API Reference]
