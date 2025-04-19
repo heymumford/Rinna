@@ -2,22 +2,38 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Overview
+
+Rinna is a polyglot workflow management system that integrates Java, Python, and Go components in a clean architecture. The system uses a language-specific approach where each component is isolated in its own directory with appropriate build tools and dependencies, while sharing common interfaces through API specifications.
+
 ## Key Commands
+
+### Build Commands
 - Build all components: `./build.sh all [dev|test|prod]`
 - Build specific components: `./build.sh [java|python|go|api-specs] [dev|test|prod]`
+- Build with parallel processing: `./build.sh all [dev|test|prod]` (automatically uses 12 parallel threads)
+- Check build artifacts: `ls -la build/artifacts/` (contains build outputs and logs)
+- View build summary: `cat logs/build-summary-latest.log`
+
+### Testing Commands
 - Test Java: `cd java && mvn test -Dtest=TestClassName#testMethodName`
 - Run tests by category: `cd java && mvn test -Dgroups="unit,component"`
 - Run BDD tests: `cd java && mvn test -P bdd-only -Dcucumber.filter.tags="@feature-tag"`
 - Run Python tests: `cd python && poetry run pytest`
 - Run Go tests: `cd go && go test ./...`
+
+### Linting and Formatting
 - Java linting: `cd java && mvn checkstyle:check pmd:check spotbugs:check`
 - Python linting: `cd python && poetry run pylint rinna`
 - Go linting: `cd go && golint ./...`
 - Java code formatting: `cd java && mvn spotless:apply`
 - Python formatting: `cd python && poetry run black . && poetry run isort .`
 - Go formatting: `cd go && go fmt ./...`
+
+### Development Environment
 - CI verification: `./scripts/utils/run-checks.sh` (validates architecture and dependencies)
 - Activate Python environment: `cd python && poetry env use python3.13 && poetry env activate`
+- Setup IntelliJ IDEA: `./setup-intellij.sh` (configures IntelliJ IDEA for polyglot development)
 
 ## XML Manipulation
 **IMPORTANT**: For all XML files (especially POM files), ALWAYS use `scripts/utils/xml-tools.sh`. NEVER use text tools (grep, sed).
@@ -57,6 +73,21 @@ xml_format_pom "java/pom.xml"
 - API Specifications: `api-specs/`
 - Configuration: `config/`
 - Build and utility scripts: `scripts/`
+- Build artifacts: `build/artifacts/`
+- Build logs: `logs/`
+
+## IDE Integration
+The project includes IntelliJ IDEA configuration files in the `.idea` directory and run configurations in the `.run` directory. These can be set up using:
+
+```bash
+./setup-intellij.sh
+```
+
+This will configure IntelliJ IDEA with:
+- Java, Python, and Go module structures
+- Maven project import for Java components
+- Run configurations for the build script
+- Appropriate source directories and encoding settings
 
 ## Java Development
 - Java version: Java 23
@@ -109,3 +140,21 @@ go fmt ./...              # Format code
 - Shared configuration is in `config/shared/`
 - Each language component has its own directory and build process
 - Components communicate through well-defined APIs
+- Build system creates archives of all build artifacts in `build/artifacts/`
+- Each build produces a summary report in `logs/build-summary-latest.log`
+
+## Parallel Processing
+The build system leverages parallel processing where appropriate:
+- Java: Maven builds use `-T 12` threads
+- Go: Uses `GOMAXPROCS=12` for compilation
+- Python: Tests can use pytest-xdist for parallel execution
+- Validation: API specifications can be validated in parallel
+
+To monitor resource usage during builds:
+```bash
+# View CPU usage during build
+htop  # Or Activity Monitor on macOS
+
+# Check build logs for parallelism details
+grep "parallel" logs/build-*.log
+```
