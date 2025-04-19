@@ -1,0 +1,34 @@
+digraph "Rinna 1.2.6 - Container Diagram" {
+	graph [fontname=Arial fontsize=12 label="Rinna 1.2.6 - Container Diagram" nodesep=0.8 rankdir=TB ranksep=1.0 splines=ortho]
+	node [fillcolor="#C5E1A5" fontname=Arial fontsize=12 height=1.2 shape=box style=filled width=2.6]
+	edge [fontname=Arial fontsize=10]
+	"Core Domain" [label="Core Domain
+[Java 21]
+
+Core domain model, business logic, and service interfaces"]
+	"Service Implementations" [label="Service Implementations
+[Java 21]
+
+Implements domain services and provides business logic"]
+	"API Server" [label="API Server
+[Go 1.21]
+
+RESTful API for external access to the system"]
+	"CLI Client" [label="CLI Client
+[Bash]
+
+Terminal-based interface for developers"]
+	"In-Memory Persistence" [label="In-Memory Persistence
+[Java Collections]
+
+Provides in-memory implementations of repositories"]
+	"Document Generation" [label="Document Generation
+[Java + Docmosis]
+
+Creates documents from workflows and releases"]
+	"API Server" -> "Core Domain" [label="Uses domain model and services"]
+	"CLI Client" -> "API Server" [label="Makes API calls"]
+	"Service Implementations" -> "Core Domain" [label="Implements domain interfaces"]
+	"Service Implementations" -> "In-Memory Persistence" [label="Uses for data access"]
+	"Service Implementations" -> "Document Generation" [label="Creates documents"]
+}

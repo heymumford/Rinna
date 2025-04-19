@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
+    <!-- Styling -->
+    <style>
+        text {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+        .title {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .state-found {
+            fill: #e6f7ff;
+            stroke: #1890ff;
+            stroke-width: 2;
+        }
+        .state-triaged {
+            fill: #f6ffed;
+            stroke: #52c41a;
+            stroke-width: 2;
+        }
+        .state-todo {
+            fill: #f6ffed;
+            stroke: #52c41a;
+            stroke-width: 2;
+        }
+        .state-progress {
+            fill: #fff7e6;
+            stroke: #fa8c16;
+            stroke-width: 2;
+        }
+        .state-test {
+            fill: #f9f0ff;
+            stroke: #722ed1;
+            stroke-width: 2;
+        }
+        .state-done {
+            fill: #f0f5ff;
+            stroke: #2f54eb;
+            stroke-width: 2;
+        }
+        .state-released {
+            fill: #fff1f0;
+            stroke: #f5222d;
+            stroke-width: 2;
+        }
+        .arrow {
+            stroke: #666;
+            stroke-width: 1.5;
+            fill: none;
+        }
+        .arrow-text {
+            font-size: 11px;
+            fill: #444;
+        }
+        .loop-box {
+            fill: rgba(0, 0, 0, 0.05);
+            stroke: #666;
+            stroke-width: 1;
+            stroke-dasharray: 5,3;
+        }
+        .loop-text {
+            font-size: 12px;
+            font-style: italic;
+            fill: #666;
+        }
+    </style>
+
+    <!-- Title -->
+    <text x="400" y="30" text-anchor="middle" class="title">Rinna Workflow State Diagram</text>
+
+    <!-- States -->
+    <rect x="50" y="100" width="100" height="50" rx="15" ry="15" class="state-found" />
+    <text x="100" y="130" text-anchor="middle">FOUND</text>
+
+    <rect x="200" y="100" width="100" height="50" rx="15" ry="15" class="state-triaged" />
+    <text x="250" y="130" text-anchor="middle">TRIAGED</text>
+
+    <rect x="350" y="100" width="100" height="50" rx="15" ry="15" class="state-todo" />
+    <text x="400" y="130" text-anchor="middle">TO_DO</text>
+
+    <rect x="500" y="100" width="100" height="50" rx="15" ry="15" class="state-progress" />
+    <text x="550" y="130" text-anchor="middle">IN_PROGRESS</text>
+
+    <rect x="650" y="100" width="100" height="50" rx="15" ry="15" class="state-test" />
+    <text x="700" y="130" text-anchor="middle">IN_TEST</text>
+
+    <rect x="500" y="200" width="100" height="50" rx="15" ry="15" class="state-done" />
+    <text x="550" y="230" text-anchor="middle">DONE</text>
+
+    <rect x="650" y="200" width="100" height="50" rx="15" ry="15" class="state-released" />
+    <text x="700" y="230" text-anchor="middle">RELEASED</text>
+
+    <!-- Standard Flow Arrows -->
+    <!-- FOUND -> TRIAGED -->
+    <path d="M 150 125 L 200 125" class="arrow" marker-end="url(#arrowhead)" />
+    <text x="175" y="115" text-anchor="middle" class="arrow-text">Prioritize</text>
+
+    <!-- TRIAGED -> TO_DO -->
+    <path d="M 300 125 L 350 125" class="arrow" marker-end="url(#arrowhead)" />
+    <text x="325" y="115" text-anchor="middle" class="arrow-text">Plan</text>
+
+    <!-- TO_DO -> IN_PROGRESS -->
+    <path d="M 450 125 L 500 125" class="arrow" marker-end="url(#arrowhead)" />
+    <text x="475" y="115" text-anchor="middle" class="arrow-text">Start work</text>
+
+    <!-- IN_PROGRESS -> IN_TEST -->
+    <path d="M 600 125 L 650 125" class="arrow" marker-end="url(#arrowhead)" />
+    <text x="625" y="115" text-anchor="middle" class="arrow-text">Ready for test</text>
+
+    <!-- IN_TEST -> DONE -->
+    <path d="M 700 150 L 700 175 L 600 175 L 600 200" class="arrow" marker-end="url(#arrowhead)" />
+    <text x="650" y="170" text-anchor="middle" class="arrow-text">Complete</text>
+
+    <!-- DONE -> RELEASED -->
+    <path d="M 600 225 L 650 225" class="arrow" marker-end="url(#arrowhead)" />
+    <text x="625" y="215" text-anchor="middle" class="arrow-text">Deploy</text>
+
+    <!-- Exception Flow Arrows -->
+    <!-- TRIAGED -> DONE (Skip) -->
+    <path d="M 250 150 L 250 225 L 500 225" class="arrow" marker-end="url(#arrowhead)" />
+    <text x="275" y="225" text-anchor="middle" class="arrow-text">Close/Cancel</text>
+
+    <!-- TO_DO -> DONE (Skip) -->
+    <path d="M 400 150 L 400 225 L 500 225" class="arrow" marker-end="url(#arrowhead)" />
+    <text x="425" y="225" text-anchor="middle" class="arrow-text">Skip</text>
+
+    <!-- IN_PROGRESS -> TO_DO (Return) -->
+    <path d="M 525 100 L 525 75 L 425 75 L 425 100" class="arrow" marker-end="url(#arrowhead)" />
+    <text x="475" y="65" text-anchor="middle" class="arrow-text">Return to backlog</text>
+
+    <!-- The Loop: IN_TEST -> IN_PROGRESS -->
+    <path d="M 675 100 L 675 75 L 575 75 L 575 100" class="arrow" marker-end="url(#arrowhead)" />
+    <text x="625" y="65" text-anchor="middle" class="arrow-text">Fail/Return</text>
+
+    <!-- Loop Highlight Box -->
+    <rect x="490" y="45" width="270" height="115" rx="5" ry="5" class="loop-box" />
+    <text x="625" y="55" text-anchor="middle" class="loop-text">The Only Permitted Loop</text>
+
+    <!-- Arrowhead marker -->
+    <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="7" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+        </marker>
+    </defs>
+</svg>

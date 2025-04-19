@@ -1,0 +1,19 @@
+digraph "Core Domain Components" {
+	graph [fontname=Arial fontsize=12 label="Core Domain Components" nodesep=0.8 rankdir=TB ranksep=1.0 splines=ortho]
+	node [fillcolor="#BBDEFB" fontname=Arial fontsize=12 height=1.2 shape=box style=filled width=2.6]
+	edge [fontname=Arial fontsize=10]
+	"Domain Entities" [label="Domain Entities
+[Java 21]
+
+Core business objects"]
+	"Service Interfaces" [label="Service Interfaces
+[Java Interfaces]
+
+Define business operations"]
+	"Repository Interfaces" [label="Repository Interfaces
+[Java Interfaces]
+
+Define data access methods"]
+	"Service Interfaces" -> "Domain Entities" [label="Uses and manipulates"]
+	"Service Interfaces" -> "Repository Interfaces" [label="Depends on for data access"]
+}

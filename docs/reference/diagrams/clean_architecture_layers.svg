@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="800" height="800" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="3" dy="3" stdDeviation="3" flood-opacity="0.2"/>
+        </filter>
+        <!-- Arrow Marker -->
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L0,6 L9,3 z" fill="#555"/>
+        </marker>
+    </defs>
+
+    <style>
+        text {
+            font-family: Arial, sans-serif;
+            fill: #333;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .subtitle {
+            font-size: 18px;
+        }
+        .layer-title {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .component {
+            font-size: 12px;
+        }
+        .annotation {
+            font-size: 11px;
+            font-style: italic;
+            fill: #555;
+        }
+        .arrow {
+            stroke: #555;
+            stroke-width: 1.5;
+            fill: none;
+            marker-end: url(#arrow);
+        }
+    </style>
+
+    <!-- Title -->
+    <text x="400" y="50" text-anchor="middle" class="title">Rinna Clean Architecture</text>
+    <text x="400" y="80" text-anchor="middle" class="subtitle">Layered Design with Inward Dependencies</text>
+
+    <!-- Concentric Circles for Clean Architecture Layers -->
+    <!-- Frameworks & Drivers Layer (outermost) -->
+    <circle cx="400" cy="420" r="300" fill="#e8eaf6" stroke="#3f51b5" stroke-width="3" opacity="0.9"/>
+    <text x="400" y="170" text-anchor="middle" class="layer-title">Frameworks &amp; Drivers Layer</text>
+    
+    <!-- Interface Adapters Layer -->
+    <circle cx="400" cy="420" r="220" fill="#fff3e0" stroke="#e65100" stroke-width="3" opacity="0.9"/>
+    <text x="400" y="230" text-anchor="middle" class="layer-title">Interface Adapters Layer</text>
+    
+    <!-- Use Case Layer -->
+    <circle cx="400" cy="420" r="140" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3" opacity="0.9"/>
+    <text x="400" y="300" text-anchor="middle" class="layer-title">Use Case Layer</text>
+    
+    <!-- Domain Layer (innermost) -->
+    <circle cx="400" cy="420" r="70" fill="#e1f5fe" stroke="#01579b" stroke-width="3" opacity="0.9"/>
+    <text x="400" y="420" text-anchor="middle" class="layer-title">Domain Layer</text>
+
+    <!-- Components in each layer -->
+    <!-- Domain Layer Components -->
+    <text x="375" y="395" text-anchor="middle" class="component">WorkItem</text>
+    <text x="380" y="410" text-anchor="middle" class="component">Priority</text>
+    <text x="390" y="425" class="component">WorkflowState</text>
+    <text x="365" y="440" text-anchor="middle" class="component">Project</text>
+    <text x="400" y="455" text-anchor="middle" class="component">Release</text>
+
+    <!-- Use Case Layer Components -->
+    <text x="315" y="330" text-anchor="middle" class="component">ItemService</text>
+    <text x="325" y="350" text-anchor="middle" class="component">WorkflowService</text>
+    <text x="330" y="370" text-anchor="middle" class="component">QueueService</text>
+    <text x="470" y="330" text-anchor="middle" class="component">SearchService</text>
+    <text x="480" y="350" text-anchor="middle" class="component">CriticalPathService</text>
+    <text x="460" y="370" text-anchor="middle" class="component">DocumentService</text>
+
+    <!-- Interface Adapters Layer Components -->
+    <!-- Input Adapters -->
+    <text x="300" y="255" text-anchor="middle" class="component">Controllers</text>
+    <text x="340" y="270" text-anchor="middle" class="component">Presenters</text>
+    <text x="380" y="255" text-anchor="middle" class="component">CLI Commands</text>
+    <!-- Output Adapters -->
+    <text x="460" y="255" text-anchor="middle" class="component">Repositories</text>
+    <text x="500" y="270" text-anchor="middle" class="component">Gateways</text>
+
+    <!-- Frameworks & Drivers Layer Components -->
+    <!-- UI -->
+    <text x="230" y="190" text-anchor="middle" class="component">CLI (Python)</text>
+    <text x="320" y="190" text-anchor="middle" class="component">Web UI (Spring)</text>
+    <!-- Storage -->
+    <text x="480" y="190" text-anchor="middle" class="component">Database (SQLite)</text>
+    <text x="570" y="190" text-anchor="middle" class="component">External APIs (Go)</text>
+
+    <!-- Cross-Language Integration -->
+    <text x="200" y="550" text-anchor="middle" class="component">Java Core</text>
+    <text x="400" y="550" text-anchor="middle" class="component">Python CLI</text>
+    <text x="600" y="550" text-anchor="middle" class="component">Go API</text>
+    
+    <!-- Dependency Direction Arrows -->
+    <path d="M400,600 L400,500" class="arrow"/>
+    <text x="420" y="550" class="annotation">Dependencies</text>
+    <text x="420" y="565" class="annotation">always point inward</text>
+
+    <!-- Cross-cutting concerns -->
+    <text x="200" y="620" text-anchor="middle" class="component">Logging System</text>
+    <text x="400" y="620" text-anchor="middle" class="component">Configuration</text>
+    <text x="600" y="620" text-anchor="middle" class="component">Security</text>
+    
+    <!-- Legend -->
+    <rect x="160" y="660" width="20" height="20" fill="#e1f5fe" stroke="#01579b" stroke-width="2"/>
+    <text x="190" y="675" class="component">Domain Layer: Core business rules and entities</text>
+    
+    <rect x="160" y="690" width="20" height="20" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2"/>
+    <text x="190" y="705" class="component">Use Case Layer: Application-specific business rules</text>
+    
+    <rect x="160" y="720" width="20" height="20" fill="#fff3e0" stroke="#e65100" stroke-width="2"/>
+    <text x="190" y="735" class="component">Interface Adapters: Convert data between layers</text>
+    
+    <rect x="160" y="750" width="20" height="20" fill="#e8eaf6" stroke="#3f51b5" stroke-width="2"/>
+    <text x="190" y="765" class="component">Frameworks &amp; Drivers: External systems and tools</text>
+</svg>
