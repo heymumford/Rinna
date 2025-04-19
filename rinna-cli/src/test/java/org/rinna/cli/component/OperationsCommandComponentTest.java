@@ -23,7 +23,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.rinna.cli.command.OperationsCommand;
-import org.rinna.cli.service.AuthorizationService;
+import org.rinna.cli.security.AuthorizationService;
 import org.rinna.cli.service.ConfigurationService;
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.ServiceManager;
@@ -50,7 +50,7 @@ public class OperationsCommandComponentTest {
 
     @Mock
     private AuthorizationService mockAuthorizationService;
-    
+
     @Mock
     private ConfigurationService mockConfigurationService;
 
@@ -69,9 +69,9 @@ public class OperationsCommandComponentTest {
         when(mockServiceManager.getConfigurationService()).thenReturn(mockConfigurationService);
         when(mockAuthorizationService.isAuthenticated()).thenReturn(true);
         when(mockAuthorizationService.hasPermission(anyString())).thenReturn(true);
-        
-        when(mockConfigurationService.getStringValue(eq("output.format"), anyString())).thenReturn("text");
-        when(mockConfigurationService.getIntValue(eq("operations.default_limit"), anyInt())).thenReturn(10);
+
+        when(mockConfigurationService.getProperty(eq("output.format"), anyString())).thenReturn("text");
+        when(mockConfigurationService.getProperty(eq("operations.default_limit"), anyString())).thenReturn("10");
 
         command = new OperationsCommand(mockServiceManager);
     }
@@ -96,10 +96,10 @@ public class OperationsCommandComponentTest {
         // Then
         assertEquals(0, exitCode);
         verify(mockMetadataService).getRecentOperations(eq(10)); // default limit
-        
+
         // Verify operation tracking
         verify(mockMetadataService).recordOperation(eq("command.operations"), eq("LIST_OPERATIONS"), any());
-        
+
         // Verify output
         String output = outputCaptor.toString();
         assertTrue(output.contains("Operation ID:"), "Output should include operation IDs");
@@ -120,11 +120,11 @@ public class OperationsCommandComponentTest {
         // Then
         assertEquals(0, exitCode);
         verify(mockMetadataService).getRecentOperations(eq(3));
-        
+
         // Verify operation tracking includes limit
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(mockMetadataService).recordOperation(eq("command.operations"), eq("LIST_OPERATIONS"), captor.capture());
-        
+
         Map<String, Object> params = captor.getValue();
         assertTrue(params.containsKey("limit"), "Parameters should include limit");
         assertEquals(3, params.get("limit"), "Limit parameter should be 3");
@@ -143,15 +143,15 @@ public class OperationsCommandComponentTest {
 
         // Then
         assertEquals(0, exitCode);
-        
+
         // Verify operation tracking includes filter
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(mockMetadataService).recordOperation(eq("command.operations"), eq("LIST_OPERATIONS"), captor.capture());
-        
+
         Map<String, Object> params = captor.getValue();
         assertTrue(params.containsKey("filter"), "Parameters should include filter");
         assertEquals("ADD_ITEM", params.get("filter"), "Filter parameter should match input");
-        
+
         // Verify output filtered
         String output = outputCaptor.toString();
         assertTrue(output.contains("ADD_ITEM"), "Output should contain filtered operation type");
@@ -171,15 +171,15 @@ public class OperationsCommandComponentTest {
 
         // Then
         assertEquals(0, exitCode);
-        
+
         // Verify operation tracking includes format
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(mockMetadataService).recordOperation(eq("command.operations"), eq("LIST_OPERATIONS"), captor.capture());
-        
+
         Map<String, Object> params = captor.getValue();
         assertTrue(params.containsKey("format"), "Parameters should include format");
         assertEquals("json", params.get("format"), "Format parameter should be json");
-        
+
         // Verify JSON output
         String output = outputCaptor.toString();
         assertTrue(output.contains("[") && output.contains("]"), 
@@ -201,15 +201,15 @@ public class OperationsCommandComponentTest {
 
         // Then
         assertEquals(0, exitCode);
-        
+
         // Verify operation tracking includes verbose flag
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(mockMetadataService).recordOperation(eq("command.operations"), eq("LIST_OPERATIONS"), captor.capture());
-        
+
         Map<String, Object> params = captor.getValue();
         assertTrue(params.containsKey("verbose"), "Parameters should include verbose");
         assertEquals(true, params.get("verbose"), "Verbose parameter should be true");
-        
+
         // Verify verbose output
         String output = outputCaptor.toString();
         assertTrue(output.contains("Parameters:"), "Verbose output should include parameters section");
@@ -227,10 +227,10 @@ public class OperationsCommandComponentTest {
 
         // Then
         assertEquals(0, exitCode);
-        
+
         // Verify operation still tracked
         verify(mockMetadataService).recordOperation(eq("command.operations"), eq("LIST_OPERATIONS"), any());
-        
+
         // Verify appropriate message
         String output = outputCaptor.toString();
         assertTrue(output.contains("No operations found"), 
@@ -250,14 +250,14 @@ public class OperationsCommandComponentTest {
 
         // Then
         assertEquals(0, exitCode);
-        
+
         // Verify operation tracked with filter
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(mockMetadataService).recordOperation(eq("command.operations"), eq("LIST_OPERATIONS"), captor.capture());
-        
+
         Map<String, Object> params = captor.getValue();
         assertTrue(params.containsKey("filter"), "Parameters should include filter");
-        
+
         // Verify appropriate message
         String output = outputCaptor.toString();
         assertTrue(output.contains("No operations found") || output.contains("No matching operations"), 
@@ -276,10 +276,10 @@ public class OperationsCommandComponentTest {
 
         // Then
         assertNotEquals(0, exitCode);
-        
+
         // Verify operation still started but should be marked as failed
         verify(mockMetadataService).recordOperation(eq("command.operations"), eq("LIST_OPERATIONS"), any());
-        
+
         // Verify error message
         String error = errorCaptor.toString();
         assertTrue(error.contains("Error") && error.contains("Service error"), 
@@ -290,10 +290,10 @@ public class OperationsCommandComponentTest {
     @DisplayName("Should respect system configuration for default limit")
     void shouldRespectSystemConfigurationForDefaultLimit() {
         // Given
-        when(mockConfigurationService.getIntValue(eq("operations.default_limit"), anyInt())).thenReturn(25);
+        when(mockConfigurationService.getProperty(eq("operations.default_limit"), anyString())).thenReturn("25");
         List<OperationRecord> mockOperations = createMockOperations(25);
         when(mockMetadataService.getRecentOperations(anyInt())).thenReturn(mockOperations);
-        
+
         // Create a new command to pick up the config
         OperationsCommand configAwareCommand = new OperationsCommand(mockServiceManager);
 
@@ -302,14 +302,14 @@ public class OperationsCommandComponentTest {
 
         // Then
         assertEquals(0, exitCode);
-        
+
         // Verify service called with configured limit
         verify(mockMetadataService).getRecentOperations(eq(25));
-        
+
         // Verify operation tracked with configured limit
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(mockMetadataService).recordOperation(eq("command.operations"), eq("LIST_OPERATIONS"), captor.capture());
-        
+
         Map<String, Object> params = captor.getValue();
         assertTrue(params.containsKey("limit"), "Parameters should include limit");
         assertEquals(25, params.get("limit"), "Limit parameter should match configured value");
@@ -329,14 +329,14 @@ public class OperationsCommandComponentTest {
 
         // Then
         assertEquals(0, exitCode);
-        
+
         // Verify service called with recent count
         verify(mockMetadataService).getRecentOperations(eq(recentCount));
-        
+
         // Verify operation tracked with recent count
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(mockMetadataService).recordOperation(eq("command.operations"), eq("LIST_OPERATIONS"), captor.capture());
-        
+
         Map<String, Object> params = captor.getValue();
         assertTrue(params.containsKey("recent"), "Parameters should include recent");
         assertEquals(recentCount, params.get("recent"), "Recent parameter should match input");
@@ -353,10 +353,10 @@ public class OperationsCommandComponentTest {
 
         // Then
         assertEquals(0, exitCode);
-        
+
         // Verify no operation tracking
         verify(mockMetadataService, never()).recordOperation(anyString(), anyString(), any());
-        
+
         // Verify help output
         String output = outputCaptor.toString();
         assertTrue(output.contains("Usage:") && output.contains("Options:"), 
@@ -368,30 +368,30 @@ public class OperationsCommandComponentTest {
         List<OperationRecord> operations = new ArrayList<>();
         String[] types = {"ADD_ITEM", "UPDATE_ITEM", "LIST_ITEMS", "VIEW_ITEM", "DELETE_ITEM"};
         String[] statuses = {"COMPLETED", "FAILED", "IN_PROGRESS"};
-        
+
         for (int i = 0; i < count; i++) {
             String id = "op-" + (i + 1);
             String type = types[i % types.length];
             String status = statuses[i % statuses.length];
             Instant startTime = Instant.now().minus(i, ChronoUnit.HOURS);
             Instant endTime = status.equals("IN_PROGRESS") ? null : startTime.plus(5, ChronoUnit.MINUTES);
-            
+
             Map<String, Object> params = new HashMap<>();
             params.put("param1", "value" + i);
             params.put("count", i);
-            
+
             Map<String, Object> results = new HashMap<>();
             if (status.equals("COMPLETED")) {
                 results.put("result", "success");
                 results.put("itemCount", i + 1);
             }
-            
+
             String errorDetails = status.equals("FAILED") ? "Error occurred: test error " + i : null;
-            
+
             OperationRecord record = new OperationRecord(id, type, status, startTime, endTime, params, results, errorDetails);
             operations.add(record);
         }
-        
+
         return operations;
     }
 }

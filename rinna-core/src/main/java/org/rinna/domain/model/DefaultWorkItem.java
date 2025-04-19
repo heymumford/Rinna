@@ -27,7 +27,7 @@ public final class DefaultWorkItem implements WorkItem {
     private final Instant createdAt;
     private final Instant updatedAt;
     private final UUID parentId;
-    
+
     /**
      * Builder for DefaultWorkItem.
      */
@@ -42,7 +42,7 @@ public final class DefaultWorkItem implements WorkItem {
         private Instant createdAt = Instant.now();
         private Instant updatedAt = Instant.now();
         private UUID parentId;
-        
+
         /**
          * Sets the ID for the work item.
          *
@@ -53,7 +53,7 @@ public final class DefaultWorkItem implements WorkItem {
             this.id = id;
             return this;
         }
-        
+
         /**
          * Sets the title for the work item.
          *
@@ -64,7 +64,7 @@ public final class DefaultWorkItem implements WorkItem {
             this.title = title;
             return this;
         }
-        
+
         /**
          * Sets the description for the work item.
          *
@@ -75,7 +75,7 @@ public final class DefaultWorkItem implements WorkItem {
             this.description = description;
             return this;
         }
-        
+
         /**
          * Sets the type for the work item.
          *
@@ -86,7 +86,7 @@ public final class DefaultWorkItem implements WorkItem {
             this.type = type;
             return this;
         }
-        
+
         /**
          * Sets the status for the work item.
          *
@@ -97,7 +97,7 @@ public final class DefaultWorkItem implements WorkItem {
             this.status = status;
             return this;
         }
-        
+
         /**
          * Sets the priority for the work item.
          *
@@ -108,7 +108,7 @@ public final class DefaultWorkItem implements WorkItem {
             this.priority = priority;
             return this;
         }
-        
+
         /**
          * Sets the assignee for the work item.
          *
@@ -119,7 +119,7 @@ public final class DefaultWorkItem implements WorkItem {
             this.assignee = assignee;
             return this;
         }
-        
+
         /**
          * Sets the creation timestamp for the work item.
          *
@@ -130,7 +130,7 @@ public final class DefaultWorkItem implements WorkItem {
             this.createdAt = createdAt;
             return this;
         }
-        
+
         /**
          * Sets the update timestamp for the work item.
          *
@@ -141,7 +141,7 @@ public final class DefaultWorkItem implements WorkItem {
             this.updatedAt = updatedAt;
             return this;
         }
-        
+
         /**
          * Sets the parent ID for the work item.
          *
@@ -152,7 +152,7 @@ public final class DefaultWorkItem implements WorkItem {
             this.parentId = parentId;
             return this;
         }
-        
+
         /**
          * Builds a new DefaultWorkItem with the configured values.
          *
@@ -168,7 +168,7 @@ public final class DefaultWorkItem implements WorkItem {
             return new DefaultWorkItem(this);
         }
     }
-    
+
     /**
      * Returns a new builder for creating a DefaultWorkItem.
      *
@@ -177,7 +177,7 @@ public final class DefaultWorkItem implements WorkItem {
     public static Builder builder() {
         return new Builder();
     }
-    
+
     /**
      * Creates a new DefaultWorkItem from a WorkItemCreateRequest.
      *
@@ -190,16 +190,16 @@ public final class DefaultWorkItem implements WorkItem {
                 .description(request.getDescription())
                 .type(request.getType())
                 .priority(request.getPriority());
-        
+
         if (request.getAssignee() != null) {
             builder.assignee(request.getAssignee());
         }
-        
+
         request.getParentId().ifPresent(builder::parentId);
-        
+
         return builder.build();
     }
-    
+
     private DefaultWorkItem(Builder builder) {
         this.id = builder.id;
         this.title = builder.title;
@@ -212,7 +212,7 @@ public final class DefaultWorkItem implements WorkItem {
         this.updatedAt = builder.updatedAt;
         this.parentId = builder.parentId;
     }
-    
+
     @Override
     public UUID getId() {
         return id;
@@ -262,7 +262,7 @@ public final class DefaultWorkItem implements WorkItem {
     public Optional<UUID> getParentId() {
         return Optional.ofNullable(parentId);
     }
-    
+
     /**
      * Creates a new DefaultWorkItem with a new status.
      *
@@ -283,7 +283,7 @@ public final class DefaultWorkItem implements WorkItem {
                 .parentId(this.parentId)
                 .build();
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -310,5 +310,28 @@ public final class DefaultWorkItem implements WorkItem {
                 ", status=" + status +
                 ", priority=" + priority +
                 "}";
+    }
+
+    /**
+     * Converts this DefaultWorkItem to a WorkItemRecord.
+     *
+     * @return a new WorkItemRecord with the same data as this DefaultWorkItem
+     */
+    public WorkItemRecord toRecord() {
+        return new WorkItemRecord(
+            id,
+            title,
+            description,
+            type,
+            status,
+            priority,
+            assignee,
+            createdAt,
+            updatedAt,
+            parentId,
+            null, // projectId
+            "PUBLIC", // visibility
+            false // localOnly
+        );
     }
 }

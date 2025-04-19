@@ -16,19 +16,29 @@ public enum WorkItemType {
      * High-level software development objective.
      */
     GOAL,
-    
+
     /**
      * Incremental, deliverable functionality.
      */
     FEATURE,
-    
+
     /**
      * Unexpected software issue requiring correction.
      */
     BUG,
-    
+
     /**
      * Non-functional task ensuring system health and stability.
      */
-    CHORE
+    CHORE,
+
+    /**
+     * Small, discrete unit of work.
+     */
+    TASK,
+
+    /**
+     * Collection of related features or stories.
+     */
+    EPIC
 }

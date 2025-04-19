@@ -14,13 +14,13 @@
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-suite-api</artifactId>
-      <version>1.10.2</version>
+      <version>1.13.0-M2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-suite-engine</artifactId>
-      <version>1.10.2</version>
+      <version>1.13.0-M2</version>
       <scope>test</scope>
     </dependency>
     <!-- SQLite for local storage -->
@@ -34,16 +34,16 @@
         Note: Docmosis libraries are not in Maven Central.
         To use Docmosis, download the JAR files from https://www.docmosis.com/
         and install them in your local Maven repository:
-        
+
         mvn install:install-file -Dfile=docmosis-core-4.7.0.jar -DgroupId=com.docmosis \
             -DartifactId=docmosis-core -Dversion=4.7.0 -Dpackaging=jar
-        
+
         mvn install:install-file -Dfile=docmosis-extras-4.7.0.jar -DgroupId=com.docmosis \
             -DartifactId=docmosis-extras -Dversion=4.7.0 -Dpackaging=jar
-            
+
         For testing purposes, these dependencies are commented out to allow builds to succeed.
         Uncomment them when you have the Docmosis JARs available.
-        
+
         <dependency>
             <groupId>com.docmosis</groupId>
             <artifactId>docmosis-core</artifactId>
@@ -63,47 +63,47 @@
     <dependency>
       <groupId>org.apache.pdfbox</groupId>
       <artifactId>pdfbox</artifactId>
-      <version>2.0.30</version>
+      <version>3.0.4</version>
     </dependency>
     <!-- DOCX generation (fallback) -->
     <dependency>
       <groupId>org.apache.poi</groupId>
       <artifactId>poi-ooxml</artifactId>
-      <version>5.4.0</version>
+      <version>5.4.1</version>
     </dependency>
     <!-- Logging -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>2.0.12</version>
+      <version>2.1.0-alpha1</version>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.4.14</version>
+      <version>1.5.18</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>jul-to-slf4j</artifactId>
-      <version>2.0.12</version>
+      <version>2.1.0-alpha1</version>
     </dependency>
     <!-- Test dependencies -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
-      <version>5.10.2</version>
+      <version>5.13.0-M2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
-      <version>5.10.2</version>
+      <version>5.13.0-M2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-params</artifactId>
-      <version>5.10.2</version>
+      <version>5.13.0-M2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -121,7 +121,7 @@
     <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>3.25.3</version>
+      <version>4.0.0-M1</version>
       <scope>test</scope>
     </dependency>
     <!-- Cucumber for BDD testing -->
@@ -210,86 +210,12 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.12.1</version>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-          <fork>true</fork>
-          <release>${java.version}</release>
-          <compilerArgs>
-            <arg>-Xlint:all</arg>
-            <arg>--enable-preview</arg>
-          </compilerArgs>
-          <showWarnings>true</showWarnings>
-          <showDeprecation>true</showDeprecation>
-          <testSource>${java.version}</testSource>
-          <testTarget>${java.version}</testTarget>
-        </configuration>
-        <!-- Force test compilation -->
-        <executions>
-          <execution>
-            <id>test-compile</id>
-            <phase>test-compile</phase>
-            <goals>
-              <goal>testCompile</goal>
-            </goals>
-            <configuration>
-              <skip>false</skip>
-            </configuration>
-          </execution>
-        </executions>
+        <!-- Inherits configuration from parent POM -->
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.2.5</version>
-        <configuration>
-          <skipTests>false</skipTests>
-          <skip>false</skip>
-          <includes>
-            <include>**/*Test.java</include>
-            <include>**/*Tests.java</include>
-          </includes>
-          <excludes>
-            <exclude>**/bdd/**</exclude>
-          </excludes>
-          <properties>
-            <!-- Parallel execution for JUnit Jupiter tests -->
-            <configurationParameters>
-                            junit.jupiter.execution.parallel.enabled=true
-                            junit.jupiter.execution.parallel.mode.default=same_thread
-                            junit.jupiter.execution.parallel.mode.classes.default=concurrent
-                            junit.jupiter.execution.parallel.config.strategy=dynamic
-                            junit.jupiter.execution.parallel.config.dynamic.factor=0.5
-                        </configurationParameters>
-          </properties>
-          <systemPropertyVariables>
-            <java.awt.headless>true</java.awt.headless>
-            <cucumber.junit-platform.naming-strategy>long</cucumber.junit-platform.naming-strategy>
-            <cucumber.publish.quiet>true</cucumber.publish.quiet>
-            <cucumber.glue>org.rinna.bdd</cucumber.glue>
-          </systemPropertyVariables>
-          <argLine>-XX:+EnableDynamicAgentLoading --enable-preview</argLine>
-          <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
-        </configuration>
-        <dependencies>
-          <!-- JUnit platform dependencies for surefire -->
-          <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-suite-api</artifactId>
-            <version>1.10.2</version>
-          </dependency>
-          <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-suite-engine</artifactId>
-            <version>1.10.2</version>
-          </dependency>
-          <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.10.2</version>
-          </dependency>
-        </dependencies>
+        <!-- Inherits configuration from parent POM -->
       </plugin>
       <plugin>
         <groupId>org.jacoco</groupId>

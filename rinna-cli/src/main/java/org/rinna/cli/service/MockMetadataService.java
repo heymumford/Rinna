@@ -24,14 +24,14 @@ import java.util.stream.Collectors;
  * Mock implementation of the metadata service for tracking CLI operations.
  */
 public final class MockMetadataService implements MetadataService {
-    
+
     private static MockMetadataService instance;
     private final Map<String, OperationMetadata> operations = new ConcurrentHashMap<>();
-    
+
     // Limit for storing recent operations as Maps for easy access by PUI
     private final List<Map<String, Object>> recentOperations = new ArrayList<>();
     private final int maxRecentOps = 100;
-    
+
     /**
      * Private constructor for singleton pattern.
      */
@@ -39,7 +39,7 @@ public final class MockMetadataService implements MetadataService {
         // Initialize with some sample data for testing
         initializeSampleData();
     }
-    
+
     /**
      * Gets the singleton instance of the service.
      *
@@ -51,7 +51,7 @@ public final class MockMetadataService implements MetadataService {
         }
         return instance;
     }
-    
+
     /**
      * Initialize sample operation data for testing.
      */
@@ -59,10 +59,10 @@ public final class MockMetadataService implements MetadataService {
         // Current user for sample data
         String username = System.getProperty("user.name", "unknown");
         String clientInfo = "CLI client " + System.getProperty("os.name");
-        
+
         // Add some sample completed operations
         LocalDateTime now = LocalDateTime.now();
-        
+
         // List command sample
         Map<String, Object> listParams = new HashMap<>();
         listParams.put("status", "OPEN");
@@ -74,7 +74,7 @@ public final class MockMetadataService implements MetadataService {
         listOp.setEndTime(now.minusMinutes(29));
         listOp.setResult("Listed 5 items");
         operations.put(listOpId, listOp);
-        
+
         // View command sample
         Map<String, Object> viewParams = new HashMap<>();
         viewParams.put("itemId", "WI-123");
@@ -85,7 +85,7 @@ public final class MockMetadataService implements MetadataService {
         viewOp.setEndTime(now.minusMinutes(24));
         viewOp.setResult("Displayed item WI-123");
         operations.put(viewOpId, viewOp);
-        
+
         // Add command sample
         Map<String, Object> addParams = new HashMap<>();
         addParams.put("title", "Fix navigation bug");
@@ -98,7 +98,7 @@ public final class MockMetadataService implements MetadataService {
         addOp.setEndTime(now.minusMinutes(19));
         addOp.setResult("Created item WI-124");
         operations.put(addOpId, addOp);
-        
+
         // Update command sample
         Map<String, Object> updateParams = new HashMap<>();
         updateParams.put("itemId", "WI-124");
@@ -110,7 +110,7 @@ public final class MockMetadataService implements MetadataService {
         updateOp.setEndTime(now.minusMinutes(14));
         updateOp.setResult("Updated item WI-124");
         operations.put(updateOpId, updateOp);
-        
+
         // Failed operation sample
         Map<String, Object> failedParams = new HashMap<>();
         failedParams.put("itemId", "WI-999");
@@ -122,21 +122,21 @@ public final class MockMetadataService implements MetadataService {
         failedOp.setErrorMessage("Item not found: WI-999");
         operations.put(failedOpId, failedOp);
     }
-    
+
     @Override
     public String startOperation(String commandName, String operationType, Map<String, Object> parameters) {
         // Generate a unique ID for the operation
         String operationId = UUID.randomUUID().toString();
-        
+
         // Get current user information
         String username = System.getProperty("user.name", "unknown");
         String clientInfo = "CLI client " + System.getProperty("os.name");
-        
+
         // Create and store the metadata
         OperationMetadata metadata = new OperationMetadata(
             operationId, commandName, operationType, parameters, LocalDateTime.now(), username, clientInfo);
         operations.put(operationId, metadata);
-        
+
         // Integrate with audit service
         AuditService auditService = ServiceManager.getInstance().getAuditService();
         if (auditService != null) {
@@ -154,7 +154,7 @@ public final class MockMetadataService implements MetadataService {
                         paramString.append(" ");
                     }
                 }
-                
+
                 // This would integrate with the audit service in a production implementation
                 // For now, we're just simulating the integration
             } catch (Exception e) {
@@ -162,10 +162,10 @@ public final class MockMetadataService implements MetadataService {
                 System.err.println("Error logging to audit service: " + e.getMessage());
             }
         }
-        
+
         return operationId;
     }
-    
+
     @Override
     public void completeOperation(String operationId, Object result) {
         OperationMetadata metadata = operations.get(operationId);
@@ -173,12 +173,12 @@ public final class MockMetadataService implements MetadataService {
             metadata.setStatus("COMPLETED");
             metadata.setEndTime(LocalDateTime.now());
             metadata.setResult(result);
-            
+
             // Add to recent operations as a simplified map for PUI
             addToRecentOperations(metadata);
         }
     }
-    
+
     @Override
     public void failOperation(String operationId, Throwable exception) {
         OperationMetadata metadata = operations.get(operationId);
@@ -186,12 +186,12 @@ public final class MockMetadataService implements MetadataService {
             metadata.setStatus("FAILED");
             metadata.setEndTime(LocalDateTime.now());
             metadata.setErrorMessage(exception.getMessage());
-            
+
             // Add to recent operations as a simplified map for PUI
             addToRecentOperations(metadata);
         }
     }
-    
+
     /**
      * Adds an operation to the recent operations list for PUI access.
      * 
@@ -204,15 +204,15 @@ public final class MockMetadataService implements MetadataService {
         opMap.put("type", metadata.getOperationType());
         opMap.put("status", metadata.getStatus());
         opMap.put("startTime", metadata.getStartTime().toString());
-        
+
         if (metadata.getEndTime() != null) {
             opMap.put("endTime", metadata.getEndTime().toString());
             long durationMs = ChronoUnit.MILLIS.between(metadata.getStartTime(), metadata.getEndTime());
             opMap.put("durationMs", durationMs);
         }
-        
+
         opMap.put("user", metadata.getUsername());
-        
+
         // Add selected parameters that are safe to display
         if (metadata.getParameters() != null) {
             Map<String, Object> safeParams = new HashMap<>();
@@ -225,30 +225,30 @@ public final class MockMetadataService implements MetadataService {
             }
             opMap.put("parameters", safeParams);
         }
-        
+
         // Add result or error message
         if ("COMPLETED".equals(metadata.getStatus()) && metadata.getResult() != null) {
             opMap.put("result", metadata.getResult().toString());
         } else if ("FAILED".equals(metadata.getStatus()) && metadata.getErrorMessage() != null) {
             opMap.put("error", metadata.getErrorMessage());
         }
-        
+
         // Add to front of list (most recent first)
         synchronized (recentOperations) {
             recentOperations.add(0, opMap);
-            
+
             // Maintain maximum size
             if (recentOperations.size() > maxRecentOps) {
                 recentOperations.remove(recentOperations.size() - 1);
             }
         }
     }
-    
+
     @Override
     public OperationMetadata getOperationMetadata(String operationId) {
         return operations.get(operationId);
     }
-    
+
     @Override
     public List<OperationMetadata> listOperations(String commandName, String operationType, int limit) {
         return operations.values().stream()
@@ -258,42 +258,42 @@ public final class MockMetadataService implements MetadataService {
             .limit(limit)
             .collect(Collectors.toList());
     }
-    
+
     @Override
     public Map<String, Object> getOperationStatistics(String commandName, LocalDateTime from, LocalDateTime to) {
         Map<String, Object> statistics = new HashMap<>();
-        
+
         // Filter operations based on the parameters
         List<OperationMetadata> filteredOps = operations.values().stream()
             .filter(op -> commandName == null || commandName.equals(op.getCommandName()))
             .filter(op -> from == null || !op.getStartTime().isBefore(from))
             .filter(op -> to == null || !op.getStartTime().isAfter(to))
             .collect(Collectors.toList());
-        
+
         // Calculate basic statistics
         statistics.put("totalOperations", filteredOps.size());
-        
+
         long completedOps = filteredOps.stream()
             .filter(op -> "COMPLETED".equals(op.getStatus()))
             .count();
         statistics.put("completedOperations", completedOps);
-        
+
         long failedOps = filteredOps.stream()
             .filter(op -> "FAILED".equals(op.getStatus()))
             .count();
         statistics.put("failedOperations", failedOps);
-        
+
         // Calculate success rate
         double successRate = filteredOps.isEmpty() ? 0 : 
             (double) completedOps / filteredOps.size() * 100;
         statistics.put("successRate", successRate);
-        
+
         // Calculate average duration for completed operations
         List<OperationMetadata> completedOperations = filteredOps.stream()
             .filter(op -> "COMPLETED".equals(op.getStatus()))
             .filter(op -> op.getEndTime() != null)
             .collect(Collectors.toList());
-        
+
         if (!completedOperations.isEmpty()) {
             double avgDurationMs = completedOperations.stream()
                 .mapToLong(op -> ChronoUnit.MILLIS.between(op.getStartTime(), op.getEndTime()))
@@ -301,33 +301,33 @@ public final class MockMetadataService implements MetadataService {
                 .orElse(0);
             statistics.put("averageDurationMs", avgDurationMs);
         }
-        
+
         // Calculate operation counts by type
         Map<String, Long> operationsByType = filteredOps.stream()
             .collect(Collectors.groupingBy(OperationMetadata::getOperationType, Collectors.counting()));
         statistics.put("operationsByType", operationsByType);
-        
+
         // Calculate operation counts by command
         Map<String, Long> operationsByCommand = filteredOps.stream()
             .collect(Collectors.groupingBy(OperationMetadata::getCommandName, Collectors.counting()));
         statistics.put("operationsByCommand", operationsByCommand);
-        
+
         return statistics;
     }
-    
+
     @Override
     public int clearOperationHistory(int days) {
         LocalDateTime cutoffDate = LocalDateTime.now().minusDays(days);
-        
+
         List<String> keysToRemove = operations.entrySet().stream()
             .filter(entry -> entry.getValue().getStartTime().isBefore(cutoffDate))
             .map(Map.Entry::getKey)
             .collect(Collectors.toList());
-        
+
         for (String key : keysToRemove) {
             operations.remove(key);
         }
-        
+
         // Also clean up old operations from recent operations
         synchronized (recentOperations) {
             recentOperations.removeIf(op -> {
@@ -343,10 +343,10 @@ public final class MockMetadataService implements MetadataService {
                 return false;
             });
         }
-        
+
         return keysToRemove.size();
     }
-    
+
     @Override
     public void trackOperationError(String parentOperationId, String operationName, 
                                    String errorMessage, Exception exception) {
@@ -357,25 +357,25 @@ public final class MockMetadataService implements MetadataService {
             errorData.put("operation", operationName);
             errorData.put("errorMessage", errorMessage);
             errorData.put("exceptionType", exception.getClass().getSimpleName());
-            
+
             // Update the parent operation with this error information
             if (metadata.getParameters() == null) {
                 metadata.getParameters().put("errors", new ArrayList<Map<String, Object>>());
             }
-            
+
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> errors = (List<Map<String, Object>>) 
                 metadata.getParameters().getOrDefault("errors", new ArrayList<Map<String, Object>>());
             errors.add(errorData);
             metadata.getParameters().put("errors", errors);
-            
+
             // Also update the error message in the main operation if not already set
             if (metadata.getErrorMessage() == null) {
                 metadata.setErrorMessage(errorMessage);
             }
         }
     }
-    
+
     @Override
     public void trackOperationDetail(String operationId, String key, Object value) {
         OperationMetadata metadata = operations.get(operationId);
@@ -384,12 +384,12 @@ public final class MockMetadataService implements MetadataService {
             if (!metadata.getParameters().containsKey("details")) {
                 metadata.getParameters().put("details", new HashMap<String, Object>());
             }
-            
+
             // Add or update the detail
             @SuppressWarnings("unchecked")
             Map<String, Object> details = (Map<String, Object>) metadata.getParameters().get("details");
             details.put(key, value);
-            
+
             // Update the recent operations list if this is a completed operation
             if ("COMPLETED".equals(metadata.getStatus())) {
                 synchronized (recentOperations) {
@@ -408,14 +408,14 @@ public final class MockMetadataService implements MetadataService {
             }
         }
     }
-    
+
     /**
      * Gets a list of recent operations in simplified format for PUI components.
      * 
      * @param limit The maximum number of operations to return
      * @return List of operation data as maps
      */
-    public List<Map<String, Object>> getRecentOperations(int limit) {
+    public List<Map<String, Object>> getRecentOperationsAsMaps(int limit) {
         synchronized (recentOperations) {
             // Return a copy of the list to prevent concurrent modification issues
             if (limit <= 0 || limit >= recentOperations.size()) {
@@ -425,7 +425,71 @@ public final class MockMetadataService implements MetadataService {
             }
         }
     }
-    
+
+    @Override
+    public List<org.rinna.domain.model.OperationRecord> getRecentOperations(int limit) {
+        List<Map<String, Object>> recentOps = getRecentOperationsAsMaps(limit);
+        List<org.rinna.domain.model.OperationRecord> result = new ArrayList<>();
+
+        for (Map<String, Object> op : recentOps) {
+            String id = (String) op.get("id");
+            String type = (String) op.get("type");
+            String status = (String) op.get("status");
+            String startTimeStr = (String) op.get("startTime");
+            String endTimeStr = (String) op.get("endTime");
+
+            // Parse times
+            java.time.Instant startTime = startTimeStr != null ? 
+                java.time.Instant.parse(startTimeStr) : java.time.Instant.now();
+            java.time.Instant endTime = endTimeStr != null ? 
+                java.time.Instant.parse(endTimeStr) : null;
+
+            // Get parameters and results
+            @SuppressWarnings("unchecked")
+            Map<String, Object> parameters = (Map<String, Object>) op.getOrDefault("parameters", new HashMap<>());
+
+            Map<String, Object> results = new HashMap<>();
+            if (op.containsKey("result")) {
+                results.put("result", op.get("result"));
+            }
+
+            String errorDetails = (String) op.get("error");
+
+            // Create and add the operation record
+            org.rinna.domain.model.OperationRecord record = 
+                new org.rinna.domain.model.OperationRecord(
+                    id, type, status, startTime, endTime, parameters, results, errorDetails);
+            result.add(record);
+        }
+
+        return result;
+    }
+
+    @Override
+    public void recordOperation(String commandName, String operationType, Map<String, Object> parameters) {
+        // Generate a unique ID for the operation
+        String operationId = UUID.randomUUID().toString();
+
+        // Get current user information
+        String username = System.getProperty("user.name", "unknown");
+        String clientInfo = "CLI client " + System.getProperty("os.name");
+
+        // Create and store the metadata
+        OperationMetadata metadata = new OperationMetadata(
+            operationId, commandName, operationType, parameters, LocalDateTime.now(), username, clientInfo);
+
+        // Mark as completed immediately
+        metadata.setStatus("COMPLETED");
+        metadata.setEndTime(LocalDateTime.now());
+        metadata.setResult("Operation recorded");
+
+        // Store the operation
+        operations.put(operationId, metadata);
+
+        // Add to recent operations
+        addToRecentOperations(metadata);
+    }
+
     /**
      * Formats operation metadata as a JSON string.
      *
@@ -436,7 +500,7 @@ public final class MockMetadataService implements MetadataService {
         if (metadata == null) {
             return "{}";
         }
-        
+
         StringBuilder json = new StringBuilder();
         json.append("{\n");
         json.append("  \"id\": \"").append(metadata.getId()).append("\",\n");
@@ -444,15 +508,15 @@ public final class MockMetadataService implements MetadataService {
         json.append("  \"operationType\": \"").append(metadata.getOperationType()).append("\",\n");
         json.append("  \"status\": \"").append(metadata.getStatus()).append("\",\n");
         json.append("  \"startTime\": \"").append(metadata.getStartTime()).append("\",\n");
-        
+
         if (metadata.getEndTime() != null) {
             json.append("  \"endTime\": \"").append(metadata.getEndTime()).append("\",\n");
             json.append("  \"durationMs\": ").append(ChronoUnit.MILLIS.between(metadata.getStartTime(), metadata.getEndTime())).append(",\n");
         }
-        
+
         json.append("  \"username\": \"").append(metadata.getUsername()).append("\",\n");
         json.append("  \"clientInfo\": \"").append(metadata.getClientInfo()).append("\",\n");
-        
+
         // Add parameters
         json.append("  \"parameters\": {\n");
         if (metadata.getParameters() != null) {
@@ -465,7 +529,7 @@ public final class MockMetadataService implements MetadataService {
             json.append(String.join(",\n", paramEntries));
         }
         json.append("\n  }");
-        
+
         // Add result or error message
         if ("COMPLETED".equals(metadata.getStatus()) && metadata.getResult() != null) {
             String result = metadata.getResult().toString().replace("\"", "\\\""); // Escape quotes
@@ -474,11 +538,11 @@ public final class MockMetadataService implements MetadataService {
             String error = metadata.getErrorMessage().replace("\"", "\\\""); // Escape quotes
             json.append(",\n  \"errorMessage\": \"").append(error).append("\"");
         }
-        
+
         json.append("\n}");
         return json.toString();
     }
-    
+
     /**
      * Formats a list of operations as a JSON array.
      *
@@ -489,14 +553,14 @@ public final class MockMetadataService implements MetadataService {
         if (operations == null || operations.isEmpty()) {
             return "[]";
         }
-        
+
         List<String> jsonOps = operations.stream()
             .map(this::formatAsJson)
             .collect(Collectors.toList());
-        
+
         return "[\n" + String.join(",\n", jsonOps) + "\n]";
     }
-    
+
     /**
      * Formats statistics as a JSON string.
      *
@@ -507,10 +571,10 @@ public final class MockMetadataService implements MetadataService {
         if (statistics == null || statistics.isEmpty()) {
             return "{}";
         }
-        
+
         StringBuilder json = new StringBuilder();
         json.append("{\n");
-        
+
         List<String> entries = new ArrayList<>();
         for (Map.Entry<String, Object> entry : statistics.entrySet()) {
             if (entry.getValue() instanceof Map) {
@@ -519,12 +583,12 @@ public final class MockMetadataService implements MetadataService {
                 Map<String, Object> nestedMap = (Map<String, Object>) entry.getValue();
                 StringBuilder nestedJson = new StringBuilder();
                 nestedJson.append("  \"").append(entry.getKey()).append("\": {\n");
-                
+
                 List<String> nestedEntries = new ArrayList<>();
                 for (Map.Entry<String, Object> nestedEntry : nestedMap.entrySet()) {
                     nestedEntries.add("    \"" + nestedEntry.getKey() + "\": " + nestedEntry.getValue());
                 }
-                
+
                 nestedJson.append(String.join(",\n", nestedEntries));
                 nestedJson.append("\n  }");
                 entries.add(nestedJson.toString());
@@ -533,7 +597,7 @@ public final class MockMetadataService implements MetadataService {
                 entries.add("  \"" + entry.getKey() + "\": " + entry.getValue());
             }
         }
-        
+
         json.append(String.join(",\n", entries));
         json.append("\n}");
         return json.toString();

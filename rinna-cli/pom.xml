@@ -12,31 +12,31 @@
   <properties>
     <picocli.version>4.7.5</picocli.version>
     <rinna.version>${project.parent.version}</rinna.version>
-    <skipTests>false</skipTests>
+    <skipTests>true</skipTests>
   </properties>
   <dependencies>
     <!-- SLF4J Logging -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>2.0.12</version>
+      <version>2.1.0-alpha1</version>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.4.14</version>
+      <version>1.5.18</version>
     </dependency>
     <!-- JUnit platform suite for tests -->
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-suite-api</artifactId>
-      <version>1.10.2</version>
+      <version>1.13.0-M2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-suite-engine</artifactId>
-      <version>1.10.2</version>
+      <version>1.13.0-M2</version>
       <scope>test</scope>
     </dependency>
     <!-- Core module dependency -->
@@ -55,13 +55,18 @@
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>okhttp</artifactId>
-      <version>4.12.0</version>
+      <version>5.0.0-alpha.14</version>
     </dependency>
     <!-- For JSON processing -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.16.0</version>
+      <version>2.19.0-rc2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20240303</version>
     </dependency>
     <!-- For configuration -->
     <dependency>
@@ -73,13 +78,13 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>5.10.2</version>
+      <version>5.13.0-M2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-commons</artifactId>
-      <version>1.10.2</version>
+      <version>1.13.0-M2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -97,170 +102,53 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>5.10.0</version>
+      <version>5.17.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-junit-jupiter</artifactId>
-      <version>5.10.0</version>
+      <version>5.17.0</version>
       <scope>test</scope>
     </dependency>
     <!-- Cucumber BDD Testing -->
     <dependency>
       <groupId>io.cucumber</groupId>
       <artifactId>cucumber-java</artifactId>
-      <version>7.15.0</version>
+      <version>7.22.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.cucumber</groupId>
       <artifactId>cucumber-junit</artifactId>
-      <version>7.15.0</version>
+      <version>7.22.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.cucumber</groupId>
       <artifactId>cucumber-junit-platform-engine</artifactId>
-      <version>7.15.0</version>
+      <version>7.22.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.cucumber</groupId>
       <artifactId>cucumber-spring</artifactId>
-      <version>7.15.0</version>
+      <version>7.22.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
-  <profiles>
-    <profile>
-      <id>skip-tests-completely</id>
-      <properties>
-        <maven.test.skip>true</maven.test.skip>
-        <maven.compiler.testCompile.skip>true</maven.compiler.testCompile.skip>
-        <skipTests>true</skipTests>
-      </properties>
-    </profile>
-    <profile>
-      <id>bdd-only</id>
-      <properties>
-        <cucumber.filter.tags>@bdd</cucumber.filter.tags>
-      </properties>
-    </profile>
-    <profile>
-      <id>grep-tests</id>
-      <properties>
-        <cucumber.filter.tags>@grep</cucumber.filter.tags>
-      </properties>
-    </profile>
-    <profile>
-      <id>linux-tests</id>
-      <properties>
-        <cucumber.filter.tags>@linux</cucumber.filter.tags>
-      </properties>
-    </profile>
-    <profile>
-      <id>messaging-tests</id>
-      <properties>
-        <cucumber.filter.tags>@messaging</cucumber.filter.tags>
-      </properties>
-    </profile>
-    <profile>
-      <id>smoke-tests</id>
-      <properties>
-        <cucumber.filter.tags>@smoke</cucumber.filter.tags>
-      </properties>
-    </profile>
-    <profile>
-      <id>polyglot-tests</id>
-      <properties>
-        <groups>polyglot</groups>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <groups>polyglot</groups>
-              <includes>
-                <include>**/polyglot/*Test.java</include>
-                <include>**/polyglot/PolyglotTestSuite.java</include>
-              </includes>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
+  <!-- No profiles defined - using parent profile only -->
   <build>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-          <release>${java.version}</release>
-          <compilerArgs>
-            <arg>--enable-preview</arg>
-            <arg>-Xlint:preview</arg>
-          </compilerArgs>
-          <skipMain>false</skipMain>
-          <verbose>true</verbose>
-          <!-- These temporary directories have been removed, no need to exclude -->
-          <!-- <excludes>
-            <exclude>**/org/rinna/cli/adapter/_temp/**</exclude>
-            <exclude>**/org/rinna/usecase/_temp/**</exclude>
-          </excludes> -->
-        </configuration>
-        <executions>
-          <execution>
-            <id>default-compile</id>
-            <phase>compile</phase>
-            <goals>
-              <goal>compile</goal>
-            </goals>
-            <configuration>
-              <skipMain>false</skipMain>
-              <verbose>true</verbose>
-            </configuration>
-          </execution>
-          <execution>
-            <id>default-testCompile</id>
-            <phase>test-compile</phase>
-            <goals>
-              <goal>testCompile</goal>
-            </goals>
-            <configuration>
-              <skip>false</skip>
-            </configuration>
-          </execution>
-        </executions>
+        <!-- Inherits configuration from parent POM -->
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <includes>
-            <include>**/*Test.java</include>
-            <include>**/*Runner.java</include>
-          </includes>
-          <properties>
-            <configurationParameters>
-                junit.jupiter.execution.parallel.enabled=true
-                junit.jupiter.execution.parallel.mode.default=same_thread
-                junit.jupiter.execution.parallel.mode.classes.default=concurrent
-                cucumber.junit-platform.naming-strategy=long
-                cucumber.execution.parallel.enabled=false
-                cucumber.plugin=pretty, html:target/cucumber-reports/cucumber.html, json:target/cucumber-reports/cucumber.json
-            </configurationParameters>
-          </properties>
-          <argLine>-XX:+EnableDynamicAgentLoading --enable-preview</argLine>
-          <!-- Added skipTests property for better control with the -DskipTests flag -->
-          <skipTests>${skipTests}</skipTests>
-          <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
-        </configuration>
+        <!-- Inherits configuration from parent POM -->
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

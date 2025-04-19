@@ -44,7 +44,7 @@ public record WorkItemRecord(
         Objects.requireNonNull(priority, "Priority cannot be null");
         Objects.requireNonNull(createdAt, "Created timestamp cannot be null");
         Objects.requireNonNull(updatedAt, "Updated timestamp cannot be null");
-        
+
         // Default visibility to PUBLIC if not specified
         if (visibility == null) {
             visibility = "PUBLIC";
@@ -143,6 +143,6 @@ public record WorkItemRecord(
 
     @Override
     public String toString() {
-        return STR."WorkItemRecord{id=\{id}, title='\{title}', type=\{type}, status=\{status}, priority=\{priority}}";
+        return "WorkItemRecord{id=" + id + ", title='" + title + "', type=" + type + ", status=" + status + ", priority=" + priority + "}";
     }
 }

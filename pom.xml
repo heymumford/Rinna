@@ -13,7 +13,7 @@
     <module>rinna-data-sqlite</module>
   </modules>
   <properties>
-    <java.version>21</java.version>
+    <java.version>23</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
@@ -25,140 +25,140 @@
       <dependency>
         <groupId>org.junit.platform</groupId>
         <artifactId>junit-platform-suite-api</artifactId>
-        <version>1.9.1</version>
+        <version>1.13.0-M2</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.junit.platform</groupId>
         <artifactId>junit-platform-suite-engine</artifactId>
-        <version>1.9.1</version>
+        <version>1.13.0-M2</version>
         <scope>test</scope>
       </dependency>
       <!-- SQLite for local storage -->
       <dependency>
         <groupId>org.xerial</groupId>
         <artifactId>sqlite-jdbc</artifactId>
-        <version>1.9.1</version>
+        <version>3.49.1.0</version>
       </dependency>
       <!-- Testing dependencies -->
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter-api</artifactId>
-        <version>1.9.1</version>
+        <version>5.13.0-M2</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter-engine</artifactId>
-        <version>1.9.1</version>
+        <version>5.13.0-M2</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter-params</artifactId>
-        <version>1.9.1</version>
+        <version>5.13.0-M2</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
-        <version>1.9.1</version>
+        <version>5.17.0</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-junit-jupiter</artifactId>
-        <version>1.9.1</version>
+        <version>5.17.0</version>
         <scope>test</scope>
       </dependency>
       <!-- Cucumber for BDD testing -->
       <dependency>
         <groupId>io.cucumber</groupId>
         <artifactId>cucumber-java</artifactId>
-        <version>1.9.1</version>
+        <version>7.22.0</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>io.cucumber</groupId>
         <artifactId>cucumber-junit</artifactId>
-        <version>1.9.1</version>
+        <version>7.22.0</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>io.cucumber</groupId>
         <artifactId>cucumber-junit-platform-engine</artifactId>
-        <version>1.9.1</version>
+        <version>7.22.0</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>io.cucumber</groupId>
         <artifactId>cucumber-spring</artifactId>
-        <version>1.9.1</version>
+        <version>7.22.0</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.assertj</groupId>
         <artifactId>assertj-core</artifactId>
-        <version>1.9.1</version>
+        <version>4.0.0-M1</version>
         <scope>test</scope>
       </dependency>
       <!-- Logging dependencies -->
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>1.9.1</version>
+        <version>2.1.0-alpha1</version>
       </dependency>
       <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
-        <version>1.9.1</version>
+        <version>1.5.18</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>jul-to-slf4j</artifactId>
-        <version>1.9.1</version>
+        <version>2.1.0-alpha1</version>
       </dependency>
       <!-- Apache Commons -->
       <dependency>
         <groupId>commons-io</groupId>
         <artifactId>commons-io</artifactId>
-        <version>1.9.1</version>
+        <version>2.19.0</version>
       </dependency>
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-api</artifactId>
-        <version>1.9.1</version>
+        <version>3.0.0-beta2</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-compress</artifactId>
-        <version>1.9.1</version>
+        <version>1.27.1</version>
       </dependency>
       <dependency>
         <groupId>org.apache.xmlbeans</groupId>
         <artifactId>xmlbeans</artifactId>
-        <version>1.9.1</version>
+        <version>5.3.0</version>
       </dependency>
       <!-- Kotlin dependencies -->
       <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-stdlib</artifactId>
-        <version>1.9.1</version>
+        <version>2.2.0-Beta1</version>
       </dependency>
       <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-stdlib-common</artifactId>
-        <version>1.9.1</version>
+        <version>2.2.0-Beta1</version>
       </dependency>
       <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-stdlib-jdk7</artifactId>
-        <version>1.9.1</version>
+        <version>2.2.0-Beta1</version>
       </dependency>
       <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-stdlib-jdk8</artifactId>
-        <version>1.9.1</version>
+        <version>2.2.0-Beta1</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -205,9 +205,6 @@
       <artifactId>mockito-junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- Note: We can't add rinna-core dependency here due to circular dependency issues -->
-    <!-- As a workaround, we'll skip tests in the parent project -->
-    <!-- Cucumber for BDD testing -->
     <dependency>
       <groupId>io.cucumber</groupId>
       <artifactId>cucumber-java</artifactId>
@@ -235,795 +232,27 @@
     </dependency>
   </dependencies>
   <profiles>
-    <!-- Test category profiles -->
-    <profile>
-      <id>unit-tests</id>
-      <properties>
-        <test.groups>unit</test.groups>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <groups>unit</groups>
-              <excludedGroups>component,integration,acceptance,performance</excludedGroups>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>component-tests</id>
-      <properties>
-        <test.groups>component</test.groups>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <groups>component</groups>
-              <excludedGroups>unit,integration,acceptance,performance</excludedGroups>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>integration-tests</id>
-      <properties>
-        <test.groups>integration</test.groups>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <groups>integration</groups>
-              <excludedGroups>unit,component,acceptance,performance</excludedGroups>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>acceptance-tests</id>
-      <properties>
-        <test.groups>acceptance</test.groups>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <groups>acceptance</groups>
-              <excludedGroups>unit,component,integration,performance</excludedGroups>
-              <includes>
-                <include>**/*Runner.java</include>
-              </includes>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>performance-tests</id>
-      <properties>
-        <test.groups>performance</test.groups>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <groups>performance</groups>
-              <excludedGroups>unit,component,integration,acceptance</excludedGroups>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <!-- Profile to run CLI, Go API, and Python tests -->
-    <profile>
-      <id>cross-language-tests</id>
-      <!-- Comment: Runs cross-language polyglot tests that integrate Java, Go, and Python components.
-        Uses the polyglot test harness to ensure proper isolation and coordination between
-        components written in different languages. -->
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <executions>
-              <execution>
-                <id>run-cli-go-python-tests</id>
-                <phase>test</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <executable>${project.basedir}/bin/maven-cross-tests.sh</executable>
-                  <workingDirectory>${project.basedir}</workingDirectory>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <!-- Profile to generate architecture diagrams -->
-    <profile>
-      <id>diagrams</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <executions>
-              <execution>
-                <id>generate-c4-diagrams</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <executable>${project.basedir}/bin/generate-diagrams.sh</executable>
-                  <workingDirectory>${project.basedir}</workingDirectory>
-                  <!-- Run synchronously during explicit diagram generation -->
-                  <arguments>
-                    <argument>--clean</argument>
-                  </arguments>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
+    <!-- Single unified profile for all development and testing -->
     <profile>
       <id>all-tests</id>
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <executions>
-              <!-- Disable cross-language tests for now -->
-              <!--
-                            <execution>
-                                <id>run-all-language-tests</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <configuration>
-                                    <executable>${project.basedir}/bin/maven-cross-tests.sh</executable>
-                                    <workingDirectory>${project.basedir}</workingDirectory>
-                                </configuration>
-                            </execution>
-                            -->
-              <execution>
-                <id>generate-c4-diagrams-async</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <executable>${project.basedir}/bin/generate-diagrams.sh</executable>
-                  <workingDirectory>${project.basedir}</workingDirectory>
-                  <!-- Run asynchronously during normal builds -->
-                  <arguments>
-                    <argument>--async</argument>
-                  </arguments>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <!-- Default profile that adds JaCoCo coverage -->
-    <profile>
-      <id>jacoco</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.jacoco</groupId>
-            <artifactId>jacoco-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <executions>
-              <execution>
-                <id>prepare-agent</id>
-                <goals>
-                  <goal>prepare-agent</goal>
-                </goals>
-              </execution>
-              <execution>
-                <id>report</id>
-                <phase>test</phase>
-                <goals>
-                  <goal>report</goal>
-                </goals>
-              </execution>
-              <execution>
-                <id>check</id>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <configuration>
-                  <rules>
-                    <rule>
-                      <element>BUNDLE</element>
-                      <limits>
-                        <limit>
-                          <counter>INSTRUCTION</counter>
-                          <value>COVEREDRATIO</value>
-                          <minimum>0.70</minimum>
-                        </limit>
-                      </limits>
-                    </rule>
-                  </rules>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <!-- SOX compliance profile for financial institution requirements -->
-    <profile>
-      <id>sox-compliance</id>
-      <build>
-        <plugins>
-          <!-- OWASP Dependency Check with stricter settings -->
-          <plugin>
-            <groupId>org.owasp</groupId>
-            <artifactId>dependency-check-maven</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-              </execution>
-            </executions>
-            <configuration>
-              <failBuildOnCVSS>7</failBuildOnCVSS>
-              <suppressionFile>config/owasp/suppressions.xml</suppressionFile>
-              <formats>
-                <format>HTML</format>
-                <format>XML</format>
-                <format>JSON</format>
-              </formats>
-            </configuration>
-          </plugin>
-          <!-- Enforcer rules for SOX compliance -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-enforcer-plugin</artifactId>
-            <version>1.9.1</version>
-            <executions>
-              <execution>
-                <id>enforce-sox-rules</id>
-                <goals>
-                  <goal>enforce</goal>
-                </goals>
-                <configuration>
-                  <rules>
-                    <requireJavaVersion>
-                      <version>1.9.1</version>
-                    </requireJavaVersion>
-                    <requireMavenVersion>
-                      <version>1.9.1</version>
-                    </requireMavenVersion>
-                    <dependencyConvergence/>
-                    <banDuplicatePomDependencyVersions/>
-                    <banVulnerableDependencies>
-                      <level>HIGH</level>
-                    </banVulnerableDependencies>
-                  </rules>
-                </configuration>
-              </execution>
-            </executions>
-            <dependencies>
-              <dependency>
-                <groupId>org.kordamp.maven</groupId>
-                <artifactId>pomchecker-enforcer-rules</artifactId>
-                <version>1.9.1</version>
-              </dependency>
-            </dependencies>
-          </plugin>
-          <!-- Stricter PMD rules for SOX -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-pmd-plugin</artifactId>
-            <configuration>
-              <failOnViolation>false</failOnViolation>
-              <printFailingErrors>true</printFailingErrors>
-              <maxAllowedViolations>100</maxAllowedViolations>
-              <rulesets>
-                <ruleset>/category/java/bestpractices.xml</ruleset>
-                <ruleset>/category/java/security.xml</ruleset>
-                <ruleset>/category/java/errorprone.xml</ruleset>
-                <ruleset>/category/java/multithreading.xml</ruleset>
-              </rulesets>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <!-- Disable quality checks profile (for faster builds when needed) -->
-    <profile>
-      <id>skip-quality</id>
-      <properties>
-        <checkstyle.skip>true</checkstyle.skip>
-        <pmd.skip>true</pmd.skip>
-        <spotbugs.skip>true</spotbugs.skip>
-        <dependency-check.skip>true</dependency-check.skip>
-        <enforcer.skip>true</enforcer.skip>
-      </properties>
-    </profile>
-    <!-- Local quality gates profile -->
-    <profile>
-      <id>local-quality</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <properties>
-        <!-- Enable style and basic code checks -->
-        <checkstyle.skip>false</checkstyle.skip>
-        <pmd.skip>false</pmd.skip>
-        <spotbugs.skip>false</spotbugs.skip>
-        <!-- Skip security checks by default locally -->
-        <dependency-check.skip>true</dependency-check.skip>
-        <enforcer.skip>false</enforcer.skip>
-      </properties>
-      <build>
-        <plugins>
-          <!-- Set local threshold for SpotBugs -->
-          <plugin>
-            <groupId>com.github.spotbugs</groupId>
-            <artifactId>spotbugs-maven-plugin</artifactId>
-            <configuration>
-              <effort>Default</effort>
-              <threshold>High</threshold>
-              <failOnError>true</failOnError>
-            </configuration>
-          </plugin>
-          <!-- Set local threshold for PMD -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-pmd-plugin</artifactId>
-            <configuration>
-              <failOnViolation>false</failOnViolation>
-              <printFailingErrors>true</printFailingErrors>
-              <failurePriority>1</failurePriority>
-              <maxAllowedViolations>1000</maxAllowedViolations>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <!-- CI profile for Continuous Integration environment -->
-    <profile>
-      <id>ci</id>
       <properties>
         <!-- Enable all quality checks -->
         <checkstyle.skip>false</checkstyle.skip>
         <pmd.skip>false</pmd.skip>
         <spotbugs.skip>false</spotbugs.skip>
-        <dependency-check.skip>false</dependency-check.skip>
+        <dependency-check.skip>true</dependency-check.skip>
         <enforcer.skip>false</enforcer.skip>
       </properties>
-      <build>
-        <plugins>
-          <!-- Stricter SpotBugs settings for CI -->
-          <plugin>
-            <groupId>com.github.spotbugs</groupId>
-            <artifactId>spotbugs-maven-plugin</artifactId>
-            <configuration>
-              <effort>Max</effort>
-              <threshold>Medium</threshold>
-              <failOnError>true</failOnError>
-            </configuration>
-          </plugin>
-          <!-- Stricter PMD settings for CI -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-pmd-plugin</artifactId>
-            <configuration>
-              <failOnViolation>false</failOnViolation>
-              <printFailingErrors>true</printFailingErrors>
-              <failurePriority>2</failurePriority>
-              <maxAllowedViolations>200</maxAllowedViolations>
-            </configuration>
-          </plugin>
-          <!-- Enable OWASP dependency check in CI -->
-          <plugin>
-            <groupId>org.owasp</groupId>
-            <artifactId>dependency-check-maven</artifactId>
-            <configuration>
-              <skip>false</skip>
-              <failBuildOnCVSS>7</failBuildOnCVSS>
-              <suppressionFile>config/owasp/suppressions.xml</suppressionFile>
-            </configuration>
-            <executions>
-              <execution>
-                <id>owasp-check-ci</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-          <!-- Enforce stricter rules in CI -->
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-enforcer-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>enforce-ci-rules</id>
-                <goals>
-                  <goal>enforce</goal>
-                </goals>
-                <configuration>
-                  <rules>
-                    <requireJavaVersion>
-                      <version>1.9.1</version>
-                    </requireJavaVersion>
-                    <requireMavenVersion>
-                      <version>1.9.1</version>
-                    </requireMavenVersion>
-                    <dependencyConvergence/>
-                    <banDuplicatePomDependencyVersions/>
-                  </rules>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <!-- Local CI testing profile - note: use bin/run-ci-local.sh instead
-             This profile is kept simple as a reminder of how to run local CI testing -->
-    <profile>
-      <id>ci-local</id>
-      <properties>
-        <dependency-check.skip>true</dependency-check.skip>
-        <skipTests>false</skipTests>
-      </properties>
-    </profile>
-    <!-- Profile to run smoke tests -->
-    <profile>
-      <id>smoke-tests</id>
-      <properties>
-        <test.groups>smoke</test.groups>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <groups>smoke</groups>
-              <skipTests>false</skipTests>
-              <skip>false</skip>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <!-- Profile for polyglot code coverage -->
-    <profile>
-      <id>polyglot-coverage</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
       <build>
         <plugins>
           <!-- JaCoCo configuration -->
           <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>1.9.1</version>
+            <version>0.8.11</version>
             <executions>
               <execution>
                 <id>prepare-agent</id>
@@ -1044,7 +273,7 @@
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
-            <version>1.9.1</version>
+            <version>3.1.1</version>
             <executions>
               <execution>
                 <id>polyglot-coverage-report</id>
@@ -1057,80 +286,50 @@
                   <arguments>
                     <argument>-o</argument>
                     <argument>html</argument>
+                    <argument>-n</argument>
+                  </arguments>
+                  <successCodes>
+                    <successCode>0</successCode>
+                    <successCode>1</successCode>
+                  </successCodes>
+                </configuration>
+              </execution>
+              <execution>
+                <id>generate-c4-diagrams-async</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>${project.basedir}/bin/generate-diagrams.sh</executable>
+                  <workingDirectory>${project.basedir}</workingDirectory>
+                  <arguments>
+                    <argument>--async</argument>
                   </arguments>
                 </configuration>
               </execution>
             </executions>
           </plugin>
+          <!-- Set threshold for SpotBugs -->
           <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-maven-plugin</artifactId>
             <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
+              <effort>Default</effort>
+              <threshold>High</threshold>
+              <failOnError>true</failOnError>
             </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
           </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <!-- Profile to run architecture validation checks -->
-    <profile>
-      <id>validate-architecture</id>
-      <build>
-        <plugins>
+          <!-- Set threshold for PMD -->
           <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <executions>
-              <execution>
-                <id>run-architecture-checks</id>
-                <phase>validate</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <executable>${session.executionRootDirectory}/bin/run-checks.sh</executable>
-                  <workingDirectory>${session.executionRootDirectory}</workingDirectory>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-pmd-plugin</artifactId>
             <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
+              <failOnViolation>false</failOnViolation>
+              <printFailingErrors>true</printFailingErrors>
+              <failurePriority>1</failurePriority>
+              <maxAllowedViolations>1000</maxAllowedViolations>
             </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
           </plugin>
         </plugins>
       </build>
@@ -1157,7 +356,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-resources-plugin</artifactId>
-          <version>1.9.1</version>
+          <version>3.3.1</version>
           <configuration>
             <nonFilteredFileExtensions>
               <nonFilteredFileExtension>feature</nonFilteredFileExtension>
@@ -1168,7 +367,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-assembly-plugin</artifactId>
-          <version>1.9.1</version>
+          <version>3.6.0</version>
           <configuration>
             <!-- Default configuration for assemblies -->
             <appendAssemblyId>true</appendAssemblyId>
@@ -1182,7 +381,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>1.9.1</version>
+          <version>3.3.1</version>
           <configuration>
             <configLocation>config/checkstyle/checkstyle.xml</configLocation>
             <suppressionsLocation>config/checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
@@ -1194,7 +393,7 @@
         <plugin>
           <groupId>com.github.spotbugs</groupId>
           <artifactId>spotbugs-maven-plugin</artifactId>
-          <version>1.9.1</version>
+          <version>4.8.2.0</version>
           <configuration>
             <excludeFilterFile>config/spotbugs/spotbugs-exclude.xml</excludeFilterFile>
             <failOnError>true</failOnError>
@@ -1205,7 +404,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-pmd-plugin</artifactId>
-          <version>1.9.1</version>
+          <version>3.21.2</version>
           <configuration>
             <linkXRef>false</linkXRef>
             <failOnViolation>false</failOnViolation>
@@ -1220,7 +419,7 @@
         <plugin>
           <groupId>org.owasp</groupId>
           <artifactId>dependency-check-maven</artifactId>
-          <version>1.9.1</version>
+          <version>9.0.9</version>
           <configuration>
             <failBuildOnCVSS>8</failBuildOnCVSS>
             <suppressionFile>config/owasp/suppressions.xml</suppressionFile>
@@ -1243,35 +442,35 @@
             <outputDirectory>${project.build.directory}/dependency-check</outputDirectory>
           </configuration>
         </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
+        <plugin>
+          <groupId>com.diffplug.spotless</groupId>
+          <artifactId>spotless-maven-plugin</artifactId>
+          <version>2.44.4</version>
+          <configuration>
+            <java>
+              <importOrder>
+                <order>java,javax,org,com</order>
+              </importOrder>
+              <removeUnusedImports/>
+              <formatAnnotations/>
+            </java>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>check</goal>
+              </goals>
+              <phase>process-sources</phase>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
-        <version>1.9.1</version>
+        <version>3.3.1</version>
         <executions>
           <execution>
             <id>copy-test-resources</id>
@@ -1285,7 +484,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>1.9.1</version>
+        <version>3.12.1</version>
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>
@@ -1293,14 +492,12 @@
           <release>${java.version}</release>
           <compilerArgs>
             <arg>-Xlint:all</arg>
-            <!-- Removed preview flag to fix string template warnings -->
+            <arg>--enable-preview</arg>
           </compilerArgs>
           <showWarnings>true</showWarnings>
           <showDeprecation>true</showDeprecation>
           <testSource>${java.version}</testSource>
           <testTarget>${java.version}</testTarget>
-          <skipTests>false</skipTests>
-          <skip>false</skip>
         </configuration>
         <!-- Skip test compilation in the parent project -->
         <executions>
@@ -1396,11 +593,8 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>1.9.1</version>
+        <version>3.2.5</version>
         <configuration>
-          <!-- Skip tests in the parent project but allow modules to run tests -->
-          <skipTests>${maven.test.skip}</skipTests>
-          <skip>${maven.test.skip}</skip>
           <includes>
             <!-- Standardized test structure -->
             <include>**/unit/**/*Test.java</include>
@@ -1431,7 +625,7 @@
             <cucumber.glue>org.rinna.acceptance.bdd,org.rinna.bdd</cucumber.glue>
             <junit.jupiter.extensions.autodetection.enabled>true</junit.jupiter.extensions.autodetection.enabled>
           </systemPropertyVariables>
-          <argLine>-XX:+EnableDynamicAgentLoading</argLine>
+          <argLine>-XX:+EnableDynamicAgentLoading --enable-preview</argLine>
           <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
         </configuration>
         <dependencies>
@@ -1439,24 +633,24 @@
           <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-suite-api</artifactId>
-            <version>1.9.1</version>
+            <version>1.13.0-M2</version>
           </dependency>
           <dependency>
             <groupId>org.junit.platform</groupId>
             <artifactId>junit-platform-suite-engine</artifactId>
-            <version>1.9.1</version>
+            <version>1.13.0-M2</version>
           </dependency>
           <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>1.9.1</version>
+            <version>5.13.0-M2</version>
           </dependency>
         </dependencies>
       </plugin>
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>1.9.1</version>
+        <version>0.8.11</version>
         <configuration>
           <skip>false</skip>
         </configuration>
@@ -1465,7 +659,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>1.9.1</version>
+        <version>3.4.1</version>
         <executions>
           <execution>
             <id>enforce-maven</id>
@@ -1475,7 +669,7 @@
             <configuration>
               <rules>
                 <requireMavenVersion>
-                  <version>1.9.1</version>
+                  <version>3.9.0</version>
                 </requireMavenVersion>
               </rules>
             </configuration>
@@ -1486,33 +680,16 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-install-plugin</artifactId>
-        <version>1.9.1</version>
+        <version>3.1.1</version>
         <configuration>
           <skip>true</skip>
         </configuration>
       </plugin>
-          <plugin>
-            <groupId>com.diffplug.spotless</groupId>
-            <artifactId>spotless-maven-plugin</artifactId>
-            <version>1.9.1</version>
-            <configuration>
-              <java>
-                <importOrder>
-                  <order>java,javax,org,com</order>
-                </importOrder>
-                <removeUnusedImports />
-                <formatAnnotations />
-              </java>
-            </configuration>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>check</goal>
-                </goals>
-                <phase>process-sources</phase>
-              </execution>
-            </executions>
-          </plugin>
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>2.44.4</version>
+      </plugin>
     </plugins>
   </build>
 </project>

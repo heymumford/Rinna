@@ -20,7 +20,7 @@ import java.util.Map;
  * performed by CLI commands, enhancing auditability and traceability.
  */
 public interface MetadataService {
-    
+
     /**
      * Records the start of an operation.
      *
@@ -30,7 +30,7 @@ public interface MetadataService {
      * @return The operation ID
      */
     String startOperation(String commandName, String operationType, Map<String, Object> parameters);
-    
+
     /**
      * Records the successful completion of an operation.
      *
@@ -38,7 +38,7 @@ public interface MetadataService {
      * @param result The result of the operation
      */
     void completeOperation(String operationId, Object result);
-    
+
     /**
      * Records the failure of an operation.
      *
@@ -46,7 +46,7 @@ public interface MetadataService {
      * @param exception The exception that occurred
      */
     void failOperation(String operationId, Throwable exception);
-    
+
     /**
      * Gets the metadata for an operation.
      *
@@ -54,7 +54,7 @@ public interface MetadataService {
      * @return The operation metadata
      */
     OperationMetadata getOperationMetadata(String operationId);
-    
+
     /**
      * Lists recent operations with optional filtering.
      *
@@ -64,7 +64,7 @@ public interface MetadataService {
      * @return List of operation metadata
      */
     List<OperationMetadata> listOperations(String commandName, String operationType, int limit);
-    
+
     /**
      * Gets statistics about operations.
      *
@@ -74,7 +74,7 @@ public interface MetadataService {
      * @return Map of statistic name to value
      */
     Map<String, Object> getOperationStatistics(String commandName, LocalDateTime from, LocalDateTime to);
-    
+
     /**
      * Simple method to track an operation without detailed parameters.
      * This is a convenience method for commands that don't need detailed tracking.
@@ -86,7 +86,7 @@ public interface MetadataService {
     default String trackOperation(String commandName, Map<String, Object> parameters) {
         return startOperation(commandName, "EXECUTE", parameters);
     }
-    
+
     /**
      * Simple method to track an operation with string data parameters.
      * This is a convenience method for commands that don't need detailed tracking.
@@ -100,7 +100,7 @@ public interface MetadataService {
         data.forEach(objectData::put);
         return startOperation(commandName, "EXECUTE", objectData);
     }
-    
+
     /**
      * Clears operation history older than the specified days.
      *
@@ -108,7 +108,7 @@ public interface MetadataService {
      * @return Number of operations cleared
      */
     int clearOperationHistory(int days);
-    
+
     /**
      * Tracks an error during an operation.
      *
@@ -119,7 +119,7 @@ public interface MetadataService {
      */
     void trackOperationError(String parentOperationId, String operationName, 
                             String errorMessage, Exception exception);
-    
+
     /**
      * Tracks a detail for an operation.
      *
@@ -128,7 +128,24 @@ public interface MetadataService {
      * @param value The detail value
      */
     void trackOperationDetail(String operationId, String key, Object value);
-    
+
+    /**
+     * Gets recent operations.
+     *
+     * @param limit Maximum number of operations to return
+     * @return List of operation records
+     */
+    List<org.rinna.domain.model.OperationRecord> getRecentOperations(int limit);
+
+    /**
+     * Records an operation.
+     *
+     * @param commandName The name of the command being executed
+     * @param operationType The type of operation
+     * @param parameters Additional parameters for the operation
+     */
+    void recordOperation(String commandName, String operationType, Map<String, Object> parameters);
+
     /**
      * Class representing operation metadata.
      */
@@ -144,9 +161,9 @@ public interface MetadataService {
         private String errorMessage;
         private String username;
         private String clientInfo;
-        
+
         // Constructors, getters, and setters
-        
+
         public OperationMetadata(String id, String commandName, String operationType, Map<String, Object> parameters,
                                 LocalDateTime startTime, String username, String clientInfo) {
             this.id = id;
@@ -158,63 +175,63 @@ public interface MetadataService {
             this.username = username;
             this.clientInfo = clientInfo;
         }
-        
+
         public String getId() {
             return id;
         }
-        
+
         public String getCommandName() {
             return commandName;
         }
-        
+
         public String getOperationType() {
             return operationType;
         }
-        
+
         public Map<String, Object> getParameters() {
             return parameters;
         }
-        
+
         public LocalDateTime getStartTime() {
             return startTime;
         }
-        
+
         public LocalDateTime getEndTime() {
             return endTime;
         }
-        
+
         public void setEndTime(LocalDateTime endTime) {
             this.endTime = endTime;
         }
-        
+
         public String getStatus() {
             return status;
         }
-        
+
         public void setStatus(String status) {
             this.status = status;
         }
-        
+
         public Object getResult() {
             return result;
         }
-        
+
         public void setResult(Object result) {
             this.result = result;
         }
-        
+
         public String getErrorMessage() {
             return errorMessage;
         }
-        
+
         public void setErrorMessage(String errorMessage) {
             this.errorMessage = errorMessage;
         }
-        
+
         public String getUsername() {
             return username;
         }
-        
+
         public String getClientInfo() {
             return clientInfo;
         }

@@ -9,6 +9,7 @@
 package org.rinna.domain.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -16,7 +17,7 @@ import java.util.UUID;
  * This is a key component for the individual-level cognitive load tracking in the Ryorin-do framework.
  */
 public interface WorkItemAssignmentRepository {
-    
+
     /**
      * Assigns a work item to a specific member within an organizational unit.
      *
@@ -26,7 +27,7 @@ public interface WorkItemAssignmentRepository {
      * @return true if the assignment was successful
      */
     boolean assignWorkItem(UUID unitId, String memberId, UUID workItemId);
-    
+
     /**
      * Unassigns a work item from a specific member within an organizational unit.
      *
@@ -36,7 +37,7 @@ public interface WorkItemAssignmentRepository {
      * @return true if the unassignment was successful
      */
     boolean unassignWorkItem(UUID unitId, String memberId, UUID workItemId);
-    
+
     /**
      * Finds all work items assigned to a specific member within an organizational unit.
      *
@@ -45,7 +46,7 @@ public interface WorkItemAssignmentRepository {
      * @return a list of assigned work item IDs
      */
     List<UUID> findWorkItemsByMember(UUID unitId, String memberId);
-    
+
     /**
      * Finds the member assigned to a specific work item within an organizational unit.
      *
@@ -54,7 +55,7 @@ public interface WorkItemAssignmentRepository {
      * @return the member ID, or null if not assigned
      */
     String findMemberByWorkItem(UUID unitId, UUID workItemId);
-    
+
     /**
      * Clears all assignments for a specific organizational unit.
      *
@@ -62,7 +63,7 @@ public interface WorkItemAssignmentRepository {
      * @return true if successful
      */
     boolean clearAssignments(UUID unitId);
-    
+
     /**
      * Clears all assignments for a specific member within an organizational unit.
      *
@@ -71,7 +72,7 @@ public interface WorkItemAssignmentRepository {
      * @return true if successful
      */
     boolean clearMemberAssignments(UUID unitId, String memberId);
-    
+
     /**
      * Finds all members with assigned work items within an organizational unit.
      *
@@ -79,7 +80,7 @@ public interface WorkItemAssignmentRepository {
      * @return a list of member IDs
      */
     List<String> findAssignedMembers(UUID unitId);
-    
+
     /**
      * Finds all work items that are assigned to any member within an organizational unit.
      *
@@ -87,7 +88,7 @@ public interface WorkItemAssignmentRepository {
      * @return a list of work item IDs
      */
     List<UUID> findAssignedWorkItems(UUID unitId);
-    
+
     /**
      * Checks if a work item is assigned to any member within an organizational unit.
      *
@@ -96,7 +97,7 @@ public interface WorkItemAssignmentRepository {
      * @return true if the work item is assigned to any member
      */
     boolean isWorkItemAssigned(UUID unitId, UUID workItemId);
-    
+
     /**
      * Gets the number of work items assigned to a specific member within an organizational unit.
      *
@@ -105,4 +106,12 @@ public interface WorkItemAssignmentRepository {
      * @return the number of assigned work items
      */
     int getAssignmentCount(UUID unitId, String memberId);
+
+    /**
+     * Gets the cognitive load for each member in a unit.
+     *
+     * @param unitId the organizational unit ID
+     * @return a map of member IDs to their cognitive load values
+     */
+    Map<String, Integer> getMemberLoadsForUnit(UUID unitId);
 }

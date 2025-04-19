@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
+
 /**
  * Immutable record implementation of the WorkItem interface.
  * This is a core domain entity record that represents a work item.
@@ -44,7 +45,7 @@ public record WorkItemRecord(
         Objects.requireNonNull(priority, "Priority cannot be null");
         Objects.requireNonNull(createdAt, "Created timestamp cannot be null");
         Objects.requireNonNull(updatedAt, "Updated timestamp cannot be null");
-        
+
         // Default visibility to PUBLIC if not specified
         if (visibility == null) {
             visibility = "PUBLIC";
@@ -58,18 +59,18 @@ public record WorkItemRecord(
         Instant now = Instant.now();
         return new WorkItemRecord(
             id,
-            request.title(),
-            request.description(),
-            request.type(),
+            request.getTitle(),
+            request.getDescription(),
+            request.getType(),
             WorkflowState.FOUND, // Initial state
-            request.priority(),
-            request.assignee(),
+            request.getPriority(),
+            request.getAssignee(),
             now,
             now,
             request.getParentId().orElse(null),
-            request.getProjectId().orElse(null),
-            request.visibility(),
-            request.localOnly()
+            null, // projectId is not available in this version of WorkItemCreateRequest
+            "PUBLIC", // visibility is not available in this version of WorkItemCreateRequest
+            false // localOnly is not available in this version of WorkItemCreateRequest
         );
     }
 
@@ -137,9 +138,9 @@ public record WorkItemRecord(
     @Override public Instant getCreatedAt() { return createdAt; }
     @Override public Instant getUpdatedAt() { return updatedAt; }
     @Override public Optional<UUID> getParentId() { return Optional.ofNullable(parentId); }
-    @Override public Optional<UUID> getProjectId() { return Optional.ofNullable(projectId); }
-    @Override public String getVisibility() { return visibility; }
-    @Override public boolean isLocalOnly() { return localOnly; }
+    public Optional<UUID> getProjectId() { return Optional.ofNullable(projectId); }
+    public String getVisibility() { return visibility; }
+    public boolean isLocalOnly() { return localOnly; }
 
     @Override
     public String toString() {

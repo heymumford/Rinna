@@ -18,13 +18,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.rinna.cli.messaging.MessageClient;
 import org.rinna.cli.messaging.MessageService;
+import org.rinna.cli.security.AuthenticationService;
+import org.rinna.cli.security.AuthorizationService;
 
 /**
  * Manages services for the CLI application.
  */
 public final class ServiceManager {
     private static ServiceManager instance;
-    
+
     private Object workflowService;
     private Object commentService;
     private Object historyService;
@@ -46,16 +48,17 @@ public final class ServiceManager {
     private MetadataService metadataService;
     private MockReportService reportService;
     private MockNotificationService mockNotificationService;
-    
+    private AuthorizationService authorizationService;
+
     // Thread-safe map to store user-specific data
     private final Map<String, Map<String, Object>> userDataMap = new ConcurrentHashMap<>();
-    
+
     // Private constructor for singleton
     private ServiceManager() {
         // Initialize service manager
         initializeServices();
     }
-    
+
     /**
      * Initialize service components.
      * 
@@ -66,7 +69,7 @@ public final class ServiceManager {
         // Configure service initialization strategy based on environment
         // In production, we'll detect if services are available via proper detection
         boolean useRemoteServices = ConfigurationService.areRemoteServicesAvailable();
-        
+
         // Create CLI-specific service instances that can work independently
         MockWorkflowService mockWorkflowService = ServiceFactory.createCliWorkflowService();
         MockBacklogService mockBacklogService = ServiceFactory.createCliBacklogService();
@@ -77,7 +80,7 @@ public final class ServiceManager {
         MockMonitoringService mockMonitoringService = ServiceFactory.createCliMonitoringService();
         MockRecoveryService mockRecoveryService = ServiceFactory.createCliRecoveryService();
         MockReportService mockReportService = ServiceFactory.createCliReportService();
-        
+
         // Create domain adapter services - these will either connect to remote services
         // or fall back to local implementations
         this.workflowService = ServiceFactory.createWorkflowService();
@@ -90,7 +93,7 @@ public final class ServiceManager {
         this.recoveryService = ServiceFactory.createRecoveryService();
         this.criticalPathService = ServiceFactory.createCriticalPathService();
         this.reportService = mockReportService;
-        
+
         // Store CLI services directly in their specialized fields
         this.messageService = new MockMessageService();
         this.messageClient = new MockMessageClient();
@@ -99,15 +102,19 @@ public final class ServiceManager {
         this.auditService = new MockAuditService();
         this.backupService = new MockBackupService();
         this.complianceService = new MockComplianceService();
-        
+
         // Use the optimized metadata service for high-volume operation tracking
         this.metadataService = OptimizedMetadataService.getInstance();
-        
+
         this.mockNotificationService = MockNotificationService.getInstance();
         this.projectContext = ProjectContext.getInstance();
         this.configurationService = ConfigurationService.getInstance();
+
+        // Initialize authentication and authorization services
+        AuthenticationService authService = new AuthenticationService();
+        this.authorizationService = new AuthorizationService(authService);
     }
-    
+
     /**
      * Get singleton instance of ServiceManager.
      *
@@ -119,7 +126,7 @@ public final class ServiceManager {
         }
         return instance;
     }
-    
+
     /**
      * Get status information for a service.
      *
@@ -131,7 +138,7 @@ public final class ServiceManager {
         if ("mock-service".equals(serviceName)) {
             return new ServiceStatusInfo(true, "RUNNING", "Mock service for testing");
         }
-        
+
         // Check messaging service
         if ("messaging".equals(serviceName)) {
             boolean connected = messageClient.isConnected();
@@ -139,12 +146,12 @@ public final class ServiceManager {
             String message = connected ? "Messaging service is running" : "Messaging service is not connected";
             return new ServiceStatusInfo(connected, state, message);
         }
-        
+
         // For real services, this would query the actual service status
         // In this implementation, any unknown service is considered unavailable
         return new ServiceStatusInfo(false, "UNKNOWN", "Service not found: " + serviceName);
     }
-    
+
     /**
      * Create a configuration file for a service.
      *
@@ -161,7 +168,7 @@ public final class ServiceManager {
                             "  \"port\": 8080,\n" +
                             "  \"logLevel\": \"INFO\"\n" +
                             "}\n";
-            
+
             // Using Files.writeString for simplified file writing with proper encoding
             Files.writeString(Paths.get(configPath), content, StandardCharsets.UTF_8);
             return true;
@@ -170,7 +177,7 @@ public final class ServiceManager {
             return false;
         }
     }
-    
+
     /**
      * Check if a local service endpoint is available.
      *
@@ -193,7 +200,7 @@ public final class ServiceManager {
             return false;
         }
     }
-    
+
     /**
      * Connect to the local service endpoint.
      * This method attempts to establish a connection to the local service,
@@ -206,14 +213,14 @@ public final class ServiceManager {
         if (hasLocalEndpoint()) {
             return messageClient.connect();
         }
-        
+
         // If no local endpoint is available, try to start one
         try {
             // Get the server port from configuration
             ConfigurationService config = ConfigurationService.getInstance();
             String serverUrl = config.getServerUrl();
             int port = 8080; // Default port
-            
+
             try {
                 // Extract port from the URL if possible
                 java.net.URL url = new java.net.URL(serverUrl);
@@ -223,18 +230,18 @@ public final class ServiceManager {
             } catch (Exception e) {
                 // Use default port if URL parsing fails
             }
-            
+
             // Launch server process
             ProcessBuilder processBuilder = new ProcessBuilder(
                 "java", "-cp", System.getProperty("java.class.path"),
                 "org.rinna.adapter.service.ApiHealthServer", String.valueOf(port)
             );
-            
+
             Process process = processBuilder.start();
-            
+
             // Wait a bit for the server to start
             Thread.sleep(2000);
-            
+
             // Try to connect
             return messageClient.connect();
         } catch (Exception e) {
@@ -242,7 +249,7 @@ public final class ServiceManager {
             return false;
         }
     }
-    
+
     /**
      * Gets the workflow service.
      *
@@ -251,7 +258,7 @@ public final class ServiceManager {
     public Object getWorkflowService() {
         return workflowService;
     }
-    
+
     /**
      * Gets the domain-compatible comment service.
      *
@@ -260,7 +267,7 @@ public final class ServiceManager {
     public Object getCommentService() {
         return commentService;
     }
-    
+
     /**
      * Gets the CLI-specific comment service for direct CLI model access.
      *
@@ -269,7 +276,7 @@ public final class ServiceManager {
     public MockCommentService getMockCommentService() {
         return ServiceFactory.createCliCommentService();
     }
-    
+
     /**
      * Gets the domain-compatible history service.
      *
@@ -278,7 +285,7 @@ public final class ServiceManager {
     public Object getHistoryService() {
         return historyService;
     }
-    
+
     /**
      * Gets the CLI-specific history service for direct CLI model access.
      *
@@ -287,7 +294,7 @@ public final class ServiceManager {
     public MockHistoryService getMockHistoryService() {
         return ServiceFactory.createCliHistoryService();
     }
-    
+
     /**
      * Gets the item service.
      *
@@ -296,7 +303,7 @@ public final class ServiceManager {
     public ItemService getItemService() {
         return (ItemService) itemService;
     }
-    
+
     /**
      * Gets the CLI-specific item service for direct CLI model access.
      *
@@ -305,7 +312,7 @@ public final class ServiceManager {
     public MockItemService getMockItemService() {
         return ServiceFactory.createCliItemService();
     }
-    
+
     /**
      * Gets the CLI-specific workflow service for direct CLI model access.
      *
@@ -314,7 +321,7 @@ public final class ServiceManager {
     public MockWorkflowService getMockWorkflowService() {
         return ServiceFactory.createCliWorkflowService();
     }
-    
+
     /**
      * Sets the item service.
      *
@@ -323,7 +330,7 @@ public final class ServiceManager {
     public void setItemService(Object itemService) {
         this.itemService = itemService;
     }
-    
+
     /**
      * Gets the domain-compatible search service.
      *
@@ -332,7 +339,7 @@ public final class ServiceManager {
     public Object getSearchService() {
         return searchService;
     }
-    
+
     /**
      * Gets the CLI-specific search service for direct CLI model access.
      *
@@ -341,7 +348,7 @@ public final class ServiceManager {
     public MockSearchService getMockSearchService() {
         return ServiceFactory.createCliSearchService();
     }
-    
+
     /**
      * Gets the message service.
      *
@@ -350,7 +357,7 @@ public final class ServiceManager {
     public MessageService getMessageService() {
         return messageService;
     }
-    
+
     /**
      * Gets the message client.
      *
@@ -359,7 +366,7 @@ public final class ServiceManager {
     public MessageClient getMessageClient() {
         return messageClient;
     }
-    
+
     /**
      * Gets the project context.
      *
@@ -368,7 +375,7 @@ public final class ServiceManager {
     public ProjectContext getProjectContext() {
         return projectContext;
     }
-    
+
     /**
      * Gets the configuration service.
      *
@@ -377,7 +384,7 @@ public final class ServiceManager {
     public ConfigurationService getConfigurationService() {
         return configurationService;
     }
-    
+
     /**
      * Gets the backlog service.
      *
@@ -386,7 +393,7 @@ public final class ServiceManager {
     public Object getBacklogService() {
         return backlogService;
     }
-    
+
     /**
      * Gets the CLI-specific backlog service for direct CLI model access.
      *
@@ -395,7 +402,7 @@ public final class ServiceManager {
     public MockBacklogService getMockBacklogService() {
         return ServiceFactory.createCliBacklogService();
     }
-    
+
     /**
      * Gets the domain-compatible monitoring service.
      *
@@ -404,7 +411,7 @@ public final class ServiceManager {
     public MonitoringService getMonitoringService() {
         return (MonitoringService) monitoringService;
     }
-    
+
     /**
      * Gets the CLI-specific monitoring service for direct CLI model access.
      *
@@ -413,7 +420,7 @@ public final class ServiceManager {
     public MockMonitoringService getMockMonitoringService() {
         return ServiceFactory.createCliMonitoringService();
     }
-    
+
     /**
      * Gets the domain-compatible recovery service.
      *
@@ -422,7 +429,7 @@ public final class ServiceManager {
     public RecoveryService getRecoveryService() {
         return (RecoveryService) recoveryService;
     }
-    
+
     /**
      * Gets the CLI-specific recovery service for direct CLI model access.
      *
@@ -431,7 +438,7 @@ public final class ServiceManager {
     public MockRecoveryService getMockRecoveryService() {
         return ServiceFactory.createCliRecoveryService();
     }
-    
+
     /**
      * Gets the domain-compatible critical path service.
      *
@@ -440,7 +447,7 @@ public final class ServiceManager {
     public Object getCriticalPathService() {
         return criticalPathService;
     }
-    
+
     /**
      * Gets the CLI-specific critical path service for direct CLI model access.
      *
@@ -449,7 +456,7 @@ public final class ServiceManager {
     public MockCriticalPathService getMockCriticalPathService() {
         return ServiceFactory.createCliCriticalPathService();
     }
-    
+
     /**
      * Gets the diagnostics service.
      *
@@ -458,7 +465,7 @@ public final class ServiceManager {
     public DiagnosticsService getDiagnosticsService() {
         return (DiagnosticsService) diagnosticsService;
     }
-    
+
     /**
      * Gets the relationship service.
      *
@@ -467,7 +474,7 @@ public final class ServiceManager {
     public Object getRelationshipService() {
         return relationshipService;
     }
-    
+
     /**
      * Gets the CLI-specific relationship service for direct CLI model access.
      *
@@ -476,7 +483,7 @@ public final class ServiceManager {
     public MockRelationshipService getMockRelationshipService() {
         return relationshipService;
     }
-    
+
     /**
      * Gets the audit service.
      *
@@ -485,7 +492,7 @@ public final class ServiceManager {
     public AuditService getAuditService() {
         return auditService;
     }
-    
+
     /**
      * Gets the backup service.
      *
@@ -494,7 +501,7 @@ public final class ServiceManager {
     public BackupService getBackupService() {
         return backupService;
     }
-    
+
     /**
      * Gets the compliance service.
      *
@@ -503,7 +510,7 @@ public final class ServiceManager {
     public ComplianceService getComplianceService() {
         return complianceService;
     }
-    
+
     /**
      * Gets the metadata service for tracking operation metadata.
      *
@@ -512,7 +519,7 @@ public final class ServiceManager {
     public MetadataService getMetadataService() {
         return metadataService;
     }
-    
+
     /**
      * Gets the report service.
      *
@@ -521,7 +528,7 @@ public final class ServiceManager {
     public MockReportService getMockReportService() {
         return reportService;
     }
-    
+
     /**
      * Gets the notification service.
      *
@@ -530,7 +537,16 @@ public final class ServiceManager {
     public MockNotificationService getMockNotificationService() {
         return mockNotificationService;
     }
-    
+
+    /**
+     * Gets the authorization service.
+     *
+     * @return the authorization service
+     */
+    public AuthorizationService getAuthorizationService() {
+        return authorizationService;
+    }
+
     /**
      * Gets user-specific data map, creating it if it doesn't exist.
      * This method allows services to store and retrieve user-specific data.
@@ -541,7 +557,7 @@ public final class ServiceManager {
     public Map<String, Object> getUserData(String username) {
         return userDataMap.computeIfAbsent(username, k -> new ConcurrentHashMap<>());
     }
-    
+
     /**
      * Clears all data for a specific user.
      *
@@ -551,7 +567,7 @@ public final class ServiceManager {
     public boolean clearUserData(String username) {
         return userDataMap.remove(username) != null;
     }
-    
+
     /**
      * Inner class representing service status information.
      */
@@ -559,7 +575,7 @@ public final class ServiceManager {
         private final boolean available;
         private final String state;
         private final String message;
-        
+
         /**
          * Constructs a new ServiceStatusInfo instance.
          *
@@ -572,19 +588,19 @@ public final class ServiceManager {
             this.state = state;
             this.message = message;
         }
-        
+
         public boolean isAvailable() {
             return available;
         }
-        
+
         public String getState() {
             return state;
         }
-        
+
         public String getMessage() {
             return message;
         }
-        
+
         @Override
         public String toString() {
             return "ServiceStatus{" +

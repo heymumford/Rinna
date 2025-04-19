@@ -50,6 +50,7 @@ WARNING="⚠️"
 SKIP_TESTS=false
 SKIP_QUALITY=false
 SKIP_VERSION_INCREMENT=false
+# Enable all components
 COMPONENTS=("java" "go" "python")
 VERBOSE=false
 HELP=false
@@ -228,18 +229,35 @@ increment_build_number() {
     local today=$(date +"%Y-%m-%d")
 
     # Update multiple properties at once to reduce file operations
-    sed -i -e "s/^buildNumber=.*/buildNumber=$new_build_number/" \
-           -e "s/^build.timestamp=.*/build.timestamp=$timestamp/" \
-           -e "s/^build.git.commit=.*/build.git.commit=$GIT_COMMIT/" \
-           -e "s/^lastUpdated=.*/lastUpdated=$today/" "$VERSION_FILE"
+    # Use a more compatible approach for sed across different platforms
+    if [[ "$(uname)" == "Darwin" ]]; then
+      # macOS requires an extension argument for -i
+      sed -i '' "s/^buildNumber=.*/buildNumber=$new_build_number/" "$VERSION_FILE"
+      sed -i '' "s/^build.timestamp=.*/build.timestamp=$timestamp/" "$VERSION_FILE"
+      sed -i '' "s/^build.git.commit=.*/build.git.commit=$GIT_COMMIT/" "$VERSION_FILE"
+      sed -i '' "s/^lastUpdated=.*/lastUpdated=$today/" "$VERSION_FILE"
+    else
+      # Linux version
+      sed -i "s/^buildNumber=.*/buildNumber=$new_build_number/" "$VERSION_FILE"
+      sed -i "s/^build.timestamp=.*/build.timestamp=$timestamp/" "$VERSION_FILE"
+      sed -i "s/^build.git.commit=.*/build.git.commit=$GIT_COMMIT/" "$VERSION_FILE"
+      sed -i "s/^lastUpdated=.*/lastUpdated=$today/" "$VERSION_FILE"
+    fi
 
     BUILD_NUMBER="$new_build_number"
     log_success "Updated build number in $VERSION_FILE"
   fi
 
   # Update version service properties if it exists
-  [[ -f "$VERSION_SERVICE_PROPS" ]] && \
-    sed -i "s/^buildNumber=.*/buildNumber=$new_build_number/" "$VERSION_SERVICE_PROPS"
+  if [[ -f "$VERSION_SERVICE_PROPS" ]]; then
+    if [[ "$(uname)" == "Darwin" ]]; then
+      # macOS requires an extension argument for -i
+      sed -i '' "s/^buildNumber=.*/buildNumber=$new_build_number/" "$VERSION_SERVICE_PROPS"
+    else
+      # Linux version
+      sed -i "s/^buildNumber=.*/buildNumber=$new_build_number/" "$VERSION_SERVICE_PROPS"
+    fi
+  fi
 }
 
 # Initialize build environment
@@ -250,11 +268,22 @@ initialize_build() {
   local missing_tools=false
 
   is_component_enabled "java" && {
-    if ! command -v mvn &>/dev/null || ! java -version 2>&1 | grep -q "version \"21"; then
-      log_error "Java 21 and Maven are required"
+    # Extract Java version number for comparison
+    if ! command -v mvn &>/dev/null; then
+      log_error "Maven is required"
+      missing_tools=true
+    elif ! java -version &>/dev/null; then
+      log_error "Java is required"
       missing_tools=true
     else
-      log_info "Java: $(java -version 2>&1 | head -1)"
+      # Extract major version number and compare
+      java_version=$(java -version 2>&1 | head -1 | awk -F '"' '{print $2}' | awk -F '.' '{print $1}')
+      if [[ -n "$java_version" ]] && [[ "$java_version" -lt 21 ]]; then
+        log_error "Java 21 or higher is required (found version $java_version)"
+        missing_tools=true
+      else
+        log_info "Java: $(java -version 2>&1 | head -1)"
+      fi
     fi
   }
 

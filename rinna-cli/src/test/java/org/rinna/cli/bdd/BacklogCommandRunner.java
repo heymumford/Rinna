@@ -14,8 +14,7 @@ import io.cucumber.junit.CucumberOptions;
     glue = {"org.rinna.cli.bdd"},
     plugin = {"pretty", "summary", "html:target/cucumber-reports/backlog-commands.html"},
     monochrome = true,
-    dryRun = false,
-    strict = true
+    dryRun = false
 )
 public class BacklogCommandRunner {
     // Runner class is empty

@@ -29,7 +29,7 @@ import org.rinna.domain.service.ItemService;
 public class DefaultItemService implements ItemService {
     private final ItemRepository itemRepository;
     private final MetadataRepository metadataRepository;
-    
+
     /**
      * Constructs a new DefaultItemService with the given repository.
      */
@@ -37,7 +37,7 @@ public class DefaultItemService implements ItemService {
         this.itemRepository = Objects.requireNonNull(itemRepository, "Item repository cannot be null");
         this.metadataRepository = null; // Default constructor for backward compatibility
     }
-    
+
     /**
      * Constructs a new DefaultItemService with the given repositories.
      */
@@ -45,43 +45,43 @@ public class DefaultItemService implements ItemService {
         this.itemRepository = Objects.requireNonNull(itemRepository, "Item repository cannot be null");
         this.metadataRepository = metadataRepository;
     }
-    
+
     @Override
     public WorkItem create(WorkItemCreateRequest request) {
         Objects.requireNonNull(request, "Create request cannot be null");
         return itemRepository.create(request);
     }
-    
+
     @Override
     public Optional<WorkItem> findById(UUID id) {
         return itemRepository.findById(Objects.requireNonNull(id, "ID cannot be null"));
     }
-    
+
     @Override
     public List<WorkItem> findAll() {
         return itemRepository.findAll();
     }
-    
+
     @Override
     public List<WorkItem> findByType(String type) {
         return itemRepository.findByType(Objects.requireNonNull(type, "Type cannot be null"));
     }
-    
+
     @Override
     public List<WorkItem> findByStatus(String status) {
         return itemRepository.findByStatus(Objects.requireNonNull(status, "Status cannot be null"));
     }
-    
+
     @Override
     public List<WorkItem> findByAssignee(String assignee) {
         return itemRepository.findByAssignee(assignee);
     }
-    
+
     @Override
     public WorkItem updateAssignee(UUID id, String assignee) {
         WorkItem item = findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Work item not found: " + id));
-        
+
         // Handle both implementations for backward compatibility
         WorkItem updatedItem = switch (item) {
             case WorkItemRecord record -> record.withAssignee(assignee);
@@ -89,47 +89,44 @@ public class DefaultItemService implements ItemService {
             case null -> throw new IllegalArgumentException("Item cannot be null");
             default -> throw new UnsupportedOperationException("Unsupported WorkItem implementation: " + item.getClass().getName());
         };
-        
+
         return itemRepository.save(updatedItem);
     }
-    
+
     @Override
     public void deleteById(UUID id) {
         itemRepository.deleteById(Objects.requireNonNull(id, "ID cannot be null"));
     }
-    
+
     @Override
     public boolean existsById(UUID id) {
         return findById(id).isPresent();
     }
-    
+
     @Override
     public boolean updateMetadata(UUID id, Map<String, String> metadata) {
         Objects.requireNonNull(id, "ID cannot be null");
         Objects.requireNonNull(metadata, "Metadata cannot be null");
-        
+
         if (metadataRepository == null) {
             // Store metadata in the work item itself as a fallback
             Optional<WorkItem> optionalItem = findById(id);
             if (optionalItem.isEmpty()) {
                 return false;
             }
-            
+
             WorkItem item = optionalItem.get();
-            
+
             // For DefaultWorkItem implementation, use reflection to set metadata
             if (item instanceof DefaultWorkItem defaultItem) {
                 try {
-                    // Create a new map with existing metadata (if any) plus new values
-                    Map<String, String> existingMetadata = defaultItem.getMetadata();
-                    Map<String, String> updatedMetadata = existingMetadata != null ? 
-                        new HashMap<>(existingMetadata) : new HashMap<>();
-                    updatedMetadata.putAll(metadata);
-                    
+                    // DefaultWorkItem doesn't have metadata support, create a new map with just the new values
+                    Map<String, String> updatedMetadata = new HashMap<>(metadata);
+
                     // Update the work item with the new metadata
                     WorkItemRecord updatedRecord = defaultItem.toRecord();
                     // In a real implementation, we would set the metadata here
-                    
+
                     // Save the updated item
                     itemRepository.save(updatedRecord);
                     return true;
@@ -137,10 +134,10 @@ public class DefaultItemService implements ItemService {
                     return false;
                 }
             }
-            
+
             return false;
         }
-        
+
         // Use the metadata repository if available
         try {
             metadataRepository.updateMetadata(id, metadata);

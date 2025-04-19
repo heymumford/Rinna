@@ -16,7 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.rinna.cli.command.OperationsCommand;
-import org.rinna.cli.service.AuthorizationService;
+import org.rinna.cli.security.AuthorizationService;
 import org.rinna.cli.service.MetadataService;
 import org.rinna.cli.service.ServiceManager;
 import org.rinna.domain.model.OperationRecord;
@@ -42,7 +42,7 @@ public class OperationsCommandSteps {
 
     @Mock
     private ServiceManager mockServiceManager;
-    
+
     @Mock
     private MetadataService mockMetadataService;
 
@@ -53,7 +53,7 @@ public class OperationsCommandSteps {
     public void setup() {
         closeable = MockitoAnnotations.openMocks(this);
         System.setOut(new PrintStream(outputStream));
-        
+
         when(mockServiceManager.getMetadataService()).thenReturn(mockMetadataService);
         when(mockServiceManager.getAuthorizationService()).thenReturn(mockAuthorizationService);
         when(mockAuthorizationService.hasPermission(anyString())).thenReturn(true);
@@ -77,7 +77,7 @@ public class OperationsCommandSteps {
         operations.clear();
         when(mockMetadataService.getRecentOperations(anyInt())).thenReturn(operations);
     }
-    
+
     @Given("the user is not authorized to view operations")
     public void theUserIsNotAuthorizedToViewOperations() {
         when(mockAuthorizationService.hasPermission(anyString())).thenReturn(false);
@@ -86,7 +86,7 @@ public class OperationsCommandSteps {
     @Given("the following operations exist in the system:")
     public void theFollowingOperationsExistInTheSystem(DataTable dataTable) {
         List<Map<String, String>> rows = dataTable.asMaps();
-        
+
         for (Map<String, String> row : rows) {
             String operationId = row.get("Operation ID");
             String type = row.get("Type");
@@ -96,21 +96,21 @@ public class OperationsCommandSteps {
             String parametersStr = row.get("Parameters");
             String resultsStr = row.get("Results");
             String errorDetails = row.get("Error Details");
-            
+
             // Parse times
             Instant startTime = Instant.parse(startTimeStr);
             Instant endTime = endTimeStr != null && !endTimeStr.isEmpty() ? Instant.parse(endTimeStr) : null;
-            
+
             // Parse parameters and results as Maps
             Map<String, Object> parameters = parseJsonToMap(parametersStr);
             Map<String, Object> results = parseJsonToMap(resultsStr);
-            
+
             // Create and add the operation record
             OperationRecord operationRecord = new OperationRecord(
                 operationId, type, status, startTime, endTime, parameters, results, errorDetails);
             operations.add(operationRecord);
         }
-        
+
         when(mockMetadataService.getRecentOperations(anyInt())).thenReturn(operations);
     }
 
@@ -177,7 +177,7 @@ public class OperationsCommandSteps {
         String output = outputStream.toString();
         int occurrences = 0;
         int index = 0;
-        
+
         // For JSON output we count objects
         if (output.contains("[{")) {
             occurrences = countJsonObjects(output);
@@ -188,7 +188,7 @@ public class OperationsCommandSteps {
                 index += "Operation ID:".length();
             }
         }
-        
+
         Assertions.assertEquals(count, occurrences, 
                 "Expected " + count + " operations but found " + occurrences);
     }
@@ -209,7 +209,7 @@ public class OperationsCommandSteps {
         String output = outputStream.toString();
         Assertions.assertTrue(output.contains(type), 
                 "Output should contain operations of type " + type);
-        
+
         // Check that other types aren't present
         List<String> otherTypes = List.of("ADD_ITEM", "UPDATE_ITEM", "VIEW_ITEM", "DELETE_ITEM", "LIST_ITEMS");
         for (String otherType : otherTypes) {
@@ -300,7 +300,7 @@ public class OperationsCommandSteps {
         String output = outputStream.toString();
         Assertions.assertTrue(output.contains("Options:"), 
                 "Output should list options");
-        
+
         // Check for important options
         List<String> expectedOptions = List.of("--limit", "--filter", "--json", "--verbose", "--recent", "--help");
         for (String option : expectedOptions) {
@@ -326,7 +326,7 @@ public class OperationsCommandSteps {
     public void theMetadataServiceShouldRecordTheOperationWithLimitParameter() {
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(mockMetadataService).recordOperation(eq("command.operations"), eq("LIST_OPERATIONS"), captor.capture());
-        
+
         Map<String, Object> params = captor.getValue();
         Assertions.assertTrue(params.containsKey("limit"), 
                 "Operation parameters should include limit");
@@ -336,7 +336,7 @@ public class OperationsCommandSteps {
     public void theMetadataServiceShouldRecordTheOperationWithFilterParameter() {
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(mockMetadataService).recordOperation(eq("command.operations"), eq("LIST_OPERATIONS"), captor.capture());
-        
+
         Map<String, Object> params = captor.getValue();
         Assertions.assertTrue(params.containsKey("filter"), 
                 "Operation parameters should include filter");
@@ -346,7 +346,7 @@ public class OperationsCommandSteps {
     public void theMetadataServiceShouldRecordTheOperationWithFormatParameter() {
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(mockMetadataService).recordOperation(eq("command.operations"), eq("LIST_OPERATIONS"), captor.capture());
-        
+
         Map<String, Object> params = captor.getValue();
         Assertions.assertTrue(params.containsKey("format"), 
                 "Operation parameters should include format");
@@ -358,19 +358,19 @@ public class OperationsCommandSteps {
     public void theMetadataServiceShouldRecordTheOperationWithVerboseParameter() {
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(mockMetadataService).recordOperation(eq("command.operations"), eq("LIST_OPERATIONS"), captor.capture());
-        
+
         Map<String, Object> params = captor.getValue();
         Assertions.assertTrue(params.containsKey("verbose"), 
                 "Operation parameters should include verbose");
         Assertions.assertEquals(true, params.get("verbose"), 
                 "Verbose parameter should be true");
     }
-    
+
     @Then("the MetadataService should record the operation with recent parameter")
     public void theMetadataServiceShouldRecordTheOperationWithRecentParameter() {
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
         verify(mockMetadataService).recordOperation(eq("command.operations"), eq("LIST_OPERATIONS"), captor.capture());
-        
+
         Map<String, Object> params = captor.getValue();
         Assertions.assertTrue(params.containsKey("recent"), 
                 "Operation parameters should include recent");
@@ -386,14 +386,14 @@ public class OperationsCommandSteps {
         if (json == null || json.isEmpty()) {
             return new HashMap<>();
         }
-        
+
         Map<String, Object> result = new HashMap<>();
-        
+
         // Simple JSON parsing for this test
         String content = json.trim();
         if (content.startsWith("{") && content.endsWith("}")) {
             content = content.substring(1, content.length() - 1);
-            
+
             if (!content.isEmpty()) {
                 // Split by commas, but handle quotes
                 String[] pairs = content.split(",");
@@ -407,20 +407,20 @@ public class OperationsCommandSteps {
                 }
             }
         }
-        
+
         return result;
     }
-    
+
     // Helper method to count JSON objects in a string
     private int countJsonObjects(String json) {
         int count = 0;
         int index = 0;
-        
+
         while ((index = json.indexOf("{", index)) != -1) {
             count++;
             index += 1;
         }
-        
+
         return count;
     }
 }

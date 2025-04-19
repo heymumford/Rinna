@@ -18,6 +18,8 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts.FontName;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
@@ -35,9 +37,9 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultDocumentService implements DocumentService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultDocumentService.class);
-    
+
     private final DocumentConfig config;
-    
+
     /**
      * Creates a new DefaultDocumentService with the given configuration.
      * 
@@ -46,7 +48,7 @@ public class DefaultDocumentService implements DocumentService {
     public DefaultDocumentService(DocumentConfig config) {
         this.config = config;
     }
-    
+
     @Override
     public void generateWorkItemDocument(WorkItem workItem, Format format, TemplateType templateType, OutputStream output) {
         try {
@@ -61,14 +63,14 @@ public class DefaultDocumentService implements DocumentService {
                 "- Updated: " + workItem.getUpdatedAt();
             content += "\n\n## Description\n\n" +
                 (workItem.getDescription() != null ? workItem.getDescription() : "No description provided");
-            
+
             generateDocument(content, format, output);
         } catch (Exception e) {
             LOGGER.error("Failed to generate work item document", e);
             throw new IllegalStateException("Document generation failed", e);
         }
     }
-    
+
     @Override
     public void generateProjectDocument(Project project, Format format, TemplateType templateType, OutputStream output) {
         try {
@@ -80,14 +82,14 @@ public class DefaultDocumentService implements DocumentService {
                 "- Updated: " + project.getUpdatedAt() + "\n\n" +
                 "## Description\n\n" +
                 (project.getDescription() != null ? project.getDescription() : "No description provided");
-            
+
             generateDocument(content, format, output);
         } catch (Exception e) {
             LOGGER.error("Failed to generate project document", e);
             throw new IllegalStateException("Document generation failed", e);
         }
     }
-    
+
     @Override
     public void generateReleaseDocument(Release release, Format format, TemplateType templateType, OutputStream output) {
         try {
@@ -96,20 +98,20 @@ public class DefaultDocumentService implements DocumentService {
                 "- Date: " + release.getCreatedAt() + "\n\n" +
                 "## Description\n\n" +
                 (release.getDescription() != null ? release.getDescription() : "No description provided");
-            
+
             generateDocument(content, format, output);
         } catch (Exception e) {
             LOGGER.error("Failed to generate release document", e);
             throw new IllegalStateException("Document generation failed", e);
         }
     }
-    
+
     @Override
     public void generateWorkItemsDocument(List<WorkItem> workItems, Format format, TemplateType templateType, OutputStream output) {
         try {
             StringBuilder content = new StringBuilder("# Work Items Report\n\n");
             content.append("Total items: ").append(workItems.size()).append("\n\n");
-            
+
             for (WorkItem item : workItems) {
                 content.append("## ").append(item.getTitle()).append("\n\n");
                 content.append("- ID: ").append(item.getId()).append("\n");
@@ -118,32 +120,32 @@ public class DefaultDocumentService implements DocumentService {
                 content.append("- Priority: ").append(item.getPriority()).append("\n");
                 content.append("- Assignee: ").append(item.getAssignee() != null ? item.getAssignee() : "Unassigned").append("\n\n");
             }
-            
+
             generateDocument(content.toString(), format, output);
         } catch (Exception e) {
             LOGGER.error("Failed to generate work items document", e);
             throw new IllegalStateException("Document generation failed", e);
         }
     }
-    
+
     @Override
     public void generateCustomDocument(String templatePath, Map<String, Object> data, Format format, OutputStream output) {
         try {
             // Very basic implementation - just dumps the data
             StringBuilder content = new StringBuilder("# Custom Document\n\n");
-            
+
             for (Map.Entry<String, Object> entry : data.entrySet()) {
                 content.append("## ").append(entry.getKey()).append("\n\n");
                 content.append(entry.getValue()).append("\n\n");
             }
-            
+
             generateDocument(content.toString(), format, output);
         } catch (Exception e) {
             LOGGER.error("Failed to generate custom document", e);
             throw new IllegalStateException("Document generation failed", e);
         }
     }
-    
+
     /**
      * Generates a document in the requested format.
      */
@@ -154,7 +156,7 @@ public class DefaultDocumentService implements DocumentService {
             case HTML -> generateHtml(content, output);
         }
     }
-    
+
     /**
      * Generates a PDF document.
      */
@@ -162,50 +164,52 @@ public class DefaultDocumentService implements DocumentService {
         try (PDDocument document = new PDDocument()) {
             PDPage page = new PDPage();
             document.addPage(page);
-            
+
             try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
                 contentStream.beginText();
-                contentStream.setFont(PDType1Font.HELVETICA, 12);
+                // Use Standard14Fonts
+                PDType1Font font = new PDType1Font(FontName.TIMES_ROMAN);
+                contentStream.setFont(font, 12);
                 contentStream.newLineAtOffset(50, 700);
-                
+
                 // Very basic content rendering - just line by line
                 String[] lines = content.split("\n");
                 float leading = 14;
-                
+
                 for (String line : lines) {
-                    // Handle headers with larger font
+                    // Handle headers with different font sizes
                     if (line.startsWith("# ")) {
-                        contentStream.setFont(PDType1Font.HELVETICA_BOLD, 16);
+                        contentStream.setFont(font, 16);
                         contentStream.showText(line.substring(2));
                     } else if (line.startsWith("## ")) {
-                        contentStream.setFont(PDType1Font.HELVETICA_BOLD, 14);
+                        contentStream.setFont(font, 14);
                         contentStream.showText(line.substring(3));
                     } else {
-                        contentStream.setFont(PDType1Font.HELVETICA, 12);
+                        contentStream.setFont(font, 12);
                         contentStream.showText(line);
                     }
-                    
+
                     contentStream.newLineAtOffset(0, -leading);
                 }
-                
+
                 contentStream.endText();
             }
-            
+
             document.save(output);
         }
     }
-    
+
     /**
      * Generates a DOCX document.
      */
     private void generateDocx(String content, OutputStream output) throws IOException {
         try (XWPFDocument document = new XWPFDocument()) {
             String[] lines = content.split("\n");
-            
+
             for (String line : lines) {
                 XWPFParagraph paragraph = document.createParagraph();
                 XWPFRun run = paragraph.createRun();
-                
+
                 // Handle headers with larger font
                 if (line.startsWith("# ")) {
                     run.setBold(true);
@@ -220,11 +224,11 @@ public class DefaultDocumentService implements DocumentService {
                     run.setText(line);
                 }
             }
-            
+
             document.write(output);
         }
     }
-    
+
     /**
      * Generates an HTML document.
      */
@@ -244,11 +248,11 @@ public class DefaultDocumentService implements DocumentService {
                 </head>
                 <body>
                 """);
-        
+
         // Very basic Markdown to HTML conversion
         String[] lines = content.split("\n");
         boolean inParagraph = false;
-        
+
         for (String line : lines) {
             if (line.isBlank()) {
                 if (inParagraph) {
@@ -257,7 +261,7 @@ public class DefaultDocumentService implements DocumentService {
                 }
                 continue;
             }
-            
+
             if (line.startsWith("# ")) {
                 if (inParagraph) {
                     html.append("</p>\n");
@@ -284,21 +288,21 @@ public class DefaultDocumentService implements DocumentService {
                 html.append(line).append("<br>\n");
             }
         }
-        
+
         if (inParagraph) {
             html.append("</p>\n");
         }
-        
+
         html.append("</body></html>");
-        
+
         output.write(html.toString().getBytes(StandardCharsets.UTF_8));
     }
-    
+
     @Override
     public boolean isAvailable() {
         return true; // Always available as fallback
     }
-    
+
     @Override
     public String getServiceName() {
         return "Default Document Service";

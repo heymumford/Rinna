@@ -41,29 +41,28 @@ public class DefaultMacroService implements MacroService {
         if (macro == null) {
             throw new IllegalArgumentException("Macro cannot be null");
         }
-        
+
         if (macro.getName() == null || macro.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Macro name cannot be empty");
         }
-        
+
         if (macro.getTrigger() == null) {
             throw new IllegalArgumentException("Macro trigger cannot be null");
         }
-        
+
         if (macro.getActions() == null || macro.getActions().isEmpty()) {
             throw new IllegalArgumentException("Macro must have at least one action");
         }
-        
+
         // Create the macro
         MacroDefinition createdMacro = macroRepository.create(macro);
-        
+
         // Schedule the macro if needed
         if (macro.getSchedule() != null && 
-            (macro.getTrigger().getType() == TriggerType.SCHEDULED || 
-             macro.getTrigger().getType() == TriggerType.ONE_TIME)) {
+            macro.getTrigger().getType() == TriggerType.SCHEDULED) {
             schedulerService.scheduleMacro(createdMacro.getId(), macro.getSchedule());
         }
-        
+
         return createdMacro;
     }
 
@@ -72,7 +71,7 @@ public class DefaultMacroService implements MacroService {
         if (id == null) {
             throw new IllegalArgumentException("Macro ID cannot be null");
         }
-        
+
         return macroRepository.findById(id);
     }
 
@@ -81,7 +80,7 @@ public class DefaultMacroService implements MacroService {
         if (filters == null) {
             filters = Collections.emptyMap();
         }
-        
+
         return macroRepository.findByFilters(filters);
     }
 
@@ -90,49 +89,48 @@ public class DefaultMacroService implements MacroService {
         if (id == null) {
             throw new IllegalArgumentException("Macro ID cannot be null");
         }
-        
+
         if (macro == null) {
             throw new IllegalArgumentException("Macro cannot be null");
         }
-        
+
         // Ensure the IDs match
         if (!id.equals(macro.getId())) {
             throw new IllegalArgumentException("Macro ID mismatch");
         }
-        
+
         // Verify the macro exists
         MacroDefinition existingMacro = macroRepository.findById(id);
         if (existingMacro == null) {
             throw new IllegalArgumentException("Macro not found: " + id);
         }
-        
+
         // Basic validation
         if (macro.getName() == null || macro.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Macro name cannot be empty");
         }
-        
+
         if (macro.getTrigger() == null) {
             throw new IllegalArgumentException("Macro trigger cannot be null");
         }
-        
+
         if (macro.getActions() == null || macro.getActions().isEmpty()) {
             throw new IllegalArgumentException("Macro must have at least one action");
         }
-        
+
         // Handle schedule changes
         if (existingMacro.getSchedule() != null && 
             (macro.getSchedule() == null || !existingMacro.getSchedule().equals(macro.getSchedule()))) {
             // Cancel existing schedule
             schedulerService.cancelScheduledMacro(id);
         }
-        
+
         if (macro.getSchedule() != null && 
-            (macro.getTrigger().getType() == TriggerType.SCHEDULED || 
-             macro.getTrigger().getType() == TriggerType.ONE_TIME)) {
+            (macro.getTrigger().getType() == TriggerType.SCHEDULED)) {
             // Schedule with new schedule
             schedulerService.scheduleMacro(id, macro.getSchedule());
         }
-        
+
         // Update the macro
         return macroRepository.update(macro);
     }
@@ -142,10 +140,10 @@ public class DefaultMacroService implements MacroService {
         if (id == null) {
             throw new IllegalArgumentException("Macro ID cannot be null");
         }
-        
+
         // Cancel any scheduled executions
         schedulerService.cancelScheduledMacro(id);
-        
+
         // Delete the macro
         macroRepository.delete(id);
     }
@@ -155,19 +153,18 @@ public class DefaultMacroService implements MacroService {
         if (id == null) {
             throw new IllegalArgumentException("Macro ID cannot be null");
         }
-        
+
         MacroDefinition macro = macroRepository.findById(id);
         if (macro == null) {
             throw new IllegalArgumentException("Macro not found: " + id);
         }
-        
+
         macro.setEnabled(true);
         macroRepository.update(macro);
-        
+
         // If the macro has a schedule, ensure it's scheduled
         if (macro.getSchedule() != null && 
-            (macro.getTrigger().getType() == TriggerType.SCHEDULED || 
-             macro.getTrigger().getType() == TriggerType.ONE_TIME)) {
+            (macro.getTrigger().getType() == TriggerType.SCHEDULED)) {
             schedulerService.scheduleMacro(id, macro.getSchedule());
         }
     }
@@ -177,15 +174,15 @@ public class DefaultMacroService implements MacroService {
         if (id == null) {
             throw new IllegalArgumentException("Macro ID cannot be null");
         }
-        
+
         MacroDefinition macro = macroRepository.findById(id);
         if (macro == null) {
             throw new IllegalArgumentException("Macro not found: " + id);
         }
-        
+
         macro.setEnabled(false);
         macroRepository.update(macro);
-        
+
         // Cancel any scheduled executions
         schedulerService.cancelScheduledMacro(id);
     }
@@ -195,27 +192,27 @@ public class DefaultMacroService implements MacroService {
         if (macroId == null) {
             throw new IllegalArgumentException("Macro ID cannot be null");
         }
-        
+
         MacroDefinition macro = macroRepository.findById(macroId);
         if (macro == null) {
             throw new IllegalArgumentException("Macro not found: " + macroId);
         }
-        
+
         if (!macro.isEnabled()) {
             throw new IllegalStateException("Cannot execute disabled macro: " + macroId);
         }
-        
+
         if (params == null) {
             params = new HashMap<>();
         }
-        
+
         // Create a manual trigger event
         TriggerEvent event = TriggerEvent.forManualExecution("system", macroId);
         event.getPayload().putAll(params);
-        
+
         // Process the event
         triggerService.processEvent(event);
-        
+
         // Return the latest execution
         List<MacroExecution> executions = macroRepository.findExecutionsByMacroId(macroId, 1);
         return executions.isEmpty() ? null : executions.get(0);
@@ -226,7 +223,7 @@ public class DefaultMacroService implements MacroService {
         if (executionId == null) {
             throw new IllegalArgumentException("Execution ID cannot be null");
         }
-        
+
         return macroRepository.findExecutionById(executionId);
     }
 
@@ -235,11 +232,11 @@ public class DefaultMacroService implements MacroService {
         if (macroId == null) {
             throw new IllegalArgumentException("Macro ID cannot be null");
         }
-        
+
         if (limit <= 0) {
             limit = 10; // Default limit
         }
-        
+
         return macroRepository.findExecutionsByMacroId(macroId, limit);
     }
 }

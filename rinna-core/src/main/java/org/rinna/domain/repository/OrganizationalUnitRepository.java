@@ -22,7 +22,7 @@ import org.rinna.domain.model.WorkParadigm;
  * Repository interface for managing organizational units.
  */
 public interface OrganizationalUnitRepository {
-    
+
     /**
      * Creates a new organizational unit.
      *
@@ -30,7 +30,7 @@ public interface OrganizationalUnitRepository {
      * @return the created organizational unit
      */
     OrganizationalUnit create(OrganizationalUnitCreateRequest request);
-    
+
     /**
      * Finds an organizational unit by its ID.
      *
@@ -38,14 +38,14 @@ public interface OrganizationalUnitRepository {
      * @return an Optional containing the organizational unit, or empty if not found
      */
     Optional<OrganizationalUnit> findById(UUID id);
-    
+
     /**
      * Finds all organizational units.
      *
      * @return a list of all organizational units
      */
     List<OrganizationalUnit> findAll();
-    
+
     /**
      * Finds organizational units by type.
      *
@@ -53,7 +53,7 @@ public interface OrganizationalUnitRepository {
      * @return a list of organizational units with the given type
      */
     List<OrganizationalUnit> findByType(OrganizationalUnitType type);
-    
+
     /**
      * Finds organizational units by parent.
      *
@@ -61,7 +61,7 @@ public interface OrganizationalUnitRepository {
      * @return a list of organizational units with the given parent ID
      */
     List<OrganizationalUnit> findByParent(UUID parentId);
-    
+
     /**
      * Finds organizational units by owner.
      *
@@ -69,7 +69,7 @@ public interface OrganizationalUnitRepository {
      * @return a list of organizational units with the given owner
      */
     List<OrganizationalUnit> findByOwner(String owner);
-    
+
     /**
      * Finds organizational units that have a member.
      *
@@ -77,7 +77,7 @@ public interface OrganizationalUnitRepository {
      * @return a list of organizational units that have the given member
      */
     List<OrganizationalUnit> findByMember(String memberId);
-    
+
     /**
      * Finds organizational units by domain expertise.
      *
@@ -85,7 +85,7 @@ public interface OrganizationalUnitRepository {
      * @return a list of organizational units with the given domain expertise
      */
     List<OrganizationalUnit> findByDomainExpertise(CynefinDomain domain);
-    
+
     /**
      * Finds organizational units by work paradigm.
      *
@@ -93,7 +93,7 @@ public interface OrganizationalUnitRepository {
      * @return a list of organizational units with the given work paradigm
      */
     List<OrganizationalUnit> findByWorkParadigm(WorkParadigm paradigm);
-    
+
     /**
      * Finds organizational units by a tag.
      *
@@ -101,21 +101,21 @@ public interface OrganizationalUnitRepository {
      * @return a list of organizational units with the given tag
      */
     List<OrganizationalUnit> findByTag(String tag);
-    
+
     /**
      * Finds active organizational units.
      *
      * @return a list of active organizational units
      */
     List<OrganizationalUnit> findActive();
-    
+
     /**
      * Finds inactive organizational units.
      *
      * @return a list of inactive organizational units
      */
     List<OrganizationalUnit> findInactive();
-    
+
     /**
      * Finds organizational units with available cognitive capacity.
      *
@@ -123,7 +123,7 @@ public interface OrganizationalUnitRepository {
      * @return a list of organizational units with at least the given available capacity
      */
     List<OrganizationalUnit> findWithAvailableCapacity(int minCapacity);
-    
+
     /**
      * Finds organizational units that are at or above cognitive capacity threshold.
      *
@@ -131,7 +131,7 @@ public interface OrganizationalUnitRepository {
      * @return a list of organizational units at or above the threshold
      */
     List<OrganizationalUnit> findAtCapacityThreshold(int capacityThresholdPercent);
-    
+
     /**
      * Saves changes to an organizational unit.
      *
@@ -139,14 +139,14 @@ public interface OrganizationalUnitRepository {
      * @return the saved organizational unit
      */
     OrganizationalUnit save(OrganizationalUnit organizationalUnit);
-    
+
     /**
      * Deletes an organizational unit by ID.
      *
      * @param id the ID of the organizational unit to delete
      */
     void deleteById(UUID id);
-    
+
     /**
      * Associates a work item with an organizational unit.
      *
@@ -155,7 +155,7 @@ public interface OrganizationalUnitRepository {
      * @return true if successful
      */
     boolean associateWorkItem(UUID organizationalUnitId, UUID workItemId);
-    
+
     /**
      * Dissociates a work item from an organizational unit.
      *
@@ -164,7 +164,7 @@ public interface OrganizationalUnitRepository {
      * @return true if successful
      */
     boolean dissociateWorkItem(UUID organizationalUnitId, UUID workItemId);
-    
+
     /**
      * Finds all work items assigned to an organizational unit.
      *
@@ -172,7 +172,18 @@ public interface OrganizationalUnitRepository {
      * @return a list of work item IDs assigned to the organizational unit
      */
     List<UUID> findWorkItemIdsByOrganizationalUnitId(UUID organizationalUnitId);
-    
+
+    /**
+     * Finds all work items assigned to an organizational unit.
+     * Alias for findWorkItemIdsByOrganizationalUnitId.
+     *
+     * @param unitId the organizational unit ID
+     * @return a list of work item IDs assigned to the organizational unit
+     */
+    default List<UUID> findWorkItemsForUnit(UUID unitId) {
+        return findWorkItemIdsByOrganizationalUnitId(unitId);
+    }
+
     /**
      * Associates a workstream with an organizational unit.
      *
@@ -181,7 +192,7 @@ public interface OrganizationalUnitRepository {
      * @return true if successful
      */
     boolean associateWorkstream(UUID organizationalUnitId, UUID workstreamId);
-    
+
     /**
      * Dissociates a workstream from an organizational unit.
      *
@@ -190,7 +201,7 @@ public interface OrganizationalUnitRepository {
      * @return true if successful
      */
     boolean dissociateWorkstream(UUID organizationalUnitId, UUID workstreamId);
-    
+
     /**
      * Finds all workstreams associated with an organizational unit.
      *
@@ -198,7 +209,7 @@ public interface OrganizationalUnitRepository {
      * @return a list of workstream IDs associated with the organizational unit
      */
     List<UUID> findWorkstreamIdsByOrganizationalUnitId(UUID organizationalUnitId);
-    
+
     /**
      * Updates the cognitive load of an organizational unit.
      *
@@ -207,7 +218,7 @@ public interface OrganizationalUnitRepository {
      * @return the updated organizational unit
      */
     OrganizationalUnit updateCognitiveLoad(UUID organizationalUnitId, int newLoad);
-    
+
     /**
      * Finds the organizational unit that owns a work item.
      *
