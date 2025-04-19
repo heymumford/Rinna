@@ -1,29 +1,137 @@
-# Build artifacts
-build/
+# Rinna Polyglot Project .gitignore
 
-# Java
-java/**/target/
+### Build System ###
+/build/
+/logs/
+*.log
+
+### Java ###
+# Compiled class files
 *.class
-*.jar
 
-# Python
+# Package files
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+/java/target/
+/java/*/target/
+/java/**/target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+### Python ###
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-*.class
-*.so
+*$py.class
+
+# Distribution / packaging
 .Python
-.env
-.venv
-env/
-venv/
+/python/build/
+/python/develop-eggs/
+/python/dist/
+/python/downloads/
+/python/eggs/
+/python/.eggs/
+/python/lib/
+/python/lib64/
+/python/parts/
+/python/sdist/
+/python/var/
+/python/wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+/python/.env
+/python/.venv
+/python/env/
+/python/venv/
+/python/ENV/
+/python/env.bak/
+/python/venv.bak/
+
+# Poetry
+/python/poetry.lock
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Pytest
+.pytest_cache/
 .coverage
 htmlcov/
+.tox/
+nosetests.xml
+coverage.xml
 
-# IDE files
-.idea/
+### Go ###
+# Binaries
+/go/bin/
+/go/pkg/
+
+# Go workspace file
+go.work
+
+# Dependency directories
+/go/vendor/
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+*.prof
+
+### IDE/Editor ###
+# VSCode
 .vscode/
-*.iml
+*.code-workspace
 
-# Logs
-logs/
-*.log
+# IntelliJ/JetBrains
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Eclipse
+.metadata
+.classpath
+.project
+.settings/
+
+# Mac OS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+### Project Specific ###
+# Build artifacts
+/api-specs/generated/
+*.versionsBackup
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.bak
+*~
+.*.swp
