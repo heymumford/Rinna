@@ -1,0 +1,11 @@
+= go API Reference
+:description: API Reference for the go component
+
+This page documents the API for the go component of Rinna.
+
+== Core API
+
+[source,go]
+----
+// Sample code will go here
+----

@@ -1,0 +1,11 @@
+= python API Reference
+:description: API Reference for the python component
+
+This page documents the API for the python component of Rinna.
+
+== Core API
+
+[source,python]
+----
+// Sample code will go here
+----

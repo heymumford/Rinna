@@ -60,7 +60,7 @@ You're new to Rinna and need to get started quickly:
 ### For Experienced Developers 💻
 You're familiar with development workflows and want to maximize efficiency:
 
-- [CLI Reference](implementation/cli/rin-cli.md) - Complete command-line interface documentation
+- [CLI Reference](guides/user/cli-reference.md) - Complete command-line interface documentation
 - [TUI Requirements](guides/user/tui-requirements.md) - Text User Interface specifications
 - [Work Item Management](guides/user/work-item-relationships.md) - Managing dependencies and relationships
 - [Test-Driven Development](guides/developer/README.md#test-driven-development-workflow) - Using Rinna for effective TDD

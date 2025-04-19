@@ -1,0 +1,17 @@
+name: java
+title: Java Component
+version: ~
+start_page: ROOT:index.adoc
+nav:
+- modules/ROOT/nav.adoc
+
+asciidoc:
+  attributes:
+    experimental: ''
+    idprefix: ''
+    idseparator: '-'
+    page-pagination: ''
+    source-language: java
+    source-highlighter: highlight.js
+    
+prerelease: true

@@ -1,0 +1,10 @@
+= python Design Patterns
+:description: Design patterns used in the python component
+
+This page documents the design patterns used in the python component.
+
+== Dependency Injection
+
+== Repository Pattern
+
+== Factory Pattern

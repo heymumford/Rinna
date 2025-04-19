@@ -1,0 +1,12 @@
+= java Component
+:description: Documentation for the java component of Rinna
+
+This is the documentation for the java component of Rinna.
+
+== Overview
+
+The java component is responsible for...
+
+== API Reference
+
+See the xref:api-reference.adoc[API Reference] for details.

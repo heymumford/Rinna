@@ -1,0 +1,10 @@
+= go Design Patterns
+:description: Design patterns used in the go component
+
+This page documents the design patterns used in the go component.
+
+== Dependency Injection
+
+== Repository Pattern
+
+== Factory Pattern

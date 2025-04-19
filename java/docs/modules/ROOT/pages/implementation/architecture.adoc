@@ -1,0 +1,12 @@
+= java Architecture
+:description: Architecture of the java component
+
+This page describes the architecture of the java component.
+
+== Clean Architecture Implementation
+
+The java component follows clean architecture principles:
+
+* Core domain models at the center
+* Use cases as the primary API
+* Adapters for external integration

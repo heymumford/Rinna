@@ -1,0 +1,5 @@
+* xref:index.adoc[Java Component]
+* xref:architecture.adoc[Architecture]
+* xref:domain-model.adoc[Domain Model]
+* xref:api-reference.adoc[API Reference]
+* xref:testing.adoc[Testing]

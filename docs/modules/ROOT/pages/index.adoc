@@ -1,0 +1,520 @@
+= Rinna Documentation
+
+
+Welcome to the Rinna documentation. Rinna is a developer-centric workflow management system designed to reduce process overhead while maximizing productivity.
+
+----
++---------------+    +---------------+    +---------------+
+|               |    |               |    |               |
+| DEVELOPER     |    | PROJECT       |    | ADMIN         |
+| DOCUMENTATION |<-->| DOCUMENTATION |<-->| DOCUMENTATION |
+|               |    |               |    |               |
++-------+-------+    +-------+-------+    +-------+-------+
+        |                    |                    |
+        v                    v                    v
++-------+-------+    +-------+-------+    +-------+-------+
+|               |    |               |    |               |
+| WORKFLOW      |    | ARCHITECTURE  |    | INTEGRATION   |
+| DOCUMENTATION |<-->| DOCUMENTATION |<-->| DOCUMENTATION |
+|               |    |               |    |               |
++---------------+    +---------------+    +---------------+
+----
+
+____
+💡 *Rinna Philosophy*: Rinna isn't trying to replace enterprise tools -- it exists to make workflow management work _for_ developers rather than the other way around. It brings workflow management to where developers actually work: the command line.
+____
+
+== Documentation Structure
+
+This documentation repository is organized into the following sections:
+
+* xref:architecture/README.adoc[Architecture] - System design documents and technical architecture
+* xref:contributing/README.adoc[Contributing] - Guidelines for contributors
+* xref:guides/README.adoc[Guides] - User and developer guides
+ ** xref:guides/getting-started/README.adoc[Getting Started] - Installation and quick start
+ ** xref:guides/developer/README.adoc[Developer] - Documentation for developers
+ ** xref:guides/user/README.adoc[User] - End-user documentation
+* xref:implementation/README.adoc[Implementation] - Implementation details
+ ** xref:implementation/api/README.adoc[API] - API documentation
+ ** xref:implementation/cli/README.adoc[CLI] - Command-line interface documentation
+ ** xref:implementation/integration/README.adoc[Integration] - Integration guides
+* xref:project/README.adoc[Project] - Project management documentation
+ ** xref:project/standards/README.adoc[Standards] - Project standards and guidelines
+ ** xref:project/status/README.adoc[Status] - Project status reports
+ ** xref:project/backlog/README.adoc[Backlog] - Feature backlog
+* xref:reference/README.adoc[Reference] - Reference materials
+ ** xref:reference/diagrams/README.adoc[Diagrams] - Technical diagrams
+ ** xref:reference/specifications/README.adoc[Specifications] - Technical specifications
+ ** xref:reference/glossary.adoc[Glossary] - Terminology definitions
+* xref:security/README.adoc[Security] - Security documentation
+* xref:testing/README.adoc[Testing] - Testing documentation
+* xref:archive/README.adoc[Archive] - Archived documentation
+
+== Documentation By User Persona
+
+=== For New Developers 🚀
+
+You're new to Rinna and need to get started quickly:
+
+* xref:guides/getting-started/README.adoc[Quick Start Guide] - Install and set up your first project in minutes
+* xref:guides/user/rin-quick-reference.adoc[CLI Basics] - Essential commands for daily use
+* xref:implementation/README.adoc[Workflow Overview] - Understanding Rinna's streamlined workflow
+* xref:guides/getting-started/first-work-item.adoc[First Work Item] - Create and manage your first task
+
+=== For Experienced Developers 💻
+
+You're familiar with development workflows and want to maximize efficiency:
+
+* xref:guides/user/cli-reference.adoc[CLI Reference] - Complete command-line interface documentation
+* xref:guides/user/tui-requirements.adoc[TUI Requirements] - Text User Interface specifications
+* xref:guides/user/work-item-relationships.adoc[Work Item Management] - Managing dependencies and relationships
+* link:guides/developer/README.md#test-driven-development-workflow[Test-Driven Development] - Using Rinna for effective TDD
+* xref:guides/developer/README.adoc[Development Guide] - Contributing to Rinna
+
+=== For Team Leads 👨‍💼👩‍💼
+
+You're managing a team and need tools for coordination and oversight:
+
+* xref:guides/user/releases.adoc[Release Management] - Planning and tracking releases
+* xref:guides/user/lota.adoc[Lota Management] - Managing development cycles
+* xref:guides/user/metrics/it-workflow-metrics.adoc[Metrics and Reporting] - Team productivity insights
+* link:implementation/README.md#critical-path-analysis[Critical Path Analysis] - Identifying bottlenecks
+* xref:guides/user/migration/README.adoc[Migration Guide] - Transitioning from other tools
+
+=== For Administrators 🔧
+
+You're responsible for setting up and maintaining Rinna:
+
+* xref:guides/user/admin-guide.adoc[Admin Guide] - Complete administration guide
+* xref:guides/user/admin-server-setup.adoc[Server Configuration] - Deployment and configuration
+* xref:guides/user/admin-cli-quickstart.adoc[Admin CLI Quick Start] - Essential admin commands
+* xref:security/README.adoc[Security Setup] - Securing your Rinna installation
+
+=== For System Integrators 🔄
+
+You need to connect Rinna with other systems in your environment:
+
+* xref:implementation/api/README.adoc[API Reference] - RESTful API documentation
+* xref:implementation/integration/README.adoc[Enterprise Integration] - Connecting with external systems
+* xref:guides/user/migration/README.adoc[Migration Guide] - Data migration strategies
+* link:implementation/api/README.md#webhook-integration[Webhook Configuration] - Event-based integration
+
+=== For Architects 🏗️
+
+You're interested in Rinna's technical architecture and design decisions:
+
+* xref:architecture/README.adoc[Architecture Overview] - Technical design and principles
+* link:reference/diagrams/clean_architecture.ascii[Clean Architecture Implementation] - How Rinna implements Clean Architecture
+* xref:architecture/decisions/README.adoc[Architecture Decisions] - Recorded architecture decisions
+* xref:reference/specifications/README.adoc[Engineering Specification] - Detailed system design
+
+=== For Individual Users 👤
+
+You want to manage both your work and personal life in one unified system:
+
+* xref:guides/user/personal/tasks.adoc[Personal Task Management] - Managing personal to-dos and projects
+* xref:guides/user/personal/habits.adoc[Habit Building] - Creating and tracking personal habits
+* xref:guides/user/personal/coordination.adoc[Life Coordination] - Family and household management
+* xref:guides/user/personal/dashboard.adoc[Unified Life Dashboard] - Bringing it all together
+
+== Core Concepts
+
+For a complete reference of all terms and concepts, see the xref:reference/glossary.adoc[Glossary].
+
+=== Clean Architecture
+
+Rinna follows the Clean Architecture approach, organizing the system into concentric layers with dependencies pointing inward:
+
+----
+                          +---------------------------------------------+
+                          |                                             |
+                          |  +-----------------------------------+      |
+                          |  |                                   |      |
+                          |  |  +---------------------------+    |      |
+                          |  |  |                           |    |      |
+                          |  |  |  +-------------------+    |    |      |
+                          |  |  |  |                   |    |    |      |
+                          |  |  |  |    ENTITIES       |    |    |      |
+                          |  |  |  |    (Domain)       |    |    |      |
+                          |  |  |  |                   |    |    |      |
+                          |  |  |  +-------------------+    |    |      |
+                          |  |  |                           |    |      |
+                          |  |  |      USE CASES            |    |      |
+                          |  |  |      (Application)        |    |      |
+                          |  |  |                           |    |      |
+                          |  |  +---------------------------+    |      |
+                          |  |                                   |      |
+                          |  |        INTERFACE ADAPTERS         |      |
+                          |  |        (Infrastructure)           |      |
+                          |  |                                   |      |
+                          |  +-----------------------------------+      |
+                          |                                             |
+                          |           FRAMEWORKS & DRIVERS              |
+                          |           (External Interfaces)             |
+                          |                                             |
+                          +---------------------------------------------+
+
+                              DEPENDENCY RULE: Dependencies point inward
+----
+
+xref:architecture/README.adoc[Learn more about Rinna's architecture]
+
+=== Ryorin-Do Philosophy and Canonical Modeling
+
+Rinna implements the Ryorin-Do workflow management philosophy through a canonical modeling approach that forms the core of its design:
+
+----
++-----------------+   +-----------------+   +-----------------+
+|                 |   |                 |   |                 |
+|    INTENTION    |-->|    EXECUTION    |-->|  VERIFICATION   |
+|     (Ishi)      |   |     (Jikko)     |   |    (Kakunin)    |
+|                 |   |                 |   |                 |
++-----------------+   +-----------------+   +-----------------+
+         ^                                            |
+         |                                            |
+         |                                            v
+         |                   +-----------------+      |
+         +-------------------|   REFINEMENT    |<-----+
+                             |    (Kairyo)     |
+                             |                 |
+                             +-----------------+
+----
+
+The canonical modeling approach is central to Ryorin-Do implementation. This means:
+
+. *Universal Underlying Model*: Rinna maintains a consistent internal model based on workflow fundamentals
+. *Bidirectional Mapping*: All external workflow representations map to and from this canonical model
+. *Semantic Preservation*: Workflow meaning is preserved across different methodologies
+. *Unified Metrics*: Consistent measurement across projects using different methodologies
+. *Methodology Flexibility*: Freedom to use any workflow methodology without losing interoperability
+
+Through this canonical approach, Rinna can provide powerful workflow capabilities while adapting to your preferred methodology instead of forcing you to adapt to it.
+
+xref:project/standards/RYORINDO.adoc[Learn more about Ryorin-Do and canonical modeling]
+
+=== Flexible Workflow Mapping
+
+Rinna provides a universal workflow management model based on the Ryorin-Do methodology, which is compatible with all Software Development Life Cycles (SDLCs):
+
+----
+                             +-----------+
+                             |           |
+                   +-------->| BACKLOG   +-----+
+                   |         |           |     |
+                   |         +-----------+     |
+                   |                           | Prioritized
+                   |                           v
+                   |         +-----------+     |
+                   |         |           |     |
+                   +-------->|  TRIAGE   +-----+
+                   |         |           |     |
+                   |         +-----------+     |
+                   |                           | Accepted
+                   |                           v
+                   |         +-----------+     |
+                   |         |           |     |
+                   +-------->|  TO_DO    +-----+
+                   |         |           |     |
+                   |         +-----------+     |
+                   |                           | Started
+                   |                           v
+  Blocked          |         +-----------+     |
+  +----------------+         |           |     |
+  |                +-------->| IN_PROGRESS +---+
+  |                |         |           |     |
+  |                |         +-----------+     |
+  |                |                           | Completed
+  |                |                           v
+  |  Blocked       |         +-----------+     |
+  +----------------+         |           |     |
+  |                +-------->|  IN_TEST  +-----+
+  |                |         |           |     |
+  |                |         +-----------+     |
+  |                |                           | Verified
+  |                |                           v
+  v                |         +-----------+     |
++-----------+      |         |           |     |
+|           |      +-------->|  DONE     +-----+
+| BLOCKED   |                |           |     |
+|           |                +-----------+     |
++-----------+                                  | Deployed
+     ^                                         v
+     |                       +-----------+     |
+     |                       |           |     |
+     +-----------------------+ RELEASED  +<----+
+                             |           |
+                             +-----------+
+----
+
+While Rinna has this internal workflow model, it provides extensive mapping capabilities to adapt to any workflow you prefer. Rinna comes with out-of-the-box mappings for:
+
+* *Kanban*: Direct mapping to Kanban columns and WIP limits
+* *Scrum*: Sprint and backlog management with story points
+* *Waterfall*: Phase-based progression with approvals
+* *Jira*: Compatible with Jira's workflow states and transitions
+* *Custom*: Define your own workflow with custom states and transitions
+
+This flexibility allows you to maintain your existing processes while gaining Rinna's efficiency advantages. xref:implementation/README.adoc[Learn more about workflow mapping]
+
+=== Quality Gates and Validation
+
+Rinna provides configurable quality gates for workflow states and actions:
+
+----
+                  ┌─────────────────┐
+                  │                 │
+                  │ Quality Gate    │
+                  │                 │
+┌─────────────┐   │ ┌─────────────┐ │   ┌─────────────┐
+│             │   │ │             │ │   │             │
+│  Previous   │   │ │ Validation  │ │   │   Next      │
+│   State     │──►│ │  Logic      │ │──►│   State     │
+│             │   │ │             │ │   │             │
+└─────────────┘   │ └─────────────┘ │   └─────────────┘
+                  │                 │
+                  │  • Context      │
+                  │  • Measures     │
+                  │  • Permissions  │
+                  │  • Rules        │
+                  │                 │
+                  └─────────────────┘
+----
+
+Quality gates allow you to:
+
+* Define context-specific validation requirements
+* Establish measurement criteria for progression
+* Set role-based permissions for state transitions
+* Create custom rules for quality enforcement
+* Connect external tools via webhooks for analysis
+* Generate reports to monitor quality metrics
+
+This ensures that work items meet your organization's quality standards before progressing through the workflow.
+
+link:implementation/README.md#quality-gates-system[Learn more about quality gates]
+
+=== Work Item Types
+
+* *Goal*: High-level objectives that orient development efforts
+* *Feature*: Incremental functionality that delivers user value
+* *Bug*: Software issues requiring correction
+* *Chore*: Non-functional maintenance tasks
+
+=== Work Items and Dependencies
+
+Understanding relationships between work items is crucial for effective project management:
+
+* xref:guides/user/work-item-relationships.adoc[Dependencies and Relationships] - How work items relate to and affect each other
+
+=== API Architecture
+
+Rinna provides a comprehensive REST API for integration:
+
+----
+                   +------------------+
+                   |                  |
+                   |   External       |
+                   |   Systems        |
+                   |                  |
+                   +--------+---------+
+                            |
+                            | HTTPS / OAuth
+                            v
++---------------------------------------------------+
+|                                                   |
+|  +-----------------+      +-------------------+   |
+|  |                 |      |                   |   |
+|  |  API Gateway    +----->+  Rate Limiter     |   |
+|  |                 |      |                   |   |
+|  +-----------------+      +-------------------+   |
+|           |                                       |
+|           | Routes requests                       |
+|           v                                       |
+|  +-----------------+      +-------------------+   |
+|  |                 |      |                   |   |
+|  |  Authentication +----->+  Authorization    |   |
+|  |  Middleware     |      |  (RBAC)           |   |
+|  |                 |      |                   |   |
+|  +-----------------+      +-------------------+   |
+|           |                                       |
+|           | Authenticated request                 |
+|           v                                       |
+|  +--------------------------------------------+   |
+|  |                                            |   |
+|  |  API Handlers                              |   |
+|  |                                            |   |
+|  |  +---------------+  +-------------------+  |   |
+|  |  | Work Items    |  | Projects          |  |   |
+|  |  +---------------+  +-------------------+  |   |
+|  |                                            |   |
+|  |  +---------------+  +-------------------+  |   |
+|  |  | Workflows     |  | Users             |  |   |
+|  |  +---------------+  +-------------------+  |   |
+|  |                                            |   |
+|  |  +---------------+  +-------------------+  |   |
+|  |  | Releases      |  | Health            |  |   |
+|  |  +---------------+  +-------------------+  |   |
+|  |                                            |   |
+|  +--------------------------------------------+   |
+|                                                   |
++---------------------------------------------------+
+----
+
+xref:implementation/api/README.adoc[Learn more about Rinna's API]
+
+== Comprehensive Management Practice Templates
+
+Rinna provides templates across the full spectrum of management practices, all built on Ryorin-do principles while adapting to your preferred management or organizational paradigm:
+
+----
+┌───────────────────────────────────────────────────────────────┐
+│                                                               │
+│                     MANAGEMENT PRACTICES                      │
+│                                                               │
+├───────────────┬───────────────┬───────────────┬───────────────┤
+│  Portfolio    │   Product     │   Project     │  Engineering  │
+│  Management   │   Management  │   Management  │  Development  │
+├───────────────┼───────────────┼───────────────┼───────────────┤
+│• Investment   │• Roadmapping  │• Traditional  │• Agile Dev    │
+│  Tracking     │• Backlog Mgmt │  Waterfall    │• DevOps       │
+│• Resource     │• Market Fit   │• Critical     │• CI/CD        │
+│  Allocation   │• User Stories │  Path         │• TDD/BDD      │
+│• Strategic    │• Competitive  │• Resource     │• Code Review  │
+│  Alignment    │  Analysis     │  Management   │• Sprint Mgmt  │
+└───────────────┴───────────────┴───────────────┴───────────────┘
+
+┌───────────────────────────────────────────────────────────────┐
+│                                                               │
+│                    MEASUREMENT & REPORTING                    │
+│                                                               │
+├───────────────┬───────────────┬───────────────┬───────────────┤
+│  Quality      │   Unified     │   KPI         │  Data         │
+│  Management   │   Reporting   │   Webhooks    │  Consolidation│
+├───────────────┼───────────────┼───────────────┼───────────────┤
+│• Test Planning│• Cross-team   │• Real-time    │• Statistics   │
+│• Test         │  Dashboards   │  Metrics      │  Generation   │
+│  Execution    │• Executive    │• Integration  │• Batch        │
+│• Results      │  Summaries    │  with BI      │  Computing    │
+│  Tracking     │• Compliance   │  Tools        │• Custom KPI   │
+│• Coverage     │  Reports      │• Alerts and   │  Reports      │
+│  Analysis     │• Trend        │  Notifications│• Historical   │
+│               │  Visualization│               │  Analysis     │
+└───────────────┴───────────────┴───────────────┴───────────────┘
+----
+
+All templates leverage the canonical modeling approach of Ryorin-do, allowing them to:
+
+* Adapt to any organizational structure or methodology
+* Integrate with existing tools and processes
+* Provide consistent metrics across different practices
+* Support seamless transitions between management approaches
+* Enable unified reporting across diverse teams and projects
+
+link:implementation/README.md#management-practice-templates[Learn more about management practice templates]
+
+== Industry-Specific Templates
+
+Rinna includes pre-configured templates for industry-specific workflows:
+
+=== Scaled Agile Framework (SAFe)
+
+----
+                    ┌───────────────┐
+                    │   Portfolio   │
+                    │    Level      │
+                    └───────┬───────┘
+                            │
+                            ▼
+┌───────────────┬───────────────────┬───────────────┐
+│   Program     │      Value        │    Solution   │
+│   Level       │      Stream       │    Level      │
+└───────┬───────┴────────┬──────────┴───────┬───────┘
+        │                │                  │
+        ▼                ▼                  ▼
+┌───────────────┬───────────────────┬───────────────┐
+│   Team        │      Team         │    Team       │
+│   Level       │      Level        │    Level      │
+└───────────────┴───────────────────┴───────────────┘
+----
+
+=== Good Practice (GxP) Compliance
+
+----
+┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+│ Requirements  │  │  Risk         │  │ Design        │
+│ Specification │─►│  Assessment   │─►│ Specification │
+└───────┬───────┘  └───────────────┘  └───────┬───────┘
+        │                                     │
+        ▼                                     ▼
+┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+│ Traceability  │  │ Validation    │  │ Implementation│
+│ Matrix        │◄─┤ Protocol      │◄─┤ Phase         │
+└───────┬───────┘  └───────────────┘  └───────┬───────┘
+        │                                     │
+        ▼                                     ▼
+┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+│ Summary       │  │ Change        │  │ Testing       │
+│ Report        │◄─┤ Control       │◄─┤ Phase         │
+└───────────────┘  └───────────────┘  └───────────────┘
+----
+
+link:implementation/README.md#industry-specific-templates[Learn more about industry templates]
+
+== Personal Life Management
+
+Rinna extends beyond professional workflow management to help users manage their personal lives using the same powerful approach:
+
+----
+┌─────────────────────────────────────────────────────────┐
+│                                                         │
+│                PERSONAL LIFE MANAGEMENT                 │
+│                                                         │
+├─────────────────┬─────────────────┬─────────────────────┤
+│ Personal Tasks  │ Habit Building  │ Life Coordination   │
+├─────────────────┼─────────────────┼─────────────────────┤
+│• Honey-do lists │• Daily routines │• Calendar reminders │
+│• Shopping lists │• Streak tracking│• Event planning     │
+│• Home projects  │• Goal systems   │• Family coordination│
+│• Errands        │• Progress charts│• Shared tasks       │
+│• Personal goals │• Accountability │• Travel planning    │
+└─────────────────┴─────────────────┴─────────────────────┘
+----
+
+Rinna provides a unified repository that consolidates items typically scattered across:
+
+* Calendar apps
+* Email reminders
+* Note-taking applications
+* To-do list apps
+* Habit trackers
+* Family coordination tools
+
+By bringing your personal and professional workflow management into one system, Rinna creates a seamless experience that helps you maintain clarity and progress across all aspects of life. The same flexible workflow mapping, quality gates, and reporting capabilities that power your work management can be applied to personal goals and habits.
+
+For teams and families, Rinna enables shared coordination with appropriate privacy controls, allowing collaborative management while maintaining separation between personal and professional domains when desired.
+
+== Why Rinna?
+
+Traditional project management tools are designed primarily for reporting to management. Rinna takes the opposite approach:
+
+* *Lives Where Developers Work*: Terminal-first interface in your coding environment
+* *Zero-Friction Philosophy*: Never adds more process than absolutely necessary
+* *Developer-Owned*: Complete workflow control by the people doing the work
+* *Clear Visibility*: Simple, unambiguous work item tracking without the noise
+* *Flexible Quality Gates*: Configurable checkpoints with context-aware validation
+* *Tool Integration*: Connect with your existing toolchain through webhooks and APIs
+
+== Getting Started
+
+Ready to dive in? Here are the quickest paths to get started with Rinna:
+
+. xref:guides/getting-started/README.adoc[Installation Guide] - Set up Rinna in your environment
+. xref:guides/user/rin-quick-reference.adoc[CLI Quick Reference] - Essential commands to get started
+. xref:guides/user/admin-cli-quickstart.adoc[First Project Setup] - Create your first Rinna project
+. link:implementation/cli/rin-cli.md#standard-work-item-commands[Creating Work Items] - Start tracking your work
+
+== Need Help?
+
+* Join our community forum at https://rinnacloud.com[rinnacloud.com]
+* Submit issues or feature requests on https://github.com/heymumford/Rinna/issues[GitHub]
+* Contact support at support@rinnacloud.com

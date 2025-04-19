@@ -1,0 +1,50 @@
+= Java Component
+:description: Rinna Java Component documentation
+
+The Java component forms the core of Rinna, implementing the domain model and business logic in a clean, maintainable way.
+
+== Overview
+
+The Java component is responsible for:
+
+* Core domain models and entities
+* Business rule implementation
+* Use case orchestration
+* Workflow state management
+* Interface adapters to external components
+
+== Architecture
+
+This component strictly follows Clean Architecture principles:
+
+[source]
+----
+/java
+  /rinna-core          # Core domain and business rules
+  /rinna-cli           # CLI adapter 
+  /rinna-data          # Data persistence adapters
+----
+
+== Key Features
+
+* *Domain-Driven Design*: Focus on the core domain and business rules
+* *Immutable Entities*: Thread-safe, predictable behavior
+* *Hexagonal Architecture*: Clear ports and adapters pattern
+* *Java 21 Features*: Leveraging modern Java capabilities
+* *Comprehensive Testing*: Unit, component, and integration tests
+
+== Getting Started
+
+To build the Java component:
+
+[source,bash]
+----
+cd java
+mvn clean install
+----
+
+== Related Documentation
+
+* xref:architecture.adoc[Architecture] - Detailed component architecture
+* xref:domain-model.adoc[Domain Model] - Core entities and relationships
+* xref:api-reference.adoc[API Reference] - Java API documentation

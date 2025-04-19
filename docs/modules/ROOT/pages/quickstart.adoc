@@ -1,0 +1,351 @@
+= Getting Started with Rinna
+
+
+Welcome to Rinna, your terminal-first workflow management system designed to make task management work _for_ you, not the other way around. This guide will help you create a personalized task management system that reflects the unique aspects of your life.
+
+== Installation
+
+Before you begin, you'll need to install Rinna:
+
+[,bash]
+----
+# Download and install Rinna
+./install.sh
+
+# Build all components
+./build.sh all
+
+# Start the Rinna server
+./rinna-server start
+----
+
+== Building Your Personal Ontology
+
+Rinna works best when organized around the actual activities and areas that matter in _your_ life. Let's start by creating your personalized ontology:
+
+[,bash]
+----
+# Start the interactive ontology builder
+rin ontology create
+----
+
+This launches an interactive session where Rinna asks you about the important domains in your life. For example:
+
+----
+Welcome to Rinna Ontology Builder!
+Let's create a personalized organization system for your tasks.
+
+What are the main areas or activities in your life? (Enter them one by one)
+> Photography
+Photography added! (Code: PHO)
+> Marathon Training
+Marathon Training added! (Code: MAR)
+> Cooking
+Cooking added! (Code: COK)
+> Family Time
+Family Time added! (Code: FAM)
+> Web Development
+Web Development added! (Code: WEB)
+> Writing
+Writing added! (Code: WRI)
+> done
+
+Great! I've created the following ontology domains:
+- PHO: Photography
+- MAR: Marathon Training
+- COK: Cooking
+- FAM: Family Time
+- WEB: Web Development
+- WRI: Writing
+
+Your work items will now be prefixed with these codes instead of generic IDs.
+You can always modify this ontology later with 'rin ontology update'.
+----
+
+Each domain is assigned a three-letter code that will be used to prefix your work items, making them instantly recognizable by area.
+
+== Creating Your First Work Items
+
+Now that you have your personal ontology, let's create your first work item - reading this user guide:
+
+[,bash]
+----
+# Create a work item in your Web Development domain
+rin create task "Read the Rinna user guide" --domain WEB --priority MEDIUM --description "Get familiar with Rinna's capabilities and workflow management approach"
+----
+
+You'll see a confirmation message with your new work item ID (e.g., `WEB-101`), prefixed with your domain code.
+
+Let's view the details:
+
+[,bash]
+----
+rin show WEB-101
+----
+
+You'll see something like:
+
+----
+─────────────────────────────────────────────────────────────────
+ID:          WEB-101
+Domain:      Web Development
+Title:       Read the Rinna user guide
+Type:        TASK
+Status:      FOUND
+Priority:    MEDIUM
+Assignee:    Unassigned
+Created:     2025-04-19 10:15:32
+Updated:     2025-04-19 10:15:32
+─────────────────────────────────────────────────────────────────
+Description:
+Get familiar with Rinna's capabilities and workflow management approach
+─────────────────────────────────────────────────────────────────
+----
+
+== Adding Domain-Specific Tasks
+
+Now, let's add tasks for different domains in your life:
+
+[,bash]
+----
+# Add a photography task
+rin create task "Organize photo equipment" --domain PHO --priority MEDIUM --description "Clean lenses, charge batteries, organize camera bag"
+
+# Add a marathon training task
+rin create task "Complete 5-mile training run" --domain MAR --priority HIGH --description "Maintain pace of 9:30 min/mile, focus on proper form"
+
+# Add a cooking task
+rin create task "Try new pasta recipe" --domain COK --priority LOW --description "Make homemade carbonara from Nonna's cookbook"
+
+# Add a family task
+rin create task "Plan weekend family picnic" --domain FAM --priority HIGH --description "Choose location, prepare food, pack games"
+----
+
+== Understanding Work Item Types and the Ryoran-do Approach
+
+Rinna implements the Ryoran-do methodology, which helps categorize work by complexity and approach:
+
+[,bash]
+----
+# View available work item types and explanations
+rin types explain
+----
+
+Let's create different types of work items across your domains:
+
+[,bash]
+----
+# Create a feature (something substantial to build or develop)
+rin create feature "Build photo portfolio website" --domain PHO \
+  --priority MEDIUM \
+  --description "Create a personal website to showcase my best photography work" \
+  --cynefin-domain COMPLICATED
+
+# Create an experiment (something to learn from)
+rin create experiment "Test new interval training method" --domain MAR \
+  --priority MEDIUM \
+  --description "Hypothesis: 30/30 intervals will improve my 5K time over 3 weeks" \
+  --cynefin-domain COMPLEX
+
+# Create a chore (routine maintenance)
+rin create chore "Clean writing desk" --domain WRI \
+  --priority LOW \
+  --description "Organize notebooks, refill pens, dust surfaces" \
+  --cynefin-domain OBVIOUS
+----
+
+The `--cynefin-domain` flag categorizes work items by their complexity level:
+
+* *OBVIOUS*: Clear cause and effect relationships (routine tasks)
+* *COMPLICATED*: Cause and effect requires analysis (problems with known solutions)
+* *COMPLEX*: Outcomes unpredictable but patterns exist (creative work, learning)
+* *CHAOTIC*: No clear cause and effect (emergencies, rapid innovation)
+* *DISORDER*: Unclear which domain applies (initial exploration)
+
+== Viewing Work by Domain
+
+One advantage of your personalized ontology is the ability to view tasks by life domain:
+
+[,bash]
+----
+# View all photography tasks
+rin list --domain PHO
+
+# View all marathon training tasks
+rin list --domain MAR
+
+# View all high priority tasks across domains
+rin list --priority HIGH
+----
+
+== Taking Ownership and Setting Contexts
+
+Let's take ownership of these tasks and add context:
+
+[,bash]
+----
+# Assign all tasks to yourself
+rin list | awk '{print $1}' | xargs -I{} rin update {} --assignee "your-username"
+
+# Add context to a photography task
+rin context PHO-101 add location "Home studio"
+rin context PHO-101 add equipment "DSLR, lenses, tripod"
+rin context PHO-101 add time "30 minutes"
+
+# Add context to a marathon task
+rin context MAR-101 add route "Riverfront path"
+rin context MAR-101 add weather "Check forecast"
+rin context MAR-101 add gear "Running shoes, hydration pack"
+----
+
+== Domain-Specific Quality Gates
+
+Quality gates can be customized for each domain:
+
+[,bash]
+----
+# Photography quality gates
+rin gate add PHO-101 "All lenses cleaned" --required true
+rin gate add PHO-101 "Batteries charged" --required true
+rin gate add PHO-101 "Memory cards formatted" --required false
+
+# Marathon quality gates
+rin gate add MAR-101 "Proper warm-up completed" --required true
+rin gate add MAR-101 "Maintained target pace" --required false
+rin gate add MAR-101 "Tracked run with GPS" --required true
+----
+
+== Creating Domain Relationships
+
+Your life domains often interrelate. Rinna helps you capture these connections:
+
+[,bash]
+----
+# Create a cross-domain task
+rin create task "Photograph family picnic" --domain PHO --related-domain FAM \
+  --description "Capture candid moments at the weekend family picnic"
+
+# Link tasks across domains
+rin link PHO-103 RELATED_TO FAM-101
+
+# Create a task that depends on another domain
+rin create task "Write blog post about marathon training" --domain WRI --related-domain MAR \
+  --description "Share experiences and photos from recent training runs"
+rin link WRI-101 DEPENDS_ON MAR-101
+----
+
+== Using Your Ontology for Daily Planning
+
+Rinna helps you plan your day across domains:
+
+[,bash]
+----
+# Create a daily plan
+rin plan create "2025-04-20" --balance-domains
+
+# Add specific domain focus time
+rin plan add-focus "2025-04-20" MAR "06:00-08:00" --priority HIGH
+rin plan add-focus "2025-04-20" WEB "09:00-12:00" --priority MEDIUM
+rin plan add-focus "2025-04-20" FAM "18:00-21:00" --priority HIGH
+----
+
+The `--balance-domains` flag helps Rinna suggest a balanced plan across your life domains.
+
+== Tracking Progress
+
+Update your progress through different domains:
+
+[,bash]
+----
+# Start working on a task
+rin start MAR-101
+
+# Mark quality gates as complete
+rin gate complete MAR-101 "Proper warm-up completed"
+
+# Add domain-specific comments
+rin comment MAR-101 "Completed 5 miles at 9:20 pace, felt strong on hills"
+rin comment PHO-101 "Organized all equipment, found that the 50mm lens needs repair"
+
+# View task history
+rin history MAR-101
+----
+
+== Completing Work Items
+
+When you finish a task:
+
+[,bash]
+----
+# First, move to testing (for review)
+rin ready-for-test MAR-101
+
+# After reviewing, mark as done
+rin done MAR-101
+----
+
+== Analyzing Your Life Balance
+
+Rinna provides insights into how you're balancing different life domains:
+
+[,bash]
+----
+# View domain balance report
+rin report domain-balance
+
+# See time investment by domain
+rin report time-invested --by-domain
+
+# Check completion rate by domain
+rin report completion-rate --by-domain
+
+# View domain interconnections
+rin report domain-network
+----
+
+== Domain-Based Reviews
+
+Create regular review sessions for each domain:
+
+[,bash]
+----
+# Create weekly domain reviews
+rin create chore "Photography weekly review" --domain PHO --recur weekly --day sunday \
+  --description "Review photography projects, equipment needs, and upcoming opportunities"
+
+rin create chore "Marathon training weekly review" --domain MAR --recur weekly --day sunday \
+  --description "Review training progress, adjust schedule for next week, check for injuries"
+----
+
+== Evolving Your Ontology
+
+As your life changes, your ontology can evolve:
+
+[,bash]
+----
+# Add a new domain
+rin ontology add "Home Renovation" --code HRN
+
+# Rename an existing domain
+rin ontology rename WEB "Frontend Development" --code FED
+
+# Merge domains (if two become closely related)
+rin ontology merge WRI WEB --new-name "Tech Blog" --new-code TBL
+
+# Archive a domain (when it's no longer relevant)
+rin ontology archive PHO --reason "Taking a break from photography"
+----
+
+== Next Steps
+
+Now that you've set up your personalized system:
+
+. Continue refining your ontology as you use Rinna
+. Explore how different domains interconnect in your life
+. Use the `rin insights` tool to discover patterns in your work
+. Set up regular whole-life reviews to maintain balance
+. Try different visualization options with `rin visualize domains`
+
+Remember, Rinna adapts to your unique life structure rather than forcing you into predefined categories. The more you use it, the better it becomes at supporting your specific needs and priorities.
+
+For more detailed instructions, refer to the full xref:../user-guide/README.adoc[User Guide] or run `rin help [command]` for specific command information.

@@ -1,0 +1,112 @@
+= Getting Started with Rinna
+:description: A guide to getting started with the Rinna workflow management system
+
+This guide will help you install, configure, and start using Rinna.
+
+== Prerequisites
+
+Before installing Rinna, ensure you have:
+
+* Java 21 or higher
+* Go 1.20 or higher
+* Python 3.10 or higher
+* Node.js 16 or higher
+
+== Installation
+
+=== Installing from Source
+
+. Clone the repository:
++
+[source,bash]
+----
+git clone https://github.com/heymumford/Rinna.git
+cd Rinna
+----
+
+. Build all components:
++
+[source,bash]
+----
+./build.sh all
+----
+
+=== Installing with Package Manager
+
+_(Coming soon)_
+
+== Configuration
+
+Create a configuration file at `~/.rinna/config.yaml`:
+
+[source,yaml]
+----
+# Basic configuration
+server:
+  host: localhost
+  port: 8080
+
+# Authentication configuration
+auth:
+  enabled: true
+  type: basic
+
+# Storage configuration
+storage:
+  type: sqlite
+  path: ~/.rinna/data.db
+----
+
+== First Steps
+
+=== Starting the Server
+
+Start the Rinna server:
+
+[source,bash]
+----
+./rinna-server start
+----
+
+=== Creating Your First Project
+
+Create a project:
+
+[source,bash]
+----
+rin project create "My First Project" --key=MFP
+----
+
+=== Creating Work Items
+
+Create work items:
+
+[source,bash]
+----
+# Create a feature
+rin add "User registration form" --type=FEATURE
+
+# Create a bug
+rin add "Login button misaligned" --type=BUG
+----
+
+=== Managing Workflow
+
+Update work item status:
+
+[source,bash]
+----
+# Start working on a feature
+rin update WI-123 --status=IN_PROGRESS
+
+# Mark a feature as done
+rin done WI-123
+----
+
+== Exploring Further
+
+Now that you have Rinna running, explore these topics:
+
+* xref:../reference/cli.adoc[CLI Reference] - Complete command reference
+* xref:user-guide.adoc[User Guide] - Detailed usage information
+* xref:../architecture/clean-architecture.adoc[Architecture] - Understanding the system architecture

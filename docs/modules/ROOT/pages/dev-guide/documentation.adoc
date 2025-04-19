@@ -1,0 +1,102 @@
+= Documentation System
+:navtitle: Documentation
+:description: Building and viewing the Rinna documentation
+
+== Overview
+
+Rinna uses the Antora documentation system to create a unified documentation site that brings together documentation from all components (Java, Python, Go).
+
+== Building and Viewing the Documentation
+
+The simplest way to build and view the Rinna documentation is using the provided script:
+
+[source,bash]
+----
+# From anywhere
+/path/to/Rinna/build-docs.sh
+
+# Or if you're already in the Rinna directory
+./build-docs.sh
+----
+
+This script will:
+
+* Check for required dependencies and install them if needed
+* Build the documentation site
+* Start a local server to view the documentation
+* Open your browser to http://localhost:5000
+
+To stop the server, press Ctrl+C in the terminal where the script is running.
+
+== Manual Build Process
+
+If you prefer to run the steps manually:
+
+[source,bash]
+----
+# Install Antora if not already installed
+npm install -g @antora/cli @antora/site-generator
+
+# Generate the site
+antora generate antora-playbook.yml --to-dir build/site
+
+# Serve the documentation using Python's built-in server
+python3 -m http.server 5000 --directory build/site
+----
+
+Your browser will automatically open to http://localhost:5000, where you can navigate through the complete documentation.
+
+== Documentation Structure
+
+The documentation is organized into component-specific sections:
+
+[source]
+----
+/
+├── docs/                     # Main documentation
+│   ├── antora.yml            # Main component config
+│   └── modules/              # Documentation modules
+├── java/docs/                # Java component documentation
+│   ├── antora.yml            # Java component config
+│   └── modules/              # Java documentation modules
+├── python/docs/              # Python component documentation
+├── go/docs/                  # Go component documentation
+└── antora-playbook.yml       # Main site configuration
+----
+
+== Adding New Content
+
+When contributing documentation:
+
+. Add content to the appropriate component:
+** Core project documentation goes in `/docs/`
+** Java-specific documentation goes in `/java/docs/`
+** Python-specific documentation goes in `/python/docs/`
+** Go-specific documentation goes in `/go/docs/`
+
+. Create AsciiDoc files with the `.adoc` extension in the `modules/ROOT/pages/` directory
+
+. Update the navigation by editing the `modules/ROOT/nav.adoc` file
+
+== Cross-References
+
+To link between documentation pages:
+
+* Within the same component:
++
+[source,asciidoc]
+----
+See the xref:my-page.adoc[My Page] for more information.
+----
+
+* To another component:
++
+[source,asciidoc]
+----
+See the xref:java:index.adoc[Java documentation] for more information.
+----
+
+== More Information
+
+For detailed information about working with the documentation, see the markdown documentation guide at:
+link:https://github.com/heymumford/Rinna/blob/main/docs/guides/developer/documentation.md[Documentation Guide]

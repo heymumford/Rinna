@@ -1,0 +1,10 @@
+= java Design Patterns
+:description: Design patterns used in the java component
+
+This page documents the design patterns used in the java component.
+
+== Dependency Injection
+
+== Repository Pattern
+
+== Factory Pattern

@@ -1,0 +1,5 @@
+name: java
+title: Java Component
+version: ~
+nav:
+  - modules/ROOT/nav.adoc

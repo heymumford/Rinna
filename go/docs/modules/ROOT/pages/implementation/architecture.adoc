@@ -1,0 +1,12 @@
+= go Architecture
+:description: Architecture of the go component
+
+This page describes the architecture of the go component.
+
+== Clean Architecture Implementation
+
+The go component follows clean architecture principles:
+
+* Core domain models at the center
+* Use cases as the primary API
+* Adapters for external integration

@@ -1,0 +1,5 @@
+name: rinna
+title: Rinna Documentation
+version: ~
+nav:
+  - modules/ROOT/nav.adoc

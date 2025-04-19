@@ -1,0 +1,50 @@
+= Rinna Documentation
+:description: Rinna workflow management system documentation
+
+Rinna is a polyglot workflow management system designed for efficient cross-language communication and unified workflow management, with a focus on clean architecture principles and high-performance execution.
+
+== Quick Start
+
+[source,bash]
+----
+# Install Rinna
+./install.sh
+
+# Build all components
+./build.sh all
+
+# Start the Rinna server
+./rinna-server start
+
+# Create your first work item
+rin create feature "My first feature"
+----
+
+== Key Features
+
+* *Polyglot Architecture*: Leverages Java, Python, and Go for their respective strengths
+* *Workflow Flexibility*: Adapts to any workflow methodology (Kanban, Scrum, Waterfall, etc.)
+* *Clean Architecture*: Clear separation of concerns with dependencies pointing inward
+* *Terminal-First Interface*: Lives where developers work
+* *Quality Gates*: Configurable validation with context-aware rules
+* *Universal Management*: From portfolio management to personal task tracking
+
+== Documentation Structure
+
+This documentation is organized into multiple components:
+
+* xref:overview.adoc[Overview] - Introduction to Rinna and its concepts
+* xref:architecture/clean-architecture.adoc[Architecture] - System architecture and design
+* xref:guides/getting-started.adoc[Getting Started] - First steps with Rinna
+* xref:reference/glossary.adoc[Reference] - Technical reference and glossary
+
+== Component Documentation
+
+* xref:java::index.adoc[Java Component] - Core domain models
+* xref:python::index.adoc[Python Component] - Data processing and reports
+* xref:go::index.adoc[Go Component] - APIs and performance-critical components
+
+== Additional Resources
+
+* link:https://github.com/heymumford/Rinna[GitHub Repository]
+* link:https://rinnacloud.com[Rinna Website]

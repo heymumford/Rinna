@@ -1,0 +1,5 @@
+* xref:index.adoc[Go Component]
+* xref:architecture.adoc[Architecture]
+* xref:packages.adoc[Packages]
+* xref:api-reference.adoc[API Reference]
+* xref:testing.adoc[Testing]

@@ -5,6 +5,12 @@
 /logs/
 *.log
 
+### Node.js/Antora ###
+node_modules/
+npm-debug.log
+yarn-error.log
+.cache/
+
 ### Java ###
 # Compiled class files
 *.class

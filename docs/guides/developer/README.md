@@ -8,6 +8,7 @@ Welcome to the Rinna developer documentation! This guide will help you set up yo
 - [Architecture](architecture.md) - Clean Architecture implementation and design decisions
 - [Build System](build-system.md) - Understanding the build tools and workflows
 - [Testing](testing.md) - Testing strategies and running tests
+- [Documentation](documentation.md) - Building and viewing project documentation
 - [Java 21 Features](java21-features.md) - Modern Java features used in Rinna
 - [Version Management](version-management.md) - How versioning works across languages
 - [Contributing](contributing.md) - Guidelines for contributing to Rinna

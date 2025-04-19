@@ -1,0 +1,55 @@
+= Go Component
+:description: Rinna Go Component documentation
+
+The Go component of Rinna provides high-performance APIs and server implementations.
+
+== Overview
+
+The Go component is responsible for:
+
+* RESTful API endpoints
+* Server implementation
+* Authentication and security
+* Rate limiting and caching
+* Health monitoring
+
+== Architecture
+
+The Go component is structured as follows:
+
+[source]
+----
+/go
+  /src
+    /auth           # Authentication and authorization
+    /client         # API client implementation
+    /handlers       # API endpoint handlers
+    /middleware     # Security and rate limiting middleware
+    /models         # Data transfer objects
+    /server         # Server implementation
+    /version        # Version management
+----
+
+== Key Features
+
+* *High Performance*: Optimized for speed and scalability
+* *RESTful API*: Clean, consistent API design
+* *OAuth Integration*: Secure authentication
+* *Middleware*: Security, logging, and rate limiting
+* *Swagger Documentation*: Auto-generated API documentation
+
+== Getting Started
+
+To build the Go component:
+
+[source,bash]
+----
+cd go
+go build ./...
+----
+
+== Related Documentation
+
+* xref:architecture.adoc[Architecture] - Detailed component architecture
+* xref:packages.adoc[Packages] - Go package documentation
+* xref:api-reference.adoc[API Reference] - Go API documentation

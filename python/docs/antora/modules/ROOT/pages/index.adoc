@@ -1,0 +1,51 @@
+= Python Component
+:description: Rinna Python Component documentation
+
+The Python component of Rinna provides data processing, reporting, and visualization capabilities.
+
+== Overview
+
+The Python component is responsible for:
+
+* Data processing and analysis
+* Report generation
+* Diagram creation
+* Metrics calculation
+* Integration utilities
+
+== Architecture
+
+The Python component is structured as follows:
+
+[source]
+----
+/python
+  /rinna              # Main package
+    /api              # API interfaces
+    /reports          # Report generators
+    /scripts          # Utility scripts
+----
+
+== Key Features
+
+* *Report Generation*: Multiple output formats (HTML, PDF, DOCX)
+* *Data Analysis*: Metrics calculation and trend analysis
+* *Visualization*: Charts and diagrams for workflow data
+* *C4 Model*: Automated architecture diagram generation
+* *Cross-Language Integration*: Clean interfaces to Java and Go components
+
+== Getting Started
+
+To set up the Python environment:
+
+[source,bash]
+----
+cd python
+poetry install
+----
+
+== Related Documentation
+
+* xref:architecture.adoc[Architecture] - Detailed component architecture
+* xref:modules.adoc[Modules] - Python module documentation
+* xref:api-reference.adoc[API Reference] - Python API documentation

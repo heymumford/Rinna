@@ -1,0 +1,12 @@
+= python Architecture
+:description: Architecture of the python component
+
+This page describes the architecture of the python component.
+
+== Clean Architecture Implementation
+
+The python component follows clean architecture principles:
+
+* Core domain models at the center
+* Use cases as the primary API
+* Adapters for external integration

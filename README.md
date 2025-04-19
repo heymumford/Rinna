@@ -48,14 +48,29 @@ This project follows a clean polyglot architecture pattern with clear language b
 
 ## Documentation
 
-For comprehensive documentation, please see the [Documentation Center](./docs/README.md), which includes:
+Rinna uses [Antora](https://antora.org/) to provide comprehensive documentation across all components.
 
-- [Architecture](./docs/architecture/README.md)
-- [Getting Started Guides](./docs/guides/getting-started/README.md)
-- [User Guides](./docs/guides/user/README.md)
-- [Developer Guides](./docs/guides/developer/README.md)
-- [API Reference](./docs/implementation/api/README.md)
-- [CLI Reference](./docs/implementation/cli/README.md)
+### Viewing Documentation
+
+To build and view the documentation:
+
+```bash
+# Build and serve documentation
+./build-docs.sh
+```
+
+This will open your browser to the documentation site.
+
+### Documentation Content
+
+The documentation includes:
+
+- [Architecture](./docs/architecture/README.md) - System design documents
+- [Getting Started Guides](./docs/guides/getting-started/README.md) - Installation and quick start
+- [User Guides](./docs/guides/user/README.md) - End-user documentation
+- [Developer Guides](./docs/guides/developer/README.md) - Developer documentation
+- [API Reference](./docs/implementation/api/README.md) - API documentation
+- [CLI Reference](./docs/implementation/cli/README.md) - Command-line interface reference
 
 ## Development Quick Reference
 

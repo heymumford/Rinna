@@ -1,0 +1,5 @@
+name: python
+title: Python Component
+version: ~
+nav:
+  - modules/ROOT/nav.adoc

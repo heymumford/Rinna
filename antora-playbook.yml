@@ -1,0 +1,24 @@
+site:
+  title: Rinna Documentation
+  url: https://docs.rinnacloud.com
+  start_page: rinna::index.adoc
+
+content:
+  sources:
+    - url: .
+      branches: HEAD
+      start_paths:
+        - docs/antora
+        - java/docs/antora
+        - python/docs/antora
+        - go/docs/antora
+
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true
+
+antora:
+  extensions:
+    - require: '@antora/lunr-extension'
+      index_latest_only: true

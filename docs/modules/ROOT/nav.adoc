@@ -1,0 +1,14 @@
+* xref:index.adoc[Home]
+* xref:quickstart.adoc[Quick Start]
+* Architecture
+** xref:architecture/overview.adoc[Overview]
+** xref:architecture/decisions.adoc[Architecture Decisions]
+* Developer Guide
+** xref:dev-guide/getting-started.adoc[Getting Started]
+** xref:dev-guide/logging.adoc[Logging]
+** xref:dev-guide/testing.adoc[Testing]
+** xref:dev-guide/documentation.adoc[Documentation]
+* User Guide
+** xref:user-guide/workflow.adoc[Workflow Guide]
+** xref:user-guide/cli-reference.adoc[CLI Reference]
+** xref:user-guide/reporting.adoc[Reporting]

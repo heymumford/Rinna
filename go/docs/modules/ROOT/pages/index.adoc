@@ -1,0 +1,12 @@
+= go Component
+:description: Documentation for the go component of Rinna
+
+This is the documentation for the go component of Rinna.
+
+== Overview
+
+The go component is responsible for...
+
+== API Reference
+
+See the xref:api-reference.adoc[API Reference] for details.

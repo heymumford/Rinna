@@ -2,10 +2,14 @@
 
 This directory contains documentation related to the CLI module of the Rinna project.
 
+## Parent Documentation
+- [Implementation Documentation](../README.md)
+- [Documentation Home](../../README.md)
+
 ## Contents
 
 - [CLI Module Enabling Summary](./CLI_MODULE_ENABLING_SUMMARY.md) - Summary of enabling the CLI module
-- [CLI Operation Analytics Implementation](../implementation/CLI_OPERATION_ANALYTICS_IMPLEMENTATION.md) - Implementation of the operation analytics dashboard
+- [CLI Operation Analytics Implementation](../CLI_OPERATION_ANALYTICS_IMPLEMENTATION.md) - Implementation of the operation analytics dashboard
 
 ## CLI Design Principles
 
@@ -47,4 +51,4 @@ Top-level commands include:
 - `dashboard` - Operation analytics dashboard for CLI usage visualization
 - `operations` - Manage operation metadata and tracking
 
-See the [user guide](../user-guide/rin-cli.md) for detailed usage information.
+See the [CLI Reference](../../guides/user/cli-reference.md) for detailed usage information.

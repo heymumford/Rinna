@@ -1,0 +1,107 @@
+= Rinna Overview
+:description: Overview of the Rinna workflow management system
+
+Rinna is a polyglot workflow management system designed for software development teams. It brings workflow management to where developers actually work: the command line.
+
+== Philosophy
+
+Rinna isn't trying to replace enterprise tools – it exists to make workflow management work _for_ developers rather than the other way around. 
+
+== Core Concepts
+
+=== Clean Architecture
+
+Rinna follows Clean Architecture principles with a clear separation of concerns:
+
+[source]
+----
+                          +---------------------------------------------+
+                          |                                             |
+                          |  +-----------------------------------+      |
+                          |  |                                   |      |
+                          |  |  +---------------------------+    |      |
+                          |  |  |                           |    |      |
+                          |  |  |  +-------------------+    |    |      |
+                          |  |  |  |                   |    |    |      |
+                          |  |  |  |    ENTITIES       |    |    |      |
+                          |  |  |  |    (Domain)       |    |    |      |
+                          |  |  |  |                   |    |    |      |
+                          |  |  |  +-------------------+    |    |      |
+                          |  |  |                           |    |      |
+                          |  |  |      USE CASES            |    |      |
+                          |  |  |      (Application)        |    |      |
+                          |  |  |                           |    |      |
+                          |  |  +---------------------------+    |      |
+                          |  |                                   |      |
+                          |  |        INTERFACE ADAPTERS         |      |
+                          |  |        (Infrastructure)           |      |
+                          |  |                                   |      |
+                          |  +-----------------------------------+      |
+                          |                                             |
+                          |           FRAMEWORKS & DRIVERS              |
+                          |           (External Interfaces)             |
+                          |                                             |
+                          +---------------------------------------------+
+
+                              DEPENDENCY RULE: Dependencies point inward
+----
+
+=== Polyglot Approach
+
+Rinna uses multiple languages, each chosen for its strengths:
+
+* *Java*: Core domain model and business logic
+* *Go*: APIs and performance-critical components
+* *Python*: Data processing, reporting, and visualization
+
+=== Terminal-First Interface
+
+Rinna provides a comprehensive CLI that integrates into developers' workflow:
+
+[source,bash]
+----
+# Create a new feature
+rin add "Implement login page" --type=FEATURE
+
+# List work items
+rin list --status=IN_PROGRESS
+
+# Start working on a feature
+rin update WI-123 --status=IN_PROGRESS
+
+# Mark a feature as done
+rin done WI-123
+----
+
+=== Workflow Flexibility
+
+Rinna adapts to your preferred workflow methodology:
+
+* Kanban
+* Scrum
+* Waterfall
+* Custom workflows
+
+== System Components
+
+=== Core Components
+
+* *Domain Model*: Entities, work items, and business rules
+* *Use Cases*: Application-specific business rules
+* *Adapters*: Interfaces to external systems
+
+=== External Interfaces
+
+* *CLI*: Command-line interface
+* *API*: RESTful API
+* *Web UI*: Browser-based interface
+
+=== Infrastructure
+
+* *Persistence*: Data storage
+* *Authentication*: User identity and access control
+* *Logging*: System and audit logging
+
+== Getting Started
+
+See the xref:guides/getting-started.adoc[Getting Started Guide] to begin using Rinna.

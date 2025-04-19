@@ -1,0 +1,12 @@
+= python Component
+:description: Documentation for the python component of Rinna
+
+This is the documentation for the python component of Rinna.
+
+== Overview
+
+The python component is responsible for...
+
+== API Reference
+
+See the xref:api-reference.adoc[API Reference] for details.

@@ -14,8 +14,8 @@ Rinna is a polyglot workflow management system integrating Java, Python, and Go 
 - Java single test: `cd java && mvn test -Dtest=TestClassName#testMethodName`
 - Test categories: `cd java && mvn test -Dgroups="unit,component"`
 - BDD tests: `cd java && mvn test -P bdd-only -Dcucumber.filter.tags="@feature-tag"`
-- Python tests: `cd python && poetry run pytest`
-- Go tests: `cd go && go test ./...`
+- Python tests: `cd python && poetry run pytest tests/path/to/test_file.py::TestClass::test_method`
+- Go tests: `cd go && go test ./... -run TestFunctionName`
 
 ### Linting & Formatting
 - Java: `mvn checkstyle:check pmd:check spotbugs:check` and `mvn spotless:apply`
@@ -28,7 +28,7 @@ Rinna is a polyglot workflow management system integrating Java, Python, and Go 
 - **Packages**: Use `org.rinna.[domain|adapter|usecase]` structure
 - **Imports**: Group by domain (java core, external libs, project-specific)
 - **Error Handling**: Use ErrorHandler utility with appropriate error categories
-- **Logging**: Use SLF4J (Java) with appropriate levels; never log sensitive information
+- **Logging**: Use MultiLanguageLogger (Java), rinna_logger.py (Python), or middleware/logger (Go); apply consistent correlation IDs across components; never log sensitive information
 - **Tests**: Tag with @Tag("unit|component|integration|acceptance|performance")
 - **XML Files**: Use `scripts/utils/xml-tools.sh` for manipulation, NEVER text tools (grep, sed)
 
@@ -38,3 +38,4 @@ Rinna is a polyglot workflow management system integrating Java, Python, and Go 
 - Use API specs as contract between components
 - Respect polyglot nature when suggesting cross-component changes
 - Consider performance for operations on large datasets
+- Follow TDD approach when implementing new features

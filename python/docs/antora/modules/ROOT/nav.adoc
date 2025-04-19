@@ -1,0 +1,5 @@
+* xref:index.adoc[Python Component]
+* xref:architecture.adoc[Architecture]
+* xref:modules.adoc[Modules]
+* xref:api-reference.adoc[API Reference]
+* xref:testing.adoc[Testing]

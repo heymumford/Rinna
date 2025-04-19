@@ -4,11 +4,11 @@ Thank you for your interest in contributing to Rinna! This document provides gui
 
 ## 📚 Documentation Resources
 
-- **[Developer Guide](DEVELOPER.md)**: Complete documentation for setting up and development
-- **[Architecture Documentation](docs/architecture/README.md)**: Understanding system design
-- **[Testing Strategy](docs/testing/TESTING_STRATEGY.md)**: Our approach to testing
-- **[Coding Standards](docs/reference/standards/code-review-guidelines.md)**: Code quality guidelines
-- **[Documentation Requirements](docs/reference/standards/documentation-requirements.md)**: Standards for documentation
+- **[Developer Guide](../guides/developer/README.md)**: Complete documentation for setting up and development
+- **[Architecture Documentation](../architecture/README.md)**: Understanding system design
+- **[Testing Strategy](../testing/README.md)**: Our approach to testing
+- **[Coding Standards](../reference/README.md)**: Code quality guidelines
+- **[Documentation Requirements](../reference/README.md)**: Standards for documentation
 
 ## 🚀 Contribution Workflow
 
@@ -46,7 +46,7 @@ git commit -m "Add feature: brief description"
 
 ## 🧪 Quality Standards
 
-- Follow [Clean Architecture](docs/architecture/decisions/0003-adopt-clean-architecture-for-system-design.md) principles
+- Follow [Clean Architecture](../architecture/decisions/0003-adopt-clean-architecture-for-system-design.md) principles
 - Write comprehensive tests for all changes
 - Update documentation as needed
 - Adhere to our code style guidelines
@@ -70,7 +70,7 @@ git commit -m "Add feature: brief description"
 
 - Your contributions must be your original work
 - Disclose any AI assistance tools used
-- By contributing, you agree that your work will be licensed under our [MIT License](LICENSE)
+- By contributing, you agree that your work will be licensed under our [MIT License](../../LICENSE)
 
 ## 📜 Community Guidelines
 

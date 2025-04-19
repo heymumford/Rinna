@@ -1,0 +1,16 @@
+{
+  "name": "rinna-docs",
+  "version": "1.0.0",
+  "description": "Documentation for Rinna workflow management system",
+  "scripts": {
+    "docs": "antora generate antora-playbook.yml --fetch --to-dir build/site",
+    "docs:serve": "serve build/site",
+    "docs:clean": "rm -rf build/site .cache"
+  },
+  "devDependencies": {
+    "@antora/cli": "^3.1.4",
+    "@antora/site-generator": "^3.1.4",
+    "@antora/lunr-extension": "^1.0.0-alpha.8",
+    "serve": "^14.2.0"
+  }
+}

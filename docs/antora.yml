@@ -1,0 +1,17 @@
+name: rinna
+title: Rinna Documentation
+version: ~
+start_page: ROOT:index.adoc
+nav:
+- modules/ROOT/nav.adoc
+
+asciidoc:
+  attributes:
+    experimental: ''
+    idprefix: ''
+    idseparator: '-'
+    page-pagination: ''
+    source-language: ruby
+    source-highlighter: highlight.js
+    
+prerelease: true
